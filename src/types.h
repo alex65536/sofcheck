@@ -39,6 +39,18 @@ inline constexpr coord_t makeCoord(uint8_t x, uint8_t y) {
   return (x << 3) | y;
 }
 
+inline constexpr uint8_t coordX(coord_t coord) {
+  return coord & 7;
+}
+
+inline constexpr uint8_t coordY(coord_t coord) {
+  return coord >> 3;
+}
+
+inline bitboard_t coordToBitboard(cell_t cell) {
+  return static_cast<uint64_t>(1) << cell;
+}
+
 // Color offsets
 constexpr cell_t whiteOffset = 1;
 constexpr cell_t blackOffset = 9;
