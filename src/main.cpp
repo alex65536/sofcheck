@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "types.h"
-#include "near_attacks.h"
+#include "core/types.h"
+#include "core/private/near_attacks.h"
 
 int main(int argc, char **argv) {
   (void)argc;

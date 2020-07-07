@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#include "../src/types.h"
+#include "core/types.h"
 
 using namespace SoFCore;
 
@@ -97,7 +97,7 @@ void doGenerate(std::ostream &out) {
   out << "#ifndef NEAR_ATTACKS_INCLUDED\n";
   out << "#define NEAR_ATTACKS_INCLUDED\n";
   out << "\n";
-  out << "#include \"types.h\"\n";
+  out << "#include \"core/types.h\"\n";
   out << "\n";
   out << "namespace SoFCore {\n";
   out << "namespace Private {\n";
