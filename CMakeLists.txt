@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.8)
 
 project(sofcheck)
 
+set(CMAKE_CXX_STANDARD 14)
+
 add_compile_options(-Wall -Wextra -Wpedantic)
 
 add_executable(gen_near_attacks gen/gen_near_attacks.cpp)
@@ -16,6 +18,7 @@ include_directories(src)
 
 add_executable(sofcheck
   src/main.cpp
+  src/board.cpp
   ${PROJECT_BINARY_DIR}/near_attacks.h
 )
 
