@@ -18,7 +18,7 @@ void printBitboardArray(std::ostream &out, const std::vector<bitboard_t> &array,
   out << "SoFCore::bitboard_t " << name << "[" << std::dec << array.size()
       << "] = {\n";
   for (size_t i = 0; i < array.size(); ++i) {
-    out << "  /*" << std::setw(2) << i << "*/ ";
+    out << "    /*" << std::setw(2) << i << "*/ ";
     printBitboard(out, array[i]);
     if (i + 1 != array.size()) {
       out << ",";
@@ -76,14 +76,14 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
 void printCombinedMatrix(std::ostream &out, const std::vector<uint64_t> &pawn,
                          const std::vector<uint64_t> &knight,
                          const std::vector<uint64_t> &king, const char *name) {
-  out << "SoFCore::bitboard_t " << name << "[64][4] = {\n";
+  out << "alignas(32) SoFCore::bitboard_t " << name << "[64][4] = {\n";
   for (size_t i = 0; i < 64; ++i) {
-    out << "  /*" << std::setw(2) << i << "*/ {0x0, ";
+    out << "    /*" << std::setw(2) << i << "*/ {0x0, ";
     printBitboard(out, pawn[i]);
-    out << ",";
-    printBitboard(out, knight[i]);
-    out << ",";
+    out << ", ";
     printBitboard(out, king[i]);
+    out << ", ";
+    printBitboard(out, knight[i]);
     out << "}";
     if (i + 1 != 64) {
       out << ",";
@@ -99,26 +99,32 @@ void doGenerate(std::ostream &out) {
   out << "\n";
   out << "#include \"types.h\"\n";
   out << "\n";
+  out << "namespace SoFCore {\n";
+  out << "namespace Private {\n";
+  out << "\n";
 
   auto knightAttacks = generateKingAttacks();
   auto kingAttacks = generateKingAttacks();
   auto whitePawnAttacks = generateWhitePawnAttacks();
   auto blackPawnAttacks = generateBlackPawnAttacks();
 
-  printBitboardArray(out, knightAttacks, "KNIGHT_ATTACKS");
-  out << "\n";
   printBitboardArray(out, kingAttacks, "KING_ATTACKS");
+  out << "\n";
+  printBitboardArray(out, knightAttacks, "KNIGHT_ATTACKS");
   out << "\n";
   printBitboardArray(out, whitePawnAttacks, "WHITE_PAWN_ATTACKS");
   out << "\n";
   printBitboardArray(out, blackPawnAttacks, "BLACK_PAWN_ATTACKS");
   out << "\n";
 
-  printCombinedMatrix(out, whitePawnAttacks, knightAttacks, kingAttacks,
+  printCombinedMatrix(out, whitePawnAttacks, kingAttacks, knightAttacks,
                       "WHITE_ATTACK_MATRIX");
   out << "\n";
-  printCombinedMatrix(out, blackPawnAttacks, knightAttacks, kingAttacks,
+  printCombinedMatrix(out, blackPawnAttacks, kingAttacks, knightAttacks,
                       "BLACK_ATTACK_MATRIX");
+  out << "\n";
+  out << "} // namespace Private\n";
+  out << "} // namespace SoFCore\n";
   out << "\n";
 
   out << "#endif // NEAR_ATTACKS_INCLUDED\n";

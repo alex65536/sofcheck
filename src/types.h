@@ -58,8 +58,8 @@ constexpr cell_t blackOffset = 9;
 // Piece kind offsets
 enum class Piece : uint8_t {
   Pawn = 0,
-  Knight = 1,
-  King = 2,
+  King = 1,
+  Knight = 2,
   Bishop = 3,
   Rook = 4,
   Queen = 5
