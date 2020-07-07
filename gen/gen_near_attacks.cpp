@@ -34,11 +34,11 @@ std::vector<bitboard_t> generateDirected(const int8_t offX[],
 
   for (cell_t cell = 0; cell < 64; ++cell) {
     bitboard_t bb = 0;
-    uint8_t x = coordX(cell);
-    uint8_t y = coordY(cell);
+    subcoord_t x = coordX(cell);
+    subcoord_t y = coordY(cell);
     for (size_t direction = 0; direction < size; ++direction) {
-      uint8_t nx = x + static_cast<uint8_t>(offX[direction]);
-      uint8_t ny = y + static_cast<uint8_t>(offY[direction]);
+      subcoord_t nx = x + static_cast<subcoord_t>(offX[direction]);
+      subcoord_t ny = y + static_cast<subcoord_t>(offY[direction]);
       if (nx < 8 && ny < 8) {
         bb |= coordToBitboard(makeCoord(nx, ny));
       }
@@ -73,9 +73,9 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
   return generateDirected(offX, offY, 2);
 }
 
-void printCombinedMatrix(std::ostream &out, const std::vector<uint64_t> &pawn,
-                         const std::vector<uint64_t> &knight,
-                         const std::vector<uint64_t> &king, const char *name) {
+void printCombinedMatrix(std::ostream &out, const std::vector<bitboard_t> &pawn,
+                         const std::vector<bitboard_t> &knight,
+                         const std::vector<bitboard_t> &king, const char *name) {
   out << "alignas(32) SoFCore::bitboard_t " << name << "[64][4] = {\n";
   for (size_t i = 0; i < 64; ++i) {
     out << "    /*" << std::setw(2) << i << "*/ {0x0, ";

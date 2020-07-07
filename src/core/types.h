@@ -26,29 +26,36 @@ typedef uint64_t bitboard_t;
 // Cell coordinate type
 typedef uint8_t coord_t;
 
+// X, Y subcoordinates type
+typedef uint8_t subcoord_t;
+
 // Cell contents type
 typedef uint8_t cell_t;
 
 // Cell color type
 enum class Color : uint8_t {
-  White,
-  Black
+  White = 0,
+  Black = 1
 };
 
-inline constexpr coord_t makeCoord(uint8_t x, uint8_t y) {
+inline constexpr Color invertColor(Color c) {
+  return static_cast<Color>(static_cast<uint8_t>(c) ^ 1);
+}
+
+inline constexpr coord_t makeCoord(subcoord_t x, subcoord_t y) {
   return (x << 3) | y;
 }
 
-inline constexpr uint8_t coordX(coord_t coord) {
+inline constexpr subcoord_t coordX(coord_t coord) {
   return coord & 7;
 }
 
-inline constexpr uint8_t coordY(coord_t coord) {
+inline constexpr subcoord_t coordY(coord_t coord) {
   return coord >> 3;
 }
 
 inline bitboard_t coordToBitboard(cell_t cell) {
-  return static_cast<uint64_t>(1) << cell;
+  return static_cast<bitboard_t>(1) << cell;
 }
 
 // Color offsets
