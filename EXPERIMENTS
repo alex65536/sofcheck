@@ -1,0 +1,4 @@
+Some insane experiments to be conducted to optimize the move generator performance:
+- Cells: uint8_t vs uint32_t
+- Coordinates: int8_t vs int32_t
+- Castling: flags vs separate booleans
