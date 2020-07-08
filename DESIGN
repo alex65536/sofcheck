@@ -1,0 +1,44 @@
+- the implementation may use any dirty hacks, but the API must be clear and beautiful
+- the code must be as fast as possible. Benchmarks are welcome
+- the standalone functions may be called like typeAction. Example: cellGetPiece, coordToBitboard
+  * exception: make...() methods (makeCell, makeCoord, ...)
+- it's allowed to assume that the API will not change, and the constants will be the same
+  * but the implementation must be flexible enough to allow known experiments
+  * anyway, performance is better than the beauty of implementation code
+- forget about other architectures, stick to x86_64
+  * you may even assume that BMI2 and AVX2 are enabled (o.o)
+  * anyway, it's better to mark x86-specific places. How? -- I don't know yet :(
+- styleguide: the project uses gepardo style guide
+  * it's much like Java code style
+  * for Clang format, use
+    $ clang-format --style='{BasedOnStyle: Google, DerivePointerAlignment: false, PointerAlignment: Right, ColumnLimit: 100}' file.cpp
+  * methods and variables are camelCase
+  * types and namespaces are BigCamelCase
+  * aliases for primitives are singleword_t
+  * enum members are BigCamelCase
+  * constants are ANGRY_SNAKE_CASE
+  * file names are snake_case.cpp
+  * global variables are g_camelCase
+  * private members are snakeCaseWithUnderscore_
+  * defines are ANGRY_SNAKE_CASE
+  * comments are from Uppercase letter
+    + dot at the end may be ommitted (and better if it's omitted)
+- the architecture is more structure-oriented
+  * class hierarchy is disregarded
+  * though, structures may have methods!
+- namespaces are cool, let's use them!
+  * SoFCore, SoFAnalyze, ...
+  * use ::Private sub-namespace for implementation details
+  * every namespace (or sub-namespace) uses its own folder in src/ tree
+- don't forget about constexpr
+- see gotbolt or gcc -S to see when the assembly becomes neater and faster
+- exceptions are not allowed!
+- document the API function meaning, if it's not clear from this name
+  * or, some corner cases, like when you can get UB from the function
+- don't forget to test the code
+  * manual tests are boring, many random testcases are much better
+  * compare with other implementations or baseline
+- why name SoFCheck?
+  * SoFCheck == совчик == small owl :)
+  * "check" part has relationship to chess
+  * SoF == Strategy of Figurines (though I'm not sure whether SoF part even has any meaning)
