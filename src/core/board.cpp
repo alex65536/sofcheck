@@ -3,24 +3,26 @@
 #include <cstring>
 #include "core/strutil.h"
 
-std::string SoFCore::Board::asFen() const {
+namespace SoFCore {
+
+std::string Board::asFen() const {
   char buf[200];
   asFen(buf);
   return std::string(buf);
 }
 
-void SoFCore::Board::asFen(char *str) const {
+void Board::asFen(char *str) const {
   (void)str;
   // TODO
 }
 
-std::string SoFCore::Board::asPretty() const {
+std::string Board::asPretty() const {
   char buf[200];
   asPretty(buf);
   return std::string(buf);
 }
 
-void SoFCore::Board::asPretty(char *str) const {
+void Board::asPretty(char *str) const {
   for (subcoord_t i = 0; i < 8; ++i) {
     *(str++) = xSubToChar(i);
     *(str++) = '|';
@@ -44,13 +46,13 @@ void SoFCore::Board::asPretty(char *str) const {
   *str = '\0';
 }
 
-bool SoFCore::Board::setFromFen(const char *fen) {
+bool Board::setFromFen(const char *fen) {
   (void)fen;
   // TODO
   return false;
 }
 
-void SoFCore::Board::setInitialPosition() {
+void Board::setInitialPosition() {
   std::memset(cells, 0, sizeof(cells));
 
   for (subcoord_t i = 0; i < 8; ++i) {
@@ -85,13 +87,13 @@ void SoFCore::Board::setInitialPosition() {
   update();
 }
 
-SoFCore::Board SoFCore::Board::initialPosition() {
+Board Board::initialPosition() {
   Board board;
   board.setInitialPosition();
   return board;
 }
 
-void SoFCore::Board::update() {
+void Board::update() {
   // TODO : validate and correct enpassant cell
   // TODO : validate and correct castling flags
 
@@ -108,4 +110,6 @@ void SoFCore::Board::update() {
     (cellPieceColor(cell) == Color::White ? bbWhite : bbBlack) |= bbAdd;
     bbPieces[cell] |= bbAdd;
   }
+}
+
 }
