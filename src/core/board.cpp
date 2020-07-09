@@ -224,6 +224,7 @@ FenParseResult Board::setFromFen(const char *fen) {
   // 4. Parse enpassant cell
   if (*fen == '-') {
     enpassantCoord = INVALID_COORD;
+    ++fen;
   } else {
     char letter = *(fen++);
     _PARSE_CHECK(isValidYChar(letter), FenParseResult::UnexpectedCharacter);
@@ -237,8 +238,9 @@ FenParseResult Board::setFromFen(const char *fen) {
       enpassantCoord = makeCoord(4, charToSubY(letter));
     }
   }
+  _PARSE_CONSUME_SPACE();
 
-  // 5. parse move counter
+  // 5. Parse move counter
   int chars = uintParse(moveCounter, fen);
   _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUnsignedInt);
   fen += chars;

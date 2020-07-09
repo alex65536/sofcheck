@@ -6,7 +6,7 @@
 namespace SoFCore {
 
 /*
- * NOTE: the cells are numbered in the following way:
+ * The cells are numbered in the following way:
  *
  * 8|  0  1  2  3  4  5  6  7
  * 7|  8  9 10 11 12 13 14 15

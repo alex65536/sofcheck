@@ -9,14 +9,12 @@
 using namespace SoFCore;
 
 void printBitboard(std::ostream &out, bitboard_t val) {
-  out << "0x" << std::hex << std::setw(16) << std::setfill('0') << val
-      << std::dec << std::setfill(' ');
+  out << "0x" << std::hex << std::setw(16) << std::setfill('0') << val << std::dec
+      << std::setfill(' ');
 }
 
-void printBitboardArray(std::ostream &out, const std::vector<bitboard_t> &array,
-                        const char *name) {
-  out << "SoFCore::bitboard_t " << name << "[" << std::dec << array.size()
-      << "] = {\n";
+void printBitboardArray(std::ostream &out, const std::vector<bitboard_t> &array, const char *name) {
+  out << "SoFCore::bitboard_t " << name << "[" << std::dec << array.size() << "] = {\n";
   for (size_t i = 0; i < array.size(); ++i) {
     out << "    /*" << std::setw(2) << i << "*/ ";
     printBitboard(out, array[i]);
@@ -28,8 +26,7 @@ void printBitboardArray(std::ostream &out, const std::vector<bitboard_t> &array,
   out << "};\n";
 }
 
-std::vector<bitboard_t> generateDirected(const int8_t offX[],
-                                         const int8_t offY[], size_t size) {
+std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[], size_t size) {
   std::vector<bitboard_t> results(64);
 
   for (cell_t cell = 0; cell < 64; ++cell) {
@@ -74,8 +71,8 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
 }
 
 void printCombinedMatrix(std::ostream &out, const std::vector<bitboard_t> &pawn,
-                         const std::vector<bitboard_t> &knight,
-                         const std::vector<bitboard_t> &king, const char *name) {
+                         const std::vector<bitboard_t> &knight, const std::vector<bitboard_t> &king,
+                         const char *name) {
   out << "alignas(32) SoFCore::bitboard_t " << name << "[64][4] = {\n";
   for (size_t i = 0; i < 64; ++i) {
     out << "    /*" << std::setw(2) << i << "*/ {0x0, ";
@@ -117,11 +114,9 @@ void doGenerate(std::ostream &out) {
   printBitboardArray(out, blackPawnAttacks, "BLACK_PAWN_ATTACKS");
   out << "\n";
 
-  printCombinedMatrix(out, whitePawnAttacks, kingAttacks, knightAttacks,
-                      "WHITE_ATTACK_MATRIX");
+  printCombinedMatrix(out, whitePawnAttacks, kingAttacks, knightAttacks, "WHITE_ATTACK_MATRIX");
   out << "\n";
-  printCombinedMatrix(out, blackPawnAttacks, kingAttacks, knightAttacks,
-                      "BLACK_ATTACK_MATRIX");
+  printCombinedMatrix(out, blackPawnAttacks, kingAttacks, knightAttacks, "BLACK_ATTACK_MATRIX");
   out << "\n";
   out << "} // namespace Private\n";
   out << "} // namespace SoFCore\n";
@@ -135,8 +130,7 @@ int main(int argc, char **argv) {
     doGenerate(std::cout);
     return 0;
   }
-  if (argc == 2 && strcmp(argv[1], "-h") != 0 &&
-      strcmp(argv[1], "--help") != 0) {
+  if (argc == 2 && strcmp(argv[1], "-h") != 0 && strcmp(argv[1], "--help") != 0) {
     std::ofstream file(argv[1]);
     doGenerate(file);
     return 0;
