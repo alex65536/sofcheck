@@ -72,10 +72,10 @@ inline bitboard_t coordToBitboard(cell_t cell) { return static_cast<bitboard_t>(
 constexpr cell_t WHITE_OFFSET = 1;
 constexpr cell_t BLACK_OFFSET = 9;
 
-// Value to indicate an invalid cell
 constexpr cell_t INVALID_CELL = static_cast<cell_t>(-1);
-
 constexpr cell_t EMPTY_CELL = static_cast<cell_t>(0);
+
+constexpr coord_t INVALID_COORD = static_cast<coord_t>(-1);
 
 inline constexpr cell_t colorOffset(Color color) {
   return (color == Color::White) ? WHITE_OFFSET : BLACK_OFFSET;
