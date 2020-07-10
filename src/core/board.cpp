@@ -317,6 +317,7 @@ void Board::update() {
     (cellPieceColor(cell) == Color::White ? bbWhite : bbBlack) |= bbAdd;
     bbPieces[cell] |= bbAdd;
   }
+  bbAll = bbWhite | bbBlack;
 }
 
 }  // namespace SoFCore

@@ -33,6 +33,7 @@ struct Board {
   // Note that these ones also MUST be filled in order to work correctly
   bitboard_t bbWhite;
   bitboard_t bbBlack;
+  bitboard_t bbAll;
   bitboard_t bbPieces[16];
 
   void setInitialPosition();

@@ -56,17 +56,19 @@ inline constexpr castling_t castlingKingside(Color c) {
   return c == Color::White ? CASTLING_WHITE_KINGSIDE : CASTLING_BLACK_KINGSIDE;
 }
 
-inline constexpr Color invert(Color c) {
-  return static_cast<Color>(static_cast<uint8_t>(c) ^ 1);
-}
+inline constexpr Color invert(Color c) { return static_cast<Color>(static_cast<uint8_t>(c) ^ 1); }
 
 inline constexpr coord_t makeCoord(subcoord_t x, subcoord_t y) { return (x << 3) | y; }
 
-inline constexpr subcoord_t coordX(coord_t coord) { return coord & 7; }
+inline constexpr subcoord_t coordX(coord_t coord) { return coord >> 3; }
 
-inline constexpr subcoord_t coordY(coord_t coord) { return coord >> 3; }
+inline constexpr subcoord_t coordY(coord_t coord) { return coord & 7; }
 
-inline bitboard_t coordToBitboard(cell_t cell) { return static_cast<bitboard_t>(1) << cell; }
+inline constexpr bitboard_t coordToBitboard(coord_t coord) {
+  return static_cast<bitboard_t>(1) << coord;
+}
+
+inline constexpr bool bitboardHasBit(bitboard_t bb, cell_t cell) { return (bb >> cell) & 1; }
 
 // Color offsets
 constexpr cell_t WHITE_OFFSET = 1;

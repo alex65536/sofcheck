@@ -24,7 +24,7 @@ endfunction()
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -mbmi2 -msse4)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -mbmi2 -msse4 -mpopcnt)
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/core/private)
 
@@ -40,6 +40,8 @@ set(SRCS_CORE
   src/core/board.cpp
   src/core/strutil.cpp
   src/core/movegen.cpp
+  src/core/init.cpp
+  src/core/private/magic.cpp
   ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
 )
 
