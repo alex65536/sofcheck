@@ -69,27 +69,6 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
   const int8_t offY[] = {-1, 1};
   return generateDirected(offX, offY, 2);
 }
-
-void printCombinedMatrix(std::ostream &out, const std::vector<bitboard_t> &pawn,
-                         const std::vector<bitboard_t> &knight, const std::vector<bitboard_t> &king,
-                         const char *name) {
-  out << "alignas(32) SoFCore::bitboard_t " << name << "[64][4] = {\n";
-  for (size_t i = 0; i < 64; ++i) {
-    out << "    /*" << std::setw(2) << i << "*/ {0x0, ";
-    printBitboard(out, pawn[i]);
-    out << ", ";
-    printBitboard(out, king[i]);
-    out << ", ";
-    printBitboard(out, knight[i]);
-    out << "}";
-    if (i + 1 != 64) {
-      out << ",";
-    }
-    out << "\n";
-  }
-  out << "};\n";
-}
-
 void doGenerate(std::ostream &out) {
   out << "#ifndef NEAR_ATTACKS_INCLUDED\n";
   out << "#define NEAR_ATTACKS_INCLUDED\n";
@@ -114,10 +93,6 @@ void doGenerate(std::ostream &out) {
   printBitboardArray(out, blackPawnAttacks, "BLACK_PAWN_ATTACKS");
   out << "\n";
 
-  printCombinedMatrix(out, whitePawnAttacks, kingAttacks, knightAttacks, "WHITE_ATTACK_MATRIX");
-  out << "\n";
-  printCombinedMatrix(out, blackPawnAttacks, kingAttacks, knightAttacks, "BLACK_ATTACK_MATRIX");
-  out << "\n";
   out << "} // namespace Private\n";
   out << "} // namespace SoFCore\n";
   out << "\n";

@@ -24,7 +24,7 @@ endfunction()
 
 set(CMAKE_CXX_STANDARD 17)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -mavx2 -mbmi2 -msse4)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror -mbmi2 -msse4)
 
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/core/private)
 
@@ -51,11 +51,5 @@ add_executable(sofcheck
   src/main.cpp
   ${SRCS_CORE}
 )
-
-add_executable(benchmark_movegen
-  bench/movegen.cpp
-  ${SRCS_CORE}
-)
-target_benchmark(benchmark_movegen)
 
 install(TARGETS sofcheck RUNTIME DESTINATION bin)
