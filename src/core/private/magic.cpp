@@ -76,7 +76,7 @@ static void initBishopMagic() {
   // First, generate attack masks
   for (coord_t c = 0; c < 64; ++c) {
     const subcoord_t d1 = coordX(c) + coordY(c);
-    const subcoord_t d2 = coordX(c) + 7 - coordY(c);
+    const subcoord_t d2 = 7 - coordX(c) + coordY(c);
     g_magicBishop[c].postMsk = BB_DIAG1[d1] ^ BB_DIAG2[d2];
     g_magicBishop[c].msk = (BB_DIAG1[d1] ^ BB_DIAG2[d2]) & ~BB_DIAG_FRAME;
   }

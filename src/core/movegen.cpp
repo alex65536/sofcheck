@@ -78,7 +78,9 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
     size = addPawnWithPromote<C>(list, size, src, dst, x);
     if (x == pawnDoubleLine) {
       const coord_t dst2 = dst + delta;
-      list[size++] = Move{MoveKind::PawnDoubleMove, src, dst2, 0};
+      if (b.cells[dst2] == EMPTY_CELL) {
+        list[size++] = Move{MoveKind::PawnDoubleMove, src, dst2, 0};
+      }
     }
   }
   return size;
@@ -195,7 +197,7 @@ inline static size_t genDirection(Move *list, size_t size, const coord_t src, co
                                   const bitboard_t bbSrc, const bitboard_t wallCells,
                                   const bitboard_t cornerCells) {
   coord_t dst = src;
-  coord_t bbDst = bbSrc;
+  bitboard_t bbDst = bbSrc;
   while (!(bbDst & cornerCells)) {
     if constexpr (Dir == ShiftDirection::Plus) {
       dst += delta;

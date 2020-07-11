@@ -15,10 +15,10 @@ void moveToStr(const SoFCore::Move move, char *str) {
     strcpy(str, "0000");
     return;
   }
-  *(str++) = ySubToChar(move.src);
-  *(str++) = xSubToChar(move.src);
-  *(str++) = ySubToChar(move.dst);
-  *(str++) = xSubToChar(move.dst);
+  *(str++) = ySubToChar(coordY(move.src));
+  *(str++) = xSubToChar(coordX(move.src));
+  *(str++) = ySubToChar(coordY(move.dst));
+  *(str++) = xSubToChar(coordX(move.dst));
   if (move.kind == MoveKind::Promote) {
     const char transpos[] = ".pknbrq?";
     *(str++) = transpos[move.promote & 7];

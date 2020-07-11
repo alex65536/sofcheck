@@ -295,7 +295,7 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
       break;
     }
     case MoveKind::PawnDoubleMove: {
-      makePawnDoubleMove<C, false>(b, move, bbChange);
+      makePawnDoubleMove<C, true>(b, move, bbChange);
       break;
     }
     case MoveKind::Simple: {
@@ -326,15 +326,15 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
   b.enpassantCoord = p.enpassantCoord;
   b.moveCounter = p.moveCounter;
   b.side = C;
-  if constexpr (C == Color::White) {
+  if constexpr (C == Color::Black) {
     --b.moveNumber;
   }
   b.bbAll = b.bbWhite | b.bbBlack;
 }
 
-MovePersistence moveUnmake(Board &b, const Move move) {
-  return (b.side == Color::Black) ? moveMakeImpl<Color::White>(b, move)
-                                  : moveMakeImpl<Color::Black>(b, move);
+void moveUnmake(Board &b, const Move move, MovePersistence p) {
+  return (b.side == Color::Black) ? moveUnmakeImpl<Color::White>(b, move, p)
+                                  : moveUnmakeImpl<Color::Black>(b, move, p);
 }
 
 }  // namespace SoFCore

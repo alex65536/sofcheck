@@ -62,7 +62,7 @@ void doGenerate(std::ostream &out) {
   out << "namespace Private {\n";
   out << "\n";
 
-  auto knightAttacks = generateKingAttacks();
+  auto knightAttacks = generateKnightAttacks();
   auto kingAttacks = generateKingAttacks();
   auto whitePawnAttacks = generateWhitePawnAttacks();
   auto blackPawnAttacks = generateBlackPawnAttacks();
