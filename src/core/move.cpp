@@ -15,12 +15,6 @@ bool Move::isWellFormed(Color c) const {
     return false;
   }
   switch (kind) {
-    case MoveKind::Null: {
-      if (src != 0 || dst != 0 || promote != 0) {
-        return false;
-      }
-      break;
-    }
     case MoveKind::Simple: {
       if (promote != 0) {
         return false;
@@ -38,18 +32,19 @@ bool Move::isWellFormed(Color c) const {
       }
       break;
     }
-    case MoveKind::Enpassant: {
-      if (promote != 0) {
-        return false;
-      }
-      const subcoord_t srcX = (c == Color::White) ? 3 : 4;
-      const subcoord_t dstX = (c == Color::White) ? 2 : 5;
+    case MoveKind::Promote: {
+      const subcoord_t srcX = (c == Color::White) ? 1 : 6;
+      const subcoord_t dstX = (c == Color::White) ? 0 : 7;
       if (coordX(src) != srcX || coordX(dst) != dstX) {
         return false;
       }
       const subcoord_t srcY = coordY(src);
       const subcoord_t dstY = coordY(dst);
-      if (srcY + 1 != dstY && srcY - 1 != dstY) {
+      if (srcY + 1 != dstY && srcY != dstY && srcY - 1 != dstY) {
+        return false;
+      }
+      if (promote != makeCell(c, Piece::Knight) && promote != makeCell(c, Piece::Bishop) &&
+          promote != makeCell(c, Piece::Rook) && promote != makeCell(c, Piece::Queen)) {
         return false;
       }
       break;
@@ -74,19 +69,24 @@ bool Move::isWellFormed(Color c) const {
       }
       break;
     }
-    case MoveKind::Promote: {
-      const subcoord_t srcX = (c == Color::White) ? 1 : 6;
-      const subcoord_t dstX = (c == Color::White) ? 0 : 7;
+    case MoveKind::Null: {
+      if (src != 0 || dst != 0 || promote != 0) {
+        return false;
+      }
+      break;
+    }
+    case MoveKind::Enpassant: {
+      if (promote != 0) {
+        return false;
+      }
+      const subcoord_t srcX = (c == Color::White) ? 3 : 4;
+      const subcoord_t dstX = (c == Color::White) ? 2 : 5;
       if (coordX(src) != srcX || coordX(dst) != dstX) {
         return false;
       }
       const subcoord_t srcY = coordY(src);
       const subcoord_t dstY = coordY(dst);
-      if (srcY + 1 != dstY && srcY != dstY && srcY - 1 != dstY) {
-        return false;
-      }
-      if (promote != makeCell(c, Piece::Knight) && promote != makeCell(c, Piece::Bishop) &&
-          promote != makeCell(c, Piece::Rook) && promote != makeCell(c, Piece::Queen)) {
+      if (srcY + 1 != dstY && srcY - 1 != dstY) {
         return false;
       }
       break;
@@ -208,26 +208,6 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
   const bitboard_t bbChange = bbSrc | bbDst;
   b.enpassantCoord = 0;
   switch (move.kind) {
-    case MoveKind::Null: {
-      // Do nothing, as it is null move
-      break;
-    }
-    case MoveKind::CastlingKingside: {
-      makeKingsideCastling<C, false>(b);
-      break;
-    }
-    case MoveKind::CastlingQueenside: {
-      makeQueensideCastling<C, false>(b);
-      break;
-    }
-    case MoveKind::Enpassant: {
-      makeEnpassant<C, false>(b, move, bbChange);
-      break;
-    }
-    case MoveKind::PawnDoubleMove: {
-      makePawnDoubleMove<C, false>(b, move, bbChange);
-      break;
-    }
     case MoveKind::Simple: {
       b.cells[move.src] = EMPTY_CELL;
       b.cells[move.dst] = srcCell;
@@ -236,6 +216,10 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
       b.bbColor(invert(C)) &= ~bbDst;
       b.bbPieces[dstCell] &= ~bbDst;
       updateCastling(b, bbChange);
+      break;
+    }
+    case MoveKind::PawnDoubleMove: {
+      makePawnDoubleMove<C, false>(b, move, bbChange);
       break;
     }
     case MoveKind::Promote: {
@@ -247,6 +231,22 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
       b.bbColor(invert(C)) &= ~bbDst;
       b.bbPieces[dstCell] &= ~bbDst;
       updateCastling(b, bbChange);
+      break;
+    }
+    case MoveKind::CastlingKingside: {
+      makeKingsideCastling<C, false>(b);
+      break;
+    }
+    case MoveKind::CastlingQueenside: {
+      makeQueensideCastling<C, false>(b);
+      break;
+    }
+    case MoveKind::Null: {
+      // Do nothing, as it is null move
+      break;
+    }
+    case MoveKind::Enpassant: {
+      makeEnpassant<C, false>(b, move, bbChange);
       break;
     }
   }
@@ -278,26 +278,6 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
   const cell_t srcCell = b.cells[move.dst];
   const cell_t dstCell = p.dstCell;
   switch (move.kind) {
-    case MoveKind::Null: {
-      // Do nothing, as it is null move
-      break;
-    }
-    case MoveKind::CastlingKingside: {
-      makeKingsideCastling<C, true>(b);
-      break;
-    }
-    case MoveKind::CastlingQueenside: {
-      makeQueensideCastling<C, true>(b);
-      break;
-    }
-    case MoveKind::Enpassant: {
-      makeEnpassant<C, true>(b, move, bbChange);
-      break;
-    }
-    case MoveKind::PawnDoubleMove: {
-      makePawnDoubleMove<C, true>(b, move, bbChange);
-      break;
-    }
     case MoveKind::Simple: {
       b.cells[move.src] = srcCell;
       b.cells[move.dst] = dstCell;
@@ -307,6 +287,10 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
         b.bbColor(invert(C)) |= bbDst;
         b.bbPieces[dstCell] |= bbDst;
       }
+      break;
+    }
+    case MoveKind::PawnDoubleMove: {
+      makePawnDoubleMove<C, true>(b, move, bbChange);
       break;
     }
     case MoveKind::Promote: {
@@ -319,6 +303,22 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
         b.bbColor(invert(C)) |= bbDst;
         b.bbPieces[dstCell] |= bbDst;
       }
+      break;
+    }
+    case MoveKind::CastlingKingside: {
+      makeKingsideCastling<C, true>(b);
+      break;
+    }
+    case MoveKind::CastlingQueenside: {
+      makeQueensideCastling<C, true>(b);
+      break;
+    }
+    case MoveKind::Null: {
+      // Do nothing, as it is null move
+      break;
+    }
+    case MoveKind::Enpassant: {
+      makeEnpassant<C, true>(b, move, bbChange);
       break;
     }
   }
