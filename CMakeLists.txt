@@ -33,6 +33,12 @@ add_custom_command(
   COMMAND gen_near_attacks ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   DEPENDS gen_near_attacks
 )
+add_custom_command(
+  OUTPUT core/private/part_lines.h
+  COMMAND gen_part_lines ${PROJECT_BINARY_DIR}/core/private/part_lines.h
+  DEPENDS gen_part_lines
+)
+
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(src)
 
@@ -44,10 +50,14 @@ set(SRCS_CORE
   src/core/strutil.cpp
   src/core/private/magic.cpp
   ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
+  ${PROJECT_BINARY_DIR}/core/private/part_lines.h
 )
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
+)
+add_executable(gen_part_lines
+  gen/gen_part_lines.cpp
 )
 
 add_executable(sofcheck

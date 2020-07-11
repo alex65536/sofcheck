@@ -4,3 +4,5 @@ Some insane experiments to be conducted to optimize the move generator performan
 - Castling: flags vs separate booleans
 - Attack checker: comparison vs SSE vs AVX
 - Move gen: iterate over bitboard vs keep separate lists
+- King: keep position explicitly or use bit tricks?
+- isMoveValid: try different approaches for long-attacking figures

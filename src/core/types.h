@@ -64,6 +64,8 @@ inline constexpr subcoord_t coordX(coord_t coord) { return coord >> 3; }
 
 inline constexpr subcoord_t coordY(coord_t coord) { return coord & 7; }
 
+constexpr bitboard_t BITBOARD_FULL = ~static_cast<bitboard_t>(0);
+
 inline constexpr bitboard_t coordToBitboard(coord_t coord) {
   return static_cast<bitboard_t>(1) << coord;
 }
@@ -91,6 +93,12 @@ inline constexpr bool cellHasValidContents(cell_t c) {
 // Returns the color of the piece in the specified cell if it's present
 // Otherwise, the behavior is undefined
 inline constexpr Color cellPieceColor(cell_t c) { return c < 8 ? Color::White : Color::Black; }
+
+// Equivalent of (c != EMPTY_CELL && cellPieceColor(c) == color)
+inline constexpr bool cellPieceHasColor(cell_t c, Color color) {
+  const uint32_t validPieceSet = (color == Color::White) ? 0x7e : 0x7e00;
+  return (static_cast<uint32_t>(1) << c) & validPieceSet;
+}
 
 // Returns the type of the piece in the specified cell if it's present
 // Otherwise, the behavior is undefined

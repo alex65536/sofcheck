@@ -231,10 +231,10 @@ FenParseResult Board::setFromFen(const char *fen) {
     char number = *(fen++);
     _PARSE_CHECK(isValidXChar(number), FenParseResult::UnexpectedCharacter);
     if (side == Color::White) {
-      _PARSE_CHECK(number == '6', FenParseResult::EnPassantInvalidCell);
+      _PARSE_CHECK(number == '6', FenParseResult::EnpassantInvalidCell);
       enpassantCoord = makeCoord(3, charToSubY(letter));
     } else {
-      _PARSE_CHECK(number == '3', FenParseResult::EnPassantInvalidCell);
+      _PARSE_CHECK(number == '3', FenParseResult::EnpassantInvalidCell);
       enpassantCoord = makeCoord(4, charToSubY(letter));
     }
   }

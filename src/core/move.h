@@ -6,12 +6,13 @@
 namespace SoFCore {
 
 enum MoveKind : uint8_t {
-  Invalid = 0,
+  Null = 0,
   Simple = 1,
-  Enpassant = 2,
-  CastlingKingside = 3,
-  CastlingQueenside = 4,
-  Promote = 5
+  PawnDoubleMove = 2,
+  Enpassant = 3,
+  CastlingKingside = 4,
+  CastlingQueenside = 5,
+  Promote = 6
 };
 
 struct Move {
@@ -20,7 +21,13 @@ struct Move {
   coord_t dst;
   cell_t promote;
 
-  inline static constexpr Move invalid() { return Move{MoveKind::Invalid, 0, 0, 0}; }
+  // Checks whether the move is well-formed for moving side c. If this function returns false, then
+  // it's guaranteed that the move cannot be returned by move generator. Though, it can return true
+  // for some impossible moves. The purpose of this function is to be used as a pre-check for
+  // isMoveValid() from movegen.h.
+  bool isWellFormed(Color c) const;
+  
+  inline static constexpr Move null() { return Move{MoveKind::Null, 0, 0, 0}; }
 
   // Serialize move structure into uint32_t
   // The compiler should optimize this and just reinterpet the structure as uint32_t
@@ -34,7 +41,7 @@ inline constexpr bool operator==(Move a, Move b) { return a.intEncode() == b.int
 
 inline constexpr bool operator!=(Move a, Move b) { return a.intEncode() != b.intEncode(); }
 
-template<class Callback>
+template <class Callback>
 inline constexpr void iterateChangedCells(Move move, Callback callback) {
   callback(move.src);
   callback(move.dst);

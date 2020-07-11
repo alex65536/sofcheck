@@ -4,27 +4,10 @@
 #include <iostream>
 #include <vector>
 
+#include "common.h"
 #include "core/types.h"
 
 using namespace SoFCore;
-
-void printBitboard(std::ostream &out, bitboard_t val) {
-  out << "0x" << std::hex << std::setw(16) << std::setfill('0') << val << std::dec
-      << std::setfill(' ');
-}
-
-void printBitboardArray(std::ostream &out, const std::vector<bitboard_t> &array, const char *name) {
-  out << "SoFCore::bitboard_t " << name << "[" << std::dec << array.size() << "] = {\n";
-  for (size_t i = 0; i < array.size(); ++i) {
-    out << "    /*" << std::setw(2) << i << "*/ ";
-    printBitboard(out, array[i]);
-    if (i + 1 != array.size()) {
-      out << ",";
-    }
-    out << "\n";
-  }
-  out << "};\n";
-}
 
 std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[], size_t size) {
   std::vector<bitboard_t> results(64);
