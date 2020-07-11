@@ -3,6 +3,7 @@
 
 #include "core/board.h"
 #include "core/types.h"
+#include "core/move.h"
 
 namespace SoFCore {
 

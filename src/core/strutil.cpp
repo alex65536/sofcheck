@@ -31,6 +31,16 @@ int uintParse(uint32_t &res, const char *str) {
   }
 }
 
+int uintParse(uint16_t &res, const char *str) {
+  uint32_t res32;
+  int chars = uintParse(res32, str);
+  if (chars < 0 || res32 > std::numeric_limits<uint16_t>::max()) {
+    return -1;
+  }
+  res = res32;
+  return chars;
+}
+
 int uintSave(uint32_t val, char *str) {
   std::string res = std::to_string(val);
   std::strcpy(str, res.c_str());

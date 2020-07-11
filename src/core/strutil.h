@@ -32,6 +32,7 @@ inline constexpr subcoord_t charToSubY(char c) { return c - 'a'; }
 // Gets the next token from str as uint32_t and puts the result into res
 // Returns the number of chars read (or -1 in case of error)
 int uintParse(uint32_t &res, const char *str);
+int uintParse(uint16_t &res, const char *str);
 
 // Writes res to the string str, including the terminating null character
 // Returns the number of chars written

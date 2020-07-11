@@ -9,7 +9,7 @@ namespace SoFCore {
 enum class FenParseResult {
   Ok,
   ExpectedSpace,
-  ExpectedUnsignedInt,
+  ExpectedUint16,
   UnexpectedCharacter,
   BoardRowOverflow,
   BoardRowUnderflow,
@@ -26,8 +26,8 @@ struct Board {
   castling_t castling;
   Color side;
   cell_t enpassantCoord; // The position of the pawn that performed double move (or INVALID_COORD)
-  uint32_t moveCounter;
-  uint32_t moveNumber;
+  uint16_t moveCounter;
+  uint16_t moveNumber;
 
   // Auxiliary fields that help the move generator to work faster
   // Note that these ones also MUST be filled in order to work correctly

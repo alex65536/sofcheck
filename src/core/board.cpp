@@ -242,13 +242,13 @@ FenParseResult Board::setFromFen(const char *fen) {
 
   // 5. Parse move counter
   int chars = uintParse(moveCounter, fen);
-  _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUnsignedInt);
+  _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
   fen += chars;
   _PARSE_CONSUME_SPACE();
 
   // 6. Parse move number
   chars = uintParse(moveNumber, fen);
-  _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUnsignedInt);
+  _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
 
   update();
   return FenParseResult::Ok;
