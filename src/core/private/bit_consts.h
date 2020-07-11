@@ -39,6 +39,9 @@ constexpr bitboard_t BB_WALL_RIGHT = 0x8080808080808080;
 
 constexpr bitboard_t BB_CASTLING_KINGSIDE_PASS = 0x60;
 constexpr bitboard_t BB_CASTLING_QUEENSIDE_PASS = 0x0e;
+
+constexpr bitboard_t BB_CASTLING_KINGSIDE_SRCS = 0x90;
+constexpr bitboard_t BB_CASTLING_QUEENSIDE_SRCS = 0x11;
   
 }  // namespace Private
 }  // namespace SoFCore

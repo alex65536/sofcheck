@@ -41,6 +41,20 @@ inline constexpr bool operator==(Move a, Move b) { return a.intEncode() == b.int
 
 inline constexpr bool operator!=(Move a, Move b) { return a.intEncode() != b.intEncode(); }
 
+// A structure to hold the information which is required to unmake the move correctly.
+struct MovePersistence {
+  // The order of the fields here is important to allow to save/load these fields in one mov.
+  castling_t castling;
+  coord_t enpassantCoord;
+  uint16_t moveCounter;
+  cell_t dstCell;
+};
+
+struct Board;
+
+MovePersistence moveMake(Board &b, const Move move);
+void moveUnmake(Board &b, const Move move, const MovePersistence p);
+
 template <class Callback>
 inline constexpr void iterateChangedCells(Move move, Callback callback) {
   callback(move.src);

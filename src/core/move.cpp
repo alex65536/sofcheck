@@ -2,6 +2,9 @@
 
 #include <cstdlib>
 
+#include "core/board.h"
+#include "core/private/bit_consts.h"
+
 namespace SoFCore {
 
 bool Move::isWellFormed(Color c) const {
@@ -93,6 +96,245 @@ bool Move::isWellFormed(Color c) const {
     }
   };
   return true;
+}
+
+inline static void updateCastling(Board &b, const bitboard_t bbChange) {
+  castling_t castlingMask = CASTLING_ALL;
+  if (bbChange & Private::BB_CASTLING_KINGSIDE_SRCS) {
+    castlingMask &= ~CASTLING_BLACK_KINGSIDE;
+  }
+  if (bbChange & Private::BB_CASTLING_QUEENSIDE_SRCS) {
+    castlingMask &= ~CASTLING_BLACK_QUEENSIDE;
+  }
+  if (bbChange & (Private::BB_CASTLING_KINGSIDE_SRCS << 56)) {
+    castlingMask &= ~CASTLING_WHITE_KINGSIDE;
+  }
+  if (bbChange & (Private::BB_CASTLING_QUEENSIDE_SRCS << 56)) {
+    castlingMask &= ~CASTLING_WHITE_QUEENSIDE;
+  }
+  b.castling &= castlingMask;
+}
+
+template <Color C, bool Inverse>
+inline static void makeKingsideCastling(Board &b) {
+  constexpr coord_t firstRowStart = (C == Color::White) ? 56 : 0;
+  if constexpr (Inverse) {
+    b.cells[firstRowStart + 4] = makeCell(C, Piece::King);
+    b.cells[firstRowStart + 5] = EMPTY_CELL;
+    b.cells[firstRowStart + 6] = EMPTY_CELL;
+    b.cells[firstRowStart + 7] = makeCell(C, Piece::Rook);
+  } else {
+    b.cells[firstRowStart + 4] = EMPTY_CELL;
+    b.cells[firstRowStart + 5] = makeCell(C, Piece::Rook);
+    b.cells[firstRowStart + 6] = makeCell(C, Piece::King);
+    b.cells[firstRowStart + 7] = EMPTY_CELL;
+  }
+  b.bbColor(C) ^= static_cast<bitboard_t>(0xf0) << firstRowStart;
+  b.bbPieces[makeCell(C, Piece::Rook)] ^= static_cast<bitboard_t>(0xa0) << firstRowStart;
+  b.bbPieces[makeCell(C, Piece::King)] ^= static_cast<bitboard_t>(0x50) << firstRowStart;
+  if constexpr (!Inverse) {
+    b.clearCastling(C);
+  }
+}
+
+template <Color C, bool Inverse>
+inline static void makeQueensideCastling(Board &b) {
+  constexpr coord_t firstRowStart = (C == Color::White) ? 56 : 0;
+  if constexpr (Inverse) {
+    b.cells[firstRowStart + 0] = makeCell(C, Piece::Rook);
+    b.cells[firstRowStart + 2] = EMPTY_CELL;
+    b.cells[firstRowStart + 3] = EMPTY_CELL;
+    b.cells[firstRowStart + 4] = makeCell(C, Piece::King);  
+  } else {
+    b.cells[firstRowStart + 0] = EMPTY_CELL;
+    b.cells[firstRowStart + 2] = makeCell(C, Piece::King);
+    b.cells[firstRowStart + 3] = makeCell(C, Piece::Rook);
+    b.cells[firstRowStart + 4] = EMPTY_CELL;
+  }
+  b.bbColor(C) ^= static_cast<bitboard_t>(0x1d) << firstRowStart;
+  b.bbPieces[makeCell(C, Piece::Rook)] ^= static_cast<bitboard_t>(0x09) << firstRowStart;
+  b.bbPieces[makeCell(C, Piece::King)] ^= static_cast<bitboard_t>(0x14) << firstRowStart;
+  if constexpr (!Inverse) {
+    b.clearCastling(C);
+  }
+}
+
+template <Color C, bool Inverse>
+inline static void makeEnpassant(Board &b, const Move move, const bitboard_t bbChange) {
+  const coord_t taken = (C == Color::White) ? move.dst + 8 : move.dst - 8;
+  const bitboard_t bbTaken = coordToBitboard(taken);
+  if constexpr (Inverse) {
+    b.cells[move.src] = makeCell(C, Piece::Pawn);
+    b.cells[move.dst] = EMPTY_CELL;
+    b.cells[taken] = makeCell(invert(C), Piece::Pawn);  
+  } else {
+    b.cells[move.src] = EMPTY_CELL;
+    b.cells[move.dst] = makeCell(C, Piece::Pawn);
+    b.cells[taken] = EMPTY_CELL;
+  }
+  b.bbColor(C) ^= bbChange;
+  b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbChange;
+  b.bbColor(invert(C)) ^= bbTaken;
+  b.bbPieces[makeCell(invert(C), Piece::Pawn)] ^= bbTaken;  
+}
+
+template<Color C, bool Inverse>
+inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_t bbChange) {
+  if constexpr (Inverse) {
+    b.cells[move.src] = makeCell(C, Piece::Pawn);
+    b.cells[move.dst] = EMPTY_CELL;
+  } else {
+    b.cells[move.src] = EMPTY_CELL;
+    b.cells[move.dst] = makeCell(C, Piece::Pawn);
+  }
+  b.bbColor(C) ^= bbChange;
+  b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbChange;
+  if constexpr (!Inverse) {
+    b.enpassantCoord = move.dst;
+  }
+}
+  
+template <Color C>
+inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
+  MovePersistence p;
+  p.castling = b.castling;
+  p.enpassantCoord = b.enpassantCoord;
+  p.moveCounter = b.moveCounter;
+  p.dstCell = b.cells[move.dst];
+  const cell_t srcCell = b.cells[move.src];
+  const cell_t dstCell = b.cells[move.dst];
+  const bitboard_t bbSrc = coordToBitboard(move.src);
+  const bitboard_t bbDst = coordToBitboard(move.dst);
+  const bitboard_t bbChange = bbSrc | bbDst;
+  b.enpassantCoord = 0;
+  switch (move.kind) {
+    case MoveKind::Null: {
+      // Do nothing, as it is null move
+      break;
+    }
+    case MoveKind::CastlingKingside: {
+      makeKingsideCastling<C, false>(b);
+      break;
+    }
+    case MoveKind::CastlingQueenside: {
+      makeQueensideCastling<C, false>(b);
+      break;
+    }
+    case MoveKind::Enpassant: {
+      makeEnpassant<C, false>(b, move, bbChange);
+      break;
+    }
+    case MoveKind::PawnDoubleMove: {
+      makePawnDoubleMove<C, false>(b, move, bbChange);
+      break;
+    }
+    case MoveKind::Simple: {
+      b.cells[move.src] = EMPTY_CELL;
+      b.cells[move.dst] = srcCell;
+      b.bbColor(C) ^= bbChange;
+      b.bbPieces[srcCell] ^= bbChange;
+      b.bbColor(invert(C)) &= ~bbDst;
+      b.bbPieces[dstCell] &= ~bbDst;
+      updateCastling(b, bbChange);
+      break;
+    }
+    case MoveKind::Promote: {
+      b.cells[move.src] = EMPTY_CELL;
+      b.cells[move.dst] = move.promote;
+      b.bbColor(C) ^= bbChange;
+      b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbSrc;
+      b.bbPieces[move.promote] ^= bbDst;
+      b.bbColor(invert(C)) &= ~bbDst;
+      b.bbPieces[dstCell] &= ~bbDst;
+      updateCastling(b, bbChange);
+      break;
+    }
+  }
+  const bool resetMoveCounter = dstCell != EMPTY_CELL || srcCell == makeCell(C, Piece::Pawn) ||
+                                move.kind == MoveKind::Enpassant;
+  if (resetMoveCounter) {
+    b.moveCounter = 0;
+  } else {
+    ++b.moveCounter;
+  }
+  b.side = invert(C);
+  if constexpr (C == Color::Black) {
+    ++b.moveNumber;
+  }
+  b.bbAll = b.bbWhite | b.bbBlack;
+  return p;
+}
+
+MovePersistence moveMake(Board &b, const Move move) {
+  return (b.side == Color::White) ? moveMakeImpl<Color::White>(b, move)
+                                  : moveMakeImpl<Color::Black>(b, move);
+}
+
+template <Color C>
+void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
+  const bitboard_t bbSrc = coordToBitboard(move.src);
+  const bitboard_t bbDst = coordToBitboard(move.dst);
+  const bitboard_t bbChange = bbSrc | bbDst;
+  const cell_t srcCell = b.cells[move.dst];
+  const cell_t dstCell = p.dstCell;
+  switch (move.kind) {
+    case MoveKind::Null: {
+      // Do nothing, as it is null move
+      break;
+    }
+    case MoveKind::CastlingKingside: {
+      makeKingsideCastling<C, true>(b);
+      break;
+    }
+    case MoveKind::CastlingQueenside: {
+      makeQueensideCastling<C, true>(b);
+      break;
+    }
+    case MoveKind::Enpassant: {
+      makeEnpassant<C, true>(b, move, bbChange);
+      break;
+    }
+    case MoveKind::PawnDoubleMove: {
+      makePawnDoubleMove<C, false>(b, move, bbChange);
+      break;
+    }
+    case MoveKind::Simple: {
+      b.cells[move.src] = srcCell;
+      b.cells[move.dst] = dstCell;
+      b.bbColor(C) ^= bbChange;
+      b.bbPieces[srcCell] ^= bbChange;
+      if (dstCell != EMPTY_CELL) {
+        b.bbColor(invert(C)) |= bbDst;
+        b.bbPieces[dstCell] |= bbDst;
+      }
+      break;
+    }
+    case MoveKind::Promote: {
+      b.cells[move.src] = makeCell(C, Piece::Pawn);
+      b.cells[move.dst] = dstCell;
+      b.bbColor(C) ^= bbChange;
+      b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbSrc;
+      b.bbPieces[move.promote] ^= bbDst;
+      if (dstCell != EMPTY_CELL) {
+        b.bbColor(invert(C)) |= bbDst;
+        b.bbPieces[dstCell] |= bbDst;
+      }
+      break;
+    }
+  }
+  b.castling = p.castling;
+  b.enpassantCoord = p.enpassantCoord;
+  b.moveCounter = p.moveCounter;
+  b.side = C;
+  if constexpr (C == Color::White) {
+    --b.moveNumber;
+  }
+  b.bbAll = b.bbWhite | b.bbBlack;
+}
+
+MovePersistence moveUnmake(Board &b, const Move move) {
+  return (b.side == Color::Black) ? moveMakeImpl<Color::White>(b, move)
+                                  : moveMakeImpl<Color::Black>(b, move);
 }
 
 }  // namespace SoFCore

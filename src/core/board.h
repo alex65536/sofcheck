@@ -25,7 +25,7 @@ enum class FenParseResult {
 struct Board {
   // Essential fields that indicate the current position
   cell_t cells[64];
-  uint8_t unused; // Unused field, needed for alignment
+  uint8_t unused;  // Unused field, needed for alignment
   Color side;
   castling_t castling;
   coord_t enpassantCoord;  // The position of the pawn that performed double move (or INVALID_COORD)
@@ -50,10 +50,8 @@ struct Board {
 
   static Board initialPosition();
 
-  inline constexpr bitboard_t &bbColor(Color c) {
-    return c == Color::White ? bbWhite : bbBlack;
-  }
-  
+  inline constexpr bitboard_t &bbColor(Color c) { return c == Color::White ? bbWhite : bbBlack; }
+
   inline constexpr const bitboard_t &bbColor(Color c) const {
     return c == Color::White ? bbWhite : bbBlack;
   }
@@ -81,6 +79,7 @@ struct Board {
 
   inline void clearKingsideCastling(Color c) { castling &= ~castlingKingside(c); }
   inline void clearQueensideCastling(Color c) { castling &= ~castlingQueenside(c); }
+  inline void clearCastling(Color c) { castling &= ~castlingKingside(c) & ~castlingQueenside(c); }
 
   inline void flipKingsideCastling(Color c) { castling ^= castlingKingside(c); }
   inline void flipQueensideCastling(Color c) { castling ^= castlingQueenside(c); }

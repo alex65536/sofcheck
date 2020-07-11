@@ -133,6 +133,8 @@ void Board::asPretty(char *str) const {
 #define _PARSE_CONSUME_SPACE() _PARSE_CHECK(*(fen++) == ' ', FenParseResult::ExpectedSpace)
 
 FenParseResult Board::setFromFen(const char *fen) {
+  unused = 0;
+  
   // 1. Parse board cells
   subcoord_t x = 0, y = 0;
   coord_t cur = 0;
@@ -291,6 +293,7 @@ void Board::setInitialPosition() {
   enpassantCoord = INVALID_COORD;
   moveCounter = 0;
   moveNumber = 1;
+  unused = 0;
 
   update();
 }
