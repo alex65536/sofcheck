@@ -1,6 +1,9 @@
 #ifndef STRUTIL_H_INCLUDED
 #define STRUTIL_H_INCLUDED
 
+#include <string>
+
+#include "core/move.h"
 #include "core/types.h"
 
 namespace SoFCore {
@@ -8,8 +11,8 @@ namespace SoFCore {
 inline constexpr char cellToChar(cell_t cell) {
   if (cell == INVALID_CELL) {
     return '?';
-  } 
-  char transpos[] = ".PKNBRQ%%pknbrq%";
+  }
+  char transpos[] = ".PKNBRQ??pknbrq?";
   if (cell > 16) {
     return '%';
   }
@@ -27,6 +30,9 @@ inline constexpr subcoord_t charToSubX(char c) { return '8' - c; }
 
 // If 'a' <= c && c <= 'h' doesn't hold, the behavior is undefined
 inline constexpr subcoord_t charToSubY(char c) { return c - 'a'; }
+
+void moveToStr(const Move move, char *str);
+std::string moveToStr(const Move move);
 
 }  // namespace SoFCore
 

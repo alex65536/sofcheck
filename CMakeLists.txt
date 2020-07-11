@@ -51,6 +51,7 @@ add_library(sof_core STATIC
   src/core/init.cpp
   src/core/movegen.cpp
   src/core/move.cpp
+  src/core/strutil.cpp
   src/core/private/magic.cpp
   ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/core/private/part_lines.h
