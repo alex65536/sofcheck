@@ -25,9 +25,10 @@ enum class FenParseResult {
 struct Board {
   // Essential fields that indicate the current position
   cell_t cells[64];
-  castling_t castling;
+  uint8_t unused; // Unused field, needed for alignment
   Color side;
-  cell_t enpassantCoord;  // The position of the pawn that performed double move (or INVALID_COORD)
+  castling_t castling;
+  coord_t enpassantCoord;  // The position of the pawn that performed double move (or INVALID_COORD)
   uint16_t moveCounter;
   uint16_t moveNumber;
 

@@ -4,7 +4,7 @@
 #include <string>
 #include <limits>
 
-namespace SoFCore {
+namespace SoFUtil {
 
 int uintParse(uint32_t &res, const char *str) {
   uint64_t largeRes = 0;
@@ -47,4 +47,4 @@ int uintSave(uint32_t val, char *str) {
   return res.size();
 }
 
-}  // namespace SoFCore
+}  // namespace SoFUtil

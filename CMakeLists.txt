@@ -42,12 +42,15 @@ add_custom_command(
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(src)
 
-set(SRCS_CORE
+add_library(sof_util STATIC
+  src/util/strutil.cpp
+)
+
+add_library(sof_core STATIC
   src/core/board.cpp
   src/core/init.cpp
   src/core/movegen.cpp
   src/core/move.cpp
-  src/core/strutil.cpp
   src/core/private/magic.cpp
   ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/core/private/part_lines.h
@@ -62,7 +65,7 @@ add_executable(gen_part_lines
 
 add_executable(sofcheck
   src/main.cpp
-  ${SRCS_CORE}
 )
+target_link_libraries(sofcheck sof_core sof_util)
 
 install(TARGETS sofcheck RUNTIME DESTINATION bin)

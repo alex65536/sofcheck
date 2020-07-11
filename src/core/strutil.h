@@ -2,7 +2,6 @@
 #define STRUTIL_H_INCLUDED
 
 #include "core/types.h"
-#include <cstdint>
 
 namespace SoFCore {
 
@@ -28,15 +27,6 @@ inline constexpr subcoord_t charToSubX(char c) { return '8' - c; }
 
 // If 'a' <= c && c <= 'h' doesn't hold, the behavior is undefined
 inline constexpr subcoord_t charToSubY(char c) { return c - 'a'; }
-
-// Gets the next token from str as uint32_t and puts the result into res
-// Returns the number of chars read (or -1 in case of error)
-int uintParse(uint32_t &res, const char *str);
-int uintParse(uint16_t &res, const char *str);
-
-// Writes res to the string str, including the terminating null character
-// Returns the number of chars written
-int uintSave(uint32_t val, char *str);
 
 }  // namespace SoFCore
 

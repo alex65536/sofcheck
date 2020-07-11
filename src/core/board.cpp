@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "core/strutil.h"
+#include "util/strutil.h"
 
 namespace SoFCore {
 
@@ -70,11 +71,11 @@ void Board::asFen(char *fen) const {
   *(fen++) = ' ';
 
   // 5. Move counter
-  fen += uintSave(moveCounter, fen);
+  fen += SoFUtil::uintSave(moveCounter, fen);
   *(fen++) = ' ';
 
   // 6. Move number
-  fen += uintSave(moveNumber, fen);
+  fen += SoFUtil::uintSave(moveNumber, fen);
 
   *(fen++) = '\0';
   return;
@@ -241,13 +242,13 @@ FenParseResult Board::setFromFen(const char *fen) {
   _PARSE_CONSUME_SPACE();
 
   // 5. Parse move counter
-  int chars = uintParse(moveCounter, fen);
+  int chars = SoFUtil::uintParse(moveCounter, fen);
   _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
   fen += chars;
   _PARSE_CONSUME_SPACE();
 
   // 6. Parse move number
-  chars = uintParse(moveNumber, fen);
+  chars = SoFUtil::uintParse(moveNumber, fen);
   _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
 
   update();
