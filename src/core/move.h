@@ -52,8 +52,8 @@ struct MovePersistence {
 
 struct Board;
 
-MovePersistence moveMake(Board &b, const Move move);
-void moveUnmake(Board &b, const Move move, const MovePersistence p);
+MovePersistence moveMake(Board &b, Move move);
+void moveUnmake(Board &b, Move move, MovePersistence p);
 
 template <class Callback>
 inline constexpr void iterateChangedCells(Move move, Callback callback) {

@@ -6,7 +6,7 @@
 #include "core/private/magic_util.h"
 #include "util/bit.h"
 
-using namespace SoFCore;
+using namespace SoFCore;  // NOLINT
 
 enum class MagicType { Rook, Bishop };
 
@@ -19,8 +19,8 @@ inline constexpr bitboard_t buildMagicMask(coord_t coord) {
 template <MagicType M>
 bool isValidMagic(coord_t coord, bitboard_t magic) {
   const bitboard_t mask = buildMagicMask<M>(coord);
-  const int shift = SoFUtil::popcount(mask);
-  const size_t len = static_cast<size_t>(1) << shift;
+  const uint8_t shift = SoFUtil::popcount(mask);
+  const size_t len = 1UL << shift;
   std::vector<bool> used(len);
   for (size_t i = 0; i < len; ++i) {
     bitboard_t occupied = SoFUtil::depositBits(i, mask);
@@ -34,11 +34,11 @@ bool isValidMagic(coord_t coord, bitboard_t magic) {
 }
 
 template <typename RandGen>
-bitboard_t genSparseNumber(RandGen &gen) {
+bitboard_t genSparseNumber(RandGen &rnd) {
   bitboard_t res = 0;
   for (size_t i = 0; i < 64; ++i) {
     res <<= 1;
-    if (gen() % 8 == 0) {
+    if (rnd() % 8 == 0) {
       res |= 1;
     }
   }
@@ -47,7 +47,8 @@ bitboard_t genSparseNumber(RandGen &gen) {
 
 template <MagicType M>
 std::vector<bitboard_t> generateMagics() {
-  std::mt19937_64 rnd(42);
+  std::mt19937_64 rnd(42);  // NOLINT: it's better to get the same magics during different builds,
+                            // so the seed is fixed here
   std::vector<bitboard_t> result(64);
 
   for (coord_t i = 0; i < 64; ++i) {
@@ -76,8 +77,7 @@ void doGenerate(std::ostream &out) {
   out << "\n";
   out << "#include \"core/types.h\"\n";
   out << "\n";
-  out << "namespace SoFCore {\n";
-  out << "namespace Private {\n";
+  out << "namespace SoFCore::Private {\n";
   out << "\n";
 
   printBitboardArray(out, generateMagics<MagicType::Rook>(), "ROOK_MAGICS");
@@ -89,8 +89,7 @@ void doGenerate(std::ostream &out) {
   printCoordArray(out, generateShifts<MagicType::Bishop>(), "BISHOP_SHIFTS");
   out << "\n";
 
-  out << "} // namespace Private\n";
-  out << "} // namespace SoFCore\n";
+  out << "}  // namespace SoFCore::Private\n";
   out << "\n";
 
   out << "#endif // MAGIC_CONSTANTS_INCLUDED\n";

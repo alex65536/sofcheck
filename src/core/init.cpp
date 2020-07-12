@@ -6,9 +6,8 @@
 
 namespace SoFCore {
 
-std::atomic_flag initialized;
-
 void init() {
+  static std::atomic_flag initialized;
   if (initialized.test_and_set()) {
     return;
   }

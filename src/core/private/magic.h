@@ -10,8 +10,7 @@
 #include "core/private/magic_consts.h"
 #endif
 
-namespace SoFCore {
-namespace Private {
+namespace SoFCore::Private {
 
 struct MagicEntry {
   const bitboard_t *lookup;
@@ -44,7 +43,6 @@ inline bitboard_t bishopAttackBitboard(bitboard_t occupied, cell_t pos) {
   return entry.lookup[idx] & entry.postMask;
 }
 
-}  // namespace Private
-}  // namespace SoFCore
+}  // namespace SoFCore::Private
 
 #endif  // MAGIC_H_INCLUDED

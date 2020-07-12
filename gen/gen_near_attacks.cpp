@@ -5,7 +5,7 @@
 #include "common.h"
 #include "core/types.h"
 
-using namespace SoFCore;
+using namespace SoFCore;  // NOLINT
 
 std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[], size_t size) {
   std::vector<bitboard_t> results(64);
@@ -57,8 +57,7 @@ void doGenerate(std::ostream &out) {
   out << "\n";
   out << "#include \"core/types.h\"\n";
   out << "\n";
-  out << "namespace SoFCore {\n";
-  out << "namespace Private {\n";
+  out << "namespace SoFCore::Private {\n";
   out << "\n";
 
   auto knightAttacks = generateKnightAttacks();
@@ -75,8 +74,7 @@ void doGenerate(std::ostream &out) {
   printBitboardArray(out, blackPawnAttacks, "BLACK_PAWN_ATTACKS");
   out << "\n";
 
-  out << "} // namespace Private\n";
-  out << "} // namespace SoFCore\n";
+  out << "}  // namespace SoFCore::Private\n";
   out << "\n";
 
   out << "#endif // NEAR_ATTACKS_INCLUDED\n";

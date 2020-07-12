@@ -6,8 +6,7 @@
 #include "core/private/magic_util.h"
 #include "util/bit.h"
 
-namespace SoFCore {
-namespace Private {
+namespace SoFCore::Private {
 
 MagicEntry g_magicRook[64];
 MagicEntry g_magicBishop[64];
@@ -45,8 +44,8 @@ inline static void initOffsets(size_t bases[]) {
       if (c1 > c2) {
         continue;
       }
-      const int maxLen = std::max(getMagicMaskBitSize<M>(c1), getMagicMaskBitSize<M>(c2));
-      const size_t add = 1L << maxLen;
+      const size_t maxLen = std::max(getMagicMaskBitSize<M>(c1), getMagicMaskBitSize<M>(c2));
+      const size_t add = 1UL << maxLen;
       bases[c1] = count;
       bases[c2] = count;
       count += add;
@@ -57,10 +56,10 @@ inline static void initOffsets(size_t bases[]) {
     for (size_t idx = 0; idx < 16; ++idx) {
       const coord_t c = starts[idx];
       const coord_t offs = offsets[idx];
-      const int maxLen = std::max(
+      const size_t maxLen = std::max(
           std::max(getMagicMaskBitSize<M>(c + 0 * offs), getMagicMaskBitSize<M>(c + 1 * offs)),
           std::max(getMagicMaskBitSize<M>(c + 2 * offs), getMagicMaskBitSize<M>(c + 3 * offs)));
-      const size_t add = 1L << maxLen;
+      const size_t add = 1UL << maxLen;
       for (coord_t i = 0; i < 4; ++i) {
         bases[c + i * offs] = count;
       }
@@ -95,7 +94,7 @@ static void initMagic() {
   // Fill lookup table
   for (coord_t c = 0; c < 64; ++c) {
     const bitboard_t mask = magicEntries[c].mask;
-    const size_t len = 1L << SoFUtil::popcount(mask);
+    const size_t len = 1UL << SoFUtil::popcount(mask);
     const size_t offset = offsets[c];
     const int8_t dxBishop[4] = {-1, 1, -1, 1};
     const int8_t dyBishop[4] = {-1, -1, 1, 1};
@@ -135,5 +134,4 @@ void initMagic() {
   initMagic<MagicType::Bishop>();
 }
 
-}  // namespace Private
-}  // namespace SoFCore
+}  // namespace SoFCore::Private

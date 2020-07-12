@@ -5,7 +5,7 @@
 #include "common.h"
 #include "core/types.h"
 
-using namespace SoFCore;
+using namespace SoFCore;  // NOLINT
 
 std::vector<bitboard_t> generateDir(int8_t dx, int8_t dy) {
   std::vector<bitboard_t> result(64);
@@ -27,8 +27,7 @@ void doGenerate(std::ostream &out) {
   out << "\n";
   out << "#include \"core/types.h\"\n";
   out << "\n";
-  out << "namespace SoFCore {\n";
-  out << "namespace Private {\n";
+  out << "namespace SoFCore::Private {\n";
   out << "\n";
 
   printBitboardArray(out, generateDir(-1, 1), "LINE_DIAG1_LOWER");
@@ -48,8 +47,7 @@ void doGenerate(std::ostream &out) {
   printBitboardArray(out, generateDir(0, 1), "LINE_HORZ_UPPER");
   out << "\n";
 
-  out << "} // namespace Private\n";
-  out << "} // namespace SoFCore\n";
+  out << "}  // namespace SoFCore::Private\n";
   out << "\n";
 
   out << "#endif // PART_LINES_INCLUDED\n";

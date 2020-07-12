@@ -8,8 +8,7 @@
 #include "core/move.h"
 #include "core/movegen.h"
 
-namespace SoFCore {
-namespace Test {
+namespace SoFCore::Test {
 
 void testBoardValid(const Board &b) {
   Board copied = b;
@@ -123,5 +122,4 @@ void selfTest(Board b) {
   }
 }
 
-}  // namespace Test
-}  // namespace SoFCore
+}  // namespace SoFCore::Test

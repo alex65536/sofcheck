@@ -30,13 +30,13 @@ void Board::asFen(char *fen) const {
         continue;
       }
       if (empty != 0) {
-        *(fen++) = '0' + empty;
+        *(fen++) = static_cast<char>('0' + empty);
         empty = 0;
       }
       *(fen++) = cellToChar(cur);
     }
     if (empty) {
-      *(fen++) = '0' + empty;
+      *(fen++) = static_cast<char>('0' + empty);
     }
   }
   *(fen++) = ' ';
@@ -81,7 +81,6 @@ void Board::asFen(char *fen) const {
   fen += SoFUtil::uintSave(moveNumber, fen);
 
   *(fen++) = '\0';
-  return;
 }
 
 std::string Board::asPretty() const {
@@ -139,7 +138,8 @@ FenParseResult Board::setFromFen(const char *fen) {
   unused = 0;
 
   // 1. Parse board cells
-  subcoord_t x = 0, y = 0;
+  subcoord_t x = 0;
+  subcoord_t y = 0;
   coord_t cur = 0;
   while (true) {
     char c = *(fen++);
@@ -164,7 +164,7 @@ FenParseResult Board::setFromFen(const char *fen) {
       _PARSE_CHECK(x == 7 && cur == 64, FenParseResult::BoardNotEnoughRows);
       break;
     }
-    char lowC = ('A' <= c && c <= 'Z') ? (c - 'A' + 'a') : c;
+    char lowC = ('A' <= c && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
     Piece piece;
     switch (lowC) {
       case 'p':
@@ -306,8 +306,8 @@ Board Board::initialPosition() {
 
 ValidateResult Board::validate() {
   // Check for BadData and InvalidEnpassantRow
-  for (coord_t i = 0; i < 64; ++i) {
-    if (!cellHasValidContents(cells[i])) {
+  for (cell_t cell : cells) {
+    if (!cellHasValidContents(cell)) {
       return ValidateResult::BadData;
     }
   }
@@ -332,7 +332,7 @@ ValidateResult Board::validate() {
   }
   const bitboard_t bbWhiteKing = bbPieces[makeCell(Color::White, Piece::King)];
   const bitboard_t bbBlackKing = bbPieces[makeCell(Color::Black, Piece::King)];
-  if (bbWhiteKing == 0 || bbBlackKing == 0) {
+  if (!bbWhiteKing || !bbBlackKing) {
     return ValidateResult::NoKing;
   }
   if (SoFUtil::popcount(bbWhiteKing) != 1 || SoFUtil::popcount(bbBlackKing) != 1) {

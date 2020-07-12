@@ -22,8 +22,8 @@ inline constexpr char cellToChar(cell_t cell) {
 inline constexpr bool isValidXChar(char c) { return '1' <= c && c <= '8'; }
 inline constexpr bool isValidYChar(char c) { return 'a' <= c && c <= 'h'; }
 
-inline constexpr char xSubToChar(subcoord_t x) { return '8' - x; }
-inline constexpr char ySubToChar(subcoord_t y) { return 'a' + y; }
+inline constexpr char xSubToChar(subcoord_t x) { return static_cast<char>('8' - x); }
+inline constexpr char ySubToChar(subcoord_t y) { return static_cast<char>('a' + y); }
 
 // If '1' <= c && c <= '8' doesn't hold, the behavior is undefined
 inline constexpr subcoord_t charToSubX(char c) { return '8' - c; }
@@ -31,8 +31,8 @@ inline constexpr subcoord_t charToSubX(char c) { return '8' - c; }
 // If 'a' <= c && c <= 'h' doesn't hold, the behavior is undefined
 inline constexpr subcoord_t charToSubY(char c) { return c - 'a'; }
 
-void moveToStr(const Move move, char *str);
-std::string moveToStr(const Move move);
+void moveToStr(Move move, char *str);
+std::string moveToStr(Move move);
 
 }  // namespace SoFCore
 

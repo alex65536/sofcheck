@@ -3,8 +3,7 @@
 
 #include "core/board.h"
 
-namespace SoFCore {
-namespace Test {
+namespace SoFCore::Test {
 
 // All this functions throw std::logic error if something is wrong with the board
 
@@ -12,7 +11,6 @@ void testBoardValid(const Board &b);
 
 void selfTest(Board b);
 
-}  // namespace Test
-}  // namespace SoFCore
+}  // namespace SoFCore::Test
 
 #endif  // SELFTEST_H_INCLUDED

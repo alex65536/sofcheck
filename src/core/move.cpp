@@ -98,16 +98,16 @@ bool Move::isWellFormed(Color c) const {
 inline static void updateCastling(Board &b, const bitboard_t bbChange) {
   castling_t castlingMask = CASTLING_ALL;
   if (bbChange & Private::BB_CASTLING_KINGSIDE_SRCS) {
-    castlingMask &= ~CASTLING_BLACK_KINGSIDE;
+    castlingMask ^= CASTLING_BLACK_KINGSIDE;
   }
   if (bbChange & Private::BB_CASTLING_QUEENSIDE_SRCS) {
-    castlingMask &= ~CASTLING_BLACK_QUEENSIDE;
+    castlingMask ^= CASTLING_BLACK_QUEENSIDE;
   }
   if (bbChange & (Private::BB_CASTLING_KINGSIDE_SRCS << 56)) {
-    castlingMask &= ~CASTLING_WHITE_KINGSIDE;
+    castlingMask ^= CASTLING_WHITE_KINGSIDE;
   }
   if (bbChange & (Private::BB_CASTLING_QUEENSIDE_SRCS << 56)) {
-    castlingMask &= ~CASTLING_WHITE_QUEENSIDE;
+    castlingMask ^= CASTLING_WHITE_QUEENSIDE;
   }
   b.castling &= castlingMask;
 }
@@ -193,11 +193,7 @@ inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_
 
 template <Color C>
 inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
-  MovePersistence p;
-  p.castling = b.castling;
-  p.enpassantCoord = b.enpassantCoord;
-  p.moveCounter = b.moveCounter;
-  p.dstCell = b.cells[move.dst];
+  MovePersistence p{b.castling, b.enpassantCoord, b.moveCounter, b.cells[move.dst]};
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
   const bitboard_t bbSrc = coordToBitboard(move.src);

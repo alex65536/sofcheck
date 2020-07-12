@@ -43,7 +43,7 @@ int uintParse(uint16_t &res, const char *str) {
 
 int uintSave(uint32_t val, char *str) {
   std::string res = std::to_string(val);
-  std::strcpy(str, res.c_str());
+  std::strcpy(str, res.c_str());  // NOLINT: we don't know the size of the buffer
   return res.size();
 }
 

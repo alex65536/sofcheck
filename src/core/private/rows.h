@@ -3,8 +3,7 @@
 
 #include "core/types.h"
 
-namespace SoFCore {
-namespace Private {
+namespace SoFCore::Private {
 
 // Row from which the pawn can make enapssant
 inline constexpr subcoord_t enpassantSrcRow(Color c) { return (c == Color::White) ? 3 : 4; }
@@ -27,7 +26,6 @@ inline constexpr subcoord_t doubleMoveDstRow(Color c) { return (c == Color::Whit
 // Row in which the castling is performed
 inline constexpr subcoord_t castlingRow(Color c) { return (c == Color::White) ? 7 : 0; }
 
-}  // namespace Private
-}  // namespace SoFCore
+}  // namespace SoFCore::Private
 
 #endif  // ROWS_H_INCLUDED

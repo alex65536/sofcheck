@@ -12,7 +12,7 @@ std::string moveToStr(const Move move) {
 
 void moveToStr(const SoFCore::Move move, char *str) {
   if (move.kind == MoveKind::Null) {
-    strcpy(str, "0000");
+    std::strcpy(str, "0000");  // NOLINT: we don't know the size of the buffer
     return;
   }
   *(str++) = ySubToChar(coordY(move.src));

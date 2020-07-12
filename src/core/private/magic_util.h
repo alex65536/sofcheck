@@ -4,8 +4,7 @@
 #include "core/private/bit_consts.h"
 #include "core/types.h"
 
-namespace SoFCore {
-namespace Private {
+namespace SoFCore::Private {
 
 inline constexpr bitboard_t buildMagicRookMask(const coord_t c) {
   const subcoord_t x = coordX(c);
@@ -31,7 +30,6 @@ inline constexpr bitboard_t buildMagicBishopPostMask(const coord_t c) {
   return BB_DIAG1[d1] ^ BB_DIAG2[d2];
 }
 
-}  // namespace Private
-}  // namespace SoFCore
+}  // namespace SoFCore::Private
 
 #endif  // MAGIC_UTIL_H_INCLUDED

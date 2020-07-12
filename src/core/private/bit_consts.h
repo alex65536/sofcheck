@@ -1,8 +1,7 @@
 #ifndef BIT_CONSTS_H_INCLUDED
 #define BIT_CONSTS_H_INCLUDED
 
-namespace SoFCore {
-namespace Private {
+namespace SoFCore::Private {
 
 constexpr bitboard_t BB_DIAG1[15] = {
     0x0000000000000001, 0x0000000000000102, 0x0000000000010204, 0x0000000001020408,
@@ -38,7 +37,6 @@ constexpr bitboard_t BB_CASTLING_QUEENSIDE_PASS = 0x0e;
 constexpr bitboard_t BB_CASTLING_KINGSIDE_SRCS = 0x90;
 constexpr bitboard_t BB_CASTLING_QUEENSIDE_SRCS = 0x11;
 
-}  // namespace Private
-}  // namespace SoFCore
+}  // namespace SoFCore::Private
 
 #endif  // BIT_CONSTS_H_INCLUDED

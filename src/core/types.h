@@ -22,19 +22,19 @@ namespace SoFCore {
  */
 
 // Bitboard type
-typedef uint64_t bitboard_t;
+using bitboard_t = uint64_t;
 
 // Cell coordinate type
-typedef uint8_t coord_t;
+using coord_t = uint8_t;
 
 // X, Y subcoordinates type
-typedef uint8_t subcoord_t;
+using subcoord_t = uint8_t;
 
 // Cell contents type
-typedef uint8_t cell_t;
+using cell_t = uint8_t;
 
 // Castling flags type
-typedef uint8_t castling_t;
+using castling_t = uint8_t;
 
 // Cell color type
 enum class Color : uint8_t { White = 0, Black = 1 };
