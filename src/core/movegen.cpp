@@ -4,6 +4,7 @@
 #include "core/private/magic.h"
 #include "core/private/near_attacks.h"
 #include "core/private/part_lines.h"
+#include "core/private/rows.h"
 #include "util/bit.h"
 #include "util/compiler.h"
 
@@ -49,8 +50,7 @@ bool isMoveLegal(const Board &b) {
 template <Color C>
 inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t src,
                                         const coord_t dst, const subcoord_t x) {
-  constexpr subcoord_t pawnPromoteLine = (C == Color::White) ? 1 : 6;
-  if (x == pawnPromoteLine) {
+  if (x == Private::promoteSrcRow(C)) {
     list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Knight)};
     list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Bishop)};
     list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Rook)};
@@ -65,7 +65,6 @@ template <Color C>
 inline static size_t genPawnSimple(const Board &b, Move *list) {
   size_t size = 0;
   bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
-  constexpr subcoord_t pawnDoubleLine = (C == Color::White) ? 6 : 1;
   while (bbPawns) {
     const coord_t src = SoFUtil::extractLowest(bbPawns);
     constexpr coord_t delta = (C == Color::White) ? -8 : 8;
@@ -76,7 +75,7 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
     }
     const coord_t x = coordX(src);
     size = addPawnWithPromote<C>(list, size, src, dst, x);
-    if (x == pawnDoubleLine) {
+    if (x == Private::doubleMoveSrcRow(C)) {
       const coord_t dst2 = dst + delta;
       if (b.cells[dst2] == EMPTY_CELL) {
         list[size++] = Move{MoveKind::PawnDoubleMove, src, dst2, 0};
@@ -199,8 +198,8 @@ inline static size_t genRook(const Board &b, Move *list, bitboard_t bbSrc) {
 template <Color C>
 inline static size_t genCastling(const Board &b, Move *list) {
   size_t size = 0;
-  constexpr uint8_t castlingPassShift = (C == Color::White) ? 56 : 0;
-  constexpr subcoord_t x = (C == Color::White) ? 7 : 0;
+  constexpr subcoord_t x = Private::castlingRow(C);
+  constexpr uint8_t castlingPassShift = x << 3;
   if (b.isKingsideCastling(C)) {
     constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingPassShift;
     constexpr coord_t src = makeCoord(x, 4);
@@ -275,7 +274,7 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
   if (unlikely(move.kind == MoveKind::Null)) {
     return false;
   }
-  constexpr uint8_t castlingPassShift = (C == Color::White) ? 56 : 0;
+  constexpr uint8_t castlingPassShift = Private::castlingRow(C) << 3;
   if (unlikely(move.kind == MoveKind::CastlingKingside)) {
     constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingPassShift;
     return b.isKingsideCastling(C) && !(castlingPass & b.bbAll) &&
@@ -301,7 +300,7 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
     if (move.kind == MoveKind::Enpassant) {
       return src + 1 == b.enpassantCoord || src - 1 == b.enpassantCoord;
     }
-    constexpr subcoord_t promoteX = (C == Color::White) ? 1 : 6;
+    constexpr subcoord_t promoteX = Private::promoteSrcRow(C);
     if (move.kind != MoveKind::Promote && coordX(src) == promoteX) {
       return false;
     }

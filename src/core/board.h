@@ -60,8 +60,6 @@ struct Board {
     return SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]);
   }
 
-  // TODO : add ValidateBoard (the implementation can be taken from Chess256)
-
   // Call this method after setting
   void update();
 

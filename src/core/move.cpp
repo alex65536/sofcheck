@@ -4,6 +4,7 @@
 
 #include "core/board.h"
 #include "core/private/bit_consts.h"
+#include "core/private/rows.h"
 
 namespace SoFCore {
 
@@ -25,17 +26,14 @@ bool Move::isWellFormed(Color c) const {
       if (promote != 0) {
         return false;
       }
-      const subcoord_t srcX = (c == Color::White) ? 6 : 1;
-      const subcoord_t dstX = (c == Color::White) ? 4 : 3;
-      if (coordX(src) != srcX || coordX(dst) != dstX || coordY(src) != coordY(dst)) {
+      if (coordX(src) != Private::doubleMoveSrcRow(c) ||
+          coordX(dst) != Private::doubleMoveDstRow(c) || coordY(src) != coordY(dst)) {
         return false;
       }
       break;
     }
     case MoveKind::Promote: {
-      const subcoord_t srcX = (c == Color::White) ? 1 : 6;
-      const subcoord_t dstX = (c == Color::White) ? 0 : 7;
-      if (coordX(src) != srcX || coordX(dst) != dstX) {
+      if (coordX(src) != Private::promoteSrcRow(c) || coordX(dst) != Private::promoteDstRow(c)) {
         return false;
       }
       const subcoord_t srcY = coordY(src);
@@ -53,7 +51,7 @@ bool Move::isWellFormed(Color c) const {
       if (promote != 0) {
         return false;
       }
-      const subcoord_t x = c == Color::White ? 7 : 0;
+      const subcoord_t x = Private::castlingRow(c);
       if (src != makeCoord(x, 4) || dst != makeCoord(x, 7)) {
         return false;
       }
@@ -63,7 +61,7 @@ bool Move::isWellFormed(Color c) const {
       if (promote != 0) {
         return false;
       }
-      const subcoord_t x = c == Color::White ? 7 : 0;
+      const subcoord_t x = Private::castlingRow(c);
       if (src != makeCoord(x, 4) || dst != makeCoord(x, 0)) {
         return false;
       }
@@ -79,9 +77,8 @@ bool Move::isWellFormed(Color c) const {
       if (promote != 0) {
         return false;
       }
-      const subcoord_t srcX = (c == Color::White) ? 3 : 4;
-      const subcoord_t dstX = (c == Color::White) ? 2 : 5;
-      if (coordX(src) != srcX || coordX(dst) != dstX) {
+      if (coordX(src) != Private::enpassantSrcRow(c) ||
+          coordX(dst) != Private::enpassantDstRow(c)) {
         return false;
       }
       const subcoord_t srcY = coordY(src);
@@ -117,7 +114,7 @@ inline static void updateCastling(Board &b, const bitboard_t bbChange) {
 
 template <Color C, bool Inverse>
 inline static void makeKingsideCastling(Board &b) {
-  constexpr coord_t firstRowStart = (C == Color::White) ? 56 : 0;
+  constexpr coord_t firstRowStart = Private::castlingRow(C) << 3;
   if constexpr (Inverse) {
     b.cells[firstRowStart + 4] = makeCell(C, Piece::King);
     b.cells[firstRowStart + 5] = EMPTY_CELL;
@@ -139,12 +136,12 @@ inline static void makeKingsideCastling(Board &b) {
 
 template <Color C, bool Inverse>
 inline static void makeQueensideCastling(Board &b) {
-  constexpr coord_t firstRowStart = (C == Color::White) ? 56 : 0;
+  constexpr coord_t firstRowStart = Private::castlingRow(C) << 3;
   if constexpr (Inverse) {
     b.cells[firstRowStart + 0] = makeCell(C, Piece::Rook);
     b.cells[firstRowStart + 2] = EMPTY_CELL;
     b.cells[firstRowStart + 3] = EMPTY_CELL;
-    b.cells[firstRowStart + 4] = makeCell(C, Piece::King);  
+    b.cells[firstRowStart + 4] = makeCell(C, Piece::King);
   } else {
     b.cells[firstRowStart + 0] = EMPTY_CELL;
     b.cells[firstRowStart + 2] = makeCell(C, Piece::King);
@@ -166,7 +163,7 @@ inline static void makeEnpassant(Board &b, const Move move, const bitboard_t bbC
   if constexpr (Inverse) {
     b.cells[move.src] = makeCell(C, Piece::Pawn);
     b.cells[move.dst] = EMPTY_CELL;
-    b.cells[taken] = makeCell(invert(C), Piece::Pawn);  
+    b.cells[taken] = makeCell(invert(C), Piece::Pawn);
   } else {
     b.cells[move.src] = EMPTY_CELL;
     b.cells[move.dst] = makeCell(C, Piece::Pawn);
@@ -175,10 +172,10 @@ inline static void makeEnpassant(Board &b, const Move move, const bitboard_t bbC
   b.bbColor(C) ^= bbChange;
   b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbChange;
   b.bbColor(invert(C)) ^= bbTaken;
-  b.bbPieces[makeCell(invert(C), Piece::Pawn)] ^= bbTaken;  
+  b.bbPieces[makeCell(invert(C), Piece::Pawn)] ^= bbTaken;
 }
 
-template<Color C, bool Inverse>
+template <Color C, bool Inverse>
 inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_t bbChange) {
   if constexpr (Inverse) {
     b.cells[move.src] = makeCell(C, Piece::Pawn);
@@ -193,7 +190,7 @@ inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_
     b.enpassantCoord = move.dst;
   }
 }
-  
+
 template <Color C>
 inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
   MovePersistence p;

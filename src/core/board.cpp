@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "core/private/rows.h"
 #include "core/strutil.h"
 #include "util/strutil.h"
 
@@ -134,7 +135,7 @@ void Board::asPretty(char *str) const {
 
 FenParseResult Board::setFromFen(const char *fen) {
   unused = 0;
-  
+
   // 1. Parse board cells
   subcoord_t x = 0, y = 0;
   coord_t cur = 0;
@@ -229,17 +230,14 @@ FenParseResult Board::setFromFen(const char *fen) {
     enpassantCoord = INVALID_COORD;
     ++fen;
   } else {
-    char letter = *(fen++);
+    const char letter = *(fen++);
     _PARSE_CHECK(isValidYChar(letter), FenParseResult::UnexpectedCharacter);
-    char number = *(fen++);
+    const char number = *(fen++);
     _PARSE_CHECK(isValidXChar(number), FenParseResult::UnexpectedCharacter);
-    if (side == Color::White) {
-      _PARSE_CHECK(number == '6', FenParseResult::EnpassantInvalidCell);
-      enpassantCoord = makeCoord(3, charToSubY(letter));
-    } else {
-      _PARSE_CHECK(number == '3', FenParseResult::EnpassantInvalidCell);
-      enpassantCoord = makeCoord(4, charToSubY(letter));
-    }
+    const subcoord_t enpassantX = Private::enpassantSrcRow(side);
+    _PARSE_CHECK(charToSubX(number) == Private::enpassantDstRow(side),
+                 FenParseResult::EnpassantInvalidCell);
+    enpassantCoord = makeCoord(enpassantX, charToSubY(letter));
   }
   _PARSE_CONSUME_SPACE();
 
