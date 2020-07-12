@@ -56,7 +56,7 @@ struct Board;
 MovePersistence moveMake(Board &b, Move move);
 void moveUnmake(Board &b, Move move, MovePersistence p);
 
-template <class Callback>
+template <typename Callback>
 inline constexpr void iterateChangedCells(Move move, Callback callback) {
   callback(move.src);
   callback(move.dst);
