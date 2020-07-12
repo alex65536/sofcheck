@@ -138,6 +138,7 @@ inline static void makeKingsideCastling(Board &b) {
   if constexpr (!Inverse) {
     b.hash ^= Private::g_zobristCastling[b.castling];
     b.clearCastling(C);
+    b.hash ^= Private::g_zobristCastling[b.castling];
   }
 }
 
@@ -164,6 +165,7 @@ inline static void makeQueensideCastling(Board &b) {
   if constexpr (!Inverse) {
     b.hash ^= Private::g_zobristCastling[b.castling];
     b.clearCastling(C);
+    b.hash ^= Private::g_zobristCastling[b.castling];
   }
 }
 
@@ -279,6 +281,7 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
     ++b.moveCounter;
   }
   b.side = invert(C);
+  b.hash ^= Private::g_zobristMoveSide;
   if constexpr (C == Color::Black) {
     ++b.moveNumber;
   }
