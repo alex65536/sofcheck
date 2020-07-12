@@ -1,4 +1,4 @@
-#include "board.h"
+#include "core/board.h"
 
 #include <cstring>
 

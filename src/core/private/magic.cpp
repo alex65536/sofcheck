@@ -1,4 +1,4 @@
-#include "magic.h"
+#include "core/private/magic.h"
 
 #include <algorithm>
 #include <iostream>

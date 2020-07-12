@@ -1,4 +1,4 @@
-#include "movegen.h"
+#include "core/movegen.h"
 
 #include "core/private/bit_consts.h"
 #include "core/private/magic.h"

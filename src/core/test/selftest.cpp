@@ -1,4 +1,4 @@
-#include "selftest.h"
+#include "core/test/selftest.h"
 
 #include <algorithm>
 #include <cstring>
