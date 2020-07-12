@@ -22,6 +22,17 @@ enum class FenParseResult {
   EnpassantInvalidCell
 };
 
+enum class ValidateResult {
+  Ok,
+  BadData,
+  TooManyPieces,
+  NoKing,
+  TooManyKings,
+  InvalidEnpassantRow,
+  InvalidPawnPosition,
+  OpponentKingAttacked
+};
+
 struct Board {
   // Essential fields that indicate the current position
   cell_t cells[64];
@@ -60,7 +71,12 @@ struct Board {
     return SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]);
   }
 
-  // Call this method after setting
+  // Validates if the board is correct, using only essential fields
+  // Non-critical issues (like bad castling flags or bad bitboards) don't trigger this function. Use
+  // update() to correct them.
+  ValidateResult validate() const;
+
+  // Call this method after setting the essential fields
   void update();
 
   // Castling helper methods

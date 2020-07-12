@@ -2,6 +2,7 @@
 
 #include <cstring>
 
+#include "core/movegen.h"
 #include "core/private/rows.h"
 #include "core/strutil.h"
 #include "util/strutil.h"
@@ -302,10 +303,92 @@ Board Board::initialPosition() {
   return board;
 }
 
-void Board::update() {
-  // TODO : validate and correct enpassant cell
-  // TODO : validate and correct castling flags
+ValidateResult Board::validate() const {
+  // Check for BadData
+  for (coord_t i = 0; i < 64; ++i) {
+    if (!cellHasValidContents(cells[i])) {
+      return ValidateResult::BadData;
+    }
+  }
+  if ((castling & CASTLING_ALL) != castling) {
+    return ValidateResult::BadData;
+  }
+  if (enpassantCoord != INVALID_COORD) {
+    if (enpassantCoord > 64) {
+      return ValidateResult::BadData;
+    }
+    if (coordX(enpassantCoord) != Private::enpassantSrcRow(side)) {
+      return ValidateResult::InvalidEnpassantRow;
+    }
+  }
 
+  // Check for TooManyPieces, NoKing, TooManyKings
+  size_t pieceCnt[2] = {};
+  size_t kingCnt[2] = {};
+  for (coord_t i = 0; i < 64; ++i) {
+    const cell_t cell = cells[i];
+    if (cell == EMPTY_CELL) {
+      continue;
+    }
+    const size_t idx = static_cast<size_t>(cellPieceColor(cell));
+    ++pieceCnt[idx];
+    if (cellPieceKind(cell) == Piece::King) {
+      ++kingCnt[idx];
+    }
+  }
+  if (kingCnt[0] == 0 || kingCnt[1] == 0) {
+    return ValidateResult::NoKing;
+  }
+  if (kingCnt[0] != 1 || kingCnt[1] != 1) {
+    return ValidateResult::TooManyKings;
+  }
+  if (pieceCnt[0] > 16 || pieceCnt[1] > 16) {
+    return ValidateResult::TooManyPieces;
+  }
+
+  // Check for InvalidPawnPosition
+  for (subcoord_t x : {0, 7}) {
+    for (subcoord_t y = 0; y < 8; ++y) {
+      const cell_t c = cells[makeCoord(x, y)];
+      if (c == makeCell(Color::White, Piece::Pawn) || c == makeCell(Color::Black, Piece::Pawn)) {
+        return ValidateResult::InvalidPawnPosition;
+      }
+    }
+  }
+
+  // Check for OpponentKingAttacked
+  if (!isMoveLegal(*this)) {
+    return ValidateResult::OpponentKingAttacked;
+  }
+
+  return ValidateResult::Ok;
+}
+
+void Board::update() {
+  // Update invalid enpassant coord
+  if (enpassantCoord != INVALID_COORD) {
+    const coord_t enpassantPreCoord =
+        (side == Color::White) ? enpassantCoord - 8 : enpassantCoord + 8;
+    if (cells[enpassantCoord] != makeCell(invert(side), Piece::Pawn) ||
+        cells[enpassantPreCoord] != EMPTY_CELL) {
+      enpassantCoord = INVALID_COORD;
+    }
+  }
+
+  // Update invalid castling flags
+  for (Color color : {Color::White, Color::Black}) {
+    const subcoord_t x = Private::castlingRow(color);
+    if (cells[makeCoord(x, 4)] != makeCell(color, Piece::King)) {
+      clearCastling(color);
+    }
+    if (cells[makeCoord(x, 0)] != makeCell(color, Piece::Rook)) {
+      clearQueensideCastling(color);
+    }
+    if (cells[makeCoord(x, 7)] != makeCell(color, Piece::Rook)) {
+      clearKingsideCastling(color);
+    }
+  }
+  
   // Update the bitboards
   bbWhite = 0;
   bbBlack = 0;
