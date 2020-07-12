@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "core/types.h"
 #include "core/board.h"
 #include "core/init.h"
+#include "core/types.h"
 
 int main(int argc, char **argv) {
   SoFCore::init();

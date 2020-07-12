@@ -1,8 +1,8 @@
 #include "strutil.h"
 
 #include <cstring>
-#include <string>
 #include <limits>
+#include <string>
 
 namespace SoFUtil {
 

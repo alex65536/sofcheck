@@ -7,9 +7,9 @@ namespace SoFCore {
 namespace Test {
 
 // All this functions throw std::logic error if something is wrong with the board
-  
+
 void testBoardValid(const Board &b);
-  
+
 void selfTest(Board b);
 
 }  // namespace Test

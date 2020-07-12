@@ -1,6 +1,6 @@
 #include <cstring>
-#include <iostream>
 #include <fstream>
+#include <iostream>
 
 void doGenerate(std::ostream &out);
 
@@ -16,4 +16,4 @@ int main(int argc, char **argv) {
   }
   std::cerr << "usage: " << argv[0] << " OUT_FILE" << std::endl;
   return 0;
-} 
+}

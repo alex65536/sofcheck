@@ -4,4 +4,4 @@
 // Set this flag to use BMI2
 // #define USE_BMI2
 
-#endif // CONFIG_H_INCLUDED
+#endif  // CONFIG_H_INCLUDED

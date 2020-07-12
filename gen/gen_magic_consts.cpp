@@ -88,7 +88,7 @@ void doGenerate(std::ostream &out) {
   out << "\n";
   printCoordArray(out, generateShifts<MagicType::Bishop>(), "BISHOP_SHIFTS");
   out << "\n";
-  
+
   out << "} // namespace Private\n";
   out << "} // namespace SoFCore\n";
   out << "\n";

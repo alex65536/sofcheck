@@ -26,7 +26,7 @@ struct Move {
   // for some impossible moves. The purpose of this function is to be used as a pre-check for
   // isMoveValid() from movegen.h. Also note that null move is considered well-formed
   bool isWellFormed(Color c) const;
-  
+
   inline static constexpr Move null() { return Move{MoveKind::Null, 0, 0, 0}; }
 
   // Serialize move structure into uint32_t

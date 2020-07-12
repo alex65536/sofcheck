@@ -1,8 +1,8 @@
 #ifndef TYPES_H_INCLUDED
 #define TYPES_H_INCLUDED
 
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 
 namespace SoFCore {
 
