@@ -24,7 +24,7 @@ struct Move {
   // Checks whether the move is well-formed for moving side c. If this function returns false, then
   // it's guaranteed that the move cannot be returned by move generator. Though, it can return true
   // for some impossible moves. The purpose of this function is to be used as a pre-check for
-  // isMoveValid() from movegen.h.
+  // isMoveValid() from movegen.h. Also note that null move is considered well-formed
   bool isWellFormed(Color c) const;
   
   inline static constexpr Move null() { return Move{MoveKind::Null, 0, 0, 0}; }

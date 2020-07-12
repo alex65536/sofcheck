@@ -54,10 +54,11 @@ add_library(sof_util STATIC
 add_library(sof_core STATIC
   src/core/board.cpp
   src/core/init.cpp
-  src/core/movegen.cpp
   src/core/move.cpp
+  src/core/movegen.cpp
   src/core/strutil.cpp
   src/core/private/magic.cpp
+  src/core/test/selftest.cpp
   ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/core/private/part_lines.h
   ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
