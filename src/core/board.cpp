@@ -115,24 +115,24 @@ void Board::asPretty(char *str) const {
 
 // Helper macros for FEN parser
 
-#define _PARSE_CHECK(cond, res) \
-  {                             \
-    if (!(cond)) {              \
-      return res;               \
-    }                           \
+#define D_PARSE_CHECK(cond, res) \
+  {                              \
+    if (!(cond)) {               \
+      return res;                \
+    }                            \
   }
 
-#define _PARSE_ADD_CASTLING(code, color, side)                                     \
-  {                                                                                \
-    if (c == (code)) {                                                             \
-      _PARSE_CHECK(!is##side##Castling(color), FenParseResult::CastlingDuplicate); \
-      set##side##Castling(color);                                                  \
-      hasCastling = true;                                                          \
-      continue;                                                                    \
-    }                                                                              \
+#define D_PARSE_ADD_CASTLING(code, color, side)                                     \
+  {                                                                                 \
+    if (c == (code)) {                                                              \
+      D_PARSE_CHECK(!is##side##Castling(color), FenParseResult::CastlingDuplicate); \
+      set##side##Castling(color);                                                   \
+      hasCastling = true;                                                           \
+      continue;                                                                     \
+    }                                                                               \
   }
 
-#define _PARSE_CONSUME_SPACE() _PARSE_CHECK(*(fen++) == ' ', FenParseResult::ExpectedSpace)
+#define D_PARSE_CONSUME_SPACE() D_PARSE_CHECK(*(fen++) == ' ', FenParseResult::ExpectedSpace)
 
 FenParseResult Board::setFromFen(const char *fen) {
   unused = 0;
@@ -145,7 +145,7 @@ FenParseResult Board::setFromFen(const char *fen) {
     char c = *(fen++);
     if ('1' <= c && c <= '8') {
       subcoord_t add = c - '0';
-      _PARSE_CHECK(y + add <= 8, FenParseResult::BoardRowOverflow);
+      D_PARSE_CHECK(y + add <= 8, FenParseResult::BoardRowOverflow);
       for (subcoord_t i = 0; i < add; ++i) {
         cells[cur++] = EMPTY_CELL;
       }
@@ -153,15 +153,15 @@ FenParseResult Board::setFromFen(const char *fen) {
       continue;
     }
     if (c == '/') {
-      _PARSE_CHECK(y == 8, FenParseResult::BoardRowUnderflow);
+      D_PARSE_CHECK(y == 8, FenParseResult::BoardRowUnderflow);
       ++x;
       y = 0;
-      _PARSE_CHECK(x < 8, FenParseResult::BoardTooManyRows);
+      D_PARSE_CHECK(x < 8, FenParseResult::BoardTooManyRows);
       continue;
     }
     if (c == ' ') {
-      _PARSE_CHECK(y == 8, FenParseResult::BoardRowUnderflow);
-      _PARSE_CHECK(x == 7 && cur == 64, FenParseResult::BoardNotEnoughRows);
+      D_PARSE_CHECK(y == 8, FenParseResult::BoardRowUnderflow);
+      D_PARSE_CHECK(x == 7 && cur == 64, FenParseResult::BoardNotEnoughRows);
       break;
     }
     char lowC = ('A' <= c && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
@@ -204,23 +204,23 @@ FenParseResult Board::setFromFen(const char *fen) {
     default:
       return FenParseResult::UnexpectedCharacter;
   }
-  _PARSE_CONSUME_SPACE();
+  D_PARSE_CONSUME_SPACE();
 
   // 3. Parse castling
   clearCastling();
   if (*fen == '-') {
     ++fen;
-    _PARSE_CONSUME_SPACE();
+    D_PARSE_CONSUME_SPACE();
   } else {
     bool hasCastling = false;
     while (true) {
       char c = *(fen++);
-      _PARSE_ADD_CASTLING('K', Color::White, Kingside);
-      _PARSE_ADD_CASTLING('Q', Color::White, Queenside);
-      _PARSE_ADD_CASTLING('k', Color::Black, Kingside);
-      _PARSE_ADD_CASTLING('q', Color::Black, Queenside);
+      D_PARSE_ADD_CASTLING('K', Color::White, Kingside);
+      D_PARSE_ADD_CASTLING('Q', Color::White, Queenside);
+      D_PARSE_ADD_CASTLING('k', Color::Black, Kingside);
+      D_PARSE_ADD_CASTLING('q', Color::Black, Queenside);
       if (c == ' ') {
-        _PARSE_CHECK(hasCastling, FenParseResult::CastlingFieldMissing);
+        D_PARSE_CHECK(hasCastling, FenParseResult::CastlingFieldMissing);
         break;
       }
       return FenParseResult::UnexpectedCharacter;
@@ -233,33 +233,33 @@ FenParseResult Board::setFromFen(const char *fen) {
     ++fen;
   } else {
     const char letter = *(fen++);
-    _PARSE_CHECK(isValidYChar(letter), FenParseResult::UnexpectedCharacter);
+    D_PARSE_CHECK(isValidYChar(letter), FenParseResult::UnexpectedCharacter);
     const char number = *(fen++);
-    _PARSE_CHECK(isValidXChar(number), FenParseResult::UnexpectedCharacter);
+    D_PARSE_CHECK(isValidXChar(number), FenParseResult::UnexpectedCharacter);
     const subcoord_t enpassantX = Private::enpassantSrcRow(side);
-    _PARSE_CHECK(charToSubX(number) == Private::enpassantDstRow(side),
-                 FenParseResult::EnpassantInvalidCell);
+    D_PARSE_CHECK(charToSubX(number) == Private::enpassantDstRow(side),
+                  FenParseResult::EnpassantInvalidCell);
     enpassantCoord = makeCoord(enpassantX, charToSubY(letter));
   }
-  _PARSE_CONSUME_SPACE();
+  D_PARSE_CONSUME_SPACE();
 
   // 5. Parse move counter
   int chars = SoFUtil::uintParse(moveCounter, fen);
-  _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
+  D_PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
   fen += chars;
-  _PARSE_CONSUME_SPACE();
+  D_PARSE_CONSUME_SPACE();
 
   // 6. Parse move number
   chars = SoFUtil::uintParse(moveNumber, fen);
-  _PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
+  D_PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
 
   update();
   return FenParseResult::Ok;
 }
 
-#undef _PARSE_CHECK
-#undef _PARSE_ADD_CASTLING
-#undef _PARSE_CONSUME_SPACE
+#undef D_PARSE_CHECK
+#undef D_PARSE_ADD_CASTLING
+#undef D_PARSE_CONSUME_SPACE
 
 void Board::setInitialPosition() {
   std::memset(cells, 0, sizeof(cells));
