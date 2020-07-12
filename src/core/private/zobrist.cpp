@@ -16,7 +16,7 @@ board_hash_t g_zobristPieceCastlingKingside[2];
 board_hash_t g_zobristPieceCastlingQueenside[2];
 
 void initZobrist() {
-  std::mt19937_64 rnd(std::chrono::steady_clock().now().time_since_epoch().count());
+  std::mt19937_64 rnd(std::chrono::steady_clock::now().time_since_epoch().count());
   for (size_t j = 0; j < 64; ++j) {
     g_zobristPieces[0][j] = 0;
   }
