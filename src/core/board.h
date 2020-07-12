@@ -71,10 +71,11 @@ struct Board {
     return SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]);
   }
 
-  // Validates if the board is correct, using only essential fields
-  // Non-critical issues (like bad castling flags or bad bitboards) don't trigger this function. Use
-  // update() to correct them.
-  ValidateResult validate() const;
+  // Validates if the board is correct
+  // Non-critical issues (like bad castling flags or bad bitboards) don't result in unsuccessful
+  // return value from this function. Note also that this function will call update() automatically,
+  // so such issues shall be corrected.
+  ValidateResult validate();
 
   // Call this method after setting the essential fields
   void update();

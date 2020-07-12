@@ -12,11 +12,10 @@ namespace SoFCore {
 namespace Test {
 
 void testBoardValid(const Board &b) {
-  if (b.validate() != ValidateResult::Ok) {
+  Board copied = b;
+  if (copied.validate() != ValidateResult::Ok) {
     throw std::logic_error("Board::validate() reported that the board is invalid");
   }
-  Board copied = b;
-  copied.update();
   if (copied.castling != b.castling) {
     throw std::logic_error("Casting flags are incorrect");
   }

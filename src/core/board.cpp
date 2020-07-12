@@ -5,6 +5,7 @@
 #include "core/movegen.h"
 #include "core/private/rows.h"
 #include "core/strutil.h"
+#include "util/bit.h"
 #include "util/strutil.h"
 
 namespace SoFCore {
@@ -303,8 +304,8 @@ Board Board::initialPosition() {
   return board;
 }
 
-ValidateResult Board::validate() const {
-  // Check for BadData
+ValidateResult Board::validate() {
+  // Check for BadData and InvalidEnpassantRow
   for (coord_t i = 0; i < 64; ++i) {
     if (!cellHasValidContents(cells[i])) {
       return ValidateResult::BadData;
@@ -322,38 +323,28 @@ ValidateResult Board::validate() const {
     }
   }
 
+  // Call update() to recalculate bitboards and fix small errors
+  update();
+
   // Check for TooManyPieces, NoKing, TooManyKings
-  size_t pieceCnt[2] = {};
-  size_t kingCnt[2] = {};
-  for (coord_t i = 0; i < 64; ++i) {
-    const cell_t cell = cells[i];
-    if (cell == EMPTY_CELL) {
-      continue;
-    }
-    const size_t idx = static_cast<size_t>(cellPieceColor(cell));
-    ++pieceCnt[idx];
-    if (cellPieceKind(cell) == Piece::King) {
-      ++kingCnt[idx];
-    }
+  if (SoFUtil::popcount(bbWhite) > 16 || SoFUtil::popcount(bbBlack) > 16) {
+    return ValidateResult::TooManyPieces;
   }
-  if (kingCnt[0] == 0 || kingCnt[1] == 0) {
+  const bitboard_t bbWhiteKing = bbPieces[makeCell(Color::White, Piece::King)];
+  const bitboard_t bbBlackKing = bbPieces[makeCell(Color::Black, Piece::King)];
+  if (bbWhiteKing == 0 || bbBlackKing == 0) {
     return ValidateResult::NoKing;
   }
-  if (kingCnt[0] != 1 || kingCnt[1] != 1) {
+  if (SoFUtil::popcount(bbWhiteKing) != 1 || SoFUtil::popcount(bbBlackKing) != 1) {
     return ValidateResult::TooManyKings;
-  }
-  if (pieceCnt[0] > 16 || pieceCnt[1] > 16) {
-    return ValidateResult::TooManyPieces;
   }
 
   // Check for InvalidPawnPosition
-  for (subcoord_t x : {0, 7}) {
-    for (subcoord_t y = 0; y < 8; ++y) {
-      const cell_t c = cells[makeCoord(x, y)];
-      if (c == makeCell(Color::White, Piece::Pawn) || c == makeCell(Color::Black, Piece::Pawn)) {
-        return ValidateResult::InvalidPawnPosition;
-      }
-    }
+  const bitboard_t bbPawns =
+      bbPieces[makeCell(Color::White, Piece::Pawn)] | bbPieces[makeCell(Color::Black, Piece::Pawn)];
+  constexpr bitboard_t bbInvalidPawnPos = 0xff000000000000ff;
+  if (bbPawns & bbInvalidPawnPos) {
+    return ValidateResult::InvalidPawnPosition;
   }
 
   // Check for OpponentKingAttacked
