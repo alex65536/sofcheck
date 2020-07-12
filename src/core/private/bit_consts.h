@@ -32,11 +32,6 @@ constexpr bitboard_t BB_ROW_FRAME = 0x8181818181818181;
 constexpr bitboard_t BB_COL_FRAME = 0xff000000000000ff;
 constexpr bitboard_t BB_DIAG_FRAME = 0xff818181818181ff;
 
-constexpr bitboard_t BB_WALL_UP = 0x00000000000000ff;
-constexpr bitboard_t BB_WALL_DOWN = 0xff00000000000000;
-constexpr bitboard_t BB_WALL_LEFT = 0x0101010101010101;
-constexpr bitboard_t BB_WALL_RIGHT = 0x8080808080808080;
-
 constexpr bitboard_t BB_CASTLING_KINGSIDE_PASS = 0x60;
 constexpr bitboard_t BB_CASTLING_QUEENSIDE_PASS = 0x0e;
 

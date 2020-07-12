@@ -2,13 +2,11 @@
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>  // TODO remove
 #include <stdexcept>
 #include <vector>
 
 #include "core/move.h"
 #include "core/movegen.h"
-#include "core/strutil.h"  // TODO remove
 
 namespace SoFCore {
 namespace Test {
