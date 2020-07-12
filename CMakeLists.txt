@@ -26,25 +26,25 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror -mbmi2 -msse4 -mpopcnt)
 
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/core/private)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/core/private)
 
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
-  COMMAND gen_near_attacks ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
+  OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
+  COMMAND gen_near_attacks ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
   DEPENDS gen_near_attacks
 )
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/core/private/part_lines.h
-  COMMAND gen_part_lines ${PROJECT_BINARY_DIR}/core/private/part_lines.h
+  OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/part_lines.h
+  COMMAND gen_part_lines ${PROJECT_BINARY_DIR}/src/core/private/part_lines.h
   DEPENDS gen_part_lines
 )
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
-  COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
+  OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
+  COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
   DEPENDS gen_magic_consts
 )
 
-include_directories(${PROJECT_BINARY_DIR})
+include_directories(${PROJECT_BINARY_DIR}/src)
 include_directories(src)
 
 add_library(sof_util STATIC
@@ -59,9 +59,9 @@ add_library(sof_core STATIC
   src/core/strutil.cpp
   src/core/private/magic.cpp
   src/core/test/selftest.cpp
-  ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
-  ${PROJECT_BINARY_DIR}/core/private/part_lines.h
-  ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
+  ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
+  ${PROJECT_BINARY_DIR}/src/core/private/part_lines.h
+  ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
 )
 
 add_executable(gen_near_attacks

@@ -29,12 +29,8 @@ bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
       b.bbPieces[makeCell(C, Piece::Bishop)] | b.bbPieces[makeCell(C, Piece::Queen)];
   const bitboard_t linePieces =
       b.bbPieces[makeCell(C, Piece::Rook)] | b.bbPieces[makeCell(C, Piece::Queen)];
-  if ((Private::bishopAttackBitboard(b.bbAll, coord) & diagPieces) ||
-      (Private::rookAttackBitboard(b.bbAll, coord) & linePieces)) {
-    return true;
-  }
-
-  return false;
+  return (Private::bishopAttackBitboard(b.bbAll, coord) & diagPieces) ||
+         (Private::rookAttackBitboard(b.bbAll, coord) & linePieces);
 }
 
 template <Color C>
