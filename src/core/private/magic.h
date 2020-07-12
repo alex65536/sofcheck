@@ -6,6 +6,8 @@
 
 #ifdef USE_BMI2
 #include <immintrin.h>
+#else
+#include "core/private/magic_consts.h"
 #endif
 
 namespace SoFCore {
@@ -24,13 +26,21 @@ void initMagic();
 
 inline bitboard_t rookAttackBitboard(bitboard_t occupied, cell_t pos) {
   const MagicEntry &entry = g_magicRook[pos];
+#ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
+#else
+  const size_t idx = ((occupied & entry.mask) * ROOK_MAGICS[pos]) >> ROOK_SHIFTS[pos];
+#endif
   return entry.lookup[idx] & entry.postMask;
 }
 
 inline bitboard_t bishopAttackBitboard(bitboard_t occupied, cell_t pos) {
   const MagicEntry &entry = g_magicBishop[pos];
+#ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
+#else
+  const size_t idx = ((occupied & entry.mask) * BISHOP_MAGICS[pos]) >> BISHOP_SHIFTS[pos];
+#endif
   return entry.lookup[idx] & entry.postMask;
 }
 

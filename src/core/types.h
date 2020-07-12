@@ -2,6 +2,7 @@
 #define TYPES_H_INCLUDED
 
 #include <cstdint>
+#include <cstddef>
 
 namespace SoFCore {
 

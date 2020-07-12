@@ -11,9 +11,14 @@ using namespace SoFCore;
 enum class MagicType { Rook, Bishop };
 
 template <MagicType M>
+inline constexpr bitboard_t buildMagicMask(coord_t coord) {
+  return (M == MagicType::Rook) ? Private::buildMagicRookMask(coord)
+                                : Private::buildMagicBishopMask(coord);
+}
+
+template <MagicType M>
 bool isValidMagic(coord_t coord, bitboard_t magic) {
-  const bitboard_t mask = (M == MagicType::Rook) ? Private::buildMagicRookMask(coord)
-                                                 : Private::buildMagicBishopMask(coord);
+  const bitboard_t mask = buildMagicMask<M>(coord);
   const int shift = SoFUtil::popcount(mask);
   const size_t len = static_cast<size_t>(1) << shift;
   std::vector<bool> used(len);
@@ -56,6 +61,15 @@ std::vector<bitboard_t> generateMagics() {
   return result;
 }
 
+template <MagicType M>
+std::vector<coord_t> generateShifts() {
+  std::vector<SoFCore::coord_t> shifts(64);
+  for (coord_t i = 0; i < 64; ++i) {
+    shifts[i] = 64 - SoFUtil::popcount(buildMagicMask<M>(i));
+  }
+  return shifts;
+}
+
 void doGenerate(std::ostream &out) {
   out << "#ifndef MAGIC_CONSTANTS_INCLUDED\n";
   out << "#define MAGIC_CONSTANTS_INCLUDED\n";
@@ -65,10 +79,14 @@ void doGenerate(std::ostream &out) {
   out << "namespace SoFCore {\n";
   out << "namespace Private {\n";
   out << "\n";
-  
+
   printBitboardArray(out, generateMagics<MagicType::Rook>(), "ROOK_MAGICS");
   out << "\n";
   printBitboardArray(out, generateMagics<MagicType::Bishop>(), "BISHOP_MAGICS");
+  out << "\n";
+  printCoordArray(out, generateShifts<MagicType::Rook>(), "ROOK_SHIFTS");
+  out << "\n";
+  printCoordArray(out, generateShifts<MagicType::Bishop>(), "BISHOP_SHIFTS");
   out << "\n";
   
   out << "} // namespace Private\n";

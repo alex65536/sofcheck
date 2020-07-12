@@ -29,17 +29,17 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror -mbmi2 -msse4 -mpopcnt)
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/core/private)
 
 add_custom_command(
-  OUTPUT core/private/near_attacks.h
+  OUTPUT ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   COMMAND gen_near_attacks ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   DEPENDS gen_near_attacks
 )
 add_custom_command(
-  OUTPUT core/private/part_lines.h
+  OUTPUT ${PROJECT_BINARY_DIR}/core/private/part_lines.h
   COMMAND gen_part_lines ${PROJECT_BINARY_DIR}/core/private/part_lines.h
   DEPENDS gen_part_lines
 )
 add_custom_command(
-  OUTPUT core/private/magic_consts.h
+  OUTPUT ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
   COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
   DEPENDS gen_magic_consts
 )
@@ -66,14 +66,17 @@ add_library(sof_core STATIC
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
   gen/gen_main.cpp
+  gen/common.cpp
 )
 add_executable(gen_part_lines
   gen/gen_part_lines.cpp
   gen/gen_main.cpp
+  gen/common.cpp
 )
 add_executable(gen_magic_consts
   gen/gen_magic_consts.cpp
   gen/gen_main.cpp
+  gen/common.cpp
 )
 
 add_executable(sofcheck

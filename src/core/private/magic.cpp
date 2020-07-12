@@ -105,7 +105,13 @@ static void initMagic() {
     const int8_t *dy = (M == MagicType::Rook) ? dyRook : dyBishop;
     for (size_t idx = 0; idx < len; ++idx) {
       const bitboard_t occupied = SoFUtil::depositBits(idx, mask);
+#ifdef USE_BMI2
       const size_t pos = idx;
+#else
+      const bitboard_t *magics = (M == MagicType::Rook) ? ROOK_MAGICS : BISHOP_MAGICS;
+      const coord_t *shifts = (M == MagicType::Rook) ? ROOK_SHIFTS : BISHOP_SHIFTS;
+      const size_t pos = (occupied * magics[c]) >> shifts[c];
+#endif
       bitboard_t &res = lookup[offset + pos];
       for (int direction = 0; direction < 4; ++direction) {
         coord_t p = c;
