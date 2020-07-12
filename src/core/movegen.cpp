@@ -131,18 +131,25 @@ inline static size_t genPawnEnpassant(const Board &b, Move *list) {
   return size;
 }
 
-template <Color C, Piece P, bool GenSimple, bool GenCaptures>
-inline static size_t genKnightOrKing(const Board &b, Move *list, const bitboard_t attacks[]) {
+// Determine what cells we can enter based on what we must generate
+template <Color C, bool GenSimple, bool GenCaptures>
+inline static bitboard_t getAllowedMask(const Board &b) {
   static_assert(GenSimple || GenCaptures);
+  return GenSimple ? (GenCaptures ? (BITBOARD_FULL ^ b.bbColor(C)) : (BITBOARD_FULL ^ b.bbAll))
+                   : b.bbColor(invert(C));
+}
+
+template <Color C, Piece P, bool GenSimple, bool GenCaptures>
+inline static size_t genKnightOrKing(const Board &b, Move *list) {
+  static_assert(P == Piece::Knight || P == Piece::King);
   size_t size = 0;
-  // Determine what cells we can enter based on what we must generate
-  const bitboard_t allowedCells =
-      GenSimple ? (GenCaptures ? (BITBOARD_FULL ^ b.bbColor(C)) : (BITBOARD_FULL ^ b.bbAll))
-                : b.bbColor(invert(C));
+  const bitboard_t bbAllowed = getAllowedMask<C, GenSimple, GenCaptures>(b);
+  const bitboard_t *attacks =
+      (P == Piece::Knight) ? Private::KNIGHT_ATTACKS : Private::KING_ATTACKS;
   bitboard_t bbSrc = b.bbPieces[makeCell(C, P)];
   while (bbSrc) {
     const coord_t src = SoFUtil::extractLowest(bbSrc);
-    bitboard_t bbDest = attacks[src] & allowedCells;
+    bitboard_t bbDest = attacks[src] & bbAllowed;
     while (bbDest) {
       const coord_t dst = SoFUtil::extractLowest(bbDest);
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
@@ -153,21 +160,24 @@ inline static size_t genKnightOrKing(const Board &b, Move *list, const bitboard_
 
 template <Color C, bool GenSimple, bool GenCaptures>
 inline static size_t genKnight(const Board &b, Move *list) {
-  return genKnightOrKing<C, Piece::Knight, GenSimple, GenCaptures>(b, list,
-                                                                   Private::KNIGHT_ATTACKS);
+  return genKnightOrKing<C, Piece::Knight, GenSimple, GenCaptures>(b, list);
 }
 
 template <Color C, bool GenSimple, bool GenCaptures>
 inline static size_t genKing(const Board &b, Move *list) {
-  return genKnightOrKing<C, Piece::King, GenSimple, GenCaptures>(b, list, Private::KING_ATTACKS);
+  return genKnightOrKing<C, Piece::King, GenSimple, GenCaptures>(b, list);
 }
 
-template <Color C>
-inline static size_t genBishopCapture(const Board &b, Move *list, bitboard_t bbSrc) {
+template <Color C, Piece P, bool GenSimple, bool GenCaptures>
+inline static size_t genBishopOrRook(const Board &b, Move *list, bitboard_t bbSrc) {
+  static_assert(P == Piece::Bishop || P == Piece::Rook);
   size_t size = 0;
+  const bitboard_t bbAllowed = getAllowedMask<C, GenSimple, GenCaptures>(b);
   while (bbSrc) {
     const coord_t src = SoFUtil::extractLowest(bbSrc);
-    bitboard_t bbDst = Private::bishopAttackBitboard(b.bbAll, src) & b.bbColor(invert(C));
+    bitboard_t bbDst = (P == Piece::Bishop) ? Private::bishopAttackBitboard(b.bbAll, src)
+                                            : Private::rookAttackBitboard(b.bbAll, src);
+    bbDst &= bbAllowed;
     while (bbDst) {
       const coord_t dst = SoFUtil::extractLowest(bbDst);
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
@@ -176,90 +186,14 @@ inline static size_t genBishopCapture(const Board &b, Move *list, bitboard_t bbS
   return size;
 }
 
-template <Color C>
-inline static size_t genRookCapture(const Board &b, Move *list, bitboard_t bbSrc) {
-  size_t size = 0;
-  while (bbSrc) {
-    const coord_t src = SoFUtil::extractLowest(bbSrc);
-    bitboard_t bbDst = Private::rookAttackBitboard(b.bbAll, src) & b.bbColor(invert(C));
-    while (bbDst) {
-      const coord_t dst = SoFUtil::extractLowest(bbDst);
-      list[size++] = Move{MoveKind::Simple, src, dst, 0};
-    }
-  }
-  return size;
+template <Color C, bool GenSimple, bool GenCaptures>
+inline static size_t genBishop(const Board &b, Move *list, bitboard_t bbSrc) {
+  return genBishopOrRook<C, Piece::Bishop, GenSimple, GenCaptures>(b, list, bbSrc);
 }
 
-enum class ShiftDirection { Plus, Minus };
-
-template <ShiftDirection Dir>
-inline static size_t genDirection(Move *list, size_t size, const coord_t src, const coord_t delta,
-                                  const bitboard_t bbSrc, const bitboard_t wallCells,
-                                  const bitboard_t cornerCells) {
-  coord_t dst = src;
-  bitboard_t bbDst = bbSrc;
-  while (!(bbDst & cornerCells)) {
-    if constexpr (Dir == ShiftDirection::Plus) {
-      dst += delta;
-      bbDst <<= delta;
-    } else {
-      dst -= delta;
-      bbDst >>= delta;
-    }
-    if (bbDst & wallCells) {
-      break;
-    }
-    list[size++] = Move{MoveKind::Simple, src, dst, 0};
-  }
-  return size;
-}
-
-inline static size_t genRookSimple(const Board &b, Move *list, bitboard_t bbSrc) {
-  using Private::BB_WALL_DOWN;
-  using Private::BB_WALL_LEFT;
-  using Private::BB_WALL_RIGHT;
-  using Private::BB_WALL_UP;
-
-  size_t size = 0;
-  while (bbSrc) {
-    const coord_t src = SoFUtil::extractLowest(bbSrc);
-    const bitboard_t bbSrc = coordToBitboard(src);
-    // Go left
-    size = genDirection<ShiftDirection::Minus>(list, size, src, 1, bbSrc, b.bbAll, BB_WALL_LEFT);
-    // Go up
-    size = genDirection<ShiftDirection::Minus>(list, size, src, 8, bbSrc, b.bbAll, BB_WALL_UP);
-    // Go right
-    size = genDirection<ShiftDirection::Plus>(list, size, src, 1, bbSrc, b.bbAll, BB_WALL_RIGHT);
-    // Go down
-    size = genDirection<ShiftDirection::Plus>(list, size, src, 8, bbSrc, b.bbAll, BB_WALL_DOWN);
-  }
-  return size;
-}
-
-inline static size_t genBishopSimple(const Board &b, Move *list, bitboard_t bbSrc) {
-  using Private::BB_WALL_DOWN;
-  using Private::BB_WALL_LEFT;
-  using Private::BB_WALL_RIGHT;
-  using Private::BB_WALL_UP;
-
-  size_t size = 0;
-  while (bbSrc) {
-    const coord_t src = SoFUtil::extractLowest(bbSrc);
-    const bitboard_t bbSrc = coordToBitboard(src);
-    // Go up-left
-    size = genDirection<ShiftDirection::Minus>(list, size, src, 9, bbSrc, b.bbAll,
-                                               BB_WALL_UP | BB_WALL_LEFT);
-    // Go up-right
-    size = genDirection<ShiftDirection::Minus>(list, size, src, 7, bbSrc, b.bbAll,
-                                               BB_WALL_UP | BB_WALL_RIGHT);
-    // Go down-left
-    size = genDirection<ShiftDirection::Plus>(list, size, src, 7, bbSrc, b.bbAll,
-                                              BB_WALL_DOWN | BB_WALL_LEFT);
-    // Go up-right
-    size = genDirection<ShiftDirection::Plus>(list, size, src, 9, bbSrc, b.bbAll,
-                                              BB_WALL_DOWN | BB_WALL_RIGHT);
-  }
-  return size;
+template <Color C, bool GenSimple, bool GenCaptures>
+inline static size_t genRook(const Board &b, Move *list, bitboard_t bbSrc) {
+  return genBishopOrRook<C, Piece::Rook, GenSimple, GenCaptures>(b, list, bbSrc);
 }
 
 template <Color C>
@@ -300,63 +234,40 @@ inline static bitboard_t bbLinePieces(const Board &b) {
   return b.bbPieces[makeCell(C, Piece::Rook)] | b.bbPieces[makeCell(C, Piece::Queen)];
 }
 
-template <Color C>
-inline static size_t genCapturesImpl(const Board &b, Move *list) {
+template <Color C, bool GenSimple, bool GenCaptures>
+inline static size_t genImpl(const Board &b, Move *list) {
+  static_assert(GenSimple || GenCaptures);
   size_t size = 0;
-  size += genPawnCapture<C>(b, list + size);
-  size += genPawnEnpassant<C>(b, list + size);
-  size += genKing<C, false, true>(b, list + size);
-  size += genKnight<C, false, true>(b, list + size);
-  size += genBishopCapture<C>(b, list + size, bbDiagPieces<C>(b));
-  size += genRookCapture<C>(b, list + size, bbLinePieces<C>(b));
-  return size;
+  if constexpr (GenSimple) {
+    size += genPawnSimple<C>(b, list + size);
+  }
+  if constexpr (GenCaptures) {
+    size += genPawnCapture<C>(b, list + size);
+    size += genPawnEnpassant<C>(b, list + size);
+  }
+  size += genKing<C, GenSimple, GenCaptures>(b, list + size);
+  size += genKnight<C, GenSimple, GenCaptures>(b, list + size);
+  size += genBishop<C, GenSimple, GenCaptures>(b, list + size, bbDiagPieces<C>(b));
+  size += genRook<C, GenSimple, GenCaptures>(b, list + size, bbLinePieces<C>(b));
+  if constexpr (GenSimple) {
+    size += genCastling<C>(b, list + size);
+  }
+  return size;  
 }
 
 size_t genCaptures(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genCapturesImpl<Color::White>(b, list)
-                                  : genCapturesImpl<Color::Black>(b, list);
-}
-
-template <Color C>
-inline static size_t genAllMovesImpl(const Board &b, Move *list) {
-  const bitboard_t bbDiag = bbDiagPieces<C>(b);
-  const bitboard_t bbLine = bbLinePieces<C>(b);
-  size_t size = 0;
-  size += genPawnSimple<C>(b, list + size);
-  size += genPawnCapture<C>(b, list + size);
-  size += genPawnEnpassant<C>(b, list + size);
-  size += genKing<C, true, true>(b, list + size);
-  size += genKnight<C, true, true>(b, list + size);
-  size += genBishopSimple(b, list + size, bbDiag);
-  size += genBishopCapture<C>(b, list + size, bbDiag);
-  size += genRookSimple(b, list + size, bbLine);
-  size += genRookCapture<C>(b, list + size, bbLine);
-  size += genCastling<C>(b, list + size);
-  return size;
+  return (b.side == Color::White) ? genImpl<Color::White, false, true>(b, list)
+                                  : genImpl<Color::Black, false, true>(b, list);
 }
 
 size_t genAllMoves(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genAllMovesImpl<Color::White>(b, list)
-                                  : genAllMovesImpl<Color::Black>(b, list);
-}
-
-template <Color C>
-inline static size_t genSimpleMovesImpl(const Board &b, Move *list) {
-  const bitboard_t bbDiag = bbDiagPieces<C>(b);
-  const bitboard_t bbLine = bbLinePieces<C>(b);
-  size_t size = 0;
-  size += genPawnSimple<C>(b, list + size);
-  size += genKing<C, true, false>(b, list + size);
-  size += genKnight<C, true, false>(b, list + size);
-  size += genBishopSimple(b, list + size, bbDiag);
-  size += genRookSimple(b, list + size, bbLine);
-  size += genCastling<C>(b, list + size);
-  return size;
+  return (b.side == Color::White) ? genImpl<Color::White, true, true>(b, list)
+                                  : genImpl<Color::Black, true, true>(b, list);
 }
 
 size_t genSimpleMoves(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genSimpleMovesImpl<Color::White>(b, list)
-                                  : genSimpleMovesImpl<Color::Black>(b, list);
+  return (b.side == Color::White) ? genImpl<Color::White, true, false>(b, list)
+                                  : genImpl<Color::Black, true, false>(b, list);
 }
 
 template <Color C>

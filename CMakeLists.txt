@@ -38,6 +38,11 @@ add_custom_command(
   COMMAND gen_part_lines ${PROJECT_BINARY_DIR}/core/private/part_lines.h
   DEPENDS gen_part_lines
 )
+add_custom_command(
+  OUTPUT core/private/magic_consts.h
+  COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
+  DEPENDS gen_magic_consts
+)
 
 include_directories(${PROJECT_BINARY_DIR})
 include_directories(src)
@@ -55,13 +60,20 @@ add_library(sof_core STATIC
   src/core/private/magic.cpp
   ${PROJECT_BINARY_DIR}/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/core/private/part_lines.h
+  ${PROJECT_BINARY_DIR}/core/private/magic_consts.h
 )
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
+  gen/gen_main.cpp
 )
 add_executable(gen_part_lines
   gen/gen_part_lines.cpp
+  gen/gen_main.cpp
+)
+add_executable(gen_magic_consts
+  gen/gen_magic_consts.cpp
+  gen/gen_main.cpp
 )
 
 add_executable(sofcheck

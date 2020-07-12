@@ -3,7 +3,7 @@
 #include <algorithm>
 #include <iostream>
 
-#include "core/private/bit_consts.h"
+#include "core/private/magic_util.h"
 #include "util/bit.h"
 
 namespace SoFCore {
@@ -12,123 +12,121 @@ namespace Private {
 MagicEntry g_magicRook[64];
 MagicEntry g_magicBishop[64];
 
-bitboard_t g_rookAttacks[65536];
-bitboard_t g_bishopAttacks[1792];
+static bitboard_t g_rookLookup[65536];
+static bitboard_t g_bishopLookup[1792];
 
-static void initRookMagic() {
-  size_t rookPos = 0;
+enum class MagicType { Rook, Bishop };
 
-  // First, generate attack masks
-  for (coord_t c = 0; c < 64; ++c) {
-    const subcoord_t x = coordX(c);
-    const subcoord_t y = coordY(c);
-    g_magicRook[c].postMsk = BB_ROW[x] ^ BB_COL[y];
-    g_magicRook[c].msk =
-        ((BB_ROW[x] & ~BB_ROW_FRAME) | (BB_COL[y] & ~BB_COL_FRAME)) & ~coordToBitboard(c);
-  }
+template <MagicType M>
+inline static constexpr const char *getMagicTypeName() {
+  return (M == MagicType::Rook) ? "Rook" : "Bishop";
+}
 
-  // Determine pointers for shared rook arrays (one entry for both c1 and c2)
-  // For details, see https://www.chessprogramming.org/Magic_Bitboards#Sharing_Attacks
-  size_t bases[64];
-  for (coord_t c1 = 0; c1 < 64; ++c1) {
-    const coord_t c2 = c1 ^ 9;
-    if (c1 > c2) {
-      continue;
-    }
-    const int maxLen =
-        std::max(SoFUtil::popcount(g_magicRook[c1].msk), SoFUtil::popcount(g_magicRook[c2].msk));
-    const size_t add = 1L << maxLen;
-    g_magicRook[c1].arr = g_rookAttacks + rookPos;
-    g_magicRook[c2].arr = g_rookAttacks + rookPos;
-    bases[c1] = rookPos;
-    bases[c2] = rookPos;
-    rookPos += add;
-  }
+template <MagicType M>
+inline static constexpr size_t buildMagicMask(coord_t c) {
+  return (M == MagicType::Rook) ? buildMagicRookMask(c) : buildMagicBishopMask(c);
+}
 
-  // Fill g_rookAttacks
-  for (coord_t c = 0; c < 64; ++c) {
-    const size_t len = 1L << SoFUtil::popcount(g_magicRook[c].msk);
-    const size_t base = bases[c];
-    for (size_t pos = 0; pos < len; ++pos) {
-      const bitboard_t occupied = _pdep_u64(pos, g_magicRook[c].msk);
-      bitboard_t &res = g_rookAttacks[base + pos];
-      const int8_t dx[4] = {-1, 1, 0, 0};
-      const int8_t dy[4] = {0, 0, -1, 1};
-      for (int direction = 0; direction < 4; ++direction) {
-        coord_t p = c;
-        for (;;) {
-          subcoord_t nx = coordX(p) + static_cast<subcoord_t>(dx[direction]);
-          subcoord_t ny = coordY(p) + static_cast<subcoord_t>(dy[direction]);
-          if (nx >= 8 || ny >= 8 || (coordToBitboard(p) & occupied)) {
-            res |= coordToBitboard(p);
-            break;
-          }
-          p = makeCoord(nx, ny);
-        }
+template <MagicType M>
+inline static constexpr size_t getMagicMaskBitSize(coord_t c) {
+  return SoFUtil::popcount(buildMagicMask<M>(c));
+}
+
+// Determine pointers for shared rook and bishop arrays
+// For rooks, we share two cells (one entry for both c1 and c2)
+// For bishops the number of shared cells is equal to four
+// To find more details, see https://www.chessprogramming.org/Magic_Bitboards#Sharing_Attacks
+template <MagicType M>
+inline static void initOffsets(size_t bases[]) {
+  size_t count = 0;
+  if constexpr (M == MagicType::Rook) {
+    for (coord_t c1 = 0; c1 < 64; ++c1) {
+      const coord_t c2 = c1 ^ 9;
+      if (c1 > c2) {
+        continue;
       }
+      const int maxLen = std::max(getMagicMaskBitSize<M>(c1), getMagicMaskBitSize<M>(c2));
+      const size_t add = 1L << maxLen;
+      bases[c1] = count;
+      bases[c2] = count;
+      count += add;
+    }
+  } else {
+    const coord_t starts[16] = {0, 1, 32, 33, 2, 10, 18, 26, 34, 42, 50, 58, 6, 7, 38, 39};
+    const coord_t offsets[16] = {8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 8, 8};
+    for (size_t idx = 0; idx < 16; ++idx) {
+      const coord_t c = starts[idx];
+      const coord_t offs = offsets[idx];
+      const int maxLen = std::max(
+          std::max(getMagicMaskBitSize<M>(c + 0 * offs), getMagicMaskBitSize<M>(c + 1 * offs)),
+          std::max(getMagicMaskBitSize<M>(c + 2 * offs), getMagicMaskBitSize<M>(c + 3 * offs)));
+      const size_t add = 1L << maxLen;
+      for (coord_t i = 0; i < 4; ++i) {
+        bases[c + i * offs] = count;
+      }
+      count += add;
     }
   }
 }
 
-static void initBishopMagic() {
-  size_t bishopPos = 0;
+template <MagicType M>
+static void initMagic() {
+  MagicEntry *magicEntries = (M == MagicType::Rook) ? g_magicRook : g_magicBishop;
+  bitboard_t *lookup = (M == MagicType::Rook ? g_rookLookup : g_bishopLookup);
 
   // First, generate attack masks
   for (coord_t c = 0; c < 64; ++c) {
-    const subcoord_t d1 = coordX(c) + coordY(c);
-    const subcoord_t d2 = 7 - coordX(c) + coordY(c);
-    g_magicBishop[c].postMsk = BB_DIAG1[d1] ^ BB_DIAG2[d2];
-    g_magicBishop[c].msk = (BB_DIAG1[d1] ^ BB_DIAG2[d2]) & ~BB_DIAG_FRAME;
-  }
-
-  // Determine pointers for shared bishop arrays (one entry for four cells)
-  // For details, see https://www.chessprogramming.org/Magic_Bitboards#Sharing_Attackss
-  const coord_t starts[16] = {0, 1, 32, 33, 2, 10, 18, 26, 34, 42, 50, 58, 6, 7, 38, 39};
-  const coord_t offsets[16] = {8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1, 8, 8, 8, 8};
-  size_t bases[64];
-  for (size_t idx = 0; idx < 16; ++idx) {
-    const coord_t c = starts[idx];
-    const coord_t offs = offsets[idx];
-    const int maxLen = std::max(std::max(SoFUtil::popcount(g_magicBishop[c + 0 * offs].msk),
-                                         SoFUtil::popcount(g_magicBishop[c + 1 * offs].msk)),
-                                std::max(SoFUtil::popcount(g_magicBishop[c + 2 * offs].msk),
-                                         SoFUtil::popcount(g_magicBishop[c + 3 * offs].msk)));
-    const size_t add = 1L << maxLen;
-    for (coord_t i = 0; i < 4; ++i) {
-      g_magicBishop[c + i * offs].arr = g_bishopAttacks + bishopPos;
-      bases[c + i * offs] = bishopPos;
+    if constexpr (M == MagicType::Rook) {
+      magicEntries[c].mask = buildMagicRookMask(c);
+      magicEntries[c].postMask = buildMagicRookPostMask(c);
+    } else {
+      magicEntries[c].mask = buildMagicBishopMask(c);
+      magicEntries[c].postMask = buildMagicBishopPostMask(c);
     }
-    bishopPos += add;
   }
 
-  // Fill g_bishopAttacks
+  // Fill table offsets
+  size_t offsets[64];
+  initOffsets<M>(offsets);
   for (coord_t c = 0; c < 64; ++c) {
-    const size_t len = 1L << SoFUtil::popcount(g_magicBishop[c].msk);
-    const size_t base = bases[c];
-    const int8_t dx[4] = {-1, 1, -1, 1};
-    const int8_t dy[4] = {-1, -1, 1, 1};
-    for (size_t pos = 0; pos < len; ++pos) {
-      const bitboard_t occupied = _pdep_u64(pos, g_magicBishop[c].msk);
-      bitboard_t &res = g_bishopAttacks[base + pos];
+    magicEntries[c].lookup = lookup + offsets[c];
+  }
+
+  // Fill lookup table
+  for (coord_t c = 0; c < 64; ++c) {
+    const bitboard_t mask = magicEntries[c].mask;
+    const size_t len = 1L << SoFUtil::popcount(mask);
+    const size_t offset = offsets[c];
+    const int8_t dxBishop[4] = {-1, 1, -1, 1};
+    const int8_t dyBishop[4] = {-1, -1, 1, 1};
+    const int8_t dxRook[4] = {-1, 1, 0, 0};
+    const int8_t dyRook[4] = {0, 0, -1, 1};
+    const int8_t *dx = (M == MagicType::Rook) ? dxRook : dxBishop;
+    const int8_t *dy = (M == MagicType::Rook) ? dyRook : dyBishop;
+    for (size_t idx = 0; idx < len; ++idx) {
+      const bitboard_t occupied = SoFUtil::depositBits(idx, mask);
+      const size_t pos = idx;
+      bitboard_t &res = lookup[offset + pos];
       for (int direction = 0; direction < 4; ++direction) {
         coord_t p = c;
         for (;;) {
-          subcoord_t nx = coordX(p) + static_cast<subcoord_t>(dx[direction]);
-          subcoord_t ny = coordY(p) + static_cast<subcoord_t>(dy[direction]);
+          res |= coordToBitboard(p);
+          const subcoord_t nx = coordX(p) + static_cast<subcoord_t>(dx[direction]);
+          const subcoord_t ny = coordY(p) + static_cast<subcoord_t>(dy[direction]);
           if (nx >= 8 || ny >= 8 || (coordToBitboard(p) & occupied)) {
-            res |= coordToBitboard(p);
             break;
           }
           p = makeCoord(nx, ny);
         }
       }
+      res &= ~coordToBitboard(c);
     }
   }
 }
 
 void initMagic() {
-  initRookMagic();
-  initBishopMagic();
+  initMagic<MagicType::Rook>();
+  initMagic<MagicType::Bishop>();
 }
 
 }  // namespace Private
