@@ -385,7 +385,7 @@ void Board::update() {
   bbBlack = 0;
   std::memset(bbPieces, 0, sizeof(bbPieces));
   for (coord_t i = 0; i < 64; ++i) {
-    cell_t cell = cells[i];
+    const cell_t cell = cells[i];
     if (cell == EMPTY_CELL) {
       continue;
     }
@@ -394,6 +394,20 @@ void Board::update() {
     bbPieces[cell] |= bbAdd;
   }
   bbAll = bbWhite | bbBlack;
+
+  // Update hash
+  hash = (side == Color::White) ? static_cast<board_hash_t>(0) : Private::g_zobristMoveSide;
+  if (enpassantCoord != INVALID_CELL) {
+    hash ^= Private::g_zobristEnpassant[enpassantCoord];
+  }
+  hash ^= Private::g_zobristCastling[castling];
+  for (coord_t i = 0; i < 64; ++i) {
+    const cell_t cell = cells[i];
+    if (cell == EMPTY_CELL) {
+      continue;
+    }
+    hash ^= Private::g_zobristPieces[cell][i];
+  }
 }
 
 }  // namespace SoFCore

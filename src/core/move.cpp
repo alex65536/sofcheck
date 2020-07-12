@@ -5,6 +5,7 @@
 #include "core/board.h"
 #include "core/private/bit_consts.h"
 #include "core/private/rows.h"
+#include "core/private/zobrist.h"
 
 namespace SoFCore {
 
@@ -109,27 +110,33 @@ inline static void updateCastling(Board &b, const bitboard_t bbChange) {
   if (bbChange & (Private::BB_CASTLING_QUEENSIDE_SRCS << 56)) {
     castlingMask ^= CASTLING_WHITE_QUEENSIDE;
   }
+  b.hash ^= Private::g_zobristCastling[b.castling];
   b.castling &= castlingMask;
+  b.hash ^= Private::g_zobristCastling[b.castling];
 }
 
 template <Color C, bool Inverse>
 inline static void makeKingsideCastling(Board &b) {
   constexpr coord_t firstRowStart = Private::castlingRow(C) << 3;
+  constexpr cell_t king = makeCell(C, Piece::King);
+  constexpr cell_t rook = makeCell(C, Piece::Rook);
   if constexpr (Inverse) {
-    b.cells[firstRowStart + 4] = makeCell(C, Piece::King);
+    b.cells[firstRowStart + 4] = king;
     b.cells[firstRowStart + 5] = EMPTY_CELL;
     b.cells[firstRowStart + 6] = EMPTY_CELL;
-    b.cells[firstRowStart + 7] = makeCell(C, Piece::Rook);
+    b.cells[firstRowStart + 7] = rook;
   } else {
     b.cells[firstRowStart + 4] = EMPTY_CELL;
-    b.cells[firstRowStart + 5] = makeCell(C, Piece::Rook);
-    b.cells[firstRowStart + 6] = makeCell(C, Piece::King);
+    b.cells[firstRowStart + 5] = rook;
+    b.cells[firstRowStart + 6] = king;
     b.cells[firstRowStart + 7] = EMPTY_CELL;
+    b.hash ^= Private::g_zobristPieceCastlingKingside[static_cast<size_t>(C)];
   }
   b.bbColor(C) ^= static_cast<bitboard_t>(0xf0) << firstRowStart;
-  b.bbPieces[makeCell(C, Piece::Rook)] ^= static_cast<bitboard_t>(0xa0) << firstRowStart;
-  b.bbPieces[makeCell(C, Piece::King)] ^= static_cast<bitboard_t>(0x50) << firstRowStart;
+  b.bbPieces[rook] ^= static_cast<bitboard_t>(0xa0) << firstRowStart;
+  b.bbPieces[king] ^= static_cast<bitboard_t>(0x50) << firstRowStart;
   if constexpr (!Inverse) {
+    b.hash ^= Private::g_zobristCastling[b.castling];
     b.clearCastling(C);
   }
 }
@@ -137,21 +144,25 @@ inline static void makeKingsideCastling(Board &b) {
 template <Color C, bool Inverse>
 inline static void makeQueensideCastling(Board &b) {
   constexpr coord_t firstRowStart = Private::castlingRow(C) << 3;
+  constexpr cell_t king = makeCell(C, Piece::King);
+  constexpr cell_t rook = makeCell(C, Piece::Rook);
   if constexpr (Inverse) {
-    b.cells[firstRowStart + 0] = makeCell(C, Piece::Rook);
+    b.cells[firstRowStart + 0] = rook;
     b.cells[firstRowStart + 2] = EMPTY_CELL;
     b.cells[firstRowStart + 3] = EMPTY_CELL;
-    b.cells[firstRowStart + 4] = makeCell(C, Piece::King);
+    b.cells[firstRowStart + 4] = king;
   } else {
     b.cells[firstRowStart + 0] = EMPTY_CELL;
-    b.cells[firstRowStart + 2] = makeCell(C, Piece::King);
-    b.cells[firstRowStart + 3] = makeCell(C, Piece::Rook);
+    b.cells[firstRowStart + 2] = king;
+    b.cells[firstRowStart + 3] = rook;
     b.cells[firstRowStart + 4] = EMPTY_CELL;
+    b.hash ^= Private::g_zobristPieceCastlingQueenside[static_cast<size_t>(C)];
   }
   b.bbColor(C) ^= static_cast<bitboard_t>(0x1d) << firstRowStart;
-  b.bbPieces[makeCell(C, Piece::Rook)] ^= static_cast<bitboard_t>(0x09) << firstRowStart;
-  b.bbPieces[makeCell(C, Piece::King)] ^= static_cast<bitboard_t>(0x14) << firstRowStart;
+  b.bbPieces[rook] ^= static_cast<bitboard_t>(0x09) << firstRowStart;
+  b.bbPieces[king] ^= static_cast<bitboard_t>(0x14) << firstRowStart;
   if constexpr (!Inverse) {
+    b.hash ^= Private::g_zobristCastling[b.castling];
     b.clearCastling(C);
   }
 }
@@ -160,50 +171,64 @@ template <Color C, bool Inverse>
 inline static void makeEnpassant(Board &b, const Move move, const bitboard_t bbChange) {
   const coord_t taken = (C == Color::White) ? move.dst + 8 : move.dst - 8;
   const bitboard_t bbTaken = coordToBitboard(taken);
+  constexpr cell_t ourPawn = makeCell(C, Piece::Pawn);
+  constexpr cell_t enemyPawn = makeCell(invert(C), Piece::Pawn);
   if constexpr (Inverse) {
-    b.cells[move.src] = makeCell(C, Piece::Pawn);
+    b.cells[move.src] = ourPawn;
     b.cells[move.dst] = EMPTY_CELL;
-    b.cells[taken] = makeCell(invert(C), Piece::Pawn);
+    b.cells[taken] = enemyPawn;
   } else {
     b.cells[move.src] = EMPTY_CELL;
-    b.cells[move.dst] = makeCell(C, Piece::Pawn);
+    b.cells[move.dst] = ourPawn;
     b.cells[taken] = EMPTY_CELL;
+    b.hash ^= Private::g_zobristPieces[ourPawn][move.src] ^
+              Private::g_zobristPieces[ourPawn][move.dst] ^
+              Private::g_zobristPieces[enemyPawn][taken];
   }
   b.bbColor(C) ^= bbChange;
-  b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbChange;
+  b.bbPieces[ourPawn] ^= bbChange;
   b.bbColor(invert(C)) ^= bbTaken;
-  b.bbPieces[makeCell(invert(C), Piece::Pawn)] ^= bbTaken;
+  b.bbPieces[enemyPawn] ^= bbTaken;
 }
 
 template <Color C, bool Inverse>
 inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_t bbChange) {
+  constexpr cell_t pawn = makeCell(C, Piece::Pawn);
   if constexpr (Inverse) {
-    b.cells[move.src] = makeCell(C, Piece::Pawn);
+    b.cells[move.src] = pawn;
     b.cells[move.dst] = EMPTY_CELL;
   } else {
     b.cells[move.src] = EMPTY_CELL;
-    b.cells[move.dst] = makeCell(C, Piece::Pawn);
+    b.cells[move.dst] = pawn;
+    b.hash ^= Private::g_zobristPieces[pawn][move.src] ^ Private::g_zobristPieces[pawn][move.dst];
   }
   b.bbColor(C) ^= bbChange;
-  b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbChange;
+  b.bbPieces[pawn] ^= bbChange;
   if constexpr (!Inverse) {
     b.enpassantCoord = move.dst;
+    b.hash ^= Private::g_zobristEnpassant[move.dst];
   }
 }
 
 template <Color C>
 inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
-  MovePersistence p{b.castling, b.enpassantCoord, b.moveCounter, b.cells[move.dst]};
+  MovePersistence p{b.hash, b.castling, b.enpassantCoord, b.moveCounter, b.cells[move.dst]};
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
   const bitboard_t bbSrc = coordToBitboard(move.src);
   const bitboard_t bbDst = coordToBitboard(move.dst);
   const bitboard_t bbChange = bbSrc | bbDst;
+  if (b.enpassantCoord != INVALID_CELL) {
+    b.hash ^= Private::g_zobristEnpassant[b.enpassantCoord];
+  }
   b.enpassantCoord = INVALID_CELL;
   switch (move.kind) {
     case MoveKind::Simple: {
       b.cells[move.src] = EMPTY_CELL;
       b.cells[move.dst] = srcCell;
+      b.hash ^= Private::g_zobristPieces[srcCell][move.src] ^
+                Private::g_zobristPieces[srcCell][move.dst] ^
+                Private::g_zobristPieces[dstCell][move.dst];
       b.bbColor(C) ^= bbChange;
       b.bbPieces[srcCell] ^= bbChange;
       b.bbColor(invert(C)) &= ~bbDst;
@@ -218,6 +243,9 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
     case MoveKind::Promote: {
       b.cells[move.src] = EMPTY_CELL;
       b.cells[move.dst] = move.promote;
+      b.hash ^= Private::g_zobristPieces[srcCell][move.src] ^
+                Private::g_zobristPieces[move.promote][move.dst] ^
+                Private::g_zobristPieces[dstCell][move.dst];
       b.bbColor(C) ^= bbChange;
       b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbSrc;
       b.bbPieces[move.promote] ^= bbDst;
@@ -315,6 +343,7 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
       break;
     }
   }
+  b.hash = p.hash;
   b.castling = p.castling;
   b.enpassantCoord = p.enpassantCoord;
   b.moveCounter = p.moveCounter;

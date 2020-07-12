@@ -43,6 +43,7 @@ inline constexpr bool operator!=(Move a, Move b) { return a.intEncode() != b.int
 
 // A structure to hold the information which is required to unmake the move correctly.
 struct MovePersistence {
+  board_hash_t hash;
   // The order of the fields here is important to allow to save/load these fields in one mov.
   castling_t castling;
   coord_t enpassantCoord;

@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "core/private/zobrist.h"
 #include "core/types.h"
 #include "util/bit.h"
 
@@ -34,6 +35,8 @@ enum class ValidateResult {
 };
 
 struct Board {
+  static constexpr size_t BB_PIECES_SZ = 15;
+
   // Essential fields that indicate the current position
   cell_t cells[64];
   uint8_t unused;  // Unused field, needed for alignment
@@ -45,10 +48,11 @@ struct Board {
 
   // Auxiliary fields that help the move generator to work faster
   // Note that these ones also MUST be filled in order to work correctly
+  board_hash_t hash;
   bitboard_t bbWhite;
   bitboard_t bbBlack;
   bitboard_t bbAll;
-  bitboard_t bbPieces[16];
+  bitboard_t bbPieces[BB_PIECES_SZ];
 
   void setInitialPosition();
 

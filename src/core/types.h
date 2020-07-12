@@ -36,6 +36,9 @@ using cell_t = uint8_t;
 // Castling flags type
 using castling_t = uint8_t;
 
+// Board hash type
+using board_hash_t = uint64_t;
+
 // Cell color type
 enum class Color : uint8_t { White = 0, Black = 1 };
 

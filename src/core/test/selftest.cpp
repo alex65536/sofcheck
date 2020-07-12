@@ -30,10 +30,13 @@ void testBoardValid(const Board &b) {
   if (copied.bbBlack != b.bbBlack) {
     throw std::logic_error("bbBlack is incorrect");
   }
-  for (cell_t i = 0; i < 16; ++i) {
+  for (cell_t i = 0; i < Board::BB_PIECES_SZ; ++i) {
     if (copied.bbPieces[i] != b.bbPieces[i]) {
       throw std::logic_error("bbPieces[i] is incorrect");
     }
+  }
+  if (copied.hash != b.hash) {
+    throw std::logic_error("hash is incorrect");
   }
 }
 

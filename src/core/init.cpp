@@ -3,6 +3,7 @@
 #include <atomic>
 
 #include "core/private/magic.h"
+#include "core/private/zobrist.h"
 
 namespace SoFCore {
 
@@ -12,6 +13,7 @@ void init() {
     return;
   }
   Private::initMagic();
+  Private::initZobrist();
 }
 
 }  // namespace SoFCore
