@@ -1,5 +1,5 @@
-#ifndef SELFTEST_H_INCLUDED
-#define SELFTEST_H_INCLUDED
+#ifndef SOF_CORE_TEST_SELFTEST_INCLUDED
+#define SOF_CORE_TEST_SELFTEST_INCLUDED
 
 #include "core/board.h"
 
@@ -13,4 +13,4 @@ void selfTest(Board b);
 
 }  // namespace SoFCore::Test
 
-#endif  // SELFTEST_H_INCLUDED
+#endif  // SOF_CORE_TEST_SELFTEST_INCLUDED

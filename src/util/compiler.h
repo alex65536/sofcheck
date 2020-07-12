@@ -1,7 +1,7 @@
-#ifndef COMPILER_H_INCLUDED
-#define COMPILER_H_INCLUDED
+#ifndef SOF_UTIL_COMPILER_INCLUDED
+#define SOF_UTIL_COMPILER_INCLUDED
 
 #define likely(x) __builtin_expect(!!(x), 1)
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
-#endif  // COMPILER_H_INCLUDED
+#endif  // SOF_UTIL_COMPILER_INCLUDED

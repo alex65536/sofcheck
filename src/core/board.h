@@ -1,5 +1,5 @@
-#ifndef BOARD_H_INCLUDED
-#define BOARD_H_INCLUDED
+#ifndef SOF_CORE_BOARD_INCLUDED
+#define SOF_CORE_BOARD_INCLUDED
 
 #include <string>
 
@@ -102,4 +102,4 @@ struct Board {
 
 }  // namespace SoFCore
 
-#endif  // BOARD_H_INCLUDED
+#endif  // SOF_CORE_BOARD_INCLUDED

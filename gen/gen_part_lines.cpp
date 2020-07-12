@@ -22,8 +22,8 @@ std::vector<bitboard_t> generateDir(int8_t dx, int8_t dy) {
 }
 
 void doGenerate(std::ostream &out) {
-  out << "#ifndef PART_LINES_INCLUDED\n";
-  out << "#define PART_LINES_INCLUDED\n";
+  out << "#ifndef SOF_CORE_PRIVATE_PART_LINES_INCLUDED\n";
+  out << "#define SOF_CORE_PRIVATE_PART_LINES_INCLUDED\n";
   out << "\n";
   out << "#include \"core/types.h\"\n";
   out << "\n";
@@ -50,5 +50,5 @@ void doGenerate(std::ostream &out) {
   out << "}  // namespace SoFCore::Private\n";
   out << "\n";
 
-  out << "#endif // PART_LINES_INCLUDED\n";
+  out << "#endif  // SOF_CORE_PRIVATE_PART_LINES_INCLUDED\n";
 }

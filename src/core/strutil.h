@@ -1,5 +1,5 @@
-#ifndef STRUTIL_H_INCLUDED
-#define STRUTIL_H_INCLUDED
+#ifndef SOF_CORE_STRUTIL_INCLUDED
+#define SOF_CORE_STRUTIL_INCLUDED
 
 #include <string>
 
@@ -36,4 +36,4 @@ std::string moveToStr(Move move);
 
 }  // namespace SoFCore
 
-#endif  // STRUTIL_H_INCLUDED
+#endif  // SOF_CORE_STRUTIL_INCLUDED

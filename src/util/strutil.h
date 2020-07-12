@@ -1,5 +1,5 @@
-#ifndef UTIL_STRUTIL_H_INCLUDED
-#define UTIL_STRUTIL_H_INCLUDED
+#ifndef SOF_UTIL_STRUTIL_INCLUDED
+#define SOF_UTIL_STRUTIL_INCLUDED
 
 #include <cstdint>
 
@@ -16,4 +16,4 @@ int uintSave(uint32_t val, char *str);
 
 }  // namespace SoFUtil
 
-#endif  // UTIL_STRUTIL_H_INCLUDED
+#endif  // SOF_UTIL_STRUTIL_INCLUDED

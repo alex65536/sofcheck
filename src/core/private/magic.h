@@ -1,5 +1,5 @@
-#ifndef MAGIC_H_INCLUDED
-#define MAGIC_H_INCLUDED
+#ifndef SOF_CORE_PRIVATE_MAGIC_INCLUDED
+#define SOF_CORE_PRIVATE_MAGIC_INCLUDED
 
 #include "config.h"
 #include "core/types.h"
@@ -45,4 +45,4 @@ inline bitboard_t bishopAttackBitboard(bitboard_t occupied, cell_t pos) {
 
 }  // namespace SoFCore::Private
 
-#endif  // MAGIC_H_INCLUDED
+#endif  // SOF_CORE_PRIVATE_MAGIC_INCLUDED

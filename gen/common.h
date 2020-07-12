@@ -1,5 +1,5 @@
-#ifndef COMMON_H_INCLUDED
-#define COMMON_H_INCLUDED
+#ifndef SOF_GEN_COMMON_INCLUDED
+#define SOF_GEN_COMMON_INCLUDED
 
 #include <iostream>
 #include <vector>
@@ -14,4 +14,4 @@ void printBitboardArray(std::ostream &out, const std::vector<SoFCore::bitboard_t
 void printCoordArray(std::ostream &out, const std::vector<SoFCore::coord_t> &array,
                      const char *name);
 
-#endif  // COMMON_H_INCLUDED
+#endif  // SOF_GEN_COMMON_INCLUDED

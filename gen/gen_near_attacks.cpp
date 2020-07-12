@@ -52,8 +52,8 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
 }
 
 void doGenerate(std::ostream &out) {
-  out << "#ifndef NEAR_ATTACKS_INCLUDED\n";
-  out << "#define NEAR_ATTACKS_INCLUDED\n";
+  out << "#ifndef SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED\n";
+  out << "#define SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED\n";
   out << "\n";
   out << "#include \"core/types.h\"\n";
   out << "\n";
@@ -77,5 +77,5 @@ void doGenerate(std::ostream &out) {
   out << "}  // namespace SoFCore::Private\n";
   out << "\n";
 
-  out << "#endif // NEAR_ATTACKS_INCLUDED\n";
+  out << "#endif  // SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED\n";
 }

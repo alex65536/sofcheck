@@ -1,5 +1,5 @@
-#ifndef MOVE_H_INCLUDED
-#define MOVE_H_INCLUDED
+#ifndef SOF_CORE_MOVE_INCLUDED
+#define SOF_CORE_MOVE_INCLUDED
 
 #include "core/types.h"
 
@@ -77,4 +77,4 @@ inline constexpr void iterateChangedCells(Move move, Callback callback) {
 
 }  // namespace SoFCore
 
-#endif  // MOVE_H_INCLUDED
+#endif  // SOF_CORE_MOVE_INCLUDED

@@ -1,5 +1,5 @@
-#ifndef INIT_H_INCLUDED
-#define INIT_H_INCLUDED
+#ifndef SOF_CORE_INIT_INCLUDED
+#define SOF_CORE_INIT_INCLUDED
 
 namespace SoFCore {
 
@@ -8,4 +8,4 @@ void init();
 
 }  // namespace SoFCore
 
-#endif  // INIT_H_INCLUDED
+#endif  // SOF_CORE_INIT_INCLUDED

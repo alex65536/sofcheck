@@ -1,5 +1,5 @@
-#ifndef BIT_H_INCLUDED
-#define BIT_H_INCLUDED
+#ifndef SOF_UTIL_BIT_INCLUDED
+#define SOF_UTIL_BIT_INCLUDED
 
 #include <cstdint>
 
@@ -55,4 +55,4 @@ inline uint64_t depositBits(uint64_t x, uint64_t msk) {
 
 }  // namespace SoFUtil
 
-#endif  // BIT_H_INCLUDED
+#endif  // SOF_UTIL_BIT_INCLUDED

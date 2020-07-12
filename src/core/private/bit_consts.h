@@ -1,5 +1,5 @@
-#ifndef BIT_CONSTS_H_INCLUDED
-#define BIT_CONSTS_H_INCLUDED
+#ifndef SOF_CORE_PRIVATE_BIT_CONSTS_INCLUDED
+#define SOF_CORE_PRIVATE_BIT_CONSTS_INCLUDED
 
 namespace SoFCore::Private {
 
@@ -39,4 +39,4 @@ constexpr bitboard_t BB_CASTLING_QUEENSIDE_SRCS = 0x11;
 
 }  // namespace SoFCore::Private
 
-#endif  // BIT_CONSTS_H_INCLUDED
+#endif  // SOF_CORE_PRIVATE_BIT_CONSTS_INCLUDED

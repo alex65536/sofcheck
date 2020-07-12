@@ -1,7 +1,7 @@
-#ifndef CONFIG_H_INCLUDED
-#define CONFIG_H_INCLUDED
+#ifndef SOF_CONFIG_INCLUDED
+#define SOF_CONFIG_INCLUDED
 
 // Set this flag to use BMI2
 // #define USE_BMI2
 
-#endif  // CONFIG_H_INCLUDED
+#endif  // SOF_CONFIG_INCLUDED

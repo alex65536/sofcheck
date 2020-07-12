@@ -1,5 +1,5 @@
-#ifndef MAGIC_UTIL_H_INCLUDED
-#define MAGIC_UTIL_H_INCLUDED
+#ifndef SOF_CORE_PRIVATE_MAGIC_UTIL_INCLUDED
+#define SOF_CORE_PRIVATE_MAGIC_UTIL_INCLUDED
 
 #include "core/private/bit_consts.h"
 #include "core/types.h"
@@ -32,4 +32,4 @@ inline constexpr bitboard_t buildMagicBishopPostMask(const coord_t c) {
 
 }  // namespace SoFCore::Private
 
-#endif  // MAGIC_UTIL_H_INCLUDED
+#endif  // SOF_CORE_PRIVATE_MAGIC_UTIL_INCLUDED

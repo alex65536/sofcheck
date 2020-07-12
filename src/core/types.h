@@ -1,5 +1,5 @@
-#ifndef TYPES_H_INCLUDED
-#define TYPES_H_INCLUDED
+#ifndef SOF_CORE_TYPES_INCLUDED
+#define SOF_CORE_TYPES_INCLUDED
 
 #include <cstddef>
 #include <cstdint>
@@ -111,4 +111,4 @@ inline constexpr cell_t makeCell(Color color, Piece piece) {
 
 }  // namespace SoFCore
 
-#endif  // TYPES_H_INCLUDED
+#endif  // SOF_CORE_TYPES_INCLUDED

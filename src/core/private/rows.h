@@ -1,5 +1,5 @@
-#ifndef ROWS_H_INCLUDED
-#define ROWS_H_INCLUDED
+#ifndef SOF_CORE_PRIVATE_ROWS_INCLUDED
+#define SOF_CORE_PRIVATE_ROWS_INCLUDED
 
 #include "core/types.h"
 
@@ -28,4 +28,4 @@ inline constexpr subcoord_t castlingRow(Color c) { return (c == Color::White) ? 
 
 }  // namespace SoFCore::Private
 
-#endif  // ROWS_H_INCLUDED
+#endif  // SOF_CORE_PRIVATE_ROWS_INCLUDED

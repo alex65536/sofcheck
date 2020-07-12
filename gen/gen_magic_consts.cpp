@@ -72,8 +72,8 @@ std::vector<coord_t> generateShifts() {
 }
 
 void doGenerate(std::ostream &out) {
-  out << "#ifndef MAGIC_CONSTANTS_INCLUDED\n";
-  out << "#define MAGIC_CONSTANTS_INCLUDED\n";
+  out << "#ifndef SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED\n";
+  out << "#define SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED\n";
   out << "\n";
   out << "#include \"core/types.h\"\n";
   out << "\n";
@@ -92,5 +92,5 @@ void doGenerate(std::ostream &out) {
   out << "}  // namespace SoFCore::Private\n";
   out << "\n";
 
-  out << "#endif // MAGIC_CONSTANTS_INCLUDED\n";
+  out << "#endif  // SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED\n";
 }

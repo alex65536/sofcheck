@@ -1,5 +1,5 @@
-#ifndef MOVEGEN_H_INCLUDED
-#define MOVEGEN_H_INCLUDED
+#ifndef SOF_CORE_MOVEGEN_INCLUDED
+#define SOF_CORE_MOVEGEN_INCLUDED
 
 #include "core/board.h"
 #include "core/move.h"
@@ -32,4 +32,4 @@ bool isMoveValid(const Board &b, Move move);
 
 }  // namespace SoFCore
 
-#endif  // MOVEGEN_H_INCLUDED
+#endif  // SOF_CORE_MOVEGEN_INCLUDED
