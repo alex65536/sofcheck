@@ -112,7 +112,7 @@ static void initMagic() {
       const size_t pos = (occupied * magics[c]) >> shifts[c];
 #endif
       bitboard_t &res = lookup[offset + pos];
-      for (int direction = 0; direction < 4; ++direction) {
+      for (size_t direction = 0; direction < 4; ++direction) {
         coord_t p = c;
         for (;;) {
           res |= coordToBitboard(p);

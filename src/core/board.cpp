@@ -22,7 +22,7 @@ void Board::asFen(char *fen) const {
     if (i != 0) {
       *(fen++) = '/';
     }
-    int empty = 0;
+    subcoord_t empty = 0;
     for (subcoord_t j = 0; j < 8; ++j) {
       cell_t cur = cells[makeCoord(i, j)];
       if (cur == EMPTY_CELL) {
