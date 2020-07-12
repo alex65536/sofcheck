@@ -388,7 +388,7 @@ void Board::update() {
       clearKingsideCastling(color);
     }
   }
-  
+
   // Update the bitboards
   bbWhite = 0;
   bbBlack = 0;

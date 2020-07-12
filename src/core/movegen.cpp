@@ -39,7 +39,7 @@ bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
 
 template <Color C>
 inline static bool isMoveLegalImpl(const Board &b) {
-  return isCellAttacked<C>(b, b.kingPos(invert(C)));
+  return !isCellAttacked<C>(b, b.kingPos(invert(C)));
 }
 
 bool isMoveLegal(const Board &b) {
@@ -298,15 +298,22 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
       return !(b.bbAll & bbMustEmpty);
     }
     if (move.kind == MoveKind::Enpassant) {
+      if (b.enpassantCoord == INVALID_CELL) {
+        return false;
+      }
+      constexpr coord_t delta = (C == Color::White) ? -8 : 8;
+      if (dst != static_cast<coord_t>(b.enpassantCoord + delta)) {
+        return false;
+      }
       return src + 1 == b.enpassantCoord || src - 1 == b.enpassantCoord;
     }
     constexpr subcoord_t promoteX = Private::promoteSrcRow(C);
     if (move.kind != MoveKind::Promote && coordX(src) == promoteX) {
       return false;
     }
-    if (dst == EMPTY_CELL) {
+    if (dstCell == EMPTY_CELL) {
       const coord_t delta = (C == Color::White) ? -8 : 8;
-      return dst == src + delta;
+      return dst == static_cast<coord_t>(src + delta);
     }
     if (cellPieceColor(dstCell) != C) {
       const bitboard_t *attackArr =

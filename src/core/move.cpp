@@ -52,7 +52,7 @@ bool Move::isWellFormed(Color c) const {
         return false;
       }
       const subcoord_t x = Private::castlingRow(c);
-      if (src != makeCoord(x, 4) || dst != makeCoord(x, 7)) {
+      if (src != makeCoord(x, 4) || dst != makeCoord(x, 6)) {
         return false;
       }
       break;
@@ -62,7 +62,7 @@ bool Move::isWellFormed(Color c) const {
         return false;
       }
       const subcoord_t x = Private::castlingRow(c);
-      if (src != makeCoord(x, 4) || dst != makeCoord(x, 0)) {
+      if (src != makeCoord(x, 4) || dst != makeCoord(x, 2)) {
         return false;
       }
       break;
@@ -203,7 +203,7 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
   const bitboard_t bbSrc = coordToBitboard(move.src);
   const bitboard_t bbDst = coordToBitboard(move.dst);
   const bitboard_t bbChange = bbSrc | bbDst;
-  b.enpassantCoord = 0;
+  b.enpassantCoord = INVALID_CELL;
   switch (move.kind) {
     case MoveKind::Simple: {
       b.cells[move.src] = EMPTY_CELL;

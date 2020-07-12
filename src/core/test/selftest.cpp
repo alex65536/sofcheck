@@ -2,11 +2,13 @@
 
 #include <algorithm>
 #include <cstring>
+#include <iostream>  // TODO remove
 #include <stdexcept>
 #include <vector>
 
 #include "core/move.h"
 #include "core/movegen.h"
+#include "core/strutil.h"  // TODO remove
 
 namespace SoFCore {
 namespace Test {
@@ -114,7 +116,9 @@ void selfTest(Board b) {
     const Move move = moves[i];
     const Board saved = b;
     MovePersistence p = moveMake(b, move);
-    testBoardValid(b);
+    if (isMoveLegal(b)) {
+      testBoardValid(b);
+    }
     moveUnmake(b, move, p);
     if (!boardsBitCompare(b, saved)) {
       throw std::logic_error("Board becomes different after a pair of make/unmake");
