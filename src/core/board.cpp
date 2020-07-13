@@ -309,7 +309,7 @@ SoFUtil::Result<Board, FenParseResult> Board::fromFen(const char *fen) {
   Board board;  // NOLINT: board is initialized in setFromFen()
   FenParseResult result = board.setFromFen(fen);
   if (result == FenParseResult::Ok) {
-    return SoFUtil::Ok(std::move(board));
+    return SoFUtil::Ok(board);
   }
   return SoFUtil::Err(result);
 }

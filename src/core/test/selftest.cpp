@@ -52,10 +52,11 @@ void selfTest(Board b) {
   // Check that asFen and setFromFen are symmetrical
   char fen[200];
   b.asFen(fen);
-  Board loaded;
-  if (loaded.setFromFen(fen) != FenParseResult::Ok) {
+  auto loadResult = Board::fromFen(fen);
+  if (!loadResult.isOk()) {
     throw std::logic_error("cannot load from FEN the board itself saved");
   }
+  Board loaded = loadResult.unwrap();
   if (!boardsBitCompare(b, loaded)) {
     throw std::logic_error("save/load from FEN produce a different board");
   }
