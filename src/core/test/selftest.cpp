@@ -50,8 +50,11 @@ void selfTest(Board b) {
   testBoardValid(b);
 
   // Check that asFen and setFromFen are symmetrical
-  char fen[200];
+  char fen[4096] = {};
   b.asFen(fen);
+  if (std::strlen(fen) + 1 > BUFSZ_BOARD_FEN) {
+    throw std::logic_error("buffer constant for FEN is too slow");
+  }
   auto loadResult = Board::fromFen(fen);
   if (!loadResult.isOk()) {
     throw std::logic_error("cannot load from FEN the board itself saved");
@@ -59,6 +62,11 @@ void selfTest(Board b) {
   Board loaded = loadResult.unwrap();
   if (!boardsBitCompare(b, loaded)) {
     throw std::logic_error("save/load from FEN produce a different board");
+  }
+  char pretty[4096] = {};
+  b.asPretty(pretty);
+  if (std::strlen(pretty) + 1 > BUFSZ_BOARD_PRETTY) {
+    throw std::logic_error("buffer constant for pretty board is too slow");
   }
 
   auto cmpMoves = [](Move a, Move b) { return a.intEncode() < b.intEncode(); };
