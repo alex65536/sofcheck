@@ -6,7 +6,7 @@
 #include "core/private/part_lines.h"
 #include "core/private/rows.h"
 #include "util/bit.h"
-#include "util/compiler.h"
+#include "util/misc.h"
 
 namespace SoFCore {
 

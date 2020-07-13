@@ -48,6 +48,7 @@ include_directories(${PROJECT_BINARY_DIR}/src)
 include_directories(src)
 
 add_library(sof_util STATIC
+  src/util/misc.cpp
   src/util/strutil.cpp
 )
 

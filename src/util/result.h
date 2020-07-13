@@ -5,7 +5,7 @@
 #include <utility>
 #include <variant>
 
-#include "util/compiler.h"
+#include "util/misc.h"
 
 namespace SoFUtil {
 
@@ -28,20 +28,20 @@ public:
 
   // Consumes the Result, moving away ok() value from it
   // If it doesn't hold the specified value, it throws std::runtime_error
-  inline T unwrap() {
+  inline T unwrap() noexcept {
     if (likely(isOk())) {
       return std::get<0>(variant_);
     }
-    throw std::runtime_error("Attempt to unwrap() Result<T, E> without a value");
+    panic("Attempt to unwrap() Result<T, E> without a value");
   }
 
   // Consumes the Result, moving away err() value from it
   // If it doesn't hold the specified value, it throws std::runtime_error
-  inline T unwrapErr() {
+  inline T unwrapErr() noexcept {
     if (likely(isErr())) {
       return std::get<1>(variant_);
     }
-    throw std::runtime_error("Attempt to unwrap() Result<T, E> without a value");
+    panic("Attempt to unwrap() Result<T, E> without a value");
   }
 
   inline friend constexpr bool operator==(const std::variant<T, E> &r1,

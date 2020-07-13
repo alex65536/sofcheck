@@ -5,7 +5,7 @@
 
 namespace SoFCore::Test {
 
-// All this functions throw std::logic error if something is wrong with the board
+// All this functions panic if something is wrong with the board
 
 void testBoardValid(const Board &b);
 
