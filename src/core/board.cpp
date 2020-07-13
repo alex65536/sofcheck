@@ -12,7 +12,7 @@
 namespace SoFCore {
 
 std::string Board::asFen() const {
-  char buf[200];
+  char buf[BUFSZ_BOARD_FEN];
   asFen(buf);
   return std::string(buf);
 }
@@ -85,7 +85,7 @@ void Board::asFen(char *fen) const {
 }
 
 std::string Board::asPretty() const {
-  char buf[200];
+  char buf[BUFSZ_BOARD_PRETTY];
   asPretty(buf);
   return std::string(buf);
 }

@@ -34,6 +34,10 @@ enum class ValidateResult {
   OpponentKingAttacked
 };
 
+// Recommended buffer sizes for string conversion methods
+constexpr size_t BUFSZ_BOARD_FEN = 120;
+constexpr size_t BUFSZ_BOARD_PRETTY = 120;
+
 struct Board {
   static constexpr size_t BB_PIECES_SZ = 15;
 

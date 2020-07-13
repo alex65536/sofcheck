@@ -5,7 +5,7 @@
 namespace SoFCore {
 
 std::string moveToStr(const Move move) {
-  char str[6];
+  char str[BUFSZ_MOVE_STR];
   moveToStr(move, str);
   return std::string(str);
 }

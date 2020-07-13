@@ -31,6 +31,9 @@ inline constexpr subcoord_t charToSubX(char c) { return '8' - c; }
 // If 'a' <= c && c <= 'h' doesn't hold, the behavior is undefined
 inline constexpr subcoord_t charToSubY(char c) { return c - 'a'; }
 
+// Recommended buffer size for moveToStr()
+constexpr size_t BUFSZ_MOVE_STR = 6;
+
 void moveToStr(Move move, char *str);
 std::string moveToStr(Move move);
 
