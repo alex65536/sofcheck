@@ -5,10 +5,12 @@
 #include "core/types.h"
 
 int main(int argc, char **argv) {
-  SoFCore::init();
   (void)argc;
   (void)argv;
-  std::cout << sizeof(SoFCore::Board) << std::endl;
-  std::cout << "Hello, world!" << std::endl;
+  SoFCore::init();
+  SoFCore::Board board =
+      SoFCore::Board::fromFen("r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4")
+          .unwrap();
+  std::cout << board.asPretty() << std::endl;
   return 0;
 }
