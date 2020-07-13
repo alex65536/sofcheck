@@ -2,3 +2,4 @@ BasedOnStyle: Google
 DerivePointerAlignment: false
 PointerAlignment: Right
 ColumnLimit: 100
+AccessModifierOffset: -2

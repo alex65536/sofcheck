@@ -16,11 +16,9 @@ readability-*, \
 -cppcoreguidelines-avoid-magic-numbers, \
 -cppcoreguidelines-macro-usage, \
 -cppcoreguidelines-pro-bounds-*, \
--cppcoreguidelines-pro-type-member-init, \
 -cppcoreguidelines-pro-type-reinterpret-cast, \
 -hicpp-avoid-c-arrays, \
 -hicpp-braces-around-statements, \
--hicpp-member-init, \
 -hicpp-no-array-decay, \
 -hicpp-signed-bitwise, \
 -modernize-use-nodiscard, \
@@ -36,9 +34,6 @@ readability-*, \
 # - cppcoreguidelines-avoid-magic-numbers is disabled because the chess rules contain enough
 # magic, and I am lazy to put them into constants.
 # - readability-magic-numbers is tightly related to the previous issue.
-# - cppcoreguidelines-pro-type-member-init will be enabled when SoFCore::Board::fromFen() will
-# be designed. Note that it must take the parse result into account.
-# - hicpp-member-init is tightly related to the previous issue.
 # - hicpp-braces-around-statements is buggy with if constexpr.
 # - readability-misleading-indentation is also buggy with if constexpr.
 # - bugprone-suspicious-semicolon is also buggy with if constexpr.

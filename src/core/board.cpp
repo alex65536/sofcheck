@@ -4,6 +4,7 @@
 
 #include "core/movegen.h"
 #include "core/private/rows.h"
+#include "core/private/zobrist.h"
 #include "core/strutil.h"
 #include "util/bit.h"
 #include "util/strutil.h"
@@ -299,9 +300,18 @@ void Board::setInitialPosition() {
 }
 
 Board Board::initialPosition() {
-  Board board;
+  Board board;  // NOLINT: board is initialized in setInitialPosition()
   board.setInitialPosition();
   return board;
+}
+
+SoFUtil::Result<Board, FenParseResult> Board::fromFen(const char *fen) {
+  Board board;  // NOLINT: board is initialized in setFromFen()
+  FenParseResult result = board.setFromFen(fen);
+  if (result == FenParseResult::Ok) {
+    return SoFUtil::Ok(std::move(board));
+  }
+  return SoFUtil::Err(result);
 }
 
 ValidateResult Board::validate() {

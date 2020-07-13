@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "core/private/zobrist.h"
 #include "core/types.h"
 #include "util/bit.h"
+#include "util/result.h"
 
 namespace SoFCore {
 
@@ -64,6 +64,7 @@ struct Board {
   std::string asPretty() const;
 
   static Board initialPosition();
+  static SoFUtil::Result<Board, FenParseResult> fromFen(const char *fen);
 
   inline constexpr bitboard_t &bbColor(Color c) { return c == Color::White ? bbWhite : bbBlack; }
 
