@@ -9,6 +9,7 @@ modernize-*, \
 performance-*, \
 portability-*, \
 readability-*, \
+-bugprone-exception-escape, \
 -bugprone-suspicious-semicolon, \
 -modernize-use-trailing-return-type, \
 -modernize-avoid-c-arrays, \
@@ -39,6 +40,7 @@ readability-*, \
 # - bugprone-suspicious-semicolon is also buggy with if constexpr.
 # - readability-braces-around-statements is also buggy with if constexpr.
 # - misc-non-private-member-variables-in-classes is disabled by design.
+# - bugprone-exception-escape is very expesive and can be false-positive on Result<T, E>.
 
 CheckOptions:
     - key: readability-identifier-naming.ClassCase

@@ -67,7 +67,7 @@ void selfTest(Board b) {
   if (!boardsBitCompare(b, loaded)) {
     panic("save/load from FEN produce a different board");
   }
-  
+
   // Check that asPretty doesn't overflow the buffer
   char pretty[4096] = {};
   std::memset(pretty, '?', sizeof(pretty));
