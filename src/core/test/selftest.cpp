@@ -53,7 +53,9 @@ void selfTest(Board b) {
 
   // Check that asFen and setFromFen are symmetrical
   char fen[4096] = {};
+  std::memset(fen, '?', sizeof(fen));
   b.asFen(fen);
+  fen[4095] = '\0';
   if (std::strlen(fen) + 1 > BUFSZ_BOARD_FEN) {
     panic("buffer constant for FEN is too slow");
   }
@@ -65,8 +67,12 @@ void selfTest(Board b) {
   if (!boardsBitCompare(b, loaded)) {
     panic("save/load from FEN produce a different board");
   }
+  
+  // Check that asPretty doesn't overflow the buffer
   char pretty[4096] = {};
+  std::memset(pretty, '?', sizeof(pretty));
   b.asPretty(pretty);
+  pretty[4095] = '\0';
   if (std::strlen(pretty) + 1 > BUFSZ_BOARD_PRETTY) {
     panic("buffer constant for pretty board is too slow");
   }
