@@ -2,6 +2,7 @@
 #define SOF_UTIL_STRUTIL_INCLUDED
 
 #include <cstdint>
+#include <cstring>
 
 namespace SoFUtil {
 
@@ -15,7 +16,14 @@ int uintParse(uint16_t &res, const char *str);
 int uintSave(uint32_t val, char *str);
 
 // Works like strcpy, but returns the address of null-terminating byte of dst
-char *stpcpy(char *dst, const char *src);
+#ifdef USE_SYSTEM_STPCPY
+inline char *stpcpy(char *dst, const char *src) { return ::stpcpy(dst, src); }
+#else
+inline char *stpcpy(char *dst, const char *src) {
+  strcpy(dst, src);  // NOLINT
+  return dst + strlen(src);
+}
+#endif
 
 }  // namespace SoFUtil
 

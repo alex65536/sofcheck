@@ -47,12 +47,4 @@ int uintSave(uint32_t val, char *str) {
   return res.size();
 }
 
-char *stpcpy(char *dst, const char *src) {
-  while (*src) {
-    *(dst++) = *(src++);
-  }
-  *dst = '\0';
-  return dst;
-}
-
 }  // namespace SoFUtil
