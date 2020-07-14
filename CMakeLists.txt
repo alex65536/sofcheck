@@ -2,8 +2,13 @@ cmake_minimum_required(VERSION 3.8)
 
 project(sofcheck)
 
+
+# Include helper modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
+
 
 # Declare configuration options
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
@@ -57,20 +62,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 include_directories(${PROJECT_BINARY_DIR}/src)
 include_directories(src)
-
-
-# Declare some helper methods
-find_package(benchmark REQUIRED)
-
-function(target_benchmark target)
-  target_link_libraries(${target} benchmark::benchmark)
-  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    target_link_libraries(${target} pthread)
-  endif()
-  if(WIN32)
-    target_link_libraries(${target} shlwapi.lib)
-  endif()
-endfunction()
 
 
 # Generate files

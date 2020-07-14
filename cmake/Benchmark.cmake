@@ -1,0 +1,11 @@
+find_package(benchmark REQUIRED)
+
+function(target_benchmark target)
+  target_link_libraries(${target} benchmark::benchmark)
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+    target_link_libraries(${target} pthread)
+  endif()
+  if(WIN32)
+    target_link_libraries(${target} shlwapi.lib)
+  endif()
+endfunction()
