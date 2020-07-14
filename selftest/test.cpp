@@ -7,20 +7,8 @@
 #include <vector>
 
 #include "chess_intf.h"
+#include "selftest_config.h"
 #include "util.h"
-
-// Print all the move chains while depthDump?
-// #define DEPTH_DUMP_TRACE_CHAINS
-
-// Run depthDump on big recursion depths (consumes more time for test)?
-#define DEPTH_DUMP_LARGE
-
-// Run self tests?
-#define RUN_SELF_TESTS
-
-#if defined(RUN_SELF_TESTS) && !defined(CHESS_INTF_HAS_SELF_TESTS)
-#undef RUN_SELF_TESTS
-#endif
 
 void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps,
                std::string &moveChain) {

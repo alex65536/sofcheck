@@ -4,9 +4,25 @@ project(SoFCheck::SelfTest)
 
 include(Benchmark)
 
+
+# Set compiler flags
 set(CMAKE_CXX_STANDARD 17)
 
 
+# Add configuration options
+set(DEPTH_DUMP_TRACE_CHAINS OFF CACHE BOOL "\
+Prints all the move chains while running depthDump test. (the output may be quite large).")
+
+set(DEPTH_DUMP_LARGE ON CACHE BOOL "\
+Run depthDump on bigger recursion depths (consumes more time for test).")
+
+set(RUN_SELF_TESTS ON CACHE BOOL "Run self-tests.")
+
+configure_file(selftest_config.h.in ${PROJECT_BINARY_DIR}/src/selftest_config.h)
+include_directories(${PROJECT_BINARY_DIR}/src)
+
+
+# Define a function to add ANY chess rules implementation for testing
 function(add_chess_impl impl_name)
   string(TOUPPER ${impl_name} impl_name_upper)
 
@@ -25,6 +41,7 @@ function(add_chess_impl impl_name)
 endfunction()
 
 
+# Add some implementations
 add_chess_impl(dodecahedron
     dodecahedron/bitboard.cpp
     dodecahedron/board.cpp

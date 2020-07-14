@@ -1,0 +1,12 @@
+#ifndef SELFTEST_CONFIG_INCLUDED
+#define SELFTEST_CONFIG_INCLUDED
+
+#cmakedefine DEPTH_DUMP_TRACE_CHAINS
+#cmakedefine DEPTH_DUMP_LARGE
+#cmakedefine RUN_SELF_TESTS
+
+#if defined(RUN_SELF_TESTS) && !defined(CHESS_INTF_HAS_SELF_TESTS)
+#undef RUN_SELF_TESTS
+#endif
+ 
+#endif  // SELFTEST_CONFIG_INCLUDED
