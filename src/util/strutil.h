@@ -14,6 +14,9 @@ int uintParse(uint16_t &res, const char *str);
 // Returns the number of chars written
 int uintSave(uint32_t val, char *str);
 
+// Works like strcpy, but returns the address of null-terminating byte of dst
+char *stpcpy(char *dst, const char *src);
+
 }  // namespace SoFUtil
 
 #endif  // SOF_UTIL_STRUTIL_INCLUDED

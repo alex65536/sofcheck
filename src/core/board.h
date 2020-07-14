@@ -34,9 +34,18 @@ enum class ValidateResult {
   OpponentKingAttacked
 };
 
+enum class BoardPrettyStyle { Ascii, Utf8 };
+
 // Recommended buffer sizes for string conversion methods
 constexpr size_t BUFSZ_BOARD_FEN = 120;
-constexpr size_t BUFSZ_BOARD_PRETTY = 120;
+constexpr size_t BUFSZ_BOARD_PRETTY_ASCII = 120;
+constexpr size_t BUFSZ_BOARD_PRETTY_UTF8 = 300;
+// Buffer size to be used regardless of the style
+constexpr size_t BUFSZ_BOARD_PRETTY = 300;
+
+// Check that BUFSZ_BOARD_PRETTY is the largest
+static_assert(BUFSZ_BOARD_PRETTY_ASCII <= BUFSZ_BOARD_PRETTY);
+static_assert(BUFSZ_BOARD_PRETTY_UTF8 <= BUFSZ_BOARD_PRETTY);
 
 struct Board {
   static constexpr size_t BB_PIECES_SZ = 15;
@@ -64,8 +73,8 @@ struct Board {
 
   void asFen(char *fen) const;
   std::string asFen() const;
-  void asPretty(char *str) const;
-  std::string asPretty() const;
+  void asPretty(char *str, BoardPrettyStyle style = BoardPrettyStyle::Ascii) const;
+  std::string asPretty(BoardPrettyStyle style = BoardPrettyStyle::Ascii) const;
 
   static Board initialPosition();
   static SoFUtil::Result<Board, FenParseResult> fromFen(const char *fen);

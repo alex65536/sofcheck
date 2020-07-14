@@ -84,34 +84,73 @@ void Board::asFen(char *fen) const {
   *(fen++) = '\0';
 }
 
-std::string Board::asPretty() const {
+std::string Board::asPretty(BoardPrettyStyle style) const {
   char buf[BUFSZ_BOARD_PRETTY];
-  asPretty(buf);
+  asPretty(buf, style);
   return std::string(buf);
 }
 
-void Board::asPretty(char *str) const {
+// Helper macros for boardAsPrettyImpl
+
+#define D_PRETTY_ADD_CHAR(ascii, utf8)                \
+  {                                                   \
+    if constexpr (Style == BoardPrettyStyle::Ascii) { \
+      *(str++) = ascii;                               \
+    } else {                                          \
+      str = SoFUtil::stpcpy(str, utf8);               \
+    }                                                 \
+  }
+
+#define D_PRETTY_ADD_HORZ_LINE() D_PRETTY_ADD_CHAR('-', "─")
+#define D_PRETTY_ADD_VERT_LINE() D_PRETTY_ADD_CHAR('|', "│")
+
+template <BoardPrettyStyle Style>
+inline static void boardAsPrettyImpl(const Board &b, char *str) {
   for (subcoord_t i = 0; i < 8; ++i) {
     *(str++) = xSubToChar(i);
-    *(str++) = '|';
+    D_PRETTY_ADD_VERT_LINE();
     for (subcoord_t j = 0; j < 8; ++j) {
-      *(str++) = cellToChar(cells[makeCoord(i, j)]);
+      const cell_t cell = b.cells[makeCoord(i, j)];
+      if constexpr (Style == BoardPrettyStyle::Ascii) {
+        *(str++) = cellToChar(cell);
+      } else {
+        str = SoFUtil::stpcpy(str, cellToUtf8(cell));
+      }
     }
     *(str++) = '\n';
   }
-  *(str++) = '-';
-  *(str++) = '+';
+  D_PRETTY_ADD_HORZ_LINE();
+  D_PRETTY_ADD_CHAR('+', "┼");
   for (subcoord_t i = 0; i < 8; ++i) {
-    *(str++) = '-';
+    D_PRETTY_ADD_HORZ_LINE();
   }
   *(str++) = '\n';
-  *(str++) = side == Color::White ? 'W' : 'B';
-  *(str++) = '|';
+  if constexpr (Style == BoardPrettyStyle::Ascii) {
+    *(str++) = (b.side == Color::White) ? 'W' : 'B';
+  } else {
+    str = SoFUtil::stpcpy(str, (b.side == Color::White) ? "○" : "●");
+  }
+  D_PRETTY_ADD_VERT_LINE();
   for (subcoord_t i = 0; i < 8; ++i) {
     *(str++) = ySubToChar(i);
   }
   *(str++) = '\n';
   *str = '\0';
+}
+
+#undef D_PRETTY_ADD_CHAR
+#undef D_PRETTY_ADD_HORZ_LINE
+#undef D_PRETTY_ADD_VERT_LINE
+
+void Board::asPretty(char *str, BoardPrettyStyle style) const {
+  switch (style) {
+    case BoardPrettyStyle::Ascii:
+      boardAsPrettyImpl<BoardPrettyStyle::Ascii>(*this, str);
+      break;
+    case BoardPrettyStyle::Utf8:
+      boardAsPrettyImpl<BoardPrettyStyle::Utf8>(*this, str);
+      break;
+  }
 }
 
 // Helper macros for FEN parser

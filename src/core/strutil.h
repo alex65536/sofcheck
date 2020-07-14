@@ -16,6 +16,15 @@ inline constexpr char cellToChar(cell_t cell) {
   return transpos[cell];
 }
 
+inline constexpr const char *cellToUtf8(cell_t cell) {
+  const char *transpos[] = {".", "♙", "♔", "♘", "♗", "♖", "♕", "?",
+                            "?", "♟", "♚", "♞", "♝", "♜", "♛", "?"};
+  if (cell > 16) {
+    return "?";
+  }
+  return transpos[cell];
+}
+
 inline constexpr bool isValidXChar(char c) { return '1' <= c && c <= '8'; }
 inline constexpr bool isValidYChar(char c) { return 'a' <= c && c <= 'h'; }
 

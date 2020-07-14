@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <map>
 #include <vector>
 
 #include "core/move.h"
@@ -69,12 +70,17 @@ void selfTest(Board b) {
   }
 
   // Check that asPretty doesn't overflow the buffer
-  char pretty[4096] = {};
-  std::memset(pretty, '?', sizeof(pretty));
-  b.asPretty(pretty);
-  pretty[4095] = '\0';
-  if (std::strlen(pretty) + 1 > BUFSZ_BOARD_PRETTY) {
-    panic("buffer constant for pretty board is too slow");
+  std::map<BoardPrettyStyle, size_t> bufSizes = {
+      {BoardPrettyStyle::Ascii, BUFSZ_BOARD_PRETTY_ASCII},
+      {BoardPrettyStyle::Utf8, BUFSZ_BOARD_PRETTY_UTF8}};
+  for (auto [style, bufSize] : bufSizes) {
+    char pretty[4096] = {};
+    std::memset(pretty, '?', sizeof(pretty));
+    b.asPretty(pretty, style);
+    pretty[4095] = '\0';
+    if (std::strlen(pretty) + 1 > bufSize) {
+      panic("buffer constant for pretty board is too slow");
+    }
   }
 
   auto cmpMoves = [](Move a, Move b) { return a.intEncode() < b.intEncode(); };
