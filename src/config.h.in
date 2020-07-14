@@ -1,0 +1,10 @@
+#ifndef SOF_CONFIG_INCLUDED
+#define SOF_CONFIG_INCLUDED
+
+// Use BMI2 instruction set?
+#cmakedefine USE_BMI2
+
+// The system has stpcpy function?
+#cmakedefine USE_SYSTEM_STPCPY
+
+#endif  // SOF_CONFIG_INCLUDED

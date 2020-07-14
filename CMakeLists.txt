@@ -2,14 +2,64 @@ cmake_minimum_required(VERSION 3.8)
 
 project(sofcheck)
 
-# The engine will only work for x86_64, so check it here explicitly
-if(NOT ${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
-  message(FATAL_ERROR
-    "Cannot build for ${CMAKE_SYSTEM_PROCESSOR}.\n"
-    "Currently, only x86_64 is supported."
-  )
+include(CheckCXXSymbolExists)
+include(CheckCSourceCompiles)
+
+# Declare configuration options
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
+  set(USE_BMI1 ON CACHE BOOL "Use BMI1 insruction set (x86_64 only)")
+  set(USE_BMI2 OFF CACHE BOOL "Use BMI2 insruction set (x86_64 only)")
 endif()
 
+
+# Detect system configuration
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
+  set(CMAKE_REQUIRED_FLAGS -mbmi2)
+  check_c_source_compiles("
+      #include <immintrin.h>
+      #include <stdint.h>
+
+      int main() {
+        uint64_t a = _pdep_u64(30, 42);
+        uint64_t b = _pext_u64(30, 42);
+        return 0;
+      }
+    "
+    HAS_BMI2
+  )
+  unset(CMAKE_REQUIRED_FLAGS)
+  if(USE_BMI2 AND NOT HAS_BMI2)
+    message(WARNING
+      "The required headers for BMI2 were not found, so this option is disabled."
+    )
+    set(USE_BMI2 OFF)
+  endif()
+endif()
+
+check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
+
+
+# Apply compiler flags
+if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
+  # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
+  add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
+  if(USE_BMI1)
+    add_compile_options(-mbmi)
+  endif()
+  if(USE_BMI2)
+    add_compile_options(-mbmi2)
+  endif()
+endif()
+
+add_compile_options(-Wall -Wextra -Wpedantic)
+
+set(CMAKE_CXX_STANDARD 17)
+
+include_directories(${PROJECT_BINARY_DIR}/src)
+include_directories(src)
+
+
+# Declare some helper methods
 find_package(benchmark REQUIRED)
 
 function(target_benchmark target)
@@ -22,12 +72,11 @@ function(target_benchmark target)
   endif()
 endfunction()
 
-set(CMAKE_CXX_STANDARD 17)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror -mbmi2 -msse4 -mpopcnt)
-
+# Generate files
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/core/private)
 
+configure_file(src/config.h.in ${PROJECT_BINARY_DIR}/src/config.h)
 add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
   COMMAND gen_near_attacks ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
@@ -44,14 +93,12 @@ add_custom_command(
   DEPENDS gen_magic_consts
 )
 
-include_directories(${PROJECT_BINARY_DIR}/src)
-include_directories(src)
 
+# Add targets to build
 add_library(sof_util STATIC
   src/util/misc.cpp
   src/util/strutil.cpp
 )
-
 add_library(sof_core STATIC
   src/core/board.cpp
   src/core/init.cpp
@@ -87,4 +134,6 @@ add_executable(sofcheck
 )
 target_link_libraries(sofcheck sof_core sof_util)
 
+
+# Add install section
 install(TARGETS sofcheck RUNTIME DESTINATION bin)
