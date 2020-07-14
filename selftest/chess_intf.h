@@ -9,14 +9,6 @@
 #include "dodecahedron/intf.h"
 #endif
 
-#ifdef INTF_SEAGULL
-#ifdef INTF_USED
-#error Interface is already included!
-#endif
-#define INTF_USED
-#include "seagull/intf.h"
-#endif
-
 #ifdef INTF_SOFCHECK
 #ifdef INTF_USED
 #error Interface is already included!

@@ -1,6 +1,7 @@
+#include <benchmark/benchmark.h>
+
 #include <algorithm>
 
-#include "benchmark.h"
 #include "chess_intf.h"
 #include "util.h"
 
@@ -153,3 +154,5 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
   BENCHMARK(BM_Recurse##name)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Unit(benchmark::kMillisecond);
 #include "bench_xmacro.h"
 #undef BENCH_DO
+
+BENCHMARK_MAIN();

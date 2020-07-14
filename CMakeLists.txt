@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.8)
 
-project(sofcheck)
+project(SoFCheck)
 
 
 # Include helper modules
@@ -124,6 +124,10 @@ add_executable(sofcheck
   src/main.cpp
 )
 target_link_libraries(sofcheck sof_core sof_util)
+
+
+# Add self-tests
+add_subdirectory(selftest)
 
 
 # Add install section
