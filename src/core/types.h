@@ -80,9 +80,7 @@ inline constexpr bool bitboardHasBit(bitboard_t bb, cell_t cell) { return (bb >>
 constexpr cell_t WHITE_OFFSET = 1;
 constexpr cell_t BLACK_OFFSET = 9;
 
-constexpr cell_t INVALID_CELL = static_cast<cell_t>(-1);
 constexpr cell_t EMPTY_CELL = static_cast<cell_t>(0);
-
 constexpr coord_t INVALID_COORD = static_cast<coord_t>(-1);
 
 inline constexpr cell_t colorOffset(Color color) {

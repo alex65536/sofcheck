@@ -220,10 +220,10 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
   const bitboard_t bbSrc = coordToBitboard(move.src);
   const bitboard_t bbDst = coordToBitboard(move.dst);
   const bitboard_t bbChange = bbSrc | bbDst;
-  if (b.enpassantCoord != INVALID_CELL) {
+  if (b.enpassantCoord != INVALID_COORD) {
     b.hash ^= Private::g_zobristEnpassant[b.enpassantCoord];
   }
-  b.enpassantCoord = INVALID_CELL;
+  b.enpassantCoord = INVALID_COORD;
   switch (move.kind) {
     case MoveKind::Simple: {
       b.cells[move.src] = EMPTY_CELL;

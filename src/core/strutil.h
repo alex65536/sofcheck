@@ -9,9 +9,6 @@
 namespace SoFCore {
 
 inline constexpr char cellToChar(cell_t cell) {
-  if (cell == INVALID_CELL) {
-    return '@';
-  }
   char transpos[] = ".PKNBRQ??pknbrq?";
   if (cell > 16) {
     return '?';

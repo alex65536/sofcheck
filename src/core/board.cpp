@@ -407,7 +407,7 @@ void Board::update() {
 
   // Update hash
   hash = (side == Color::White) ? static_cast<board_hash_t>(0) : Private::g_zobristMoveSide;
-  if (enpassantCoord != INVALID_CELL) {
+  if (enpassantCoord != INVALID_COORD) {
     hash ^= Private::g_zobristEnpassant[enpassantCoord];
   }
   hash ^= Private::g_zobristCastling[castling];
