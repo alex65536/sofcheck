@@ -33,7 +33,7 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
     }
     return;
   }
-  MoveList moves;
+  MoveList moves = {};
   generateMoves(board, moves);
   int cnt = getMoveCount(moves);
   std::pair<int, int> moveOrd[240];
@@ -102,7 +102,7 @@ void runTestsFen(const char *fen) {
   using namespace ChessIntf;
 
   Board board;
-  MoveList moves;
+  MoveList moves = {};
   boardFromFen(board, fen);
   std::cout << "fen: " << fen << std::endl;
 #ifdef RUN_SELF_TESTS

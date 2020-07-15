@@ -23,7 +23,7 @@ inline void runGenMoves(benchmark::State &state, const char *fen) {
   Board board;
   boardFromFen(board, fen);
   for (auto _ : state) {
-    MoveList moves;
+    MoveList moves;  // NOLINT : we test for speed, no time to initialize
     generateMoves(board, moves);
     benchmark::DoNotOptimize(moves);
   }
@@ -42,7 +42,7 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
 
   Board board;
   boardFromFen(board, fen);
-  MoveList moveList;
+  MoveList moveList = {};
   generateMoves(board, moveList);
 
   Move moves[240];
@@ -120,7 +120,7 @@ void recurseSearch(ChessIntf::Board &board, int d) {
     return;
   }
 
-  MoveList moves;
+  MoveList moves;  // NOLINT: we test for speed, no time to initialize
   generateMoves(board, moves);
   int cnt = getMoveCount(moves);
 
