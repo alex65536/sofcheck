@@ -98,12 +98,8 @@ std::string hexDump(const unsigned char *buf, int size) {
   return result;
 }
 
-void dumpPosition(const char *fen) {
+void runTestsFen(const char *fen) {
   using namespace ChessIntf;
-
-  if (fen[0] == '\0' || fen[0] == '#') {
-    return;
-  }
 
   Board board;
   MoveList moves;
@@ -172,22 +168,32 @@ void dumpPosition(const char *fen) {
   std::cout << "\n";
 }
 
-int main() {
-  std::ios_base::sync_with_stdio(false);
+void doRunTests(std::istream &in) {
   ChessIntf::init();
 
-  std::cout << "Testing " << ChessIntf::getImplName() << "...\n\n";
-
-  std::ifstream fens("../boards.fen");
-  if (!fens) {
-    std::cerr << "Cannot locate file ../boards.fen; aborting" << std::endl;
-    return 1;
-  }
+  std::cerr << "Testing " << ChessIntf::getImplName() << "..." << std::endl;
 
   std::string fen;
-  while (getline(fens, fen)) {
-    dumpPosition(fen.c_str());
+  while (getline(in, fen)) {
+    // Ignore comment or blank lines
+    if (fen.empty() || fen[0] == '#') {
+      continue;
+    }
+    runTestsFen(fen.c_str());
   }
+}
 
-  return 0;
+int main(int argc, char **argv) {
+  std::ios_base::sync_with_stdio(false);
+  if (argc == 2) {
+    std::ifstream file(argv[1]);
+    if (!file) {
+      std::cerr << "Cannot open file \"" << argv[1] << "\"; aborting" << std::endl;
+      return 1;
+    }
+    doRunTests(file);
+    return 0;
+  }
+  std::cerr << "usage: " << argv[0] << " IN_FILE" << std::endl;
+  return 1;
 }
