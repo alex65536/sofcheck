@@ -7,27 +7,41 @@
 
 namespace SoFCore {
 
-// Check if the cell is attacked by pieces of color C
-// Note that this function doesn't count enpassant as attack for efficiency
+// Checks if the cell is attacked by any of the pieces of color `C`
+//
+// For optimization purposes, enpassant captures are not considered by this function, as the primary
+// purpose of this function is to check for king attacks  (e. g. in `isMoveLegal()`)
 template <Color C>
 bool isCellAttacked(const Board &b, coord_t coord);
 
-// Checks if the move is legal AFTER it is made
-// So, the typical use is to make move, then check whether it is legal, and then unmake it
+// Returns `true` if the last move applied to the board `b` was legal. Note that it doesn't mean
+// that you can apply any illegal moves to the board, the applied move must be still pseudo-legal.
+//
+// So, the typical use of this function is to make a pseudo-legal move, then check whether it is
+// legal, and then unmake it if it's illegal.
 bool isMoveLegal(const Board &b);
 
-// All those functions that generate moves take arguments in the following way:
+// Returns `true` is the king of the moving side is currenly under check
+bool isCheck(const Board &b);
+
+// All these functions generate pseudo-legal moves (i.e. all the moves that are legal by chess rules
+// if we ignore the rule that the king must not be under check). The arguments are passed in the
+// following way:
+//
 // - `board` is the current position
 // - `list` is an output list in which the moves will be written
 // - the return value indicates the number of moves generated
-// The moves are not guaranteed to be legal, use `isMoveLegal` to check it
+//
+// To generate only legal moves you can use `isMoveLegal()` function
 size_t genAllMoves(const Board &b, Move *list);
 size_t genSimpleMoves(const Board &b, Move *list);
 size_t genCaptures(const Board &b, Move *list);
 
-// Returns true if this move can be returned by move generator mentioned above
-// The move must be well-formed (i.e. move.isWellFormed(b.side) must return true)
-// Null move is considered invalid
+// Returns `true` if the move `move` can be returned by `genAllMoves()`
+//
+// The move must be well-formed (i.e. `move.isWellFormed(b.side)` must return `true`), otherwise the
+// behavior is undefined. Null moves are considered invalid by this function, as they cannot be
+// returned by `genAllMoves()`.
 bool isMoveValid(const Board &b, Move move);
 
 }  // namespace SoFCore

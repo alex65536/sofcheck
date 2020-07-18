@@ -44,6 +44,15 @@ bool isMoveLegal(const Board &b) {
 }
 
 template <Color C>
+inline static bool isCheckImpl(const Board &b) {
+  return !isCellAttacked<invert(C)>(b, b.kingPos(C));
+}
+
+bool isCheck(const Board &b) {
+  return (b.side == Color::White) ? isCheckImpl<Color::White>(b) : isCheckImpl<Color::Black>(b);
+}
+
+template <Color C>
 inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t src,
                                         const coord_t dst, const subcoord_t x) {
   if (x == Private::promoteSrcRow(C)) {
@@ -95,10 +104,10 @@ inline static size_t genPawnCapture(const Board &b, Move *list) {
     constexpr coord_t rightDelta = (C == Color::White) ? -7 : 9;
     const coord_t leftDst = src + leftDelta;
     const coord_t rightDst = src + rightDelta;
-    if (y != 0 && cellPieceHasColor(b.cells[leftDst], invert(C))) {
+    if (y != 0 && isCellPieceColorEqualTo(b.cells[leftDst], invert(C))) {
       size = addPawnWithPromote<C>(list, size, src, leftDst, x);
     }
-    if (y != 7 && cellPieceHasColor(b.cells[rightDst], invert(C))) {
+    if (y != 7 && isCellPieceColorEqualTo(b.cells[rightDst], invert(C))) {
       size = addPawnWithPromote<C>(list, size, src, rightDst, x);
     }
   }

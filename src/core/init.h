@@ -3,7 +3,7 @@
 
 namespace SoFCore {
 
-// Initialization routine, must be called once before other methods are used.
+// Initialization routine, must be called once before other methods in `SoFCore` are used.
 void init();
 
 }  // namespace SoFCore

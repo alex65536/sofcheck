@@ -273,9 +273,9 @@ FenParseResult Board::setFromFen(const char *fen) {
     ++fen;
   } else {
     const char letter = *(fen++);
-    D_PARSE_CHECK(isValidYChar(letter), FenParseResult::UnexpectedCharacter);
+    D_PARSE_CHECK(isYCharValid(letter), FenParseResult::UnexpectedCharacter);
     const char number = *(fen++);
-    D_PARSE_CHECK(isValidXChar(number), FenParseResult::UnexpectedCharacter);
+    D_PARSE_CHECK(isXCharValid(number), FenParseResult::UnexpectedCharacter);
     const subcoord_t enpassantX = Private::enpassantSrcRow(side);
     D_PARSE_CHECK(charToSubX(number) == Private::enpassantDstRow(side),
                   FenParseResult::EnpassantInvalidCell);
@@ -356,7 +356,7 @@ SoFUtil::Result<Board, FenParseResult> Board::fromFen(const char *fen) {
 ValidateResult Board::validate() {
   // Check for BadData and InvalidEnpassantRow
   for (cell_t cell : cells) {
-    if (!cellHasValidContents(cell)) {
+    if (!isCellValid(cell)) {
       return ValidateResult::BadData;
     }
   }

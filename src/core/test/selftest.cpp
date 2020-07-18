@@ -48,7 +48,7 @@ static bool boardsBitCompare(const Board &a, const Board &b) {
                      sizeof(Board)) == 0;
 }
 
-void selfTest(Board b) {
+void runSelfTest(Board b) {
   // Check that the board itself is valid
   testBoardValid(b);
 
@@ -83,7 +83,7 @@ void selfTest(Board b) {
     }
   }
 
-  auto cmpMoves = [](Move a, Move b) { return a.intEncode() < b.intEncode(); };
+  auto cmpMoves = [](Move a, Move b) { return a.asUint() < b.asUint(); };
 
   // Try to generate moves in total and compare the result if we generate simple moves and captures
   // separately

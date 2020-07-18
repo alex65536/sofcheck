@@ -5,11 +5,12 @@
 
 namespace SoFCore::Test {
 
-// All this functions panic if something is wrong with the board
-
+// Checks that the board `b` is valid and updated. Otherwise this function panics.
 void testBoardValid(const Board &b);
 
-void selfTest(Board b);
+// Performs self-tests for board `b` (i.e. checks that many functions in `SoFCore` are
+// implemented properly)
+void runSelfTest(Board b);
 
 }  // namespace SoFCore::Test
 

@@ -11,18 +11,17 @@
 
 namespace SoFUtil {
 
-// Returns the number of ones in x
+// Returns the number of ones in `x`
 inline constexpr uint8_t popcount(uint64_t x) { return __builtin_popcountll(x); }
 
-// Clears the lowest bit set to one
+// Clears the lowest bit set to one in `x`
 inline constexpr uint64_t clearLowest(uint64_t x) { return x & (x - 1); }
 
-// Returns the lowest bit number
-// If x == 0, the behavior is undefined!
+// Returns the position of the lowest bit set to one in `x`. If `x == 0`, the behavior is undefined
 inline constexpr uint8_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
 
-// Combines getLowest and clearLowest for convenience
-// If x == 0, the behavior is undefined!
+// Combines getLowest and clearLowest for convenience. It clears the lowest bit set to one in `x`
+// and returns the position of the cleared bit. If `x == 0`, the behavior is undefined
 inline constexpr uint8_t extractLowest(uint64_t &x) {
   uint8_t res = getLowest(x);
   x = clearLowest(x);
@@ -31,13 +30,16 @@ inline constexpr uint8_t extractLowest(uint64_t &x) {
 
 #ifdef USE_BMI2
 
-// The function does the same as _pdep_u64 Intel intrinsic (or PDEP instruction)
+// The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)
+//
+// For more details, you can look at https://www.felixcloutier.com/x86/pdep
 inline uint64_t depositBits(uint64_t x, uint64_t msk) { return _pdep_u64(x, msk); }
 
 #else
 
-// The function does the same as _pdep_u64 Intel intrinsic (or PDEP instruction)
-// This is a naive implementation for CPUs that do not support BMI2
+// The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)
+//
+// This is a naive implementation for CPUs that don't support BMI2
 inline uint64_t depositBits(uint64_t x, uint64_t msk) {
   uint64_t res = 0;
   while (msk) {

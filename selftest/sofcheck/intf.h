@@ -24,7 +24,7 @@ struct MoveList {
 
 inline const char *getImplName() { return "SoFCheck"; }
 
-inline void selfTest(Board board) { SoFCore::Test::selfTest(board); }
+inline void selfTest(Board board) { SoFCore::Test::runSelfTest(board); }
 
 inline void init() { SoFCore::init(); }
 

@@ -9,8 +9,8 @@
 
 namespace SoFUtil {
 
-// TODO: do something better instead of throwing std::runtime_error on error in Result<T, E>
-// TODO: add more methods to Result<T, E>
+// TODO: add more methods into `Result<T, E>`
+// TODO: ensure that there are no unnecessary copies and moves in `Result<T, E>`
 
 template <typename T>
 class Ok;
@@ -18,7 +18,7 @@ class Ok;
 template <typename E>
 class Err;
 
-// A simple result type that behaves similar to Result<T, E> in Rust
+// A simple result type that behaves similar to `Result<T, E>` in Rust
 template <typename T, typename E>
 class Result {
 public:
@@ -26,8 +26,8 @@ public:
 
   inline constexpr bool isErr() const { return variant_.index() == 1; }
 
-  // Consumes the Result, moving away ok() value from it
-  // If it doesn't hold the specified value, it throws std::runtime_error
+  // Consumes the Result, moving away `ok()` value from it. If it doesn't hold the specified value,
+  // it panics
   inline T unwrap() noexcept {
     if (likely(isOk())) {
       return std::get<0>(variant_);
@@ -35,8 +35,8 @@ public:
     panic("Attempt to unwrap() Result<T, E> without a value");
   }
 
-  // Consumes the Result, moving away err() value from it
-  // If it doesn't hold the specified value, it throws std::runtime_error
+  // Consumes the `Result`, moving away `err()` value from it. If it doesn't hold the specified
+  // value, it panics
   inline T unwrapErr() noexcept {
     if (likely(isErr())) {
       return std::get<1>(variant_);
@@ -67,10 +67,15 @@ private:
   std::variant<T, E> variant_;
 };
 
+// Wrapper class that helps to convert the value into successful `Result<T, E>`
+//
+// Usage example:
+//
+// Result<int, std::string> res = Ok(42);
 template <typename T>
 class Ok {
 public:
-  inline constexpr Ok(T value) : value_(std::move(value)) {}
+  inline explicit constexpr Ok(T value) : value_(std::move(value)) {}
 
 private:
   T value_;
@@ -79,10 +84,15 @@ private:
   friend class Result;
 };
 
+// Wrapper class that helps to convert the value into errored `Result<T, E>`
+//
+// Usage example:
+//
+// Result<int, std::string> res = Err("something is wrong");
 template <typename E>
 class Err {
 public:
-  inline constexpr Err(E err) : err_(std::move(err)) {}
+  inline explicit constexpr Err(E err) : err_(std::move(err)) {}
 
 private:
   E err_;

@@ -40,10 +40,10 @@ enum class BoardPrettyStyle { Ascii, Utf8 };
 constexpr size_t BUFSZ_BOARD_FEN = 120;
 constexpr size_t BUFSZ_BOARD_PRETTY_ASCII = 120;
 constexpr size_t BUFSZ_BOARD_PRETTY_UTF8 = 300;
-// Buffer size to be used regardless of the style
+// Buffer size to be used in `Board::asPretty` regardless of the style
 constexpr size_t BUFSZ_BOARD_PRETTY = 300;
 
-// Check that BUFSZ_BOARD_PRETTY is the largest
+// Check that `BUFSZ_BOARD_PRETTY` is the largest
 static_assert(BUFSZ_BOARD_PRETTY_ASCII <= BUFSZ_BOARD_PRETTY);
 static_assert(BUFSZ_BOARD_PRETTY_UTF8 <= BUFSZ_BOARD_PRETTY);
 
@@ -52,15 +52,18 @@ struct Board {
 
   // Essential fields that indicate the current position
   cell_t cells[64];
-  uint8_t unused;  // Unused field, needed for alignment
+  uint8_t unused;  // Unused field, required for alignment, must be set to zero
   Color side;
   castling_t castling;
-  coord_t enpassantCoord;  // The position of the pawn that performed double move (or INVALID_COORD)
+  coord_t enpassantCoord;  // Position of pawn that performed last double move (or `INVALID_COORD`)
   uint16_t moveCounter;
   uint16_t moveNumber;
 
   // Auxiliary fields that help the move generator to work faster
-  // Note that these ones also MUST be filled in order to work correctly
+  //
+  // Note that these ones also MUST be filled in order to work correctly. If you fill everything
+  // manually, use `update()` method. Note that the functions in SoFCore maintain these fields
+  // automatically, so you don't need to use `update()` after calling one of them
   board_hash_t hash;
   bitboard_t bbWhite;
   bitboard_t bbBlack;
@@ -89,33 +92,38 @@ struct Board {
     return SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]);
   }
 
-  // Validates if the board is correct
+  // Validates the board for correctness
   // Non-critical issues (like bad castling flags or bad bitboards) don't result in unsuccessful
-  // return value from this function. Note also that this function will call update() automatically,
-  // so such issues shall be corrected.
+  // return value from this function, so it may still return `Ok`. Note also that this function will
+  // call `update()` automatically, so such issues shall be corrected.
   ValidateResult validate();
 
-  // Call this method after setting the essential fields
+  // Updates the auxilliary fields in the structure and corrects minor issues in essential fields
+  // such as invalid castling and enpassant flags
   void update();
 
-  // Castling helper methods
-  inline void clearCastling() { castling = 0; }
-  inline void setAllCastling() { castling = CASTLING_ALL; }
+  // Helper methods to change castling flags
+  inline constexpr void clearCastling() { castling = 0; }
+  inline constexpr void setAllCastling() { castling = CASTLING_ALL; }
 
-  inline bool isAnyCastling() const { return castling != 0; }
+  inline constexpr bool isAnyCastling() const { return castling != 0; }
 
-  inline bool isKingsideCastling(Color c) const { return castling & castlingKingside(c); }
-  inline bool isQueensideCastling(Color c) const { return castling & castlingQueenside(c); }
+  inline constexpr bool isKingsideCastling(Color c) const { return castling & castlingKingside(c); }
+  inline constexpr bool isQueensideCastling(Color c) const {
+    return castling & castlingQueenside(c);
+  }
 
-  inline void setKingsideCastling(Color c) { castling |= castlingKingside(c); }
-  inline void setQueensideCastling(Color c) { castling |= castlingQueenside(c); }
+  inline constexpr void setKingsideCastling(Color c) { castling |= castlingKingside(c); }
+  inline constexpr void setQueensideCastling(Color c) { castling |= castlingQueenside(c); }
 
-  inline void clearKingsideCastling(Color c) { castling &= ~castlingKingside(c); }
-  inline void clearQueensideCastling(Color c) { castling &= ~castlingQueenside(c); }
-  inline void clearCastling(Color c) { castling &= ~castlingKingside(c) & ~castlingQueenside(c); }
+  inline constexpr void clearKingsideCastling(Color c) { castling &= ~castlingKingside(c); }
+  inline constexpr void clearQueensideCastling(Color c) { castling &= ~castlingQueenside(c); }
+  inline constexpr void clearCastling(Color c) {
+    castling &= ~castlingKingside(c) & ~castlingQueenside(c);
+  }
 
-  inline void flipKingsideCastling(Color c) { castling ^= castlingKingside(c); }
-  inline void flipQueensideCastling(Color c) { castling ^= castlingQueenside(c); }
+  inline constexpr void flipKingsideCastling(Color c) { castling ^= castlingKingside(c); }
+  inline constexpr void flipQueensideCastling(Color c) { castling ^= castlingQueenside(c); }
 };
 
 }  // namespace SoFCore
