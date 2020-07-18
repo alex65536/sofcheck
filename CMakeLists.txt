@@ -74,11 +74,6 @@ add_custom_command(
   DEPENDS gen_near_attacks
 )
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/part_lines.h
-  COMMAND gen_part_lines ${PROJECT_BINARY_DIR}/src/core/private/part_lines.h
-  DEPENDS gen_part_lines
-)
-add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
   COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
   DEPENDS gen_magic_consts
@@ -101,17 +96,11 @@ add_library(sof_core STATIC
   src/core/private/zobrist.cpp
   src/core/test/selftest.cpp
   ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
-  ${PROJECT_BINARY_DIR}/src/core/private/part_lines.h
   ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
 )
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
-  gen/gen_main.cpp
-  gen/common.cpp
-)
-add_executable(gen_part_lines
-  gen/gen_part_lines.cpp
   gen/gen_main.cpp
   gen/common.cpp
 )

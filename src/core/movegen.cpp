@@ -3,7 +3,6 @@
 #include "core/private/bit_consts.h"
 #include "core/private/magic.h"
 #include "core/private/near_attacks.h"
-#include "core/private/part_lines.h"
 #include "core/private/rows.h"
 #include "util/bit.h"
 #include "util/misc.h"
@@ -332,26 +331,16 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
   if (srcCell == makeCell(C, Piece::Knight)) {
     return Private::KNIGHT_ATTACKS[src] & bbDst;
   }
-  const coord_t coordMin = std::min(src, dst);
-  const coord_t coordMax = std::max(src, dst);
-  const bitboard_t bbMax = coordToBitboard(coordMax);
-
-#define D_CHECK_LINE(line)                             \
-  ((bbMax & Private::LINE_##line##_UPPER[coordMin]) && \
-   !(b.bbAll & Private::LINE_##line##_UPPER[coordMin] & Private::LINE_##line##_LOWER[coordMax]))
-
   if (srcCell == makeCell(C, Piece::Bishop)) {
-    return D_CHECK_LINE(DIAG1) || D_CHECK_LINE(DIAG2);
+    return Private::bishopAttackBitboard(b.bbAll, src) & bbDst;
   }
   if (srcCell == makeCell(C, Piece::Rook)) {
-    return D_CHECK_LINE(VERT) || D_CHECK_LINE(HORZ);
+    return Private::rookAttackBitboard(b.bbAll, src) & bbDst;
   }
   if (srcCell == makeCell(C, Piece::Queen)) {
-    return D_CHECK_LINE(DIAG1) || D_CHECK_LINE(DIAG2) || D_CHECK_LINE(VERT) || D_CHECK_LINE(HORZ);
+    return (Private::bishopAttackBitboard(b.bbAll, src) & bbDst) ||
+           (Private::rookAttackBitboard(b.bbAll, src) & bbDst);
   }
-
-#undef D_CHECK_LINE
-
   return false;
 }
 
