@@ -47,6 +47,14 @@ inline constexpr subcoord_t charToSubX(char c) { return '8' - c; }
 // If `'a' <= c && c <= 'h'` doesn't hold, the behavior is undefined
 inline constexpr subcoord_t charToSubY(char c) { return c - 'a'; }
 
+// Creates a coordinate from its string representation. If invalid string representation is given,
+// the behaviour of this function is undefined.
+//
+// For example, `charsToCoord('c', '5')` returns coord_t that corresponds to c5 cell.
+inline constexpr coord_t charsToCoord(char cy, char cx) {
+  return makeCoord(charToSubX(cx), charToSubY(cy));
+}
+
 // Recommended buffer size for `moveToStr()`
 constexpr size_t BUFSZ_MOVE_STR = 6;
 

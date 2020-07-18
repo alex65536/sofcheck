@@ -57,9 +57,9 @@ inline MoveList generateMoves(const Board &board) {
   return moves;
 }
 
-inline bool isAttacked(const Board &board, bool isWhite, char cx, char cy) {
+inline bool isAttacked(const Board &board, bool isWhite, char cy, char cx) {
   using namespace SoFCore;
-  coord_t coord = makeCoord(charToSubX(cy), charToSubY(cx));
+  coord_t coord = charsToCoord(cy, cx);
   if (isWhite) {
     return isCellAttacked<Color::White>(board, coord);
   } else {
