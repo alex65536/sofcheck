@@ -1,1 +1,4 @@
-Checks: -*
+Checks: -*,clang-analyzer-*,-clang-analyzer-valist.Uninitialized
+
+# I don't plan to fix anything in Dodecahedron code base, so the checks are superficial here
+# clang-analyzer-valist.Uninitialized is probably false positive, so it's disabled
