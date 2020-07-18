@@ -127,6 +127,12 @@ add_executable(sofcheck
 target_link_libraries(sofcheck sof_core sof_util)
 
 
+# Add benchmarks
+add_executable(bench_is_move_legal bench/core/bench_is_move_legal.cpp)
+target_benchmark(bench_is_move_legal)
+target_link_libraries(bench_is_move_legal sof_core sof_util)
+
+
 # Add self-tests
 add_subdirectory(selftest)
 
