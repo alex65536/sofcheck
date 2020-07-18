@@ -1,10 +1,10 @@
 #include "core/private/zobrist.h"
 
-#include <chrono>
-#include <random>
+#include <initializer_list>
 
 #include "core/private/rows.h"
 #include "core/types.h"
+#include "util/random.h"
 
 namespace SoFCore::Private {
 
@@ -16,21 +16,22 @@ board_hash_t g_zobristPieceCastlingKingside[2];
 board_hash_t g_zobristPieceCastlingQueenside[2];
 
 void initZobrist() {
-  std::mt19937_64 rnd(std::chrono::steady_clock::now().time_since_epoch().count());
+  using SoFUtil::random;
+
   for (size_t j = 0; j < 64; ++j) {
     g_zobristPieces[0][j] = 0;
   }
   for (size_t i = 1; i < 16; ++i) {
     for (size_t j = 0; j < 64; ++j) {
-      g_zobristPieces[i][j] = rnd();
+      g_zobristPieces[i][j] = random();
     }
   }
-  g_zobristMoveSide = rnd();
+  g_zobristMoveSide = random();
   for (board_hash_t &hash : g_zobristCastling) {
-    hash = rnd();
+    hash = random();
   }
   for (board_hash_t &hash : g_zobristEnpassant) {
-    hash = rnd();
+    hash = random();
   }
   for (Color c : {Color::White, Color::Black}) {
     const auto idx = static_cast<size_t>(c);

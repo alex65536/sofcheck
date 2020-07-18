@@ -89,6 +89,7 @@ add_custom_command(
 add_library(sof_util STATIC
   src/util/misc.cpp
   src/util/strutil.cpp
+  src/util/random.cpp
 )
 add_library(sof_core STATIC
   src/core/board.cpp

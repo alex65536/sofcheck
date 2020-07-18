@@ -1,5 +1,5 @@
-#ifndef SOF_MISC_COMPILER_INCLUDED
-#define SOF_MISC_COMPILER_INCLUDED
+#ifndef SOF_UTIL_MISC_INCLUDED
+#define SOF_UTIL_MISC_INCLUDED
 
 // We define `likely` and `unlikely` ourselves, so reset them if they are present
 #ifdef likely
@@ -30,4 +30,4 @@ namespace SoFUtil {
 
 }  // namespace SoFUtil
 
-#endif  // SOF_MISC_COMPILER_INCLUDED
+#endif  // SOF_UTIL_MISC_INCLUDED
