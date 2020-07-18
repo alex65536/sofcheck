@@ -16,7 +16,7 @@ Prints all the move chains while running depthDump test. (the output may be quit
 set(DEPTH_DUMP_LARGE ON CACHE BOOL "\
 Run depthDump on bigger recursion depths (consumes more time for test).")
 
-set(RUN_SELF_TESTS ON CACHE BOOL "Run self-tests.")
+set(RUN_SELF_TESTS ON CACHE BOOL "Run SoFCore::selfTest() while testing.")
 
 configure_file(selftest_config.h.in ${PROJECT_BINARY_DIR}/src/selftest_config.h)
 include_directories(${PROJECT_BINARY_DIR}/src)
@@ -54,3 +54,19 @@ add_chess_impl(dodecahedron
 add_chess_impl(sofcheck)
 target_link_libraries(test_sofcheck sof_core sof_util)
 target_link_libraries(bench_sofcheck sof_core sof_util)
+
+enable_testing()
+
+if(UNIX)
+  # The self-test runner uses diff and shell script, so run only on UNIX-like
+
+  add_test(
+    NAME self-test
+    COMMAND ${PROJECT_SOURCE_DIR}/../tools/run_self_tests.sh
+    ${PROJECT_BINARY_DIR}/test_dodecahedron
+    ${PROJECT_BINARY_DIR}/test_sofcheck
+    ${PROJECT_SOURCE_DIR}/boards.fen
+    ${PROJECT_BINARY_DIR}/report.log
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  )
+endif()
