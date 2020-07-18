@@ -1,5 +1,6 @@
 #include "core/board.h"
 
+#include <charconv>
 #include <cstring>
 
 #include "core/movegen.h"
@@ -75,11 +76,11 @@ void Board::asFen(char *fen) const {
   *(fen++) = ' ';
 
   // 5. Move counter
-  fen += SoFUtil::uintSave(moveCounter, fen);
+  fen = std::to_chars(fen, fen + 6, moveCounter).ptr;
   *(fen++) = ' ';
 
   // 6. Move number
-  fen += SoFUtil::uintSave(moveNumber, fen);
+  fen = std::to_chars(fen, fen + 6, moveNumber).ptr;
 
   *(fen++) = '\0';
 }
@@ -284,14 +285,17 @@ FenParseResult Board::setFromFen(const char *fen) {
   D_PARSE_CONSUME_SPACE();
 
   // 5. Parse move counter
-  int chars = SoFUtil::uintParse(moveCounter, fen);
-  D_PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
-  fen += chars;
+  const char *oldPos = fen;
+  fen = SoFUtil::scanTokenEnd(fen);
+  std::from_chars_result res = std::from_chars(oldPos, fen, moveCounter);
+  D_PARSE_CHECK(res.ec == std::errc(), FenParseResult::ExpectedUint16);
   D_PARSE_CONSUME_SPACE();
 
   // 6. Parse move number
-  chars = SoFUtil::uintParse(moveNumber, fen);
-  D_PARSE_CHECK(chars > 0, FenParseResult::ExpectedUint16);
+  oldPos = fen;
+  fen = SoFUtil::scanTokenEnd(fen);
+  res = std::from_chars(oldPos, fen, moveNumber);
+  D_PARSE_CHECK(res.ec == std::errc(), FenParseResult::ExpectedUint16);
 
   update();
   return FenParseResult::Ok;

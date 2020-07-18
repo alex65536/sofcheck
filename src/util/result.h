@@ -37,7 +37,7 @@ public:
 
   // Consumes the `Result`, moving away `err()` value from it. If it doesn't hold the specified
   // value, it panics
-  inline T unwrapErr() noexcept {
+  inline E unwrapErr() noexcept {
     if (likely(isErr())) {
       return std::get<1>(variant_);
     }
