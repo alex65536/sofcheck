@@ -90,6 +90,7 @@ add_library(sof_core STATIC
   src/core/board.cpp
   src/core/init.cpp
   src/core/move.cpp
+  src/core/move_chain.cpp
   src/core/movegen.cpp
   src/core/strutil.cpp
   src/core/private/magic.cpp
@@ -120,6 +121,10 @@ target_link_libraries(sofcheck sof_core sof_util)
 add_executable(bench_is_move_legal bench/core/bench_is_move_legal.cpp)
 target_benchmark(bench_is_move_legal)
 target_link_libraries(bench_is_move_legal sof_core sof_util)
+
+add_executable(bench_move_chain bench/core/bench_move_chain.cpp)
+target_benchmark(bench_move_chain)
+target_link_libraries(bench_move_chain sof_core sof_util)
 
 
 # Add self-tests
