@@ -1,6 +1,7 @@
 find_package(benchmark REQUIRED)
 
 function(target_benchmark target)
+  target_include_directories(${target} PRIVATE ${PROJECT_SOURCE_DIR}/bench)
   target_link_libraries(${target} benchmark::benchmark)
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     target_link_libraries(${target} pthread)

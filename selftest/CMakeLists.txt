@@ -37,6 +37,7 @@ function(add_chess_impl impl_name)
     ${ARGN}
   )
   target_benchmark(bench_${impl_name})
+  target_include_directories(bench_${impl_name} PRIVATE ${PROJECT_SOURCE_DIR}/../bench)
   target_compile_definitions(bench_${impl_name} PUBLIC INTF_${impl_name_upper})
 endfunction()
 

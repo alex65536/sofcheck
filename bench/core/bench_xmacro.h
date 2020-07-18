@@ -1,3 +1,5 @@
+// NO_HEADER_GUARD
+
 BENCH_DO(Initial)
 BENCH_DO(Sicilian)
 BENCH_DO(Middle)

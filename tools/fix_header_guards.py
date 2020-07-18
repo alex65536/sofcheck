@@ -30,6 +30,8 @@ def fix_header_guard(file_name):
     if not lines:
         sys.stderr.write(f"WARNING: file {file_name} is empty!\n")
         lines = ['\n']
+    if lines[0].startswith('// NO_HEADER_GUARD'):
+        return
     header_guard = make_header_guard(file_name)
     if len(lines) >= 3 and lines[0].strip().startswith('#ifndef') and \
        lines[1].strip().startswith('#define') and \
@@ -47,7 +49,7 @@ def fix_header_guard(file_name):
     open(file_name, 'w').write(''.join(lines))
 
 
-for subdir in ['gen', 'src']:
+for subdir in ['bench', 'gen', 'src']:
     p = Path('.') / subdir
     for file_name in p.glob('**/*.h'):
         fix_header_guard(file_name)
