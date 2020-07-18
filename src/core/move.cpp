@@ -214,7 +214,7 @@ inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_
 
 template <Color C>
 inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
-  MovePersistence p{b.hash, b.castling, b.enpassantCoord, b.moveCounter, b.cells[move.dst]};
+  MovePersistence p{b.hash, b.castling, b.enpassantCoord, b.moveCounter, b.cells[move.dst], 0, 0};
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
   const bitboard_t bbSrc = coordToBitboard(move.src);

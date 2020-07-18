@@ -7,6 +7,7 @@
 #include "core/movegen.h"
 #include "core/strutil.h"
 #include "core/test/selftest.h"
+#include "util/misc.h"
 
 namespace ChessIntf {
 
@@ -31,10 +32,17 @@ inline const Move &getMove(const MoveList &lst, int idx) { return lst.moves[idx]
 
 inline int getMoveCount(const MoveList &lst) { return lst.count; }
 
-inline void boardFromFen(Board &board, const char *fen) { board.setFromFen(fen); }
+inline Board boardFromFen(const char *fen) {
+  Board board;  // NOLINT: uninitialized
+  SoFCore::FenParseResult result = board.setFromFen(fen);
+  if (result != SoFCore::FenParseResult::Ok) {
+    SoFUtil::panic("the given FEN is invalid");
+  }
+  return board;
+}
 
-inline void makeMove(Board &board, const Move &move, MovePersistence &p) {
-  p = SoFCore::moveMake(board, move);
+inline MovePersistence makeMove(Board &board, const Move &move) {
+  return SoFCore::moveMake(board, move);
 }
 
 inline void unmakeMove(Board &board, const Move &move, MovePersistence &p) {
@@ -43,8 +51,10 @@ inline void unmakeMove(Board &board, const Move &move, MovePersistence &p) {
 
 inline void moveStr(const Board &, const Move &mv, char *str) { SoFCore::moveToStr(mv, str); }
 
-inline void generateMoves(const Board &board, MoveList &moves) {
+inline MoveList generateMoves(const Board &board) {
+  MoveList moves;
   moves.count = static_cast<size_t>(SoFCore::genAllMoves(board, moves.moves));
+  return moves;
 }
 
 inline bool isAttacked(const Board &board, bool isWhite, char cx, char cy) {

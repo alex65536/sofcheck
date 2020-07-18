@@ -339,13 +339,13 @@ void Board::setInitialPosition() {
 }
 
 Board Board::initialPosition() {
-  Board board;  // NOLINT: board is initialized in setInitialPosition()
+  Board board;  // NOLINT: uninitialized
   board.setInitialPosition();
   return board;
 }
 
 SoFUtil::Result<Board, FenParseResult> Board::fromFen(const char *fen) {
-  Board board;  // NOLINT: board is initialized in setFromFen()
+  Board board;  // NOLINT: uninitialized
   FenParseResult result = board.setFromFen(fen);
   if (result == FenParseResult::Ok) {
     return SoFUtil::Ok(board);

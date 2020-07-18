@@ -20,11 +20,9 @@ inline void runGenMoves(benchmark::State &state, const char *fen) {
 
   init();
 
-  Board board;
-  boardFromFen(board, fen);
+  Board board = boardFromFen(fen);
   for (auto _ : state) {
-    MoveList moves;  // NOLINT : we test for speed, no time to initialize
-    generateMoves(board, moves);
+    MoveList moves = generateMoves(board);
     benchmark::DoNotOptimize(moves);
   }
 }
@@ -40,10 +38,8 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
 
   init();
 
-  Board board;
-  boardFromFen(board, fen);
-  MoveList moveList = {};
-  generateMoves(board, moveList);
+  Board board = boardFromFen(fen);
+  MoveList moveList = generateMoves(board);
 
   Move moves[240];
   int cnt = getMoveCount(moveList);
@@ -56,8 +52,7 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
 
   for (auto _ : state) {
     for (int i = 0; i < cnt; ++i) {
-      MovePersistence p;
-      makeMove(board, moves[i], p);
+      MovePersistence p = makeMove(board, moves[i]);
       unmakeMove(board, moves[i], p);
     }
   }
@@ -74,8 +69,7 @@ inline void runIsAttacked(benchmark::State &state, const char *fen) {
 
   init();
 
-  Board board;
-  boardFromFen(board, fen);
+  Board board = boardFromFen(fen);
 
   for (auto _ : state) {
     for (bool color : {true, false}) {
@@ -99,8 +93,7 @@ inline void runKingAttack(benchmark::State &state, const char *fen) {
 
   init();
 
-  Board board;
-  boardFromFen(board, fen);
+  Board board = boardFromFen(fen);
 
   for (auto _ : state) {
     benchmark::DoNotOptimize(isOpponentKingAttacked(board));
@@ -120,14 +113,12 @@ void recurseSearch(ChessIntf::Board &board, int d) {
     return;
   }
 
-  MoveList moves;  // NOLINT: we test for speed, no time to initialize
-  generateMoves(board, moves);
+  MoveList moves = generateMoves(board);
   int cnt = getMoveCount(moves);
 
   for (int i = 0; i < cnt; ++i) {
     const Move &move = getMove(moves, i);
-    MovePersistence persistence;
-    makeMove(board, move, persistence);
+    MovePersistence persistence = makeMove(board, move);
     if (!isOpponentKingAttacked(board)) {
       recurseSearch(board, d - 1);
     }
@@ -140,8 +131,7 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
 
   init();
 
-  Board board;
-  boardFromFen(board, fen);
+  Board board = boardFromFen(fen);
 
   for (auto _ : state) {
     int d = state.range(0);

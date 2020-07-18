@@ -33,8 +33,7 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
     }
     return;
   }
-  MoveList moves = {};
-  generateMoves(board, moves);
+  MoveList moves = generateMoves(board);
   int cnt = getMoveCount(moves);
   std::pair<int, int> moveOrd[240];
   for (int i = 0; i < cnt; ++i) {
@@ -48,13 +47,12 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
   }
   for (int i = 0; i < cnt; ++i) {
     const Move &move = getMove(moves, moveOrd[i].second);
-    MovePersistence persistence;
 #ifdef DEPTH_DUMP_TRACE_CHAINS
     char str[6];
     moveStr(board, move, str);
     size_t wasLen = moveChain.size();
 #endif
-    makeMove(board, move, persistence);
+    MovePersistence persistence = makeMove(board, move);
     if (!isOpponentKingAttacked(board)) {
 #ifdef DEPTH_DUMP_TRACE_CHAINS
       moveChain += str;
@@ -101,15 +99,13 @@ std::string hexDump(const unsigned char *buf, int size) {
 void runTestsFen(const char *fen) {
   using namespace ChessIntf;
 
-  Board board;
-  MoveList moves = {};
-  boardFromFen(board, fen);
+  Board board = boardFromFen(fen);
   std::cout << "fen: " << fen << std::endl;
 #ifdef RUN_SELF_TESTS
   selfTest(board);
 #endif
 
-  generateMoves(board, moves);
+  MoveList moves = generateMoves(board);
   std::vector<std::string> moveList = getMoveStrList(board, moves);
 
   std::cout << "moves: ["
@@ -133,8 +129,7 @@ void runTestsFen(const char *fen) {
 #ifdef RUN_SELF_TESTS
   for (int i = 0; i < getMoveCount(moves); ++i) {
     const Move &move = getMove(moves, i);
-    MovePersistence persistence;
-    makeMove(board, move, persistence);
+    MovePersistence persistence = makeMove(board, move);
     if (!isOpponentKingAttacked(board)) {
       selfTest(board);
     }

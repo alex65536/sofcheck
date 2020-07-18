@@ -53,7 +53,7 @@ void selfTest(Board b) {
   testBoardValid(b);
 
   // Check that asFen and setFromFen are symmetrical
-  char fen[4096] = {};
+  char fen[4096];
   std::memset(fen, '?', sizeof(fen));
   b.asFen(fen);
   fen[4095] = '\0';
@@ -74,7 +74,7 @@ void selfTest(Board b) {
       {BoardPrettyStyle::Ascii, BUFSZ_BOARD_PRETTY_ASCII},
       {BoardPrettyStyle::Utf8, BUFSZ_BOARD_PRETTY_UTF8}};
   for (auto [style, bufSize] : bufSizes) {
-    char pretty[4096] = {};
+    char pretty[4096];
     std::memset(pretty, '?', sizeof(pretty));
     b.asPretty(pretty, style);
     pretty[4095] = '\0';

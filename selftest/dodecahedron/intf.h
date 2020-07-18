@@ -34,12 +34,16 @@ inline int getMoveCount(const MoveList &lst) {
 
 inline void init() {}
 
-inline void boardFromFen(Board &board, const char *fen) {
+inline Board boardFromFen(const char *fen) {
+    Board board;
     load_from_fen(board, fen);
+    return board;
 }
 
-inline void makeMove(Board &board, const Move &move, MovePersistence &p) {
+inline MovePersistence makeMove(Board &board, const Move &move) {
+    MovePersistence p;
     make_move(board, move, p);
+    return p;
 }
 
 inline void unmakeMove(Board &board, const Move &move, MovePersistence &p) {
@@ -50,8 +54,10 @@ inline void moveStr(const Board &, const Move &move, char *str) {
     move_to_str(move, str);
 }
 
-inline void generateMoves(const Board &board, MoveList &moves) {
+inline MoveList generateMoves(const Board &board) {
+    MoveList moves;
     moves.count = gen_moves(board, moves.moves);
+    return moves;
 }
 
 inline bool isAttacked(const Board &board, bool isWhite, char cx, char cy) {

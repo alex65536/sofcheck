@@ -49,6 +49,9 @@ struct MovePersistence {
   coord_t enpassantCoord;
   uint16_t moveCounter;
   cell_t dstCell;
+  // Padding to make structure size equal to 16 bytes, must be zero
+  uint8_t padding1;
+  uint16_t padding2;
 };
 
 struct Board;
