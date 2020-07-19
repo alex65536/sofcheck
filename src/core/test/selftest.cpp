@@ -115,7 +115,7 @@ void runSelfTest(Board b) {
     const Move move = moves[i];
     char str[BUFSZ_MOVE_STR];
     moveToStr(move, str);
-    const Move move2 = moveParse(str, str + std::strlen(str), b);
+    const Move move2 = moveParse(str, b);
     if (move != move2) {
       panic("Move changed after converting to string and vice versa");
     }

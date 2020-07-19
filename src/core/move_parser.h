@@ -1,6 +1,8 @@
 #ifndef SOF_CORE_MOVE_PARSER_INCLUDED
 #define SOF_CORE_MOVE_PARSER_INCLUDED
 
+#include <cstring>
+
 #include "core/board.h"
 #include "core/move.h"
 #include "core/types.h"
@@ -18,6 +20,9 @@ struct ParsedMove {
   // of the string, and `last` is the pointer past the end of the string. If the given string cannot
   // be interpreted as `ParsedMove`, the return value is equal to `INVALID_PARSED_MOVE`
   static ParsedMove fromStr(const char *first, const char *last);
+
+  // Variation of `fromStr` that works with zero-terminated strings
+  inline static ParsedMove fromStr(const char *str) { return fromStr(str, str + std::strlen(str)); }
 
   // Serializes the structure into `uint32_t`
   //
@@ -49,6 +54,12 @@ Move moveFromParsed(const ParsedMove parsedMove, const Board &board);
 // `moveFromParsed`.
 inline Move moveParse(const char *first, const char *last, const Board &board) {
   const ParsedMove parsed = ParsedMove::fromStr(first, last);
+  return moveFromParsed(parsed, board);
+}
+
+// Variation of `moveParse` that works with zero-terminated strings
+inline Move moveParse(const char *str, const Board &board) {
+  const ParsedMove parsed = ParsedMove::fromStr(str);
   return moveFromParsed(parsed, board);
 }
 
