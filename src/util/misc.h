@@ -13,12 +13,12 @@
 // cases the given condition is false.
 
 #ifdef likely
-#undef likely
+#error "likely" is already defined!
 #endif
 #define likely(x) __builtin_expect(!!(x), 1)
 
 #ifdef unlikely
-#undef unlikely
+#error "unlikely" is already defined!
 #endif
 #define unlikely(x) __builtin_expect(!!(x), 0)
 
@@ -26,14 +26,14 @@
 // statement, then the behaviour is undefined
 
 #ifdef unreachable
-#undef unreachable
+#error "unreachable" is already defined!
 #endif
 #define unreachable() __builtin_unreachable()
 
 // Indicate that the variable is unused and ignore compiler/linter warnings about it
 
 #ifdef unused
-#undef unused
+#error "unused" is already defined!
 #endif
 #define unused(x) (void)(x)
 

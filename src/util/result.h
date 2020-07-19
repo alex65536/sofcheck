@@ -28,7 +28,7 @@ public:
 
   // Consumes the Result, moving away `ok()` value from it. If it doesn't hold the specified value,
   // it panics
-  inline T unwrap() noexcept {
+  inline constexpr T unwrap() noexcept {
     if (likely(isOk())) {
       return std::get<0>(variant_);
     }
@@ -37,7 +37,7 @@ public:
 
   // Consumes the `Result`, moving away `err()` value from it. If it doesn't hold the specified
   // value, it panics
-  inline E unwrapErr() noexcept {
+  inline constexpr E unwrapErr() noexcept {
     if (likely(isErr())) {
       return std::get<1>(variant_);
     }
@@ -54,16 +54,12 @@ public:
     return r1.variant_ != r2.variant_;
   }
 
-  Result(Ok<T> ok) : Result(std::in_place_index<0>, std::move(ok.value_)) {}
-  Result(Err<E> err) : Result(std::in_place_index<1>, std::move(err.err_)) {}
+  inline constexpr Result(Ok<T> &&ok) noexcept
+      : variant_(std::in_place_index<0>, std::move(ok.value_)) {}
+  inline constexpr Result(Err<E> &&err) noexcept
+      : variant_(std::in_place_index<1>, std::move(err.err_)) {}
 
 private:
-  inline constexpr explicit Result(std::in_place_index_t<0> idx, T &&value)
-      : variant_(idx, std::forward<T>(value)) {}
-
-  inline constexpr explicit Result(std::in_place_index_t<1> idx, E &&err)
-      : variant_(idx, std::forward<E>(err)) {}
-
   std::variant<T, E> variant_;
 };
 
@@ -75,7 +71,8 @@ private:
 template <typename T>
 class Ok {
 public:
-  inline explicit constexpr Ok(T value) : value_(std::move(value)) {}
+  inline constexpr explicit Ok(const T &value) : value_(value) {}
+  inline constexpr explicit Ok(T &&value) noexcept : value_(std::move(value)) {}
 
 private:
   T value_;
@@ -92,7 +89,8 @@ private:
 template <typename E>
 class Err {
 public:
-  inline explicit constexpr Err(E err) : err_(std::move(err)) {}
+  inline constexpr explicit Err(const E &err) : err_(err) {}
+  inline constexpr explicit Err(E &&err) noexcept : err_(std::move(err)) {}
 
 private:
   E err_;
