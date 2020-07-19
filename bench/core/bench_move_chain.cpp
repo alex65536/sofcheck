@@ -5,6 +5,7 @@
 #include "core/init.h"
 #include "core/move.h"
 #include "core/move_chain.h"
+#include "core/move_parser.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
 
@@ -12,39 +13,31 @@ using SoFCore::Board;
 using SoFCore::cell_t;
 using SoFCore::Move;
 using SoFCore::MoveChain;
-using SoFCore::MoveKind;
-
-inline static Move createMove(const char *src, const char *dst, MoveKind kind = MoveKind::Simple,
-                              cell_t promote = 0) {
-  using SoFCore::charsToCoord;
-
-  return Move{kind, charsToCoord(src[0], src[1]), charsToCoord(dst[0], dst[1]), promote};
-}
 
 MoveChain generateChainSicilian() {
   using namespace SoFCore;
 
   MoveChain chain(Board::initialPosition());
-  chain.push(createMove("e2", "e4", MoveKind::PawnDoubleMove));
-  chain.push(createMove("c7", "c5", MoveKind::PawnDoubleMove));
-  chain.push(createMove("g1", "f3"));
-  chain.push(createMove("d7", "d6"));
-  chain.push(createMove("d2", "d4", MoveKind::PawnDoubleMove));
-  chain.push(createMove("c5", "d4"));
-  chain.push(createMove("f3", "d4"));
-  chain.push(createMove("g1", "f6"));
-  chain.push(createMove("b1", "c3"));
-  chain.push(createMove("a7", "a6"));
-  chain.push(createMove("c1", "g5"));
-  chain.push(createMove("e7", "e6"));
-  chain.push(createMove("f2", "f4", MoveKind::PawnDoubleMove));
-  chain.push(createMove("f8", "e7"));
-  chain.push(createMove("d1", "f3"));
-  chain.push(createMove("d8", "c7"));
-  chain.push(createMove("e1", "c1", MoveKind::CastlingQueenside));
-  chain.push(createMove("b8", "d7"));
-  chain.push(createMove("g2", "g4", MoveKind::PawnDoubleMove));
-  chain.push(createMove("b7", "b5", MoveKind::PawnDoubleMove));
+  chain.push(moveParse("e2e4", chain.position()));
+  chain.push(moveParse("c7c5", chain.position()));
+  chain.push(moveParse("g1f3", chain.position()));
+  chain.push(moveParse("d7d6", chain.position()));
+  chain.push(moveParse("d2d4", chain.position()));
+  chain.push(moveParse("c5d4", chain.position()));
+  chain.push(moveParse("f3d4", chain.position()));
+  chain.push(moveParse("g8f6", chain.position()));
+  chain.push(moveParse("b1c3", chain.position()));
+  chain.push(moveParse("a7a6", chain.position()));
+  chain.push(moveParse("c1g5", chain.position()));
+  chain.push(moveParse("e7e6", chain.position()));
+  chain.push(moveParse("f2f4", chain.position()));
+  chain.push(moveParse("f8e7", chain.position()));
+  chain.push(moveParse("d1f3", chain.position()));
+  chain.push(moveParse("d8c7", chain.position()));
+  chain.push(moveParse("e1c1", chain.position()));
+  chain.push(moveParse("b8d7", chain.position()));
+  chain.push(moveParse("g2g4", chain.position()));
+  chain.push(moveParse("b7b5", chain.position()));
 
   return chain;
 }
