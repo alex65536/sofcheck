@@ -323,14 +323,14 @@ void Board::setInitialPosition() {
   for (subcoord_t i = 0; i < 8; ++i) {
     cells[makeCoord(6, i)] = makeCell(Color::White, Piece::Pawn);
   }
-  cells[makeCoord(0, 0)] = makeCell(Color::White, Piece::Rook);
-  cells[makeCoord(0, 1)] = makeCell(Color::White, Piece::Knight);
-  cells[makeCoord(0, 2)] = makeCell(Color::White, Piece::Bishop);
-  cells[makeCoord(0, 3)] = makeCell(Color::White, Piece::Queen);
-  cells[makeCoord(0, 4)] = makeCell(Color::White, Piece::King);
-  cells[makeCoord(0, 5)] = makeCell(Color::White, Piece::Bishop);
-  cells[makeCoord(0, 6)] = makeCell(Color::White, Piece::Knight);
-  cells[makeCoord(0, 7)] = makeCell(Color::White, Piece::Rook);
+  cells[makeCoord(7, 0)] = makeCell(Color::White, Piece::Rook);
+  cells[makeCoord(7, 1)] = makeCell(Color::White, Piece::Knight);
+  cells[makeCoord(7, 2)] = makeCell(Color::White, Piece::Bishop);
+  cells[makeCoord(7, 3)] = makeCell(Color::White, Piece::Queen);
+  cells[makeCoord(7, 4)] = makeCell(Color::White, Piece::King);
+  cells[makeCoord(7, 5)] = makeCell(Color::White, Piece::Bishop);
+  cells[makeCoord(7, 6)] = makeCell(Color::White, Piece::Knight);
+  cells[makeCoord(7, 7)] = makeCell(Color::White, Piece::Rook);
 
   setAllCastling();
   side = Color::White;
