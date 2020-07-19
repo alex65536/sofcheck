@@ -2,6 +2,7 @@
 
 #include "core/bench_boards.h"
 #include "core/board.h"
+#include "core/init.h"
 #include "core/move.h"
 #include "core/move_chain.h"
 #include "core/movegen.h"
@@ -84,6 +85,8 @@ void moveChainSearch(MoveChain &chain, int d) {
 }
 
 void BM_RecurseSearch(benchmark::State &state) {
+  SoFCore::init();
+
   MoveChain chain = generateChainSicilian();
 
   for (auto _ : state) {
@@ -94,6 +97,8 @@ void BM_RecurseSearch(benchmark::State &state) {
 BENCHMARK(BM_RecurseSearch)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Unit(benchmark::kMillisecond);
 
 void BM_MoveChainSearch(benchmark::State &state) {
+  SoFCore::init();
+
   MoveChain chain = generateChainSicilian();
 
   for (auto _ : state) {
