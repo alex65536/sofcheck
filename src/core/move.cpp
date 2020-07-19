@@ -6,6 +6,7 @@
 #include "core/private/bit_consts.h"
 #include "core/private/rows.h"
 #include "core/private/zobrist.h"
+#include "util/misc.h"
 
 namespace SoFCore {
 
@@ -88,6 +89,9 @@ bool Move::isWellFormed(Color c) const {
         return false;
       }
       break;
+    }
+    case MoveKind::Invalid: {
+      return false;
     }
     default: {
       return false;
@@ -272,6 +276,10 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
       makeEnpassant<C, false>(b, move, bbChange);
       break;
     }
+    case MoveKind::Invalid: {
+      unreachable();
+      break;
+    }
   }
   const bool resetMoveCounter = dstCell != EMPTY_CELL || srcCell == makeCell(C, Piece::Pawn) ||
                                 move.kind == MoveKind::Enpassant;
@@ -343,6 +351,10 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
     }
     case MoveKind::Enpassant: {
       makeEnpassant<C, true>(b, move, bbChange);
+      break;
+    }
+    case MoveKind::Invalid: {
+      unreachable();
       break;
     }
   }
