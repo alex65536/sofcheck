@@ -12,7 +12,8 @@ enum MoveKind : uint8_t {
   Enpassant = 3,
   CastlingKingside = 4,
   CastlingQueenside = 5,
-  Promote = 6
+  Promote = 6,
+  Invalid = 7
 };
 
 struct Move {
@@ -30,6 +31,7 @@ struct Move {
   bool isWellFormed(Color c) const;
 
   inline static constexpr Move null() { return Move{MoveKind::Null, 0, 0, 0}; }
+  inline static constexpr Move invalid() { return Move{MoveKind::Invalid, 0, 0, 0}; }
 
   // Serializes the move structure into `uint32_t`
   //
@@ -63,7 +65,7 @@ struct MovePersistence {
 struct Board;
 
 // Applies move `move` to the board `b`. The move must be pseudo-legal, i.e. must be in the list
-// generated from current position using `genAllMoves()`.
+// generated from current position using `genAllMoves()`. Otherwise, the behaviour is undefined.
 //
 // As a special exception, making null moves is also allowed. If you pass a null move to this
 // function, it will just flip the current move side and update the move counter and move number.
