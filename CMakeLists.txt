@@ -99,6 +99,9 @@ add_library(sof_core STATIC
   ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
 )
+add_library(sof_engine_base STATIC
+  src/engine_base/connection.cpp
+)
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp

@@ -37,6 +37,8 @@ may depend on private API
 
 - `util` implements helper utilities. It must not depend on any other module
 - `core` is a fast implementation of basic chess rules
+- `engine_base` contains APIs for communication between the engine and the GUI. The implementation 
+of these APIs is located in other modules
 - more modules coming soon...
 
 # Main design principles
