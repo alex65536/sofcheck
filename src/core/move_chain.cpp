@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "core/movegen.h"
+#include "util/misc.h"
 
 namespace SoFCore {
 
@@ -19,18 +20,21 @@ void MoveChain::doPush() {
 }
 
 void MoveChain::push(const Move move) {
-  const MovePersistence persistence = moveMake(board_, move);
-  moves_.push_back({move, persistence});
+  moves_.emplace_back();
+  moves_.back().move = move;
+  moves_.back().persistence = moveMake(board_, move);
   doPush();
 }
 
 bool MoveChain::tryPush(const Move move) {
-  const MovePersistence persistence = moveMake(board_, move);
-  if (!isMoveLegal(board_)) {
-    moveUnmake(board_, move, persistence);
+  moves_.emplace_back();
+  moves_.back().persistence = moveMake(board_, move);
+  if (unlikely(!isMoveLegal(board_))) {
+    moveUnmake(board_, move, moves_.back().persistence);
+    moves_.pop_back();
     return false;
   }
-  moves_.push_back({move, persistence});
+  moves_.back().move = move;
   doPush();
   return true;
 }
