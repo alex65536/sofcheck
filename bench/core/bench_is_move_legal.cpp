@@ -4,6 +4,7 @@
 #include "core/board.h"
 #include "core/init.h"
 #include "core/movegen.h"
+#include "util/misc.h"
 
 inline void runCheckValid(benchmark::State &state, const char *fen) {
   using namespace SoFCore;
@@ -15,7 +16,7 @@ inline void runCheckValid(benchmark::State &state, const char *fen) {
   size_t cnt = genAllMoves(board, moves);
 
   for (auto _ : state) {
-    (void)_;
+    unused(_);
     for (size_t i = 0; i < cnt; ++i) {
       benchmark::DoNotOptimize(isMoveValid(board, moves[i]));
     }
