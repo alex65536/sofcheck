@@ -2,20 +2,37 @@
 
 #include <utility>
 
+#include "core/movegen.h"
+
 namespace SoFCore {
 
 MoveChain::MoveChain(const Board &rootPosition) : board_(rootPosition), repeatedPositions_(0) {
   ++repetitions_[board_.hash];
 }
 
-void MoveChain::push(const Move move) {
-  const MovePersistence persistence = moveMake(board_, move);
-  moves_.push_back({move, persistence});
+void MoveChain::doPush() {
   size_t &curRepetitions = repetitions_[board_.hash];
   ++curRepetitions;
   if (curRepetitions == REPETITIONS_FOR_DRAW) {
     ++repeatedPositions_;
   }
+}
+
+void MoveChain::push(const Move move) {
+  const MovePersistence persistence = moveMake(board_, move);
+  moves_.push_back({move, persistence});
+  doPush();
+}
+
+bool MoveChain::tryPush(const Move move) {
+  const MovePersistence persistence = moveMake(board_, move);
+  if (!isMoveLegal(board_)) {
+    moveUnmake(board_, move, persistence);
+    return false;
+  }
+  moves_.push_back({move, persistence});
+  doPush();
+  return true;
 }
 
 Move MoveChain::pop() {

@@ -22,6 +22,7 @@ public:
   inline bool isEmpty() const { return moves_.empty(); }
 
   void push(Move move);
+  bool tryPush(Move move);
   Move pop();
 
   bool isDrawByRepetition() const { return repeatedPositions_; }
@@ -31,6 +32,8 @@ private:
     Move move;
     MovePersistence persistence;
   };
+
+  void doPush();
 
   Board board_;
   std::vector<State> moves_;

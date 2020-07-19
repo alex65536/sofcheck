@@ -76,10 +76,10 @@ void moveChainSearch(MoveChain &chain, int d) {
   Move moves[240];
   size_t cnt = genAllMoves(chain.position(), moves);
   for (size_t i = 0; i < cnt; ++i) {
-    chain.push(moves[i]);
-    if (isMoveLegal(chain.position())) {
-      moveChainSearch(chain, d - 1);
+    if (!chain.tryPush(moves[i])) {
+      continue;
     }
+    moveChainSearch(chain, d - 1);
     chain.pop();
   }
 }
