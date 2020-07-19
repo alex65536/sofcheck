@@ -41,7 +41,7 @@ public:
     if (likely(isErr())) {
       return std::get<1>(variant_);
     }
-    panic("Attempt to unwrap() Result<T, E> without a value");
+    panic("Attempt to unwrap() Result<T, E> without an error");
   }
 
   inline friend constexpr bool operator==(const std::variant<T, E> &r1,
