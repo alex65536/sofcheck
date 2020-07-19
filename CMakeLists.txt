@@ -89,6 +89,7 @@ add_library(sof_util STATIC
 add_library(sof_core STATIC
   src/core/board.cpp
   src/core/init.cpp
+  src/core/move_parser.cpp
   src/core/move.cpp
   src/core/movegen.cpp
   src/core/strutil.cpp

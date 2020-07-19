@@ -31,6 +31,7 @@ struct Move {
   bool isWellFormed(Color c) const;
 
   inline static constexpr Move null() { return Move{MoveKind::Null, 0, 0, 0}; }
+  inline static constexpr Move invalid() { return Move{MoveKind::Invalid, 0, 0, 0}; }
 
   // Serializes the move structure into `uint32_t`
   //
