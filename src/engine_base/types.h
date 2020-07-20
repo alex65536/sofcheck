@@ -9,27 +9,6 @@
 
 namespace SoFEngineBase {
 
-// Result of client or server API calls. This is only the error codes, the error messages (if any)
-// must be reported separately via `reportError()`
-enum class ApiResult {
-  // API call was successful
-  Ok,
-  // API call is not implemented
-  NotSupported,
-  // Invalid arguments passed to API call
-  InvalidArgument,
-  // API methods are called in invalid order (e.g. `stop()` without `search...()` before it)
-  UnexpectedCall,
-  // Error due to bug in the code which implements this API
-  ApiError,
-  // Input/output error
-  IOError,
-  // Unknown error not listed here. More details may be passed with an error message
-  RuntimeError
-};
-
-// TODO : move these types into other package (and call it smth like core_extra)
-
 using std::chrono::milliseconds;
 
 constexpr size_t INFINITE_MOVES = static_cast<size_t>(-1);
@@ -65,7 +44,7 @@ enum class PositionCostType {
   Checkmate    // The position cost is stored in moves until checkmate
 };
 
-// Minimum and maximum allowed values (in centipawns) for position cost
+// Minimum and maximum allowed values (in centipawns) for `PositionCost`
 constexpr int32_t MIN_POSITION_COST = -2'000'000'000;
 constexpr int32_t MAX_POSITION_COST = 2'000'000'000;
 
@@ -131,6 +110,15 @@ private:
 
 // The type that indicates number of permille
 using permille_t = uint16_t;
+
+// Intermediate search result
+struct SearchResult {
+  size_t depth;             // Search depth (in plies)
+  const SoFCore::Move *pv;  // The best line found
+  size_t pvLen;             // Length of the best line found (if not present, set to zero)
+  PositionCost cost;        // Estimated position cost
+  PositionCostBound bound;  // Is position cost exact?
+};
 
 }  // namespace SoFEngineBase
 

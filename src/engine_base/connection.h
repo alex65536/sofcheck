@@ -3,6 +3,7 @@
 
 #include <memory>
 
+#include "engine_base/api_base.h"
 #include "engine_base/client.h"
 #include "engine_base/server.h"
 #include "util/result.h"

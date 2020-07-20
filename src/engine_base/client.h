@@ -5,6 +5,7 @@
 
 #include "core/board.h"
 #include "core/move.h"
+#include "engine_base/api_base.h"
 #include "engine_base/types.h"
 #include "util/misc.h"
 

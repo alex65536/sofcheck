@@ -2,6 +2,7 @@
 #define SOF_ENGINE_BASE_SERVER_INCLUDED
 
 #include "core/move.h"
+#include "engine_base/api_base.h"
 #include "engine_base/types.h"
 #include "util/misc.h"
 
@@ -10,14 +11,6 @@ namespace SoFEngineBase {
 // TODO : support multi-PV mode
 // TODO : support reporting refutations
 // TODO : support "info" subcommands: "seldepth", "tbhits", "sbhits", "cpuload", "currline"
-
-struct SearchResult {
-  size_t depth;             // Search depth (in plies)
-  const SoFCore::Move *pv;  // The best line found
-  size_t pvLen;             // Length of the best line found (if not present, set to zero)
-  PositionCost cost;        // Estimated position cost
-  PositionCostBound bound;  // Is position cost exact?
-};
 
 class Client;
 
