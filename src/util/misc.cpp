@@ -10,4 +10,6 @@ namespace SoFUtil {
   std::terminate();
 }
 
+[[noreturn]] void panic(const std::string &message) { panic(message.c_str()); }
+
 }  // namespace SoFUtil

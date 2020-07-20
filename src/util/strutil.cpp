@@ -9,4 +9,13 @@ const char *scanTokenEnd(const char *str) {
   return str;
 }
 
+std::string sanitizeEol(std::string str) {
+  for (char &c : str) {
+    if (c < ' ' && c != '\t') {
+      c = ' ';
+    }
+  }
+  return str;
+}
+
 }  // namespace SoFUtil

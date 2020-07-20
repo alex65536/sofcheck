@@ -1,6 +1,8 @@
 #ifndef SOF_UTIL_MISC_INCLUDED
 #define SOF_UTIL_MISC_INCLUDED
 
+#include <string>
+
 // Macros to help branch prediction
 //
 // If it's more likely that the condition is true, use `likely`. Example:
@@ -41,6 +43,7 @@ namespace SoFUtil {
 
 // Terminates the program with the given `message`
 [[noreturn]] void panic(const char *message);
+[[noreturn]] void painc(const std::string &message);
 
 }  // namespace SoFUtil
 
