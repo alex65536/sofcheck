@@ -132,8 +132,6 @@ private:
 // The type that indicates number of permille
 using permille_t = uint16_t;
 
-constexpr permille_t PERMILLE_UNKNOWN = static_cast<permille_t>(-1);
-
 }  // namespace SoFEngineBase
 
 #endif  // SOF_ENGINE_BASE_TYPES_INCLUDED

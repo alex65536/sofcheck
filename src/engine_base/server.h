@@ -13,12 +13,10 @@ namespace SoFEngineBase {
 
 struct SearchResult {
   size_t depth;             // Search depth (in plies)
-  uint64_t nodeCount;       // Total number of nodes searched
   const SoFCore::Move *pv;  // The best line found
   size_t pvLen;             // Length of the best line found (if not present, set to zero)
   PositionCost cost;        // Estimated position cost
   PositionCostBound bound;  // Is position cost exact?
-  permille_t hashFull;      // Permille of the hash full (or `PERMILLE_UNKNOWN`)
 };
 
 class Client;
@@ -47,8 +45,7 @@ public:
   // Send number of nodes currently searched. Call this method only during the search
   virtual ApiResult sendNodeCount(uint64_t nodes) = 0;
 
-  // Send permille of hash full. The parameter must not be equal to `PERMILLE_UNKNOWN`. Call this
-  // method only during the search
+  // Send permille of hash full. Call this method only during the search
   virtual ApiResult sendHashFull(permille_t hashFull) = 0;
 
   // Send currently searched move. `moveNumber` starts from 1 and set to zero if it's undefined.
