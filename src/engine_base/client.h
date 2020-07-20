@@ -2,6 +2,7 @@
 #define SOF_ENGINE_BASE_CLIENT_INCLUDED
 
 #include <cstdint>
+#include <string>
 
 #include "core/board.h"
 #include "core/move.h"
@@ -81,6 +82,7 @@ public:
   // Report the error from the server. This function (like many others) cannot be called before the
   // connection is finished
   virtual ApiResult reportError(const char *message) = 0;
+  ApiResult reportError(const std::string &message) { return reportError(message.c_str()); }
 
   virtual ~Client() {}
 

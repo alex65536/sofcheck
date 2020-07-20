@@ -1,6 +1,8 @@
 #ifndef SOF_ENGINE_BASE_SERVER_INCLUDED
 #define SOF_ENGINE_BASE_SERVER_INCLUDED
 
+#include <string>
+
 #include "core/move.h"
 #include "engine_base/api_base.h"
 #include "engine_base/types.h"
@@ -33,6 +35,7 @@ public:
 
   // Send an arbitrary string message to the server
   virtual ApiResult sendString(const char *str) = 0;
+  ApiResult sendString(const std::string &str) { return sendString(str.c_str()); }
 
   // Send temporary search result. Call this method only during the search
   virtual ApiResult sendResult(const SearchResult &result) = 0;
@@ -50,6 +53,7 @@ public:
   // Report the error from the client. This function (like many others) cannot be called before the
   // connection is finished
   virtual ApiResult reportError(const char *message) = 0;
+  ApiResult reportError(const std::string &message) { return reportError(message.c_str()); }
 
   virtual ~Server() {}
 
