@@ -48,7 +48,8 @@ public:
   // During the search, the position and the options can be changed by API calls, so be careful with
   // this. These changed must not have any effect on the currently running search.
   //
-  // The client should send information during the search via `send...()` server calls
+  // The client should send information during the search via `send...()` server calls. Note that
+  // the search is considered started only if the `search...()` function returns without errors
 
   // Infinite search
   virtual ApiResult searchInfinite() = 0;

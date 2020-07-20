@@ -27,7 +27,9 @@ public:
   // Indicate that the client finished the search, reporting the best move to the server. The client
   // must call this method after `stop()`, `disconnect()` (if the search was running at this time)
   // or when it stops the search itself
-  virtual ApiResult finishSearch(const SoFCore::Move &bestMove) = 0;
+  //
+  // Note that the search is considered finished only if the function returns without errors
+  virtual ApiResult finishSearch(SoFCore::Move bestMove) = 0;
 
   // Send an arbitrary string message to the server
   virtual ApiResult sendString(const char *str) = 0;
@@ -43,7 +45,7 @@ public:
 
   // Send currently searched move. `moveNumber` starts from 1 and set to zero if it's undefined.
   // Call this method only during the search
-  virtual ApiResult sendCurrMove(const SoFCore::Move move, size_t moveNumber = 0) = 0;
+  virtual ApiResult sendCurrMove(SoFCore::Move move, size_t moveNumber = 0) = 0;
 
   // Report the error from the client. This function (like many others) cannot be called before the
   // connection is finished
