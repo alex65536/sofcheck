@@ -10,6 +10,8 @@ namespace SoFEngineBase {
 enum class PollResult {
   // Success
   Ok,
+  // Success, but no client API commands executed
+  NoData,
   // Success, but received shutdown message
   Shutdown,
   // I/O error

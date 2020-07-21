@@ -48,7 +48,7 @@ PollResult Connection::runPollLoop() {
     if (result == PollResult::Shutdown) {
       return PollResult::Ok;
     }
-    if (result != PollResult::Ok) {
+    if (result != PollResult::Ok && result != PollResult::NoData) {
       return result;
     }
   }

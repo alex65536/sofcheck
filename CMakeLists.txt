@@ -101,6 +101,7 @@ add_library(sof_core STATIC
 )
 add_library(sof_engine_base STATIC
   src/engine_base/connection.cpp
+  src/engine_base/strutil.cpp
 )
 add_library(sof_engine_clients STATIC
   src/engine_clients/uci.cpp
