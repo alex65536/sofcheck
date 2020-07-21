@@ -90,9 +90,9 @@ bool Move::isWellFormed(Color c) const {
       }
       break;
     }
-    case MoveKind::Invalid: {
-      return false;
-    }
+    // Explicitly list that MoveKind::Invalid is not well formed
+    case MoveKind::Invalid:
+    // All other invalid values are not well formed, of course
     default: {
       return false;
     }
