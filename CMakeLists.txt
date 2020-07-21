@@ -102,6 +102,9 @@ add_library(sof_core STATIC
 add_library(sof_engine_base STATIC
   src/engine_base/connection.cpp
 )
+add_library(sof_engine_clients STATIC
+  src/engine_clients/uci.cpp
+)
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
