@@ -10,6 +10,10 @@ namespace SoFUtil {
 // the end of the token (i.e. one of the characters `'\0'`, `'\t'`, `'\n'` and `' '`).
 const char *scanTokenEnd(const char *str);
 
+// Scans the string forward, starting from `str` and returns the first character which is not equal
+// to `'t'`, `'\n'` and `' '`.
+const char *scanTokenStart(const char *str);
+
 // Replaces the small characters (with ASCII code <= 32) with spaces. The tab characters ('\t') are
 // left intact. The primary purpose of this function is to sanitize the string for UCI output, to
 // make sure that it doesn't contain a newline, which can be potentially interpreted as a new UCI

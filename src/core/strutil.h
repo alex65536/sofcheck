@@ -3,6 +3,7 @@
 
 #include <string>
 
+#include "core/board.h"
 #include "core/move.h"
 #include "core/types.h"
 
@@ -60,6 +61,9 @@ constexpr size_t BUFSZ_MOVE_STR = 6;
 
 void moveToStr(Move move, char *str);
 std::string moveToStr(Move move);
+
+const char *fenParseResultToStr(FenParseResult res);
+const char *validateResultToStr(ValidateResult res);
 
 }  // namespace SoFCore
 

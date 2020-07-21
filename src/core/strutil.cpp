@@ -26,4 +26,56 @@ void moveToStr(const SoFCore::Move move, char *str) {
   *str = '\0';
 }
 
+const char *fenParseResultToStr(const FenParseResult res) {
+  switch (res) {
+    case FenParseResult::Ok:
+      return "Ok";
+    case FenParseResult::ExpectedSpace:
+      return "Expected space";
+    case FenParseResult::ExpectedUint16:
+      return "Expected uint16";
+    case FenParseResult::UnexpectedCharacter:
+      return "Unexpected character";
+    case FenParseResult::BoardRowOverflow:
+      return "Too many cells in a row";
+    case FenParseResult::BoardRowUnderflow:
+      return "Too little cells in a row";
+    case FenParseResult::BoardNotEnoughRows:
+      return "Too little rows on a board";
+    case FenParseResult::BoardTooManyRows:
+      return "Too many rows on a board";
+    case FenParseResult::CastlingDuplicate:
+      return "The same castling type is encountered twice";
+    case FenParseResult::CastlingFieldMissing:
+      return "Expected castling type, space found";
+    case FenParseResult::EnpassantInvalidCell:
+      return "Invalid enpassant cell";
+    case FenParseResult::RedundantData:
+      return "Redundant data in the string";
+  }
+  return "";
+}
+
+const char *validateResultToStr(const ValidateResult res) {
+  switch (res) {
+    case ValidateResult::Ok:
+      return "Ok";
+    case ValidateResult::BadData:
+      return "Bad data in the board";
+    case ValidateResult::TooManyPieces:
+      return "Board must have no more than 16 pieces on each side";
+    case ValidateResult::NoKing:
+      return "One of the sides doesn\'t have a king";
+    case ValidateResult::TooManyKings:
+      return "One of the sides has more than one king";
+    case ValidateResult::InvalidEnpassantRow:
+      return "Invalid enpassant row";
+    case ValidateResult::InvalidPawnPosition:
+      return "Pawns cannot stay on the first and the last line";
+    case ValidateResult::OpponentKingAttacked:
+      return "The opponent king is under attack";
+  }
+  return "";
+}
+
 }  // namespace SoFCore

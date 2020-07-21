@@ -20,7 +20,8 @@ enum class FenParseResult {
   BoardTooManyRows,
   CastlingDuplicate,
   CastlingFieldMissing,
-  EnpassantInvalidCell
+  EnpassantInvalidCell,
+  RedundantData
 };
 
 enum class ValidateResult {

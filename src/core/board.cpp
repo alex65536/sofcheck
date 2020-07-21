@@ -297,6 +297,10 @@ FenParseResult Board::setFromFen(const char *fen) {
   res = std::from_chars(oldPos, fen, moveNumber);
   D_PARSE_CHECK(res.ec == std::errc(), FenParseResult::ExpectedUint16);
 
+  // 7. Check that there is no extra data
+  fen = SoFUtil::scanTokenStart(fen);
+  D_PARSE_CHECK(*fen == '\0', FenParseResult::RedundantData);
+
   update();
   return FenParseResult::Ok;
 }

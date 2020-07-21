@@ -9,6 +9,13 @@ const char *scanTokenEnd(const char *str) {
   return str;
 }
 
+const char *scanTokenStart(const char *str) {
+  while (*str == '\n' || *str == '\t' || *str == ' ') {
+    ++str;
+  }
+  return str;
+}
+
 std::string sanitizeEol(std::string str) {
   for (char &c : str) {
     if (c < ' ' && c != '\t') {
