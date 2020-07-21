@@ -17,10 +17,15 @@ using SoFEngineBase::ApiResult;
 using SoFEngineBase::Client;
 using SoFEngineBase::PollResult;
 
-// A server connector for UCI chess engines
+// A server connector for UCI chess engines. It tries to conform the official docs, but still lacks
+// some features, because they are not supported by the API now. Such commands are just ignored.
+// Another feature of this implementation is careful and strict input validation. The parser tries
+// hard to prevent the engine from getting invalid data.
+//
+// To obtain the official UCI documentation, use http://download.shredderchess.com/div/uci.zip.
 class UciServerConnector final : public SoFEngineBase::ServerConnector, public SoFUtil::NoCopyMove {
 public:
-  const char *name() const override { return "UCI Server"; }
+  const char *name() const override { return "UCI Server Connector"; }
   const char *author() const override { return "SoFCheck developers"; }
 
   ApiResult finishSearch(SoFCore::Move bestMove) override;
@@ -48,6 +53,22 @@ protected:
 private:
   // Makes sure that the client is connected
   void ensureClient();
+
+  // Reports failures from client side, if any. Returns `result` unchanged
+  ApiResult checkClient(ApiResult result);
+
+  // Indicates that the search is started
+  void doStartSearch();
+
+  // Processes "position" subcommand
+  PollResult processUciPosition(std::istream &tokens);
+
+  // Processes "go" command
+  PollResult processUciGo(std::istream &tokens);
+
+  // Tries to interpret the next value on the stream as milliseconds and put it to `time`. Returns
+  // `true` on success. Otherwise returns `false` and doesn't perform any writes into `time`.
+  bool tryReadMsec(std::chrono::milliseconds &time, std::istream &stream);
 
   // Returns the amount of time the search is running. If the search was not started, the behaviour
   // is undefined

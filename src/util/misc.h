@@ -43,7 +43,7 @@ namespace SoFUtil {
 
 // Terminates the program with the given `message`
 [[noreturn]] void panic(const char *message);
-[[noreturn]] void painc(const std::string &message);
+[[noreturn]] void panic(const std::string &message);
 
 }  // namespace SoFUtil
 
