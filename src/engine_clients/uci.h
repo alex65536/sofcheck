@@ -54,11 +54,16 @@ private:
   // Makes sure that the client is connected
   void ensureClient();
 
-  // Reports failures from client side, if any. Returns `result` unchanged
-  ApiResult checkClient(ApiResult result);
+  // Reports failures from client side, if any
+  void checkClient(ApiResult result);
 
-  // Indicates that the search is started
-  void doStartSearch();
+  // Helper method for `processUciGo`. It runs the logic which is required to start the analysis:
+  // checks the API call results, reports the errors to the server, indicates that the search has
+  // started.
+  //
+  // The primary purpose of this method is to reduce copy-paste in `processUciGo` for different
+  // `search(...)` methods. Better see the source code for more details.
+  PollResult doStartSearch(ApiResult searchStartResult);
 
   // Processes "position" subcommand
   PollResult processUciPosition(std::istream &tokens);

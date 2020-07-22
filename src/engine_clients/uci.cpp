@@ -170,17 +170,27 @@ ApiResult UciServerConnector::sendString(const char *str) {
   return ApiResult::Ok;
 }
 
-ApiResult UciServerConnector::checkClient(ApiResult result) {
+void UciServerConnector::checkClient(ApiResult result) {
   if (result == ApiResult::Ok || result == ApiResult::NotSupported) {
-    return result;
+    return;
   }
   err_ << "UCI client error: " << SoFEngineBase::apiResultToStr(result) << endl;
-  return result;
 }
 
-void UciServerConnector::doStartSearch() {
+PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) {
+  if (searchStartResult != ApiResult::Ok) {
+    const char *strResult = SoFEngineBase::apiResultToStr(searchStartResult);
+    err_ << "UCI client error: " << strResult << endl;
+    D_CHECK_POLL_IO(out_ << "info string Cannot start search: " << strResult << endl);
+    // We cannot start search from our side because of API call error. But it's better to tell the
+    // server that we stopped (by sending null move). Otherwise the server will wait for the search
+    // result infinitely.
+    D_CHECK_POLL_IO(out_ << "bestmove 0000" << endl);
+    return PollResult::Ok;
+  }
   searchStarted_ = true;
   searchStartTime_ = std::chrono::steady_clock::now();
+  return PollResult::Ok;
 }
 
 bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
@@ -275,10 +285,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
         err_ << "UCI server error: Cannot interpret value for \"depth\" as size_t" << endl;
         continue;
       }
-      if (checkClient(client_->searchFixedDepth(val)) == ApiResult::Ok) {
-        doStartSearch();
-      }
-      return PollResult::Ok;
+      return doStartSearch(client_->searchFixedDepth(val));
     }
     if (token == "nodes") {
       // Fixed nodes.
@@ -287,10 +294,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
         err_ << "UCI server error: Cannot interpret value for \"nodes\" as uint64" << endl;
         continue;
       }
-      if (checkClient(client_->searchFixedNodes(val)) == ApiResult::Ok) {
-        doStartSearch();
-      }
-      return PollResult::Ok;
+      return doStartSearch(client_->searchFixedNodes(val));
     }
     if (token == "mate") {
       // Not supported.
@@ -300,19 +304,13 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     }
     if (token == "movetime") {
       milliseconds val;
-      if (tryReadMsec(val, tokens)) {
-        if (checkClient(client_->searchFixedTime(val)) == ApiResult::Ok) {
-          doStartSearch();
-        }
-        return PollResult::Ok;
+      if (!tryReadMsec(val, tokens)) {
+        continue;
       }
-      continue;
+      return doStartSearch(client_->searchFixedTime(val));
     }
     if (token == "infinite") {
-      if (checkClient(client_->searchInfinite()) == ApiResult::Ok) {
-        doStartSearch();
-      }
-      return PollResult::Ok;
+      return doStartSearch(client_->searchInfinite());
     }
     if (token.empty()) {
       // Empty token means end of line; exiting the parser loop
@@ -324,17 +322,11 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     // If no suitable search type found, then go infinite
     err_ << "UCI server error: No useful parameters to \"go\" specified; running infinite search"
          << endl;
-    if (checkClient(client_->searchInfinite()) == ApiResult::Ok) {
-      doStartSearch();
-    }
-  } else {
-    // Run with time control
-    if (checkClient(client_->searchTimeControl(timeControl)) == ApiResult::Ok) {
-      doStartSearch();
-    }
+    return doStartSearch(client_->searchInfinite());
   }
 
-  return PollResult::Ok;
+  // Run with time control
+  return doStartSearch(client_->searchTimeControl(timeControl));
 }
 
 PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
