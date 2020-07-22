@@ -71,7 +71,13 @@ private:
   // Processes "go" command
   PollResult processUciGo(std::istream &tokens);
 
-  // Tries to interpret the next value on the stream as milliseconds and put it to `time`. Returns
+  // Tries to interpret the next token on the stream as integral type and put it to `val`. Returns
+  // true on success. Otherwise, returns `false`, reports the error and doesn't perform any writes
+  // into `val`. `intType` parameter is used for error reporting and denotes reported type name.
+  template <typename T>
+  bool tryReadInt(T &val, std::istream &stream, const char *intType);
+
+  // Tries to interpret the next token on the stream as milliseconds and put it to `time`. Returns
   // `true` on success. Otherwise returns `false`, reports the error and doesn't perform any writes
   // into `time`.
   bool tryReadMsec(std::chrono::milliseconds &time, std::istream &stream);

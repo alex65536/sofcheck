@@ -86,6 +86,7 @@ add_library(sof_util STATIC
   src/util/strutil.cpp
   src/util/random.cpp
 )
+
 add_library(sof_core STATIC
   src/core/board.cpp
   src/core/init.cpp
@@ -99,13 +100,18 @@ add_library(sof_core STATIC
   ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
 )
+target_link_libraries(sof_core sof_util)
+
 add_library(sof_engine_base STATIC
   src/engine_base/connection.cpp
   src/engine_base/strutil.cpp
 )
+target_link_libraries(sof_engine_base sof_core sof_util)
+
 add_library(sof_engine_clients STATIC
   src/engine_clients/uci.cpp
 )
+target_link_libraries(sof_engine_clients sof_core sof_util sof_engine_base)
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
@@ -121,7 +127,12 @@ add_executable(gen_magic_consts
 add_executable(sofcheck
   src/main.cpp
 )
-target_link_libraries(sofcheck sof_core sof_util)
+target_link_libraries(sofcheck
+  sof_core
+  sof_util
+  sof_engine_base
+  sof_engine_clients
+)
 
 
 # Add benchmarks

@@ -18,6 +18,8 @@ class Client;
 
 // The abstract class server API, i.e. the API that GUI provides to the chess engine. This API is
 // mostly based on UCI interface.
+//
+// Note that this API is not assumed to be thread-safe.
 class Server {
 public:
   // Returns server name (or empty string if the name is unknown)

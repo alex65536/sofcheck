@@ -30,7 +30,7 @@ public:
   // it panics
   inline constexpr T unwrap() noexcept {
     if (likely(isOk())) {
-      return std::get<0>(variant_);
+      return std::move(std::get<0>(variant_));
     }
     panic("Attempt to unwrap() Result<T, E> without a value");
   }
@@ -39,7 +39,7 @@ public:
   // value, it panics
   inline constexpr E unwrapErr() noexcept {
     if (likely(isErr())) {
-      return std::get<1>(variant_);
+      return std::move(std::get<1>(variant_));
     }
     panic("Attempt to unwrap() Result<T, E> without an error");
   }

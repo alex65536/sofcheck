@@ -1,6 +1,7 @@
 #include "engine_clients/uci.h"
 
 #include <algorithm>
+#include <charconv>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -56,6 +57,7 @@ ApiResult UciServerConnector::finishSearch(const SoFCore::Move bestMove) {
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
+  // TODO: validate move received from the engine (?)
   D_CHECK_IO(out_ << "bestmove " << SoFCore::moveToStr(bestMove) << endl);
   searchStarted_ = false;
   return ApiResult::Ok;
@@ -132,6 +134,7 @@ ApiResult UciServerConnector::sendResult(const SoFEngineBase::SearchResult &resu
   const uint64_t timeMsec = duration_cast<milliseconds>(getSearchTime()).count();
   D_CHECK_IO(out_ << "info depth " << result.depth << " time " << timeMsec);
   if (result.pvLen != 0) {
+    // TODO: validate PV received from the engine (?)
     D_CHECK_IO(out_ << " pv");
     for (size_t i = 0; i < result.pvLen; ++i) {
       D_CHECK_IO(out_ << " " << SoFCore::moveToStr(result.pv[i]));
@@ -194,10 +197,23 @@ PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) 
   return PollResult::Ok;
 }
 
+template <typename T>
+bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *intType) {
+  std::string token;
+  if (!(stream >> token)) {
+    err_ << "UCI server error: Cannot read token" << endl;
+    return false;
+  }
+  if (std::from_chars(token.data(), token.data() + token.size(), val).ec != std::errc()) {
+    err_ << "UCI server error: Cannot interpret token as " << intType << endl;
+    return false;
+  }
+  return true;
+}
+
 bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
   uint64_t val;
-  if (!(stream >> val)) {
-    err_ << "UCI server error: Cannot interpret value as uint64" << endl;
+  if (!tryReadInt(val, stream, "uint64")) {
     return false;
   }
   if (val > static_cast<uint64_t>(milliseconds::max().count())) {
@@ -274,8 +290,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     }
     if (token == "movestogo") {
       uint64_t val;
-      if (!(tokens >> val)) {
-        err_ << "UCI server error: Cannot interpret value for \"movestogo\" as uint64" << endl;
+      if (!tryReadInt(val, tokens, "uint64")) {
         continue;
       }
       timeControl.movesToGo = val;
@@ -285,8 +300,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     if (token == "depth") {
       // Fixed depth.
       size_t val;
-      if (!(tokens >> val)) {
-        err_ << "UCI server error: Cannot interpret value for \"depth\" as size_t" << endl;
+      if (!tryReadInt(val, tokens, "size_t")) {
         continue;
       }
       return doStartSearch(client_->searchFixedDepth(val));
@@ -294,8 +308,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     if (token == "nodes") {
       // Fixed nodes.
       uint64_t val;
-      if (!(tokens >> val)) {
-        err_ << "UCI server error: Cannot interpret value for \"nodes\" as uint64" << endl;
+      if (!tryReadInt(val, tokens, "uint64")) {
         continue;
       }
       return doStartSearch(client_->searchFixedNodes(val));
@@ -339,7 +352,7 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   std::string token;
   while (tokens >> token) {
     if (token == "moves") {
-      continue;
+      break;
     }
     if (!fenString.empty()) {
       fenString += ' ';
@@ -394,11 +407,12 @@ PollResult UciServerConnector::poll() {
 
   // Read command line
   std::string cmdLine;
+  std::getline(in_, cmdLine);
+  D_CHECK_POLL_IO(!in_.bad());
   if (in_.eof()) {
     err_ << "Stopping." << endl;
     return PollResult::Shutdown;
   }
-  D_CHECK_POLL_IO(std::getline(in_, cmdLine));
   if (cmdLine.empty()) {
     return PollResult::NoData;
   }
@@ -420,7 +434,7 @@ PollResult UciServerConnector::poll() {
       std::string value;
       cmdTokens >> value;
       if (value != "on" && value != "off") {
-        err_ << R"(UCI server error: "on" or "off" expected)" << endl;
+        err_ << R"(UCI server error: Tokens "on" or "off" expected)" << endl;
         return PollResult::NoData;
       }
       const bool newDebugEnabled = (value == "on");
@@ -428,10 +442,12 @@ PollResult UciServerConnector::poll() {
         // Nothing is changed.
         return PollResult::NoData;
       }
-      ApiResult result = newDebugEnabled ? client_->enterDebugMode() : client_->leaveDebugMode();
-      if (checkClient(result) == ApiResult::Ok) {
-        debugEnabled_ = newDebugEnabled;
+      if (newDebugEnabled) {
+        client_->enterDebugMode();
+      } else {
+        client_->leaveDebugMode();
       }
+      debugEnabled_ = newDebugEnabled;
       return PollResult::Ok;
     }
     if (command == "isready") {
@@ -458,6 +474,10 @@ PollResult UciServerConnector::poll() {
       return processUciGo(cmdTokens);
     }
     if (command == "stop") {
+      if (!searchStarted_) {
+        err_ << "UCI server error: Search not started" << endl;
+        return PollResult::NoData;
+      }
       checkClient(client_->stopSearch());
       return PollResult::Ok;
     }
@@ -493,7 +513,12 @@ void UciServerConnector::disconnect() {
 UciServerConnector::UciServerConnector() : UciServerConnector(std::cin, std::cout, std::cerr) {}
 
 UciServerConnector::UciServerConnector(std::istream &in, std::ostream &out, std::ostream &err)
-    : searchStarted_(false), debugEnabled_(false), client_(nullptr), in_(in), out_(out), err_(err) {}
+    : searchStarted_(false),
+      debugEnabled_(false),
+      client_(nullptr),
+      in_(in),
+      out_(out),
+      err_(err) {}
 
 UciServerConnector::~UciServerConnector() {
   if (unlikely(client_)) {

@@ -20,6 +20,8 @@ class Server;
 
 // The abstract class client API, i.e. the API that the chess engine provides to GUI. This API is
 // mostly based on UCI interface.
+//
+// Note that this API is not assumed to be thread-safe.
 class Client {
 public:
   // Returns engine name
@@ -29,10 +31,10 @@ public:
   virtual const char *author() const = 0;
 
   // Enter debug mode. The engine can report debug info to the GUI
-  virtual ApiResult enterDebugMode() { return ApiResult::Ok; }
+  virtual void enterDebugMode() {}
 
   // Leave debug mode
-  virtual ApiResult leaveDebugMode() { return ApiResult::Ok; }
+  virtual void leaveDebugMode() {}
 
   // Indicate that the next search will be from a different game. The implementation must not rely
   // on this command much
