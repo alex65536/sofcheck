@@ -54,8 +54,8 @@ private:
   // Makes sure that the client is connected
   void ensureClient();
 
-  // Reports failures from client side, if any
-  void checkClient(ApiResult result);
+  // Reports failures from client side, if any. Returns `result` unchanged
+  ApiResult checkClient(ApiResult result);
 
   // Helper method for `processUciGo`. It runs the logic which is required to start the analysis:
   // checks the API call results, reports the errors to the server, indicates that the search has
@@ -72,7 +72,8 @@ private:
   PollResult processUciGo(std::istream &tokens);
 
   // Tries to interpret the next value on the stream as milliseconds and put it to `time`. Returns
-  // `true` on success. Otherwise returns `false` and doesn't perform any writes into `time`.
+  // `true` on success. Otherwise returns `false`, reports the error and doesn't perform any writes
+  // into `time`.
   bool tryReadMsec(std::chrono::milliseconds &time, std::istream &stream);
 
   // Returns the amount of time the search is running. If the search was not started, the behaviour
@@ -80,6 +81,7 @@ private:
   inline auto getSearchTime() const { return std::chrono::steady_clock::now() - searchStartTime_; }
 
   bool searchStarted_;
+  bool debugEnabled_;
   std::chrono::time_point<std::chrono::steady_clock> searchStartTime_;
   Client *client_;
   std::istream &in_;

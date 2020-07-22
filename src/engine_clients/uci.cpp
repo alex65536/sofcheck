@@ -170,11 +170,12 @@ ApiResult UciServerConnector::sendString(const char *str) {
   return ApiResult::Ok;
 }
 
-void UciServerConnector::checkClient(ApiResult result) {
+ApiResult UciServerConnector::checkClient(ApiResult result) {
   if (result == ApiResult::Ok || result == ApiResult::NotSupported) {
-    return;
+    return result;
   }
   err_ << "UCI client error: " << SoFEngineBase::apiResultToStr(result) << endl;
+  return result;
 }
 
 PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) {
@@ -200,9 +201,9 @@ bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
     return false;
   }
   if (val > static_cast<uint64_t>(milliseconds::max().count())) {
-    err_ << "UCI server error: Given value is too large" << endl;
+    err_ << "UCI server error: Value is too large" << endl;
   }
-  time = std::chrono::milliseconds(val);
+  time = milliseconds(val);
   return true;
 }
 
@@ -228,20 +229,23 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
   SoFEngineBase::TimeControl timeControl;
   for (;;) {
     std::string token;
-    tokens >> token;
+    if (!(tokens >> token)) {
+      break;
+    }
     if (token == "searchmoves") {
-      // Not supported, skip any token until we get a valid subcommand or end of line
+      // Not supported, skip any token until we get either a valid subcommand or end of line
       for (;;) {
         if (!(tokens >> token)) {
+          // Found end of line
           token = "";
           break;
         }
         if (std::find(subcommands.begin(), subcommands.end(), token) != subcommands.end()) {
+          // Found valid subcommand
           break;
         }
       }
-      // As we read an extra token here, do not go the next loop iteration here, fall through to the
-      // next command.
+      // We read an extra token here. We need to fall through and parse it
     }
     if (token == "searchmoves") {
       // Two "searchmoves" in a row is really weird
@@ -313,14 +317,14 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
       return doStartSearch(client_->searchInfinite());
     }
     if (token.empty()) {
-      // Empty token means end of line; exiting the parser loop
+      // Empty token means end of line; exit the parser loop
       break;
     }
   }
 
   if (!hasTimeControl) {
     // If no suitable search type found, then go infinite
-    err_ << "UCI server error: No useful parameters to \"go\" specified; running infinite search"
+    err_ << "UCI server error: No useful parameters specified for \"go\"; running infinite search"
          << endl;
     return doStartSearch(client_->searchInfinite());
   }
@@ -330,7 +334,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
 }
 
 PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
-  // Scan the position description (until the stream is over or "moves" encountered)
+  // Scan the position description (until the end of line or "moves" token)
   std::string fenString;
   std::string token;
   while (tokens >> token) {
@@ -362,12 +366,12 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
     }
   }
 
-  // Parse all the moves and make them on `dstBoard`
+  // Parse all the moves and apply them to `dstBoard`
   Board dstBoard = board;
   std::vector<Move> moves;
   while (tokens >> token) {
     const Move move = SoFCore::moveParse(token.c_str(), dstBoard);
-    if (!move.isWellFormed(dstBoard.side) || SoFCore::isMoveValid(dstBoard, move)) {
+    if (!move.isWellFormed(dstBoard.side) || !SoFCore::isMoveValid(dstBoard, move)) {
       err_ << "UCI server error: Move is invalid" << endl;
       return PollResult::NoData;
     }
@@ -394,16 +398,14 @@ PollResult UciServerConnector::poll() {
     err_ << "Stopping." << endl;
     return PollResult::Shutdown;
   }
-  if (!std::getline(in_, cmdLine)) {
-    return PollResult::IOError;
-  }
+  D_CHECK_POLL_IO(std::getline(in_, cmdLine));
   if (cmdLine.empty()) {
     return PollResult::NoData;
   }
 
   // Scan for command name. UCI standard says that we can safely skip all the words we don't know
-  // and use the first known words as UCI command. For example, "joho debug on\n" must be
-  // interperted just like "debug on\n"
+  // and use the first known word as UCI command. For example, "joho debug on\n" will be interperted
+  // just like "debug on\n"
   std::istringstream cmdTokens(cmdLine);
   std::string command;
   while (cmdTokens >> command) {
@@ -417,16 +419,20 @@ PollResult UciServerConnector::poll() {
       // Expecting "on" or "off"
       std::string value;
       cmdTokens >> value;
-      if (value == "on") {
-        checkClient(client_->enterDebugMode());
-        return PollResult::Ok;
+      if (value != "on" && value != "off") {
+        err_ << R"(UCI server error: "on" or "off" expected)" << endl;
+        return PollResult::NoData;
       }
-      if (value == "off") {
-        checkClient(client_->leaveDebugMode());
-        return PollResult::Ok;
+      const bool newDebugEnabled = (value == "on");
+      if (debugEnabled_ == newDebugEnabled) {
+        // Nothing is changed.
+        return PollResult::NoData;
       }
-      err_ << R"(UCI server error: "on" or "off" expected)" << endl;
-      return PollResult::NoData;
+      ApiResult result = newDebugEnabled ? client_->enterDebugMode() : client_->leaveDebugMode();
+      if (checkClient(result) == ApiResult::Ok) {
+        debugEnabled_ = newDebugEnabled;
+      }
+      return PollResult::Ok;
     }
     if (command == "isready") {
       // Always reply "readyok"
@@ -487,7 +493,7 @@ void UciServerConnector::disconnect() {
 UciServerConnector::UciServerConnector() : UciServerConnector(std::cin, std::cout, std::cerr) {}
 
 UciServerConnector::UciServerConnector(std::istream &in, std::ostream &out, std::ostream &err)
-    : searchStarted_(false), client_(nullptr), in_(in), out_(out), err_(err) {}
+    : searchStarted_(false), debugEnabled_(false), client_(nullptr), in_(in), out_(out), err_(err) {}
 
 UciServerConnector::~UciServerConnector() {
   if (unlikely(client_)) {
