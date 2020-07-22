@@ -1,7 +1,6 @@
 #include "engine_clients/uci.h"
 
 #include <algorithm>
-#include <charconv>
 #include <cmath>
 #include <iostream>
 #include <limits>
@@ -204,7 +203,7 @@ bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *in
     err_ << "UCI server error: Cannot read token" << endl;
     return false;
   }
-  if (std::from_chars(token.data(), token.data() + token.size(), val).ec != std::errc()) {
+  if (!SoFUtil::valueFromStr(token.data(), token.data() + token.size(), val)) {
     err_ << "UCI server error: Cannot interpret token as " << intType << endl;
     return false;
   }

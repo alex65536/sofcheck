@@ -1,6 +1,7 @@
 #ifndef SOF_UTIL_STRUTIL_INCLUDED
 #define SOF_UTIL_STRUTIL_INCLUDED
 
+#include <charconv>
 #include <cstring>
 #include <string>
 
@@ -13,6 +14,20 @@ const char *scanTokenEnd(const char *str);
 // Scans the string forward, starting from `str` and returns the first character which is not equal
 // to `'t'`, `'\n'` and `' '`.
 const char *scanTokenStart(const char *str);
+
+// Wrapper for `std::from_chars`. Tries to interpret the entire string between `first` and `last` as
+// integer or floating point type `T`. Returns `true` and puts the result into `val` on success.
+// Otherwise `false` is returned and `val` remains untouched.
+template <typename T>
+inline bool valueFromStr(const char *first, const char *last, T &val) {
+  T value;
+  const std::from_chars_result res = std::from_chars(first, last, value);
+  if (res.ptr != last || res.ec != std::errc()) {
+    return false;
+  }
+  val = value;
+  return true;
+}
 
 // Replaces the small characters (with ASCII code <= 32) with spaces. The tab characters ('\t') are
 // left intact. The primary purpose of this function is to sanitize the string for UCI output, to

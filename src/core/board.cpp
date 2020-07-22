@@ -287,15 +287,13 @@ FenParseResult Board::setFromFen(const char *fen) {
   // 5. Parse move counter
   const char *oldPos = fen;
   fen = SoFUtil::scanTokenEnd(fen);
-  std::from_chars_result res = std::from_chars(oldPos, fen, moveCounter);
-  D_PARSE_CHECK(res.ec == std::errc(), FenParseResult::ExpectedUint16);
+  D_PARSE_CHECK(SoFUtil::valueFromStr(oldPos, fen, moveCounter), FenParseResult::ExpectedUint16);
   D_PARSE_CONSUME_SPACE();
 
   // 6. Parse move number
   oldPos = fen;
   fen = SoFUtil::scanTokenEnd(fen);
-  res = std::from_chars(oldPos, fen, moveNumber);
-  D_PARSE_CHECK(res.ec == std::errc(), FenParseResult::ExpectedUint16);
+  D_PARSE_CHECK(SoFUtil::valueFromStr(oldPos, fen, moveNumber), FenParseResult::ExpectedUint16);
 
   // 7. Check that there is no extra data
   fen = SoFUtil::scanTokenStart(fen);
