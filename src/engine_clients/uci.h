@@ -55,12 +55,7 @@ private:
   // Reports failures from client side, if any. Returns `result` unchanged
   ApiResult checkClient(ApiResult result);
 
-  // Helper method for `processUciGo`. It runs the logic which is required to start the analysis:
-  // checks the API call results, reports the errors to the server, indicates that the search has
-  // started.
-  //
-  // The primary purpose of this method is to reduce copy-paste in `processUciGo` for different
-  // `search(...)` methods. Better see the source code for more details.
+  // Helper method for `processUciGo`
   PollResult doStartSearch(ApiResult searchStartResult);
 
   // Processes "position" subcommand
