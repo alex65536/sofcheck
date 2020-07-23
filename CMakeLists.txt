@@ -104,6 +104,7 @@ target_link_libraries(sof_core sof_util)
 
 add_library(sof_engine_base STATIC
   src/engine_base/connection.cpp
+  src/engine_base/options.cpp
   src/engine_base/strutil.cpp
 )
 target_link_libraries(sof_engine_base sof_core sof_util)
