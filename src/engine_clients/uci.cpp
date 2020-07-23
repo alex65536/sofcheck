@@ -181,7 +181,7 @@ ApiResult UciServerConnector::checkClient(ApiResult result) {
 PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) {
   if (searchStartResult != ApiResult::Ok) {
     const char *strResult = SoFEngineBase::apiResultToStr(searchStartResult);
-    err_ << "UCI client error: " << strResult << endl;
+    err_ << "UCI client error: Cannot start search: " << strResult << endl;
     D_CHECK_POLL_IO(out_ << "info string Cannot start search: " << strResult << endl);
     // We cannot start search from our side because of API call error. But it's better to tell the
     // server that we stopped (by sending null move). Otherwise the server will wait for the search
@@ -198,11 +198,11 @@ template <typename T>
 bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *intType) {
   std::string token;
   if (!(stream >> token)) {
-    err_ << "UCI server error: Cannot read token" << endl;
+    err_ << "UCI server error: Expected token, but end of line found" << endl;
     return false;
   }
   if (!SoFUtil::valueFromStr(token.data(), token.data() + token.size(), val)) {
-    err_ << "UCI server error: Cannot interpret token as " << intType << endl;
+    err_ << "UCI server error: Cannot interpret token \"" << token << "\" as " << intType << endl;
     return false;
   }
   return true;
@@ -214,7 +214,7 @@ bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
     return false;
   }
   if (val > static_cast<uint64_t>(milliseconds::max().count())) {
-    err_ << "UCI server error: Value is too large" << endl;
+    err_ << "UCI server error: Value " << val << " is too large" << endl;
   }
   time = milliseconds(val);
   return true;
@@ -334,7 +334,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
 
   if (!hasTimeControl) {
     // If no suitable search type found, then go infinite
-    err_ << "UCI server error: No useful parameters specified for \"go\"; running infinite search"
+    err_ << "UCI server warning: No useful parameters specified for \"go\"; running infinite search"
          << endl;
     return doStartSearch(client_->searchInfinite());
   }
@@ -364,14 +364,14 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   } else {
     SoFCore::FenParseResult parseRes = board.setFromFen(fenString.c_str());
     if (parseRes != SoFCore::FenParseResult::Ok) {
-      err_ << "UCI server error: Cannot parse position: " << SoFCore::fenParseResultToStr(parseRes)
-           << endl;
+      err_ << "UCI server error: Cannot parse position \"" << fenString
+           << "\" << : " << SoFCore::fenParseResultToStr(parseRes) << endl;
       return PollResult::NoData;
     }
     SoFCore::ValidateResult validateRes = board.validate();
     if (validateRes != SoFCore::ValidateResult::Ok) {
-      err_ << "UCI server error: Position is invalid: " << SoFCore::validateResultToStr(validateRes)
-           << endl;
+      err_ << "UCI server error: Position \"" << fenString
+           << "\" is invalid: " << SoFCore::validateResultToStr(validateRes) << endl;
       return PollResult::NoData;
     }
   }
@@ -382,13 +382,13 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   while (tokens >> token) {
     const Move move = SoFCore::moveParse(token.c_str(), dstBoard);
     if (!move.isWellFormed(dstBoard.side) || !SoFCore::isMoveValid(dstBoard, move)) {
-      err_ << "UCI server error: Move is invalid" << endl;
+      err_ << "UCI server error: Move \"" << token << "\" is invalid" << endl;
       return PollResult::NoData;
     }
     moves.push_back(move);
     SoFCore::moveMake(dstBoard, move);
     if (!isMoveLegal(dstBoard)) {
-      err_ << "UCI server error: Move is not legal" << endl;
+      err_ << "UCI server error: Move \"" << token << "\" is not legal" << endl;
       return PollResult::NoData;
     }
   }
@@ -431,13 +431,13 @@ PollResult UciServerConnector::poll() {
       std::string value;
       cmdTokens >> value;
       if (value != "on" && value != "off") {
-        err_ << R"(UCI server error: Tokens "on" or "off" expected)" << endl;
+        err_ << R"(UCI server error: Tokens "on" or "off" expected after "debug")" << endl;
         return PollResult::NoData;
       }
       const bool newDebugEnabled = (value == "on");
       if (debugEnabled_ == newDebugEnabled) {
         err_ << "UCI server error: Debug is already " << (debugEnabled_ ? "enabled" : "disabled")
-             << "!" << endl;
+             << endl;
         return PollResult::NoData;
       }
       if (newDebugEnabled) {
@@ -473,7 +473,7 @@ PollResult UciServerConnector::poll() {
     }
     if (command == "stop") {
       if (!searchStarted_) {
-        err_ << "UCI server error: Search not started" << endl;
+        err_ << "UCI server error: Cannot stop search, as it is not started" << endl;
         return PollResult::NoData;
       }
       checkClient(client_->stopSearch());
@@ -491,7 +491,7 @@ PollResult UciServerConnector::poll() {
   }
 
   // The given string didn't contain any commands
-  err_ << "UCI server error: No command" << endl;
+  err_ << "UCI server error: Cannot interpret line as UCI comment" << endl;
   return PollResult::NoData;
 }
 
