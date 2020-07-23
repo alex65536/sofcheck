@@ -12,11 +12,11 @@
 
 namespace SoFEngineBase {
 
-// TODO : add support for engine options
 // TODO : add API for ponder
 // TODO : add API for "go" subcommands: "searchmoves", "mate"
 
 class Server;
+class Options;
 
 // The abstract class client API, i.e. the API that the chess engine provides to GUI. This API is
 // mostly based on UCI interface.
@@ -34,6 +34,10 @@ public:
 
   // Returns engine author
   virtual const char *author() const = 0;
+
+  // Returns engine options
+  virtual Options &options() = 0;
+  virtual const Options &options() const = 0;
 
   // Enter debug mode. The engine can report debug info to the GUI
   virtual void enterDebugMode() {}

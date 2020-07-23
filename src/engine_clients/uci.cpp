@@ -6,11 +6,13 @@
 #include <limits>
 #include <sstream>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "core/move_parser.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
+#include "engine_base/options.h"
 #include "engine_base/strutil.h"
 #include "engine_base/types.h"
 #include "util/misc.h"
@@ -20,10 +22,15 @@ namespace SoFEngineClients {
 
 using SoFCore::Board;
 using SoFCore::Move;
+using SoFEngineBase::Options;
+using SoFEngineBase::OptionType;
 using SoFEngineBase::PositionCostBound;
 using SoFEngineBase::PositionCostType;
 using SoFUtil::panic;
 using std::endl;
+using std::pair;
+using std::string;
+using std::vector;
 using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
@@ -196,7 +203,7 @@ PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) 
 
 template <typename T>
 bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *intType) {
-  std::string token;
+  string token;
   if (!(stream >> token)) {
     err_ << "UCI server error: Expected token, but end of line found" << endl;
     return false;
@@ -227,9 +234,9 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
   }
 
   // List of supported subcommands
-  const std::vector<std::string> subcommands{"searchmoves", "ponder", "wtime",     "btime",
-                                             "winc",        "binc",   "movestogo", "depth",
-                                             "nodes",       "mate",   "movetime",  "infinite"};
+  const vector<string> subcommands{"searchmoves", "ponder", "wtime",     "btime",
+                                   "winc",        "binc",   "movestogo", "depth",
+                                   "nodes",       "mate",   "movetime",  "infinite"};
 
   // We don't support intricate combination of the parameters in this command, so we try to find
   // "depth", "nodes", "movetime" or "infinite" and call appropriate APIs to handle this. If nothing
@@ -241,7 +248,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
   bool hasTimeControl = false;
   SoFEngineBase::TimeControl timeControl;
   for (;;) {
-    std::string token;
+    string token;
     if (!(tokens >> token)) {
       break;
     }
@@ -312,7 +319,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     }
     if (token == "mate") {
       // Not supported.
-      std::string unused;
+      string unused;
       tokens >> unused;
       continue;
     }
@@ -345,8 +352,8 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
 
 PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   // Scan the position description (until the end of line or "moves" token)
-  std::string fenString;
-  std::string token;
+  string fenString;
+  string token;
   while (tokens >> token) {
     if (token == "moves") {
       break;
@@ -378,7 +385,7 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
 
   // Parse all the moves and apply them to `dstBoard`
   Board dstBoard = board;
-  std::vector<Move> moves;
+  vector<Move> moves;
   while (tokens >> token) {
     const Move move = SoFCore::moveParse(token.c_str(), dstBoard);
     if (!move.isWellFormed(dstBoard.side) || !SoFCore::isMoveValid(dstBoard, move)) {
@@ -398,12 +405,64 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   return PollResult::Ok;
 }
 
+PollResult UciServerConnector::listOptions() {
+  const Options &opts = client_->options();
+  vector<pair<string, OptionType>> keys = opts.list();
+  // TODO : escape names and fill mappings
+  std::sort(keys.begin(), keys.end());
+  for (const auto &[key, type] : keys) {
+    D_CHECK_POLL_IO(out_ << "option name " << key << " type");
+    switch (type) {
+      case OptionType::Bool: {
+        const auto *option = opts.getBool(key);
+        D_CHECK_POLL_IO(out_ << " check default " << (option->value ? "true" : "false") << endl);
+        break;
+      }
+      case OptionType::Enum: {
+        const auto *option = opts.getEnum(key);
+        // TODO : also fill mappings and escape names for enums
+        D_CHECK_POLL_IO(out_ << " combo default " << option->items[option->index]);
+        for (const string &item : option->items) {
+          D_CHECK_POLL_IO(out_ << " val " << item);
+        }
+        D_CHECK_POLL_IO(out_ << endl);
+        break;
+      }
+      case OptionType::Int: {
+        const auto *option = opts.getInt(key);
+        D_CHECK_POLL_IO(out_ << " spin default " << option->value << " min " << option->minValue
+                             << " max " << option->maxValue << endl);
+        break;
+      }
+      case OptionType::String: {
+        const auto *option = opts.getString(key);
+        string value = SoFUtil::sanitizeEol(option->value);
+        // If the string is empty or consists only of spaces, then assign special value <empty>
+        if (*SoFUtil::scanTokenStart(value.c_str()) == '\0') {
+          value = "<empty>";
+        }
+        D_CHECK_POLL_IO(out_ << " string default " << value << endl);
+        break;
+      }
+      case OptionType::Action: {
+        D_CHECK_POLL_IO(out_ << " button" << endl);
+        break;
+      }
+      case OptionType::None: {
+        unreachable();
+        break;
+      }
+    }
+  }
+  return PollResult::Ok;
+}
+
 PollResult UciServerConnector::poll() {
   // Check that the client is connected
   ensureClient();
 
   // Read command line
-  std::string cmdLine;
+  string cmdLine;
   std::getline(in_, cmdLine);
   D_CHECK_POLL_IO(!in_.bad());
   if (in_.eof()) {
@@ -415,20 +474,24 @@ PollResult UciServerConnector::poll() {
   }
 
   // Scan for command name. UCI standard says that we can safely skip all the words we don't know
-  // and use the first known word as UCI command. For example, "joho debug on\n" will be interperted
-  // just like "debug on\n"
+  // and use the first known word as UCI command. For example, "joho debug on\n" will be
+  // interperted just like "debug on\n"
   std::istringstream cmdTokens(cmdLine);
-  std::string command;
+  string command;
   while (cmdTokens >> command) {
     if (command == "uci") {
       D_CHECK_POLL_IO(out_ << "id name " << SoFUtil::sanitizeEol(client_->name()) << endl);
       D_CHECK_POLL_IO(out_ << "id author " << SoFUtil::sanitizeEol(client_->author()) << endl);
+      PollResult res = listOptions();
+      if (res != PollResult::Ok) {
+        return res;
+      }
       D_CHECK_POLL_IO(out_ << "uciok" << endl);
       return PollResult::Ok;
     }
     if (command == "debug") {
       // Expecting "on" or "off"
-      std::string value;
+      string value;
       cmdTokens >> value;
       if (value != "on" && value != "off") {
         err_ << R"(UCI server error: Tokens "on" or "off" expected after "debug")" << endl;

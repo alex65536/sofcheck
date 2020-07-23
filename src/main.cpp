@@ -5,6 +5,7 @@
 #include "core/init.h"
 #include "engine_base/client.h"
 #include "engine_base/connection.h"
+#include "engine_base/options.h"
 #include "engine_base/strutil.h"
 #include "engine_clients/uci.h"
 #include "util/misc.h"
@@ -14,7 +15,9 @@ using SoFEngineBase::ApiResult;
 using std::cerr;
 using std::endl;
 
-class TestEngine : public SoFEngineBase::Client, public SoFUtil::NoCopyMove {
+class TestEngine : public SoFEngineBase::Client,
+                   public SoFUtil::NoCopyMove,
+                   private SoFEngineBase::OptionObserver {
 public:
   const char *name() const override { return "Test Engine"; }
   const char *author() const override { return "ubilso ap stenku"; }
@@ -77,14 +80,58 @@ public:
     return ApiResult::Ok;
   }
 
+  SoFEngineBase::Options &options() override { return options_; }
+
+  const SoFEngineBase::Options &options() const override { return options_; }
+
 private:
   ApiResult connect(SoFEngineBase::Server *server) override {
     server_ = server;
     return ApiResult::Ok;
   }
 
+  ApiResult setBool(const std::string &key, bool value) override {
+    cerr << "setBool(" << key << "#" << value << ")" << endl;
+    return ApiResult::Ok;
+  }
+
+  ApiResult setEnum(const std::string &key, size_t index) override {
+    cerr << "setEnum(" << key << "#" << index << ")" << endl;
+    return ApiResult::Ok;
+  }
+
+  SoFEngineBase::ApiResult setInt(const std::string &key, int64_t value) override {
+    cerr << "setInt(" << key << "#" << value << ")" << endl;
+    return ApiResult::Ok;
+  }
+
+  SoFEngineBase::ApiResult setString(const std::string &key, const std::string &value) override {
+    cerr << "setString(" << key << "#" << value << ")" << endl;
+    return ApiResult::Ok;
+  }
+
+  SoFEngineBase::ApiResult triggerAction(const std::string &key) override {
+    cerr << "triggerAction(" << key << ")" << endl;
+    return ApiResult::Ok;
+  }
+
   void disconnect() override { server_ = nullptr; }
 
+  static SoFEngineBase::Options buildOptions() {
+    return SoFEngineBase::OptionBuilder()
+        .addBool("trueBool", true)
+        .addBool("false bool", false)
+        .addEnum(" enum   ", {"Item", "  Item  ", "TheItem"}, 1)
+        .addEnum("enum", {"A", "B", "val C"}, 2)
+        .addEnum("enum 2", {"A", "key B", "val C"}, 0)
+        .addInt("myInt", 0, 10, 20)
+        .addString("name myStr", "key value")
+        .addString("value myStr", "key name")
+        .addAction("action")
+        .options();
+  }
+
+  SoFEngineBase::Options options_ = buildOptions();
   SoFEngineBase::Server *server_;
 };
 

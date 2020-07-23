@@ -61,6 +61,9 @@ public:
     return static_cast<OptionType>(iter->second.index());
   }
 
+  // Lists all the options and their types
+  std::vector<std::pair<std::string, OptionType>> list() const;
+
   // Returns pointer to the option `key` if it's of type `Bool`. Otherwise returns `nullptr`. The
   // other `get...()` methods behave in the similar way.
   inline const BoolOption *getBool(const std::string &key) const { return getT<BoolOption>(key); }
@@ -134,7 +137,8 @@ public:
   // All these methods return `*this`.
 
   OptionBuilder &addBool(const std::string &key, bool value) noexcept;
-  OptionBuilder &addEnum(const std::string &key, std::vector<std::string> items, size_t index) noexcept;
+  OptionBuilder &addEnum(const std::string &key, std::vector<std::string> items,
+                         size_t index) noexcept;
   OptionBuilder &addInt(const std::string &key, int64_t min, int64_t value, int64_t max) noexcept;
   OptionBuilder &addString(const std::string &key, std::string value) noexcept;
   OptionBuilder &addAction(const std::string &key) noexcept;

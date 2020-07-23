@@ -55,6 +55,9 @@ private:
   // Reports failures from client side, if any. Returns `result` unchanged
   ApiResult checkClient(ApiResult result);
 
+  // Lists engine options and fill option mappings
+  PollResult listOptions();
+
   // Helper method for `processUciGo`
   PollResult doStartSearch(ApiResult searchStartResult);
 

@@ -9,6 +9,15 @@ namespace SoFEngineBase {
 
 using SoFUtil::panic;
 
+std::vector<std::pair<std::string, OptionType>> Options::list() const {
+  std::vector<std::pair<std::string, OptionType>> result;
+  result.reserve(values_.size());
+  for (const auto &[key, value] : values_) {
+    result.emplace_back(key, static_cast<OptionType>(value.index()));
+  }
+  return result;
+}
+
 template <typename T, typename Val, typename Validator, typename Observer>
 ApiResult Options::setT(const std::string &key, const Val &value, Validator validate,
                         Observer observe) noexcept {

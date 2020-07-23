@@ -39,6 +39,18 @@
 #endif
 #define unused(x) (void)(x)
 
+// Assume that x is true
+
+#ifdef assume
+#error "assume" is already defined!
+#endif
+#define assume(x)              \
+  {                            \
+    if (!(x)) {                \
+      __builtin_unreachable(); \
+    }                          \
+  }
+
 namespace SoFUtil {
 
 // Terminates the program with the given `message`
