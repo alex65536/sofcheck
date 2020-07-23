@@ -21,6 +21,11 @@ class Server;
 // The abstract class client API, i.e. the API that the chess engine provides to GUI. This API is
 // mostly based on UCI interface.
 //
+// This API mostly assumes that all its methods receive valid parameter values (i.e. the server
+// should perform its own validation before calling the client). Though, the client may perform its
+// own validation and throw `ApiResult::UnexpectedCall` or `ApiResult::InvalidArgument` in case of
+// errors.
+//
 // Note that this API is not assumed to be thread-safe.
 class Client {
 public:

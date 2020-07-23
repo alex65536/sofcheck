@@ -17,10 +17,8 @@ using SoFEngineBase::ApiResult;
 using SoFEngineBase::Client;
 using SoFEngineBase::PollResult;
 
-// A server connector for UCI chess engines. It tries to conform the official docs, but still lacks
-// some features, because they are not supported by the API now. Such commands are just ignored.
-// Another feature of this implementation is careful and strict input validation. The parser tries
-// hard to prevent the engine from getting invalid data.
+// A server connector for UCI chess engines. The main goals of this implementation are conformance
+// with the official docs, and strict input validation.
 //
 // To obtain the official UCI documentation, use http://download.shredderchess.com/div/uci.zip.
 class UciServerConnector final : public SoFEngineBase::ServerConnector, public SoFUtil::NoCopyMove {

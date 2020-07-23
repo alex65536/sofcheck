@@ -56,7 +56,6 @@ ApiResult UciServerConnector::finishSearch(const SoFCore::Move bestMove) {
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
-  // TODO: validate move received from the engine (?)
   D_CHECK_IO(out_ << "bestmove " << SoFCore::moveToStr(bestMove) << endl);
   searchStarted_ = false;
   return ApiResult::Ok;
@@ -133,7 +132,6 @@ ApiResult UciServerConnector::sendResult(const SoFEngineBase::SearchResult &resu
   const uint64_t timeMsec = duration_cast<milliseconds>(getSearchTime()).count();
   D_CHECK_IO(out_ << "info depth " << result.depth << " time " << timeMsec);
   if (result.pvLen != 0) {
-    // TODO: validate PV received from the engine (?)
     D_CHECK_IO(out_ << " pv");
     for (size_t i = 0; i < result.pvLen; ++i) {
       D_CHECK_IO(out_ << " " << SoFCore::moveToStr(result.pv[i]));
@@ -438,7 +436,8 @@ PollResult UciServerConnector::poll() {
       }
       const bool newDebugEnabled = (value == "on");
       if (debugEnabled_ == newDebugEnabled) {
-        // Nothing is changed.
+        err_ << "UCI server error: Debug is already " << (debugEnabled_ ? "enabled" : "disabled")
+             << "!" << endl;
         return PollResult::NoData;
       }
       if (newDebugEnabled) {
