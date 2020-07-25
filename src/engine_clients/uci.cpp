@@ -15,6 +15,7 @@
 #include "engine_base/options.h"
 #include "engine_base/strutil.h"
 #include "engine_base/types.h"
+#include "engine_clients/private/uci_option_escape.h"
 #include "util/misc.h"
 #include "util/strutil.h"
 
@@ -408,10 +409,9 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
 PollResult UciServerConnector::listOptions() {
   const Options &opts = client_->options();
   vector<pair<string, OptionType>> keys = opts.list();
-  // TODO : escape names and fill mappings
   std::sort(keys.begin(), keys.end());
   for (const auto &[key, type] : keys) {
-    D_CHECK_POLL_IO(out_ << "option name " << key << " type");
+    D_CHECK_POLL_IO(out_ << "option name " << Private::uciOptionNameEscape(key) << " type");
     switch (type) {
       case OptionType::Bool: {
         const auto *option = opts.getBool(key);
@@ -420,10 +420,10 @@ PollResult UciServerConnector::listOptions() {
       }
       case OptionType::Enum: {
         const auto *option = opts.getEnum(key);
-        // TODO : also fill mappings and escape names for enums
-        D_CHECK_POLL_IO(out_ << " combo default " << option->items[option->index]);
+        D_CHECK_POLL_IO(out_ << " combo default "
+                             << Private::uciEnumNameEscape(option->items[option->index]));
         for (const string &item : option->items) {
-          D_CHECK_POLL_IO(out_ << " val " << item);
+          D_CHECK_POLL_IO(out_ << " val " << Private::uciEnumNameEscape(item));
         }
         D_CHECK_POLL_IO(out_ << endl);
         break;
@@ -437,7 +437,7 @@ PollResult UciServerConnector::listOptions() {
       case OptionType::String: {
         const auto *option = opts.getString(key);
         string value = SoFUtil::sanitizeEol(option->value);
-        // If the string is empty or consists only of spaces, then assign special value <empty>
+        // If the string is empty or consists only of spaces, then print special value <empty>
         if (*SoFUtil::scanTokenStart(value.c_str()) == '\0') {
           value = "<empty>";
         }

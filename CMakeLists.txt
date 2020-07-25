@@ -110,6 +110,7 @@ add_library(sof_engine_base STATIC
 target_link_libraries(sof_engine_base sof_core sof_util)
 
 add_library(sof_engine_clients STATIC
+  src/engine_clients/private/uci_option_escape.cpp
   src/engine_clients/uci.cpp
 )
 target_link_libraries(sof_engine_clients sof_core sof_util sof_engine_base)

@@ -21,6 +21,13 @@ using SoFEngineBase::PollResult;
 // with the official docs, and strict input validation.
 //
 // To obtain the official UCI documentation, use http://download.shredderchess.com/div/uci.zip.
+//
+// Currently, the implementation is not fully compliant with the UCI docs, here are the issues:
+// - the UCI docs say that there must be no substring "name" and "value" in "setoption" command.
+// This implementation assumes that must be no **token** "name" and "value", but such substrings are
+// allowed.
+// - the UCI docs assume that the options are case-insensitive. This implementation assumes that
+// they are case-sensitive.
 class UciServerConnector final : public SoFEngineBase::ServerConnector, public SoFUtil::NoCopyMove {
 public:
   const char *name() const override { return "UCI Server Connector"; }

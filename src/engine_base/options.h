@@ -135,6 +135,10 @@ public:
   // option is added twice, the functions panic.
   //
   // All these methods return `*this`.
+  //
+  // Also please note that the option names names must be valid, i.e. `isOptionNameValid()` must
+  // return `true`. This rule also applies to enumeration items, i.e. all the strings in `items`
+  // must be valid option names.
 
   OptionBuilder &addBool(const std::string &key, bool value) noexcept;
   OptionBuilder &addEnum(const std::string &key, std::vector<std::string> items,
@@ -154,6 +158,13 @@ private:
 
   Options options_;
 };
+
+// Checks if the option name is valid. This contains checks that:
+// - all the characters are from ASCII 32 to ASCII 126
+// - no two spaces in a row
+// - the name must not start or end with space
+// - the string is not empty
+bool isOptionNameValid(const std::string &s);
 
 }  // namespace SoFEngineBase
 

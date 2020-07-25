@@ -99,10 +99,31 @@ OptionBuilder &OptionBuilder::addBool(const std::string &key, const bool value) 
   return addT(key, BoolOption{value});
 }
 
+template <typename T>
+inline static bool hasRepetitions(std::vector<T> vec) {
+  std::sort(vec.begin(), vec.end());
+  for (size_t i = 1; i < vec.size(); ++i) {
+    if (vec[i - 1] == vec[i]) {
+      return true;
+    }
+  }
+  return false;
+}
+
 OptionBuilder &OptionBuilder::addEnum(const std::string &key, std::vector<std::string> items,
                                       size_t index) noexcept {
   if (index >= items.size()) {
     panic("Invalid EnumOption given for the key \"" + key + "\"");
+  }
+  // Check if all the items have correct names
+  for (const std::string &item : items) {
+    if (!isOptionNameValid(item)) {
+      panic("Attempt to add item with invalid name \"" + item + "\"");
+    }
+  }
+  // Check if some items repeat
+  if (hasRepetitions(items)) {
+    panic("Some enumeration items repeat");
   }
   return addT(key, EnumOption{std::move(items), index});
 }
@@ -125,11 +146,32 @@ OptionBuilder &OptionBuilder::addAction(const std::string &key) noexcept {
 
 template <typename T>
 OptionBuilder &OptionBuilder::addT(const std::string &key, T t) noexcept {
+  if (!isOptionNameValid(key)) {
+    panic("Attempt to add invalid key \"" + key + "\"");
+  }
   const bool added = options_.values_.try_emplace(key, std::in_place_type<T>, std::move(t)).second;
   if (!added) {
     panic("Attempt to add key \"" + key + "\" twice");
   }
   return *this;
+}
+
+bool isOptionNameValid(const std::string &s) {
+  if (s.empty() || s[0] == ' ' || s.back() == ' ') {
+    return false;
+  }
+  for (char c : s) {
+    const int charCode = c;
+    if (charCode < 32 || charCode > 126) {
+      return false;
+    }
+  }
+  for (size_t i = 1; i < s.size(); ++i) {
+    if (s[i - 1] == ' ' && s[i] == ' ') {
+      return false;
+    }
+  }
+  return true;
 }
 
 }  // namespace SoFEngineBase
