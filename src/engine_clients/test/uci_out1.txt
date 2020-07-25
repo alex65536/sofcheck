@@ -1,0 +1,176 @@
+I uci
+O id name Test Engine
+O id author Test Author
+O option name ___name ___value type button
+O option name __name __value type button
+O option name empty string type string default <empty>
+O option name enum type combo default _value val _name val _value val _val val my _name val my _val
+O option name enum _value type combo default v1 val v1 val v3 val v2
+O option name false bool type check default false
+O option name good type button
+O option name good string type string default 42
+O option name int type spin default 10 min 0 max 100
+O option name int 2 type spin default 10 min -100 max 100
+O option name _name _val type button
+O option name _name _value type check default true
+O option name true bool type check default true
+O uciok
+I setoption empty
+E UCI server error: "name" token expected
+E UCI server error: no such option "empty"
+I setoption empty string value 42
+E UCI server error: "name" token expected
+E setString(empty string, 42)
+I setoption name empty string value   <empty>    
+E setString(empty string, )
+I setoption name empty string value    has   many  spaces    
+E setString(empty string, has   many  spaces)
+I setoption name good string value 
+E setString(good string, )
+I setoption name true bool value 0
+E setBool(true bool, 0)
+I setoption name true bool value 1
+E setBool(true bool, 1)
+I setoption name false bool value   true  
+E setBool(false bool, 1)
+I do setoption name false bool   value	false		
+E setBool(false bool, 0)
+I setoption name _name _value value true
+E setBool(name value, 1)
+I setoption name true bool value bad
+E UCI server error: expected "0", "1", "true" or "false", "bad" found
+I setoption
+E UCI server error: cannot read option name
+I setoption name enum value _value
+E setEnum(enum, 1)
+I setoption name enum value   my   _value
+E UCI client error: Invalid parameters given
+I setoption name enum value   my   _val
+E setEnum(enum, 4)
+I setoption name enum value my _name
+E setEnum(enum, 3)
+I setoption name enum value 
+E UCI client error: Invalid parameters given
+I setoption name enum value yes
+E UCI client error: Invalid parameters given
+I setoption name enum _value value v1
+E setEnum(enum value, 0)
+I setoption name enum _value value v2
+E setEnum(enum value, 2)
+I setoption name enum _value value v3
+E setEnum(enum value, 1)
+I setoption name int value 33
+E setInt(int, 33)
+I setoption name int value 42
+E setInt(int, 42)
+E UCI client error: Unknown error
+I setoption name int value int value -14159753975197319753197
+E UCI server error: "int value -14159753975197319753197" is not int64
+I setoption name int value -444444444444444444444444444444444444444
+E UCI server error: "-444444444444444444444444444444444444444" is not int64
+I setoption name int value 1001
+E UCI client error: Invalid parameters given
+I setoption name int 2 value -42
+E setInt(int 2, -42)
+I setoption name _name _val
+E triggerAction(name val)
+I setoption name good
+E triggerAction(good)
+I setoption name __name __value
+E triggerAction(_name _value)
+I setoption name ___name ___value
+E triggerAction(__name __value)
+I setoption name name val
+E triggerAction(name val)
+I debug off
+E UCI server error: Debug is already disabled
+I debug   on
+E enterDebugMode()
+I debug on
+E UCI server error: Debug is already enabled
+I debug off
+E leaveDebugMode()
+I debug off
+E UCI server error: Debug is already disabled
+I isready
+O readyok
+I ucinewgame
+E newGame()
+I position startpos moves e2e4 e7e5
+E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1, e2e4, e7e5)
+I position r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4 moves
+E setPosition(r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4)
+I position startpos moves g2g4 e7e5 f2f3 d8h5 a2a3
+E UCI server error: Move "d8h5" is invalid
+I position startpos moves g2g4 e7e5 f2f3 d8h4 a2a3
+E UCI server error: Move "a2a3" is not legal
+I position startpos
+E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
+I position startpos moves moves
+E UCI server error: Move "moves" is invalid
+I position rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves
+E UCI server error: Position "rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" is invalid: One of the sides doesn't have a king
+I position startpos moves
+E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
+I go searchmoves e2e4 d2d4
+E UCI server warning: No useful parameters specified for "go"; running infinite search
+E searchInfinite()
+I go searchmoves e2e4 d2d4 infinite
+E UCI server error: Search is already started
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+I go searchmoves e2e4 d2d4 infinite
+E searchInfinite()
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+I go depth 12
+E searchFixedDepth(12)
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+I go nodes 18484414
+O info string Cannot start search: Command not supported
+O bestmove 0000
+E searchFixedNodes(18484414) // not supported
+E UCI client error: Cannot start search: Command not supported
+I stop
+E UCI server error: Cannot stop search, as it is not started
+I stop
+E UCI server error: Cannot stop search, as it is not started
+I go winc 30000 wtime 1000000 btime 2000000
+E searchTimeControl(1000000, 30000, 2000000, 0)
+I go winc 30000 wtime 1000000 btime 2000000 movestogo 20
+E UCI server error: Search is already started
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+I go winc 30000 wtime 1000000 btime 2000000 movestogo 20
+E searchTimeControl(1000000, 30000, 2000000, 0, movesToGo = 20)
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+I go movetime 1000
+E searchFixedTime(1000)
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+I unknown command
+E UCI server error: Cannot interpret line as UCI command
+I quit
+E Stopping.
+M Close
+M Exited with exitcode 0

@@ -645,7 +645,7 @@ PollResult UciServerConnector::poll() {
   }
 
   // The given string didn't contain any commands
-  err_ << "UCI server error: Cannot interpret line as UCI comment" << endl;
+  err_ << "UCI server error: Cannot interpret line as UCI command" << endl;
   return PollResult::NoData;
 }
 

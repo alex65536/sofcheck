@@ -147,5 +147,39 @@ target_link_libraries(bench_is_move_legal sof_core sof_util)
 add_subdirectory(selftest)
 
 
+# Add tests
+enable_testing()
+
+add_executable(test_uci_client
+  src/engine_clients/test/uci.cpp
+)
+target_link_libraries(test_uci_client
+  sof_core
+  sof_util
+  sof_engine_base
+  sof_engine_clients
+)
+add_test(
+  NAME uci-client-1
+  COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
+  ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
+  ${PROJECT_BINARY_DIR}/test_uci_client
+  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in1.txt
+  ${PROJECT_BINARY_DIR}/test_uci_client_log1.txt
+  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out1.txt
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+)
+add_test(
+  NAME uci-client-2
+  COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
+  ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
+  ${PROJECT_BINARY_DIR}/test_uci_client
+  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in2.txt
+  ${PROJECT_BINARY_DIR}/test_uci_client_log2.txt
+  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out2.txt
+  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+)
+
+
 # Add install section
 install(TARGETS sofcheck RUNTIME DESTINATION bin)

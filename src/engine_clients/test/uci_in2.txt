@@ -1,0 +1,4 @@
+uci
+position startpos moves
+go infinite
+stop

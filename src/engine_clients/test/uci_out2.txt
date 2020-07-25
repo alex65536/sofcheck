@@ -1,0 +1,29 @@
+I uci
+O id name Test Engine
+O id author Test Author
+O option name ___name ___value type button
+O option name __name __value type button
+O option name empty string type string default <empty>
+O option name enum type combo default _value val _name val _value val _val val my _name val my _val
+O option name enum _value type combo default v1 val v1 val v3 val v2
+O option name false bool type check default false
+O option name good type button
+O option name good string type string default 42
+O option name int type spin default 10 min 0 max 100
+O option name int 2 type spin default 10 min -100 max 100
+O option name _name _val type button
+O option name _name _value type check default true
+O option name true bool type check default true
+O uciok
+I position startpos moves
+E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
+I go infinite
+E searchInfinite()
+I stop
+O info string :)
+O info hashfull 500
+O bestmove e2e4
+E stopSearch()
+M Close
+E Stopping.
+M Exited with exitcode 0

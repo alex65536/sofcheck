@@ -1,0 +1,67 @@
+uci
+setoption empty
+setoption empty string value 42
+setoption name empty string value   <empty>    
+setoption name empty string value    has   many  spaces    
+setoption name good string value 
+setoption name true bool value 0
+setoption name true bool value 1
+setoption name false bool value   true  
+do setoption name false bool   value	false		
+setoption name _name _value value true
+setoption name true bool value bad
+setoption
+setoption name enum value _value
+setoption name enum value   my   _value
+setoption name enum value   my   _val
+setoption name enum value my _name
+setoption name enum value 
+setoption name enum value yes
+setoption name enum _value value v1
+setoption name enum _value value v2
+setoption name enum _value value v3
+setoption name int value 33
+setoption name int value 42
+setoption name int value int value -14159753975197319753197
+setoption name int value -444444444444444444444444444444444444444
+setoption name int value 1001
+setoption name int 2 value -42
+setoption name _name _val
+setoption name good
+setoption name __name __value
+setoption name ___name ___value
+setoption name name val
+debug off
+debug   on
+debug on
+debug off
+debug off
+isready
+ucinewgame
+position startpos moves e2e4 e7e5
+position r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4 moves
+position startpos moves g2g4 e7e5 f2f3 d8h5 a2a3
+position startpos moves g2g4 e7e5 f2f3 d8h4 a2a3
+position startpos
+position startpos moves moves
+position rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves
+position startpos moves
+go searchmoves e2e4 d2d4
+go searchmoves e2e4 d2d4 infinite
+stop
+go searchmoves e2e4 d2d4 infinite
+stop
+go depth 12
+stop
+go nodes 18484414
+stop
+stop
+go winc 30000 wtime 1000000 btime 2000000
+go winc 30000 wtime 1000000 btime 2000000 movestogo 20
+stop
+go winc 30000 wtime 1000000 btime 2000000 movestogo 20
+stop
+go movetime 1000
+stop
+unknown command
+quit

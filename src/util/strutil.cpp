@@ -38,7 +38,7 @@ std::string trim(const std::string &str) {
          (str[right - 1] == '\n' || str[right - 1] == '\t' || str[right - 1] == ' ')) {
     --right;
   }
-  return str.substr(left, right - left + 1);
+  return str.substr(left, right - left);
 }
 
 }  // namespace SoFUtil
