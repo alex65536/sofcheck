@@ -63,7 +63,7 @@ if(UNIX)
 
   add_test(
     NAME self-test
-    COMMAND ${PROJECT_SOURCE_DIR}/../tools/run_self_tests.sh
+    COMMAND ${PROJECT_SOURCE_DIR}/run_self_tests.sh
     ${PROJECT_BINARY_DIR}/test_dodecahedron
     ${PROJECT_BINARY_DIR}/test_sofcheck
     ${PROJECT_SOURCE_DIR}/boards.fen
