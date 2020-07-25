@@ -52,7 +52,7 @@ ApiResult Options::setEnum(const std::string &key, size_t index) noexcept {
 }
 
 ApiResult Options::setEnum(const std::string &key, const std::string &value) noexcept {
-  EnumOption *option = getMutT<EnumOption>(key);
+  auto option = getMutT<EnumOption>(key);
   if (!option) {
     return ApiResult::InvalidArgument;
   }
@@ -85,7 +85,7 @@ ApiResult Options::setString(const std::string &key, const std::string &value) n
 }
 
 ApiResult Options::triggerAction(const std::string &key) noexcept {
-  ActionOption *option = getMutT<ActionOption>(key);
+  auto option = getMutT<ActionOption>(key);
   if (!option) {
     return ApiResult::InvalidArgument;
   }

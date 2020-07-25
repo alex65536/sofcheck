@@ -84,6 +84,8 @@ public:
 
   const SoFEngineBase::Options &options() const override { return options_; }
 
+  TestEngine() : options_(buildOptions(this)) {}
+
 private:
   ApiResult connect(SoFEngineBase::Server *server) override {
     server_ = server;
@@ -117,8 +119,8 @@ private:
 
   void disconnect() override { server_ = nullptr; }
 
-  static SoFEngineBase::Options buildOptions() {
-    return SoFEngineBase::OptionBuilder()
+  static SoFEngineBase::Options buildOptions(SoFEngineBase::OptionObserver *observer) {
+    return SoFEngineBase::OptionBuilder(observer)
         .addBool("trueBool", true)
         .addBool("false bool", false)
         .addEnum("enum", {"Item", "Item val", "TheItem"}, 1)
@@ -131,8 +133,8 @@ private:
         .options();
   }
 
-  SoFEngineBase::Options options_ = buildOptions();
-  SoFEngineBase::Server *server_;
+  SoFEngineBase::Options options_;
+  SoFEngineBase::Server *server_ = nullptr;
 };
 
 int main(int argc, char **argv) {

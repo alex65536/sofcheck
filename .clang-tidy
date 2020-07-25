@@ -27,6 +27,7 @@ readability-*, \
 -readability-braces-around-statements, \
 -readability-implicit-bool-conversion, \
 -readability-magic-numbers, \
+-readability-named-parameter, \
 -readability-misleading-indentation"
 
 # Notes:
