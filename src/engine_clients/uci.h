@@ -68,6 +68,9 @@ private:
   // Helper method for `processUciGo`
   PollResult doStartSearch(ApiResult searchStartResult);
 
+  // Processes "setoption" subcommand
+  PollResult processUciSetOption(std::istream &tokens);
+  
   // Processes "position" subcommand
   PollResult processUciPosition(std::istream &tokens);
 

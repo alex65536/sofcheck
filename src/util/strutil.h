@@ -35,6 +35,9 @@ inline bool valueFromStr(const char *first, const char *last, T &val) {
 // command
 std::string sanitizeEol(std::string str);
 
+// Removes leading and trailing spaces from the string
+std::string trim(const std::string &str);
+
 // Works like `strcpy`, but returns the address of null-terminating byte in `dst` (e.g. pointer to
 // the end of `dst` instead of the pointer to the beginning of `dst`)
 //

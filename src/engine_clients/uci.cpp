@@ -457,6 +457,98 @@ PollResult UciServerConnector::listOptions() {
   return PollResult::Ok;
 }
 
+PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
+  // Read "name" token. There must be such token, according to UCI docs. If not, just assume that
+  // the first token is the start of the option name
+  string name;
+  string token;
+  if (!(tokens >> token)) {
+    err_ << "UCI server error: cannot read option name" << endl;
+    return PollResult::NoData;
+  }
+  if (token != "name") {
+    err_ << R"R(UCI server error: "name" token expected)R" << endl;
+    name += token;
+  }
+
+  // Seek for end of line or "value" token (which denotes end of the option name)
+  for (;;) {
+    if (!(tokens >> token) || token == "value") {
+      break;
+    }
+    if (!name.empty()) {
+      name += ' ';
+    }
+    name += token;
+  }
+  name = Private::uciOptionNameUnescape(name);
+
+  OptionType type = client_->options().type(name);
+  if (type == OptionType::None) {
+    err_ << "UCI server error: no such option \"" << name << "\"" << endl;
+    return PollResult::NoData;
+  }
+
+  // Read value
+  string value;
+  if (type == OptionType::String) {
+    // String must be read without parsing it into tokens
+    std::getline(tokens, value);
+    value = SoFUtil::trim(value);
+  } else {
+    // Parse value as tokens
+    string token;
+    while (tokens >> token) {
+      if (!value.empty()) {
+        value += ' ';
+      }
+      value += token;
+    }
+  }
+
+  switch (type) {
+    case OptionType::Bool: {
+      if (value == "0" || value == "false") {
+        checkClient(client_->options().setBool(name, false));
+        return PollResult::Ok;
+      }
+      if (value == "1" || value == "true") {
+        checkClient(client_->options().setBool(name, true));
+        return PollResult::Ok;
+      }
+      err_ << R"R(UCI server error: expected "0", "1", "true" or "false", ")R" << value
+           << "\" found" << endl;
+      return PollResult::NoData;
+    }
+    case OptionType::Int: {
+      int64_t result;
+      if (!SoFUtil::valueFromStr(value.c_str(), value.c_str() + value.size(), result)) {
+        err_ << "UCI server error: \"" << value << "\" is not int64" << endl;
+        return PollResult::NoData;
+      }
+      checkClient(client_->options().setInt(name, result));
+      return PollResult::Ok;
+    }
+    case OptionType::String: {
+      checkClient(client_->options().setString(name, (value == "<empty>") ? std::string() : value));
+      return PollResult::Ok;
+    }
+    case OptionType::Enum: {
+      checkClient(client_->options().setEnum(name, Private::uciEnumNameUnescape(value)));
+      return PollResult::Ok;
+    }
+    case OptionType::Action: {
+      checkClient(client_->options().triggerAction(name));
+      return PollResult::Ok;
+    }
+    case OptionType::None: {
+      unreachable();
+    }
+  }
+
+  panic("Unknown option type, end of function reached in processUciSetOption");
+}
+
 PollResult UciServerConnector::poll() {
   // Check that the client is connected
   ensureClient();
@@ -517,8 +609,7 @@ PollResult UciServerConnector::poll() {
       return PollResult::Ok;
     }
     if (command == "setoption") {
-      // TODO : support setoption command!
-      return PollResult::NoData;
+      return processUciSetOption(cmdTokens);
     }
     if (command == "register") {
       // Not supported.

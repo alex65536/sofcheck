@@ -11,6 +11,9 @@ namespace SoFEngineClients::Private {
 // otherwise the behaviour is undefined
 template <typename Transform>
 inline static std::string transformTokens(const std::string &name, Transform transform) {
+  if (name.empty()) {
+    return std::string();
+  }
   std::string result;
   result.reserve(name.size() + 16);
   const char *str = name.c_str();
