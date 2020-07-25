@@ -159,26 +159,29 @@ target_link_libraries(test_uci_client
   sof_engine_base
   sof_engine_clients
 )
-add_test(
-  NAME uci-client-1
-  COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
-  ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
-  ${PROJECT_BINARY_DIR}/test_uci_client
-  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in1.txt
-  ${PROJECT_BINARY_DIR}/test_uci_client_log1.txt
-  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out1.txt
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-)
-add_test(
-  NAME uci-client-2
-  COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
-  ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
-  ${PROJECT_BINARY_DIR}/test_uci_client
-  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in2.txt
-  ${PROJECT_BINARY_DIR}/test_uci_client_log2.txt
-  ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out2.txt
-  WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
-)
+if(UNIX)
+  # TODO : add code to detect the presence of Python in the system
+  add_test(
+    NAME uci-client-1
+    COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
+    ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
+    ${PROJECT_BINARY_DIR}/test_uci_client
+    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in1.txt
+    ${PROJECT_BINARY_DIR}/test_uci_client_log1.txt
+    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out1.txt
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  )
+  add_test(
+    NAME uci-client-2
+    COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
+    ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
+    ${PROJECT_BINARY_DIR}/test_uci_client
+    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in2.txt
+    ${PROJECT_BINARY_DIR}/test_uci_client_log2.txt
+    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out2.txt
+    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  )
+endif()
 
 
 # Add install section
