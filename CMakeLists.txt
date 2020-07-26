@@ -100,20 +100,20 @@ add_library(sof_core STATIC
   ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
   ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
 )
-target_link_libraries(sof_core sof_util)
+target_link_libraries(sof_core PUBLIC sof_util)
 
 add_library(sof_engine_base STATIC
   src/engine_base/connection.cpp
   src/engine_base/options.cpp
   src/engine_base/strutil.cpp
 )
-target_link_libraries(sof_engine_base sof_core sof_util)
+target_link_libraries(sof_engine_base PUBLIC sof_core sof_util)
 
 add_library(sof_engine_clients STATIC
   src/engine_clients/private/uci_option_escape.cpp
   src/engine_clients/uci.cpp
 )
-target_link_libraries(sof_engine_clients sof_core sof_util sof_engine_base)
+target_link_libraries(sof_engine_clients PUBLIC sof_core sof_util sof_engine_base)
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
@@ -129,12 +129,7 @@ add_executable(gen_magic_consts
 add_executable(sofcheck
   src/main.cpp
 )
-target_link_libraries(sofcheck
-  sof_core
-  sof_util
-  sof_engine_base
-  sof_engine_clients
-)
+target_link_libraries(sofcheck sof_core sof_util sof_engine_base sof_engine_clients)
 
 
 # Add benchmarks
@@ -153,12 +148,7 @@ enable_testing()
 add_executable(test_uci_client
   src/engine_clients/test/uci.cpp
 )
-target_link_libraries(test_uci_client
-  sof_core
-  sof_util
-  sof_engine_base
-  sof_engine_clients
-)
+target_link_libraries(test_uci_client sof_core sof_util sof_engine_clients)
 if(UNIX)
   # TODO : add code to detect the presence of Python in the system
   add_test(
