@@ -32,23 +32,14 @@ bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
          (Private::rookAttackBitboard(b.bbAll, coord) & linePieces);
 }
 
-template <Color C>
-inline static bool isMoveLegalImpl(const Board &b) {
-  return !isCellAttacked<C>(b, b.kingPos(invert(C)));
-}
-
 bool isMoveLegal(const Board &b) {
-  return (b.side == Color::White) ? isMoveLegalImpl<Color::White>(b)
-                                  : isMoveLegalImpl<Color::Black>(b);
-}
-
-template <Color C>
-inline static bool isCheckImpl(const Board &b) {
-  return !isCellAttacked<invert(C)>(b, b.kingPos(C));
+  const Color c = b.side;
+  return !isCellAttacked(b, b.kingPos(invert(c)), c);
 }
 
 bool isCheck(const Board &b) {
-  return (b.side == Color::White) ? isCheckImpl<Color::White>(b) : isCheckImpl<Color::Black>(b);
+  const Color c = b.side;
+  return isCellAttacked(b, b.kingPos(c), invert(c));
 }
 
 template <Color C>

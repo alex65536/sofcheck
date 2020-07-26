@@ -14,6 +14,11 @@ namespace SoFCore {
 template <Color C>
 bool isCellAttacked(const Board &b, coord_t coord);
 
+inline bool isCellAttacked(const Board &b, const coord_t coord, const Color c) {
+  return (c == Color::White) ? isCellAttacked<Color::White>(b, coord)
+                             : isCellAttacked<Color::Black>(b, coord);
+}
+
 // Returns `true` if the last move applied to the board `b` was legal. Note that it doesn't mean
 // that you can apply any illegal moves to the board, the applied move must be still pseudo-legal.
 //
