@@ -15,6 +15,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
   set(USE_BMI1 ON CACHE BOOL "Use BMI1 insruction set (x86_64 only)")
   set(USE_BMI2 OFF CACHE BOOL "Use BMI2 insruction set (x86_64 only)")
 endif()
+set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 
 
 # Detect system configuration
@@ -59,6 +60,9 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+if(USE_SANITIZERS)
+  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address -fsanitize=leak -fsanitize=undefined")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
