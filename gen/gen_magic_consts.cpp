@@ -7,24 +7,17 @@
 #include "util/bit.h"
 
 using namespace SoFCore;  // NOLINT
-
-enum class MagicType { Rook, Bishop };
-
-template <MagicType M>
-inline constexpr bitboard_t buildMagicMask(coord_t coord) {
-  return (M == MagicType::Rook) ? Private::buildMagicRookMask(coord)
-                                : Private::buildMagicBishopMask(coord);
-}
+using SoFCore::Private::MagicType;
 
 template <MagicType M>
 bool isValidMagic(coord_t coord, bitboard_t magic) {
-  const bitboard_t mask = buildMagicMask<M>(coord);
-  const uint8_t shift = SoFUtil::popcount(mask);
-  const size_t len = 1UL << shift;
-  std::vector<bool> used(len);
-  for (size_t i = 0; i < len; ++i) {
-    bitboard_t occupied = SoFUtil::depositBits(i, mask);
-    size_t idx = (occupied * magic) >> (64 - shift);
+  const bitboard_t mask = Private::buildMagicMask<M>(coord);
+  const auto shift = SoFUtil::popcount(mask);
+  const size_t submaskCnt = 1UL << shift;
+  std::vector<bool> used(submaskCnt);
+  for (size_t submask = 0; submask < submaskCnt; ++submask) {
+    const bitboard_t occupied = SoFUtil::depositBits(submask, mask);
+    const size_t idx = (occupied * magic) >> (64 - shift);
     if (used[idx]) {
       return false;
     }
@@ -64,9 +57,9 @@ std::vector<bitboard_t> generateMagics() {
 
 template <MagicType M>
 std::vector<coord_t> generateShifts() {
-  std::vector<SoFCore::coord_t> shifts(64);
+  std::vector<coord_t> shifts(64);
   for (coord_t i = 0; i < 64; ++i) {
-    shifts[i] = 64 - SoFUtil::popcount(buildMagicMask<M>(i));
+    shifts[i] = 64 - Private::getMagicMaskBitSize<M>(i);
   }
   return shifts;
 }

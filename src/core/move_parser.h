@@ -13,8 +13,8 @@ struct ParsedMove {
   uint8_t unused;  // Padding field, shall be set to zero
   coord_t src;
   coord_t dst;
-  cell_t promote;  // This field holds only EMPTY_CELL or a white piece. If, for example, the move
-                   // is a promote to black queen, this fields holds white queen.
+  cell_t promote;  // This field holds only `EMPTY_CELL` or a white piece. If, for example, the move
+                   // is a promote to black queen, this field holds white queen.
 
   // Returns ParsedMove from its UCI string representation. `first` is the pointer to the beginning
   // of the string, and `last` is the pointer past the end of the string. If the given string cannot

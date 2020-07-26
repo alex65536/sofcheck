@@ -19,7 +19,7 @@ void moveToStr(const SoFCore::Move move, char *str) {
   *(str++) = xSubToChar(coordX(move.src));
   *(str++) = ySubToChar(coordY(move.dst));
   *(str++) = xSubToChar(coordX(move.dst));
-  if (move.kind == MoveKind::Promote) {
+  if (move.promote != 0) {
     const char transpos[] = ".pknbrq?";
     *(str++) = transpos[move.promote & 7];
   }
@@ -52,6 +52,8 @@ const char *fenParseResultToStr(const FenParseResult res) {
       return "Invalid enpassant cell";
     case FenParseResult::RedundantData:
       return "Redundant data in the string";
+    case FenParseResult::InternalError:
+      return "Internal parser error";
   }
   return "";
 }

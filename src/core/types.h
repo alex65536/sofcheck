@@ -116,7 +116,7 @@ inline constexpr bool isCellPieceColorEqualTo(cell_t c, Color color) {
 inline constexpr Piece cellPiece(cell_t c) { return static_cast<Piece>((c & 7) - 1); }
 
 inline constexpr cell_t makeCell(Color color, Piece piece) {
-  return colorOffset(color) + static_cast<uint8_t>(piece);
+  return colorOffset(color) + static_cast<cell_t>(piece);
 }
 
 }  // namespace SoFCore

@@ -7,21 +7,22 @@
 
 using namespace SoFCore;  // NOLINT
 
-std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[], size_t size) {
+std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[],
+                                         const size_t size) {
   std::vector<bitboard_t> results(64);
 
-  for (cell_t cell = 0; cell < 64; ++cell) {
+  for (coord_t c = 0; c < 64; ++c) {
     bitboard_t bb = 0;
-    subcoord_t x = coordX(cell);
-    subcoord_t y = coordY(cell);
+    const subcoord_t x = coordX(c);
+    const subcoord_t y = coordY(c);
     for (size_t direction = 0; direction < size; ++direction) {
-      subcoord_t nx = x + static_cast<subcoord_t>(offX[direction]);
-      subcoord_t ny = y + static_cast<subcoord_t>(offY[direction]);
+      const subcoord_t nx = x + static_cast<subcoord_t>(offX[direction]);
+      const subcoord_t ny = y + static_cast<subcoord_t>(offY[direction]);
       if (nx < 8 && ny < 8) {
         bb |= coordToBitboard(makeCoord(nx, ny));
       }
     }
-    results[cell] = bb;
+    results[c] = bb;
   }
 
   return results;

@@ -6,21 +6,22 @@
 #include "core/board.h"
 #include "core/move.h"
 #include "core/types.h"
+#include "util/misc.h"
 
 namespace SoFCore {
 
 inline constexpr char cellToChar(cell_t cell) {
-  char transpos[] = ".PKNBRQ??pknbrq?";
-  if (cell > 16) {
+  constexpr char transpos[] = ".PKNBRQ??pknbrq?";
+  if (SOF_UNLIKELY(cell > 16)) {
     return '?';
   }
   return transpos[cell];
 }
 
 inline constexpr const char *cellToUtf8(cell_t cell) {
-  const char *transpos[] = {".", "♙", "♔", "♘", "♗", "♖", "♕", "?",
-                            "?", "♟", "♚", "♞", "♝", "♜", "♛", "?"};
-  if (cell > 16) {
+  constexpr const char *transpos[] = {".", "♙", "♔", "♘", "♗", "♖", "♕", "?",
+                                      "?", "♟", "♚", "♞", "♝", "♜", "♛", "?"};
+  if (SOF_UNLIKELY(cell > 16)) {
     return "?";
   }
   return transpos[cell];

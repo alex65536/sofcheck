@@ -34,8 +34,10 @@ constexpr bitboard_t BB_DIAG_FRAME = 0xff818181818181ff;
 constexpr bitboard_t BB_CASTLING_KINGSIDE_PASS = 0x60;
 constexpr bitboard_t BB_CASTLING_QUEENSIDE_PASS = 0x0e;
 
-constexpr bitboard_t BB_CASTLING_KINGSIDE_SRCS = 0x90;
-constexpr bitboard_t BB_CASTLING_QUEENSIDE_SRCS = 0x11;
+constexpr bitboard_t BB_CASTLING_BLACK_KINGSIDE_SRCS = 0x90;
+constexpr bitboard_t BB_CASTLING_BLACK_QUEENSIDE_SRCS = 0x11;
+constexpr bitboard_t BB_CASTLING_WHITE_KINGSIDE_SRCS = BB_CASTLING_BLACK_KINGSIDE_SRCS << 56;
+constexpr bitboard_t BB_CASTLING_WHITE_QUEENSIDE_SRCS = BB_CASTLING_BLACK_QUEENSIDE_SRCS << 56;
 
 }  // namespace SoFCore::Private
 

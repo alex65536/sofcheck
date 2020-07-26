@@ -100,45 +100,45 @@ bool Move::isWellFormed(Color c) const {
   return true;
 }
 
+// Helper macro for `updateCastling`
+#define D_CHECK_CASTLING_FLAG(type)                    \
+  if (bbChange & Private::BB_CASTLING_##type##_SRCS) { \
+    castlingMask ^= CASTLING_##type;                   \
+  }
+
 inline static void updateCastling(Board &b, const bitboard_t bbChange) {
   castling_t castlingMask = CASTLING_ALL;
-  if (bbChange & Private::BB_CASTLING_KINGSIDE_SRCS) {
-    castlingMask ^= CASTLING_BLACK_KINGSIDE;
-  }
-  if (bbChange & Private::BB_CASTLING_QUEENSIDE_SRCS) {
-    castlingMask ^= CASTLING_BLACK_QUEENSIDE;
-  }
-  if (bbChange & (Private::BB_CASTLING_KINGSIDE_SRCS << 56)) {
-    castlingMask ^= CASTLING_WHITE_KINGSIDE;
-  }
-  if (bbChange & (Private::BB_CASTLING_QUEENSIDE_SRCS << 56)) {
-    castlingMask ^= CASTLING_WHITE_QUEENSIDE;
-  }
+  D_CHECK_CASTLING_FLAG(BLACK_KINGSIDE);
+  D_CHECK_CASTLING_FLAG(BLACK_QUEENSIDE);
+  D_CHECK_CASTLING_FLAG(WHITE_KINGSIDE);
+  D_CHECK_CASTLING_FLAG(WHITE_QUEENSIDE);
   b.hash ^= Private::g_zobristCastling[b.castling];
   b.castling &= castlingMask;
   b.hash ^= Private::g_zobristCastling[b.castling];
 }
 
+#undef D_CHECK_CASTLING_FLAG
+
 template <Color C, bool Inverse>
 inline static void makeKingsideCastling(Board &b) {
-  constexpr coord_t firstRowStart = Private::castlingRow(C) << 3;
+  constexpr coord_t offset = Private::castlingOffset(C);
   constexpr cell_t king = makeCell(C, Piece::King);
   constexpr cell_t rook = makeCell(C, Piece::Rook);
   if constexpr (Inverse) {
-    b.cells[firstRowStart + 4] = king;
-    b.cells[firstRowStart + 5] = EMPTY_CELL;
-    b.cells[firstRowStart + 6] = EMPTY_CELL;
-    b.cells[firstRowStart + 7] = rook;
+    b.cells[offset + 4] = king;
+    b.cells[offset + 5] = EMPTY_CELL;
+    b.cells[offset + 6] = EMPTY_CELL;
+    b.cells[offset + 7] = rook;
   } else {
-    b.cells[firstRowStart + 4] = EMPTY_CELL;
-    b.cells[firstRowStart + 5] = rook;
-    b.cells[firstRowStart + 6] = king;
-    b.cells[firstRowStart + 7] = EMPTY_CELL;
+    b.cells[offset + 4] = EMPTY_CELL;
+    b.cells[offset + 5] = rook;
+    b.cells[offset + 6] = king;
+    b.cells[offset + 7] = EMPTY_CELL;
     b.hash ^= Private::g_zobristPieceCastlingKingside[static_cast<size_t>(C)];
   }
-  b.bbColor(C) ^= static_cast<bitboard_t>(0xf0) << firstRowStart;
-  b.bbPieces[rook] ^= static_cast<bitboard_t>(0xa0) << firstRowStart;
-  b.bbPieces[king] ^= static_cast<bitboard_t>(0x50) << firstRowStart;
+  b.bbColor(C) ^= static_cast<bitboard_t>(0xf0) << offset;
+  b.bbPieces[rook] ^= static_cast<bitboard_t>(0xa0) << offset;
+  b.bbPieces[king] ^= static_cast<bitboard_t>(0x50) << offset;
   if constexpr (!Inverse) {
     b.hash ^= Private::g_zobristCastling[b.castling];
     b.clearCastling(C);
@@ -148,24 +148,24 @@ inline static void makeKingsideCastling(Board &b) {
 
 template <Color C, bool Inverse>
 inline static void makeQueensideCastling(Board &b) {
-  constexpr coord_t firstRowStart = Private::castlingRow(C) << 3;
+  constexpr coord_t offset = Private::castlingOffset(C);
   constexpr cell_t king = makeCell(C, Piece::King);
   constexpr cell_t rook = makeCell(C, Piece::Rook);
   if constexpr (Inverse) {
-    b.cells[firstRowStart + 0] = rook;
-    b.cells[firstRowStart + 2] = EMPTY_CELL;
-    b.cells[firstRowStart + 3] = EMPTY_CELL;
-    b.cells[firstRowStart + 4] = king;
+    b.cells[offset + 0] = rook;
+    b.cells[offset + 2] = EMPTY_CELL;
+    b.cells[offset + 3] = EMPTY_CELL;
+    b.cells[offset + 4] = king;
   } else {
-    b.cells[firstRowStart + 0] = EMPTY_CELL;
-    b.cells[firstRowStart + 2] = king;
-    b.cells[firstRowStart + 3] = rook;
-    b.cells[firstRowStart + 4] = EMPTY_CELL;
+    b.cells[offset + 0] = EMPTY_CELL;
+    b.cells[offset + 2] = king;
+    b.cells[offset + 3] = rook;
+    b.cells[offset + 4] = EMPTY_CELL;
     b.hash ^= Private::g_zobristPieceCastlingQueenside[static_cast<size_t>(C)];
   }
-  b.bbColor(C) ^= static_cast<bitboard_t>(0x1d) << firstRowStart;
-  b.bbPieces[rook] ^= static_cast<bitboard_t>(0x09) << firstRowStart;
-  b.bbPieces[king] ^= static_cast<bitboard_t>(0x14) << firstRowStart;
+  b.bbColor(C) ^= static_cast<bitboard_t>(0x1d) << offset;
+  b.bbPieces[rook] ^= static_cast<bitboard_t>(0x09) << offset;
+  b.bbPieces[king] ^= static_cast<bitboard_t>(0x14) << offset;
   if constexpr (!Inverse) {
     b.hash ^= Private::g_zobristCastling[b.castling];
     b.clearCastling(C);
@@ -175,7 +175,7 @@ inline static void makeQueensideCastling(Board &b) {
 
 template <Color C, bool Inverse>
 inline static void makeEnpassant(Board &b, const Move move, const bitboard_t bbChange) {
-  const coord_t taken = (C == Color::White) ? move.dst + 8 : move.dst - 8;
+  const coord_t taken = move.dst - Private::pawnMoveDelta(C);
   const bitboard_t bbTaken = coordToBitboard(taken);
   constexpr cell_t ourPawn = makeCell(C, Piece::Pawn);
   constexpr cell_t enemyPawn = makeCell(invert(C), Piece::Pawn);

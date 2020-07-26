@@ -1,19 +1,29 @@
 #include "core/movegen.h"
 
 #include "core/private/bit_consts.h"
+#include "core/private/geometry.h"
 #include "core/private/magic.h"
 #include "core/private/near_attacks.h"
-#include "core/private/geometry.h"
 #include "util/bit.h"
 #include "util/misc.h"
 
 namespace SoFCore {
 
 template <Color C>
+inline static bitboard_t bbDiagPieces(const Board &b) {
+  return b.bbPieces[makeCell(C, Piece::Bishop)] | b.bbPieces[makeCell(C, Piece::Queen)];
+}
+
+template <Color C>
+inline static bitboard_t bbLinePieces(const Board &b) {
+  return b.bbPieces[makeCell(C, Piece::Rook)] | b.bbPieces[makeCell(C, Piece::Queen)];
+}
+
+template <Color C>
 bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
   // Here, we use black attack map for white, as we need to trace the attack from destination piece,
   // not from the source one
-  const auto *pawnAttacks =
+  constexpr auto *pawnAttacks =
       (C == Color::White) ? Private::BLACK_PAWN_ATTACKS : Private::WHITE_PAWN_ATTACKS;
 
   // Check near attacks
@@ -24,12 +34,8 @@ bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
   }
 
   // Check far attacks
-  const bitboard_t diagPieces =
-      b.bbPieces[makeCell(C, Piece::Bishop)] | b.bbPieces[makeCell(C, Piece::Queen)];
-  const bitboard_t linePieces =
-      b.bbPieces[makeCell(C, Piece::Rook)] | b.bbPieces[makeCell(C, Piece::Queen)];
-  return (Private::bishopAttackBitboard(b.bbAll, coord) & diagPieces) ||
-         (Private::rookAttackBitboard(b.bbAll, coord) & linePieces);
+  return (Private::bishopAttackBitboard(b.bbAll, coord) & bbDiagPieces<C>(b)) ||
+         (Private::rookAttackBitboard(b.bbAll, coord) & bbLinePieces<C>(b));
 }
 
 bool isMoveLegal(const Board &b) {
@@ -63,11 +69,11 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
   while (bbPawns) {
     const coord_t src = SoFUtil::extractLowest(bbPawns);
     const coord_t dst = src + Private::pawnMoveDelta(C);
-    // We assume that pawns cannot stay on lines 0 and 7, so don't check it
+    // We assume that pawns cannot stay on lines 0 and 7, so don't check that `dst` exists
     if (b.cells[dst] != EMPTY_CELL) {
       continue;
     }
-    const coord_t x = coordX(src);
+    const subcoord_t x = coordX(src);
     size = addPawnWithPromote<C>(list, size, src, dst, x);
     if (x == Private::doubleMoveSrcRow(C)) {
       const coord_t dst2 = dst + Private::pawnMoveDelta(C);
@@ -105,13 +111,14 @@ inline static size_t genPawnCapture(const Board &b, Move *list) {
 template <Color C>
 inline static size_t genPawnEnpassant(const Board &b, Move *list) {
   const coord_t enpassantCoord = b.enpassantCoord;
+  SOF_ASSUME(enpassantCoord == INVALID_COORD || enpassantCoord < 64);
   if (enpassantCoord == INVALID_COORD) {
     return 0;
   }
   size_t size = 0;
-  const coord_t y = coordY(enpassantCoord);
+  const subcoord_t y = coordY(enpassantCoord);
   const coord_t dst = enpassantCoord + Private::pawnMoveDelta(C);
-  // We assume that the cell behind the pawn that made double move is clean, so don't check it
+  // We assume that the cell behind the pawn that made double move is empty, so don't check it
   const coord_t leftPawn = enpassantCoord - 1;
   if (y != 0 && b.cells[leftPawn] == makeCell(C, Piece::Pawn)) {
     list[size++] = Move{MoveKind::Enpassant, leftPawn, dst, 0};
@@ -136,14 +143,13 @@ inline static size_t genKnightOrKing(const Board &b, Move *list) {
   static_assert(P == Piece::Knight || P == Piece::King);
   size_t size = 0;
   const bitboard_t bbAllowed = getAllowedMask<C, GenSimple, GenCaptures>(b);
-  const bitboard_t *attacks =
-      (P == Piece::Knight) ? Private::KNIGHT_ATTACKS : Private::KING_ATTACKS;
+  constexpr auto *attacks = (P == Piece::Knight) ? Private::KNIGHT_ATTACKS : Private::KING_ATTACKS;
   bitboard_t bbSrc = b.bbPieces[makeCell(C, P)];
   while (bbSrc) {
     const coord_t src = SoFUtil::extractLowest(bbSrc);
-    bitboard_t bbDest = attacks[src] & bbAllowed;
-    while (bbDest) {
-      const coord_t dst = SoFUtil::extractLowest(bbDest);
+    bitboard_t bbDst = attacks[src] & bbAllowed;
+    while (bbDst) {
+      const coord_t dst = SoFUtil::extractLowest(bbDst);
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
     }
   }
@@ -192,9 +198,9 @@ template <Color C>
 inline static size_t genCastling(const Board &b, Move *list) {
   size_t size = 0;
   constexpr subcoord_t x = Private::castlingRow(C);
-  constexpr uint8_t castlingPassShift = x << 3;
+  constexpr coord_t castlingOffset = Private::castlingOffset(C);
   if (b.isKingsideCastling(C)) {
-    constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingPassShift;
+    constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingOffset;
     constexpr coord_t src = makeCoord(x, 4);
     constexpr coord_t tmp = makeCoord(x, 5);
     constexpr coord_t dst = makeCoord(x, 6);
@@ -204,7 +210,7 @@ inline static size_t genCastling(const Board &b, Move *list) {
     }
   }
   if (b.isQueensideCastling(C)) {
-    constexpr bitboard_t castlingPass = Private::BB_CASTLING_QUEENSIDE_PASS << castlingPassShift;
+    constexpr bitboard_t castlingPass = Private::BB_CASTLING_QUEENSIDE_PASS << castlingOffset;
     constexpr coord_t src = makeCoord(x, 4);
     constexpr coord_t tmp = makeCoord(x, 3);
     constexpr coord_t dst = makeCoord(x, 2);
@@ -214,16 +220,6 @@ inline static size_t genCastling(const Board &b, Move *list) {
     }
   }
   return size;
-}
-
-template <Color C>
-inline static bitboard_t bbDiagPieces(const Board &b) {
-  return b.bbPieces[makeCell(C, Piece::Bishop)] | b.bbPieces[makeCell(C, Piece::Queen)];
-}
-
-template <Color C>
-inline static bitboard_t bbLinePieces(const Board &b) {
-  return b.bbPieces[makeCell(C, Piece::Rook)] | b.bbPieces[makeCell(C, Piece::Queen)];
 }
 
 template <Color C, bool GenSimple, bool GenCaptures>
@@ -263,18 +259,18 @@ size_t genSimpleMoves(const Board &b, Move *list) {
 }
 
 template <Color C>
-inline static size_t isMoveValidImpl(const Board &b, Move move) {
+inline static size_t isMoveValidImpl(const Board &b, const Move move) {
   if (SOF_UNLIKELY(move.kind == MoveKind::Null)) {
     return false;
   }
-  constexpr uint8_t castlingPassShift = Private::castlingRow(C) << 3;
+  constexpr coord_t castlingOffset = Private::castlingOffset(C);
   if (SOF_UNLIKELY(move.kind == MoveKind::CastlingKingside)) {
-    constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingPassShift;
+    constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingOffset;
     return b.isKingsideCastling(C) && !(castlingPass & b.bbAll) &&
            !isCellAttacked<invert(C)>(b, move.src) && !isCellAttacked<invert(C)>(b, move.src + 1);
   }
   if (SOF_UNLIKELY(move.kind == MoveKind::CastlingQueenside)) {
-    constexpr bitboard_t castlingPass = Private::BB_CASTLING_QUEENSIDE_PASS << castlingPassShift;
+    constexpr bitboard_t castlingPass = Private::BB_CASTLING_QUEENSIDE_PASS << castlingOffset;
     return b.isQueensideCastling(C) && !(castlingPass & b.bbAll) &&
            !isCellAttacked<invert(C)>(b, move.src) && !isCellAttacked<invert(C)>(b, move.src - 1);
   }
@@ -333,7 +329,7 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
   return false;
 }
 
-bool isMoveValid(const Board &b, Move move) {
+bool isMoveValid(const Board &b, const Move move) {
   return (b.side == Color::White) ? isMoveValidImpl<Color::White>(b, move)
                                   : isMoveValidImpl<Color::Black>(b, move);
 }

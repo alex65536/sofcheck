@@ -35,16 +35,15 @@ void initZobrist() {
   }
   for (Color c : {Color::White, Color::Black}) {
     const auto idx = static_cast<size_t>(c);
-    const coord_t firstRowStart = castlingRow(c) << 3;
+    const coord_t offset = Private::castlingOffset(c);
     const cell_t king = makeCell(c, Piece::King);
     const cell_t rook = makeCell(c, Piece::Rook);
-    g_zobristPieceCastlingKingside[idx] = Private::g_zobristPieces[king][firstRowStart + 4] ^
-                                          Private::g_zobristPieces[rook][firstRowStart + 5] ^
-                                          Private::g_zobristPieces[king][firstRowStart + 6] ^
-                                          Private::g_zobristPieces[rook][firstRowStart + 7];
+    g_zobristPieceCastlingKingside[idx] =
+        Private::g_zobristPieces[king][offset + 4] ^ Private::g_zobristPieces[rook][offset + 5] ^
+        Private::g_zobristPieces[king][offset + 6] ^ Private::g_zobristPieces[rook][offset + 7];
     g_zobristPieceCastlingQueenside[idx] =
-        g_zobristPieces[rook][firstRowStart + 0] ^ g_zobristPieces[king][firstRowStart + 2] ^
-        g_zobristPieces[rook][firstRowStart + 3] ^ g_zobristPieces[king][firstRowStart + 4];
+        g_zobristPieces[rook][offset + 0] ^ g_zobristPieces[king][offset + 2] ^
+        g_zobristPieces[rook][offset + 3] ^ g_zobristPieces[king][offset + 4];
   }
 }
 

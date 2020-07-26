@@ -27,7 +27,7 @@ inline constexpr subcoord_t doubleMoveDstRow(Color c) { return (c == Color::Whit
 inline constexpr subcoord_t castlingRow(Color c) { return (c == Color::White) ? 7 : 0; }
 
 // First cell of `castlingRow`
-inline constexpr coord_t castlingShift(Color c) { return castlingRow(c) << 3; }
+inline constexpr coord_t castlingOffset(Color c) { return castlingRow(c) << 3; }
 
 // Offset of the pawn of color `c` after making a single move
 inline constexpr coord_t pawnMoveDelta(Color c) { return (c == Color::White) ? -8 : 8; }

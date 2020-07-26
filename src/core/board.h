@@ -21,7 +21,8 @@ enum class FenParseResult {
   CastlingDuplicate,
   CastlingFieldMissing,
   EnpassantInvalidCell,
-  RedundantData
+  RedundantData,
+  InternalError
 };
 
 enum class ValidateResult {
@@ -62,9 +63,10 @@ struct Board {
 
   // Auxiliary fields that help the move generator to work faster
   //
-  // Note that these ones also MUST be filled in order to work correctly. If you fill everything
-  // manually, use `update()` method. Note that the functions in SoFCore maintain these fields
-  // automatically, so you don't need to use `update()` after calling one of them
+  // Note that these ones also MUST be filled in order to work correctly. If you fill the essential
+  // fields manually, use `update()` method after you finished setting them. Note that the functions
+  // in `SoFCore` maintain these fields automatically, so you don't need to use `update()` after
+  // calling one of them
   board_hash_t hash;
   bitboard_t bbWhite;
   bitboard_t bbBlack;
@@ -95,8 +97,8 @@ struct Board {
 
   // Validates the board for correctness
   // Non-critical issues (like bad castling flags or bad bitboards) don't result in unsuccessful
-  // return value from this function, so it may still return `Ok`. Note also that this function will
-  // call `update()` automatically, so such issues shall be corrected.
+  // return value from this function, so it may still return `Ok` in such cases. Note also that this
+  // function will call `update()` automatically, so such issues will be corrected.
   ValidateResult validate();
 
   // Updates the auxilliary fields in the structure and corrects minor issues in essential fields

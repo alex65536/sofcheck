@@ -47,7 +47,7 @@ inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
   if (SOF_UNLIKELY(p == INVALID_PARSED_MOVE)) {
     return Move::invalid();
   }
-  
+
   // Convert null move
   constexpr ParsedMove nullParsedMove{0, 0, 0, 0};
   if (SOF_UNLIKELY(p == nullParsedMove)) {
@@ -55,10 +55,7 @@ inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
   }
 
   // Convert promote
-  if (SOF_UNLIKELY(p.promote != 0)) {
-    if (board.cells[p.src] != makeCell(C, Piece::Pawn)) {
-      return Move::invalid();
-    }
+  if (p.promote != 0) {
     return Move{MoveKind::Promote, p.src, p.dst, makeCell(C, cellPiece(p.promote))};
   }
 
@@ -78,13 +75,13 @@ inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
   }
 
   // Convert castling
-  if (SOF_UNLIKELY(board.cells[p.src] == makeCell(C, Piece::King))) {
+  if (board.cells[p.src] == makeCell(C, Piece::King)) {
     constexpr subcoord_t x = Private::castlingRow(C);
-    if (SOF_UNLIKELY(p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 6))) {
+    if (p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 6)) {
       result.kind = MoveKind::CastlingKingside;
       return result;
     }
-    if (SOF_UNLIKELY(p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 2))) {
+    if (p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 2)) {
       result.kind = MoveKind::CastlingQueenside;
       return result;
     }

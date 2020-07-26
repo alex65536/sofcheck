@@ -15,6 +15,16 @@ const char *scanTokenEnd(const char *str);
 // to `'t'`, `'\n'` and `' '`.
 const char *scanTokenStart(const char *str);
 
+// Converts the character `c` to lower case. `c` must be an ASCII character
+inline constexpr char asciiToLower(const char c) {
+  return ('A' <= c && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
+}
+
+// Converts the character `c` to upper case. `c` must be an ASCII character
+inline constexpr char asciiToUpper(const char c) {
+  return ('a' <= c && c <= 'z') ? static_cast<char>(c - 'a' + 'A') : c;
+}
+
 // Wrapper for `std::from_chars`. Tries to interpret the entire string between `first` and `last` as
 // integer or floating point type `T`. Returns `true` and puts the result into `val` on success.
 // Otherwise `false` is returned and `val` remains untouched.

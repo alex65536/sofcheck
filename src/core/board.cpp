@@ -1,7 +1,6 @@
 #include "core/board.h"
 
 #include <charconv>
-#include <cstring>
 
 #include "core/movegen.h"
 #include "core/private/geometry.h"
@@ -37,7 +36,7 @@ void Board::asFen(char *fen) const {
       }
       *(fen++) = cellToChar(cur);
     }
-    if (empty) {
+    if (empty != 0) {
       *(fen++) = static_cast<char>('0' + empty);
     }
   }
@@ -76,11 +75,11 @@ void Board::asFen(char *fen) const {
   *(fen++) = ' ';
 
   // 5. Move counter
-  fen = std::to_chars(fen, fen + 6, moveCounter).ptr;
+  fen = std::to_chars(fen, fen + 11, moveCounter).ptr;
   *(fen++) = ' ';
 
   // 6. Move number
-  fen = std::to_chars(fen, fen + 6, moveNumber).ptr;
+  fen = std::to_chars(fen, fen + 11, moveNumber).ptr;
 
   *(fen++) = '\0';
 }
@@ -202,10 +201,12 @@ FenParseResult Board::setFromFen(const char *fen) {
     }
     if (c == ' ') {
       D_PARSE_CHECK(y == 8, FenParseResult::BoardRowUnderflow);
-      D_PARSE_CHECK(x == 7 && cur == 64, FenParseResult::BoardNotEnoughRows);
+      D_PARSE_CHECK(x == 7, FenParseResult::BoardNotEnoughRows);
+      D_PARSE_CHECK(cur == 64, FenParseResult::InternalError);
       break;
     }
-    char lowC = ('A' <= c && c <= 'Z') ? static_cast<char>(c - 'A' + 'a') : c;
+    D_PARSE_CHECK(y < 8, FenParseResult::BoardRowOverflow);
+    const char lowC = SoFUtil::asciiToLower(c);
     Piece piece;
     switch (lowC) {
       case 'p':
@@ -229,7 +230,7 @@ FenParseResult Board::setFromFen(const char *fen) {
       default:
         return FenParseResult::UnexpectedCharacter;
     }
-    Color color = (c == lowC) ? Color::Black : Color::White;
+    const Color color = (c == lowC) ? Color::Black : Color::White;
     cells[cur++] = makeCell(color, piece);
     ++y;
   }
@@ -360,7 +361,7 @@ SoFUtil::Result<Board, FenParseResult> Board::fromFen(const char *fen) {
 }
 
 ValidateResult Board::validate() {
-  // Check for BadData and InvalidEnpassantRow
+  // Check for `BadData` and `InvalidEnpassantRow`
   for (cell_t cell : cells) {
     if (!isCellValid(cell)) {
       return ValidateResult::BadData;
@@ -378,10 +379,10 @@ ValidateResult Board::validate() {
     }
   }
 
-  // Call update() to recalculate bitboards and fix small errors
+  // Call `update()` to recalculate bitboards and fix small errors
   update();
 
-  // Check for TooManyPieces, NoKing, TooManyKings
+  // Check for `TooManyPieces`, `NoKing`, `TooManyKings`
   if (SoFUtil::popcount(bbWhite) > 16 || SoFUtil::popcount(bbBlack) > 16) {
     return ValidateResult::TooManyPieces;
   }
@@ -394,7 +395,7 @@ ValidateResult Board::validate() {
     return ValidateResult::TooManyKings;
   }
 
-  // Check for InvalidPawnPosition
+  // Check for `InvalidPawnPosition`
   const bitboard_t bbPawns =
       bbPieces[makeCell(Color::White, Piece::Pawn)] | bbPieces[makeCell(Color::Black, Piece::Pawn)];
   constexpr bitboard_t bbInvalidPawnPos = 0xff000000000000ff;
@@ -402,7 +403,7 @@ ValidateResult Board::validate() {
     return ValidateResult::InvalidPawnPosition;
   }
 
-  // Check for OpponentKingAttacked
+  // Check for `OpponentKingAttacked`
   if (!isMoveLegal(*this)) {
     return ValidateResult::OpponentKingAttacked;
   }
@@ -413,8 +414,7 @@ ValidateResult Board::validate() {
 void Board::update() {
   // Update invalid enpassant coord
   if (enpassantCoord != INVALID_COORD) {
-    const coord_t enpassantPreCoord =
-        (side == Color::White) ? enpassantCoord - 8 : enpassantCoord + 8;
+    const coord_t enpassantPreCoord = enpassantCoord + Private::pawnMoveDelta(side);
     if (cells[enpassantCoord] != makeCell(invert(side), Piece::Pawn) ||
         cells[enpassantPreCoord] != EMPTY_CELL) {
       enpassantCoord = INVALID_COORD;
@@ -444,7 +444,7 @@ void Board::update() {
     if (cell == EMPTY_CELL) {
       continue;
     }
-    bitboard_t bbAdd = coordToBitboard(i);
+    const bitboard_t bbAdd = coordToBitboard(i);
     (cellPieceColor(cell) == Color::White ? bbWhite : bbBlack) |= bbAdd;
     bbPieces[cell] |= bbAdd;
   }
