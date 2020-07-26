@@ -1,8 +1,6 @@
 #ifndef SOF_CORE_PRIVATE_ZOBRIST_INCLUDED
 #define SOF_CORE_PRIVATE_ZOBRIST_INCLUDED
 
-#include <cstdint>
-
 #include "core/types.h"
 
 namespace SoFCore::Private {
