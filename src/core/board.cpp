@@ -371,7 +371,7 @@ ValidateResult Board::validate() {
     return ValidateResult::BadData;
   }
   if (enpassantCoord != INVALID_COORD) {
-    if (enpassantCoord > 64) {
+    if (enpassantCoord >= 64) {
       return ValidateResult::BadData;
     }
     if (coordX(enpassantCoord) != Private::enpassantSrcRow(side)) {
