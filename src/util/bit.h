@@ -12,18 +12,18 @@
 namespace SoFUtil {
 
 // Returns the number of ones in `x`
-inline constexpr uint8_t popcount(uint64_t x) { return __builtin_popcountll(x); }
+inline constexpr size_t popcount(uint64_t x) { return __builtin_popcountll(x); }
 
 // Clears the lowest bit set to one in `x`
 inline constexpr uint64_t clearLowest(uint64_t x) { return x & (x - 1); }
 
 // Returns the position of the lowest bit set to one in `x`. If `x == 0`, the behavior is undefined
-inline constexpr uint8_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
+inline constexpr size_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
 
 // Combines `getLowest` and `clearLowest` for convenience. It clears the lowest bit set to one in
 // `x` and returns the position of the cleared bit. If `x == 0`, the behavior is undefined
-inline constexpr uint8_t extractLowest(uint64_t &x) {
-  const uint8_t res = getLowest(x);
+inline constexpr size_t extractLowest(uint64_t &x) {
+  const size_t res = getLowest(x);
   x = clearLowest(x);
   return res;
 }
