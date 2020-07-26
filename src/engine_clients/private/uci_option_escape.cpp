@@ -7,8 +7,7 @@
 
 namespace SoFEngineClients::Private {
 
-// Transforms each token in the string `name`. The given string must be a valid option name,
-// otherwise the behaviour is undefined
+// Tokenizes the string `name`, transforms each token and rebuilds the string
 template <typename Transform>
 inline static std::string transformTokens(const std::string &name, Transform transform) {
   if (name.empty()) {
@@ -40,7 +39,7 @@ inline static bool isBadToken(const std::string &str) {
     ++pos;
   }
   for (const char *badWord : {"name", "value", "val"}) {
-    if (std::equal(str.begin() + pos, str.end(), badWord, badWord + strlen(badWord))) {
+    if (std::equal(str.begin() + pos, str.end(), badWord, badWord + std::strlen(badWord))) {
       return true;
     }
   }
@@ -53,6 +52,9 @@ inline static std::string uciNameEscape(const std::string &name) {
 }
 
 inline static std::string uciNameUnescape(const std::string &name) {
+  // NOTE: "value" escaped is "_value". When we try to unescape "_value", we get "value", when we
+  // try to unescape "value", we also get "value". Maybe we should indicate that the string is
+  // invalid in this case?
   return transformTokens(name, [&](const std::string &str) {
     return (isBadToken(str) && str[0] == '_') ? str.substr(1) : str;
   });

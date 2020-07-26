@@ -64,8 +64,8 @@ public:
   // Lists all the options and their types
   std::vector<std::pair<std::string, OptionType>> list() const;
 
-  // Returns pointer to the option `key` if it's of type `Bool`. Otherwise returns `nullptr`. The
-  // other `get...()` methods behave in the similar way.
+  // Returns pointer to the option `key` if this option is of type `Bool`. Otherwise returns
+  // `nullptr`. The other `get...()` methods behave in the similar way.
   inline const BoolOption *getBool(const std::string &key) const { return getT<BoolOption>(key); }
   inline const IntOption *getInt(const std::string &key) const { return getT<IntOption>(key); }
   inline const EnumOption *getEnum(const std::string &key) const { return getT<EnumOption>(key); }
@@ -73,7 +73,8 @@ public:
     return getT<StringOption>(key);
   }
 
-  // Sets value to the option `key` and return result appropriately. The algorithm is as follows:
+  // Sets value `value` to the option `key` and returns the result of this operation. The algorithm
+  // is as follows:
   // - first, validate the option
   // - then call the observer (if it's present)
   // - if the observer is absent or returned `ApiResult::Ok`, really set the option
@@ -83,9 +84,9 @@ public:
   ApiResult setEnum(const std::string &key, const std::string &value) noexcept;
   ApiResult setString(const std::string &key, const std::string &value) noexcept;
 
-  // Calls the observer and triggers the option `key` of type `Action`. Such options cannot be set,
-  // they can only be triggered. The algorithm is as follows:
-  // - validate that the option is present and of type `Action`
+  // Calls the observer and triggers the option `key` of type `Action`. Options of such type cannot
+  // be set, they can only be triggered. The algorithm is as follows:
+  // - validate that the option is present and is of type `Action`
   // - then call the observer if it's present
   ApiResult triggerAction(const std::string &key) noexcept;
 
@@ -131,14 +132,14 @@ public:
   // Creates the builder and sets the observer for the new `Options` instance
   inline explicit OptionBuilder(OptionObserver *observer = nullptr) : options_(observer) {}
 
-  // Adds options to the `Options` instance being built. If invalid options supplies or the same
-  // option is added twice, the functions panic.
+  // Adds options to the `Options` instance being built. If invalid options are supplied or the same
+  // option is added twice, these functions panic.
   //
   // All these methods return `*this`.
   //
-  // Also please note that the option names names must be valid, i.e. `isOptionNameValid()` must
-  // return `true`. This rule also applies to enumeration items, i.e. all the strings in `items`
-  // must be valid option names.
+  // Also please note that the option names must be valid, i.e. `isOptionNameValid()` must return
+  // `true`. This rule also applies to enumeration items, i.e. all the strings in `items` must be
+  // valid option names.
 
   OptionBuilder &addBool(const std::string &key, bool value) noexcept;
   OptionBuilder &addEnum(const std::string &key, std::vector<std::string> items,

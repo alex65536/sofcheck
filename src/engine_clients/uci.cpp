@@ -109,7 +109,7 @@ inline static bool calcNodesPerSecond(const uint64_t nodes, const Duration time,
   }
   const double npsFloat = std::round(static_cast<double>(nodes) / timeSec);
   // Check if the result fits into uint64_t
-  if (npsFloat < 0 || npsFloat > static_cast<double>(std::numeric_limits<uint64_t>::max())) {
+  if (npsFloat < 0 || npsFloat >= static_cast<double>(std::numeric_limits<uint64_t>::max())) {
     return false;
   }
   nps = static_cast<uint64_t>(npsFloat);
@@ -223,6 +223,7 @@ bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
   }
   if (val > static_cast<uint64_t>(milliseconds::max().count())) {
     err_ << "UCI server error: Value " << val << " is too large" << endl;
+    return false;
   }
   time = milliseconds(val);
   return true;
@@ -270,7 +271,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
     }
     if (token == "searchmoves") {
       // Two "searchmoves" in a row is really weird
-      err_ << "UCI server error: \"searchmoves\" is mentioned twice in a row" << endl;
+      err_ << "UCI server warning: \"searchmoves\" is mentioned twice in a row" << endl;
       continue;
     }
     if (token == "ponder") {
@@ -294,12 +295,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
       continue;
     }
     if (token == "movestogo") {
-      uint64_t val;
-      if (!tryReadInt(val, tokens, "uint64")) {
-        continue;
-      }
-      timeControl.movesToGo = val;
-      hasTimeControl = true;
+      hasTimeControl |= tryReadInt(timeControl.movesToGo, tokens, "uint64");
       continue;
     }
     if (token == "depth") {
@@ -395,7 +391,7 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
     }
     moves.push_back(move);
     SoFCore::moveMake(dstBoard, move);
-    if (!isMoveLegal(dstBoard)) {
+    if (!SoFCore::isMoveLegal(dstBoard)) {
       err_ << "UCI server error: Move \"" << token << "\" is not legal" << endl;
       return PollResult::NoData;
     }
@@ -467,7 +463,7 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
     return PollResult::NoData;
   }
   if (token != "name") {
-    err_ << R"R(UCI server error: "name" token expected)R" << endl;
+    err_ << R"R(UCI server warning: "name" token expected)R" << endl;
     name += token;
   }
 
@@ -483,7 +479,8 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
   }
   name = Private::uciOptionNameUnescape(name);
 
-  OptionType type = client_->options().type(name);
+  Options &opts = client_->options();
+  OptionType type = opts.type(name);
   if (type == OptionType::None) {
     err_ << "UCI server error: no such option \"" << name << "\"" << endl;
     return PollResult::NoData;
@@ -495,7 +492,7 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
     // String must be read without parsing it into tokens
     std::getline(tokens, value);
     value = SoFUtil::trim(value);
-  } else {
+  } else if (type == OptionType::Enum) {
     // Parse value as tokens
     string token;
     while (tokens >> token) {
@@ -504,16 +501,21 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
       }
       value += token;
     }
+  } else if (type != OptionType::Action) {
+    // Extract single token
+    if (!(tokens >> value)) {
+      value = "";
+    }
   }
 
   switch (type) {
     case OptionType::Bool: {
       if (value == "0" || value == "false") {
-        checkClient(client_->options().setBool(name, false));
+        checkClient(opts.setBool(name, false));
         return PollResult::Ok;
       }
       if (value == "1" || value == "true") {
-        checkClient(client_->options().setBool(name, true));
+        checkClient(opts.setBool(name, true));
         return PollResult::Ok;
       }
       err_ << R"R(UCI server error: expected "0", "1", "true" or "false", ")R" << value
@@ -526,19 +528,19 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
         err_ << "UCI server error: \"" << value << "\" is not int64" << endl;
         return PollResult::NoData;
       }
-      checkClient(client_->options().setInt(name, result));
+      checkClient(opts.setInt(name, result));
       return PollResult::Ok;
     }
     case OptionType::String: {
-      checkClient(client_->options().setString(name, (value == "<empty>") ? std::string() : value));
+      checkClient(opts.setString(name, (value == "<empty>") ? std::string() : value));
       return PollResult::Ok;
     }
     case OptionType::Enum: {
-      checkClient(client_->options().setEnum(name, Private::uciEnumNameUnescape(value)));
+      checkClient(opts.setEnum(name, Private::uciEnumNameUnescape(value)));
       return PollResult::Ok;
     }
     case OptionType::Action: {
-      checkClient(client_->options().triggerAction(name));
+      checkClient(opts.triggerAction(name));
       return PollResult::Ok;
     }
     case OptionType::None: {
@@ -582,16 +584,16 @@ PollResult UciServerConnector::poll() {
       return PollResult::Ok;
     }
     if (command == "debug") {
-      // Expecting "on" or "off"
+      // Expect one of the tokens "on" or "off"
       string value;
       cmdTokens >> value;
       if (value != "on" && value != "off") {
-        err_ << R"(UCI server error: Tokens "on" or "off" expected after "debug")" << endl;
+        err_ << R"(UCI server error: Token "on" or "off" expected after "debug")" << endl;
         return PollResult::NoData;
       }
       const bool newDebugEnabled = (value == "on");
       if (debugEnabled_ == newDebugEnabled) {
-        err_ << "UCI server error: Debug is already " << (debugEnabled_ ? "enabled" : "disabled")
+        err_ << "UCI server warning: Debug is already " << (debugEnabled_ ? "enabled" : "disabled")
              << endl;
         return PollResult::NoData;
       }

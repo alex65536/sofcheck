@@ -45,7 +45,7 @@ ApiResult Options::setBool(const std::string &key, const bool value) noexcept {
       [&]() { return observer_->setBool(key, value); });
 }
 
-ApiResult Options::setEnum(const std::string &key, size_t index) noexcept {
+ApiResult Options::setEnum(const std::string &key, const size_t index) noexcept {
   return setT<EnumOption>(
       key, index, [&](const EnumOption &o) { return index < o.items.size(); },
       [&]() { return observer_->setEnum(key, index); });
@@ -72,7 +72,7 @@ ApiResult Options::setEnum(const std::string &key, const std::string &value) noe
   return ApiResult::Ok;
 }
 
-ApiResult Options::setInt(const std::string &key, int64_t value) noexcept {
+ApiResult Options::setInt(const std::string &key, const int64_t value) noexcept {
   return setT<IntOption>(
       key, value, [&](const IntOption &o) { return o.minValue <= value && value <= o.maxValue; },
       [&]() { return observer_->setInt(key, value); });
@@ -111,7 +111,7 @@ inline static bool hasRepetitions(std::vector<T> vec) {
 }
 
 OptionBuilder &OptionBuilder::addEnum(const std::string &key, std::vector<std::string> items,
-                                      size_t index) noexcept {
+                                      const size_t index) noexcept {
   if (index >= items.size()) {
     panic("Invalid EnumOption given for the key \"" + key + "\"");
   }

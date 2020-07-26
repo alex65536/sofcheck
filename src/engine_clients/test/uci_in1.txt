@@ -32,6 +32,7 @@ setoption name __name __value
 setoption name ___name ___value
 setoption name name val
 debug off
+debug kkk
 debug   on
 debug on
 debug off

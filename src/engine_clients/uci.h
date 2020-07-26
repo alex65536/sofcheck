@@ -18,14 +18,14 @@ using SoFEngineBase::Client;
 using SoFEngineBase::PollResult;
 
 // A server connector for UCI chess engines. The main goals of this implementation are conformance
-// with the official docs, and strict input validation.
+// with the official docs and strict input validation.
 //
 // To obtain the official UCI documentation, use http://download.shredderchess.com/div/uci.zip.
 //
 // Currently, the implementation is not fully compliant with the UCI docs, here are the issues:
-// - the UCI docs say that there must be no substring "name" and "value" in "setoption" command.
-// This implementation assumes that must be no **token** "name" and "value", but such substrings are
-// allowed.
+// - the UCI docs say that there must be no substrings "name" and "value" in "setoption" command.
+// This implementation assumes that must be no **tokens** "name" and "value", but such substrings
+// are allowed.
 // - the UCI docs assume that the options are case-insensitive. This implementation assumes that
 // they are case-sensitive.
 class UciServerConnector final : public SoFEngineBase::ServerConnector, public SoFUtil::NoCopyMove {
@@ -43,10 +43,10 @@ public:
 
   PollResult poll() override;
 
-  // Construct `UciServerConnector` with default streams
+  // Constructs `UciServerConnector` with default streams
   UciServerConnector();
 
-  // Construct `UciServerConnector` with custom
+  // Constructs `UciServerConnector` with custom streams
   UciServerConnector(std::istream &in, std::ostream &out, std::ostream &err);
 
   ~UciServerConnector() override;
@@ -62,7 +62,7 @@ private:
   // Reports failures from client side, if any. Returns `result` unchanged
   ApiResult checkClient(ApiResult result);
 
-  // Lists engine options and fill option mappings
+  // Lists engine options
   PollResult listOptions();
 
   // Helper method for `processUciGo`
@@ -70,7 +70,7 @@ private:
 
   // Processes "setoption" subcommand
   PollResult processUciSetOption(std::istream &tokens);
-  
+
   // Processes "position" subcommand
   PollResult processUciPosition(std::istream &tokens);
 

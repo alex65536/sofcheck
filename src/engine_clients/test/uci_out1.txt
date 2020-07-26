@@ -16,10 +16,10 @@ O option name _name _value type check default true
 O option name true bool type check default true
 O uciok
 I setoption empty
-E UCI server error: "name" token expected
+E UCI server warning: "name" token expected
 E UCI server error: no such option "empty"
 I setoption empty string value 42
-E UCI server error: "name" token expected
+E UCI server warning: "name" token expected
 E setString(empty string, 42)
 I setoption name empty string value   <empty>    
 E setString(empty string, )
@@ -65,7 +65,7 @@ I setoption name int value 42
 E setInt(int, 42)
 E UCI client error: Unknown error
 I setoption name int value int value -14159753975197319753197
-E UCI server error: "int value -14159753975197319753197" is not int64
+E UCI server error: "int" is not int64
 I setoption name int value -444444444444444444444444444444444444444
 E UCI server error: "-444444444444444444444444444444444444444" is not int64
 I setoption name int value 1001
@@ -83,15 +83,17 @@ E triggerAction(__name __value)
 I setoption name name val
 E triggerAction(name val)
 I debug off
-E UCI server error: Debug is already disabled
+E UCI server warning: Debug is already disabled
+I debug kkk
+E UCI server error: Token "on" or "off" expected after "debug"
 I debug   on
 E enterDebugMode()
 I debug on
-E UCI server error: Debug is already enabled
+E UCI server warning: Debug is already enabled
 I debug off
 E leaveDebugMode()
 I debug off
-E UCI server error: Debug is already disabled
+E UCI server warning: Debug is already disabled
 I isready
 O readyok
 I ucinewgame
