@@ -2,7 +2,7 @@
 
 #include <initializer_list>
 
-#include "core/private/rows.h"
+#include "core/private/geometry.h"
 #include "core/types.h"
 #include "util/random.h"
 

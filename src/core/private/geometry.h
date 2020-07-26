@@ -1,5 +1,5 @@
-#ifndef SOF_CORE_PRIVATE_ROWS_INCLUDED
-#define SOF_CORE_PRIVATE_ROWS_INCLUDED
+#ifndef SOF_CORE_PRIVATE_GEOMETRY_INCLUDED
+#define SOF_CORE_PRIVATE_GEOMETRY_INCLUDED
 
 #include "core/types.h"
 
@@ -26,6 +26,12 @@ inline constexpr subcoord_t doubleMoveDstRow(Color c) { return (c == Color::Whit
 // Row in which the castling is performed
 inline constexpr subcoord_t castlingRow(Color c) { return (c == Color::White) ? 7 : 0; }
 
+// First cell of `castlingRow`
+inline constexpr coord_t castlingShift(Color c) { return castlingRow(c) << 3; }
+
+// Offset of the pawn of color `c` after making a single move
+inline constexpr coord_t pawnMoveDelta(Color c) { return (c == Color::White) ? -8 : 8; }
+
 }  // namespace SoFCore::Private
 
-#endif  // SOF_CORE_PRIVATE_ROWS_INCLUDED
+#endif  // SOF_CORE_PRIVATE_GEOMETRY_INCLUDED

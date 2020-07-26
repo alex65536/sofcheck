@@ -1,6 +1,6 @@
 #include "core/move_parser.h"
 
-#include "core/private/rows.h"
+#include "core/private/geometry.h"
 #include "core/strutil.h"
 #include "util/misc.h"
 

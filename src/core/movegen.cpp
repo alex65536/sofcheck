@@ -3,7 +3,7 @@
 #include "core/private/bit_consts.h"
 #include "core/private/magic.h"
 #include "core/private/near_attacks.h"
-#include "core/private/rows.h"
+#include "core/private/geometry.h"
 #include "util/bit.h"
 #include "util/misc.h"
 
@@ -65,15 +65,13 @@ inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t s
   return size;
 }
 
-inline static constexpr coord_t pawnMoveDelta(Color c) { return (c == Color::White) ? -8 : 8; }
-
 template <Color C>
 inline static size_t genPawnSimple(const Board &b, Move *list) {
   size_t size = 0;
   bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
   while (bbPawns) {
     const coord_t src = SoFUtil::extractLowest(bbPawns);
-    const coord_t dst = src + pawnMoveDelta(C);
+    const coord_t dst = src + Private::pawnMoveDelta(C);
     // We assume that pawns cannot stay on lines 0 and 7, so don't check it
     if (b.cells[dst] != EMPTY_CELL) {
       continue;
@@ -81,7 +79,7 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
     const coord_t x = coordX(src);
     size = addPawnWithPromote<C>(list, size, src, dst, x);
     if (x == Private::doubleMoveSrcRow(C)) {
-      const coord_t dst2 = dst + pawnMoveDelta(C);
+      const coord_t dst2 = dst + Private::pawnMoveDelta(C);
       if (b.cells[dst2] == EMPTY_CELL) {
         list[size++] = Move{MoveKind::PawnDoubleMove, src, dst2, 0};
       }
@@ -121,7 +119,7 @@ inline static size_t genPawnEnpassant(const Board &b, Move *list) {
   }
   size_t size = 0;
   const coord_t y = coordY(enpassantCoord);
-  const coord_t dst = enpassantCoord + pawnMoveDelta(C);
+  const coord_t dst = enpassantCoord + Private::pawnMoveDelta(C);
   // We assume that the cell behind the pawn that made double move is clean, so don't check it
   const coord_t leftPawn = enpassantCoord - 1;
   if (y != 0 && b.cells[leftPawn] == makeCell(C, Piece::Pawn)) {
@@ -303,14 +301,14 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
     }
     if (move.kind == MoveKind::Enpassant) {
       return (src + 1 == b.enpassantCoord || src - 1 == b.enpassantCoord) &&
-             dst == static_cast<coord_t>(b.enpassantCoord + pawnMoveDelta(C));
+             dst == static_cast<coord_t>(b.enpassantCoord + Private::pawnMoveDelta(C));
     }
     constexpr subcoord_t promoteX = Private::promoteSrcRow(C);
     if (move.kind != MoveKind::Promote && coordX(src) == promoteX) {
       return false;
     }
     if (dstCell == EMPTY_CELL) {
-      return dst == static_cast<coord_t>(src + pawnMoveDelta(C));
+      return dst == static_cast<coord_t>(src + Private::pawnMoveDelta(C));
     }
     if (cellPieceColor(dstCell) != C) {
       const bitboard_t *attackArr =

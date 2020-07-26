@@ -4,7 +4,7 @@
 #include <cstring>
 
 #include "core/movegen.h"
-#include "core/private/rows.h"
+#include "core/private/geometry.h"
 #include "core/private/zobrist.h"
 #include "core/strutil.h"
 #include "util/bit.h"
