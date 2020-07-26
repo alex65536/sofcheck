@@ -29,7 +29,7 @@ public:
   // Consumes the Result, moving away `ok()` value from it. If it doesn't hold the specified value,
   // it panics
   inline constexpr T unwrap() noexcept {
-    if (likely(isOk())) {
+    if (SOF_LIKELY(isOk())) {
       return std::move(std::get<0>(variant_));
     }
     panic("Attempt to unwrap() Result<T, E> without a value");
@@ -38,7 +38,7 @@ public:
   // Consumes the `Result`, moving away `err()` value from it. If it doesn't hold the specified
   // value, it panics
   inline constexpr E unwrapErr() noexcept {
-    if (likely(isErr())) {
+    if (SOF_LIKELY(isErr())) {
       return std::move(std::get<1>(variant_));
     }
     panic("Attempt to unwrap() Result<T, E> without an error");

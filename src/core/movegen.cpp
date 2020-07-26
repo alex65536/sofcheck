@@ -275,16 +275,16 @@ size_t genSimpleMoves(const Board &b, Move *list) {
 
 template <Color C>
 inline static size_t isMoveValidImpl(const Board &b, Move move) {
-  if (unlikely(move.kind == MoveKind::Null)) {
+  if (SOF_UNLIKELY(move.kind == MoveKind::Null)) {
     return false;
   }
   constexpr uint8_t castlingPassShift = Private::castlingRow(C) << 3;
-  if (unlikely(move.kind == MoveKind::CastlingKingside)) {
+  if (SOF_UNLIKELY(move.kind == MoveKind::CastlingKingside)) {
     constexpr bitboard_t castlingPass = Private::BB_CASTLING_KINGSIDE_PASS << castlingPassShift;
     return b.isKingsideCastling(C) && !(castlingPass & b.bbAll) &&
            !isCellAttacked<invert(C)>(b, move.src) && !isCellAttacked<invert(C)>(b, move.src + 1);
   }
-  if (unlikely(move.kind == MoveKind::CastlingQueenside)) {
+  if (SOF_UNLIKELY(move.kind == MoveKind::CastlingQueenside)) {
     constexpr bitboard_t castlingPass = Private::BB_CASTLING_QUEENSIDE_PASS << castlingPassShift;
     return b.isQueensideCastling(C) && !(castlingPass & b.bbAll) &&
            !isCellAttacked<invert(C)>(b, move.src) && !isCellAttacked<invert(C)>(b, move.src - 1);
@@ -319,7 +319,7 @@ inline static size_t isMoveValidImpl(const Board &b, Move move) {
     }
     return false;
   }
-  if (unlikely(move.kind != MoveKind::Simple)) {
+  if (SOF_UNLIKELY(move.kind != MoveKind::Simple)) {
     return false;
   }
   if (bbDst & b.bbColor(C)) {

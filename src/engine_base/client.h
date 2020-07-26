@@ -68,19 +68,19 @@ public:
 
   // Search on the fixed depth
   virtual ApiResult searchFixedDepth(size_t depth) {
-    unused(depth);
+    SOF_UNUSED(depth);
     return ApiResult::NotSupported;
   }
 
   // Search no more than `nodes` nodes
   virtual ApiResult searchFixedNodes(uint64_t nodes) {
-    unused(nodes);
+    SOF_UNUSED(nodes);
     return ApiResult::NotSupported;
   }
 
   // Search for fixed amount of time
   virtual ApiResult searchFixedTime(milliseconds time) {
-    unused(time);
+    SOF_UNUSED(time);
     return ApiResult::NotSupported;
   }
 

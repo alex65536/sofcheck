@@ -54,7 +54,7 @@ using std::chrono::seconds;
   }
 
 void UciServerConnector::ensureClient() {
-  if (unlikely(!client_)) {
+  if (SOF_UNLIKELY(!client_)) {
     panic("The client is not connected");
   }
 }
@@ -445,7 +445,7 @@ PollResult UciServerConnector::listOptions() {
         break;
       }
       case OptionType::None: {
-        unreachable();
+        SOF_UNREACHABLE();
         break;
       }
     }
@@ -544,7 +544,7 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
       return PollResult::Ok;
     }
     case OptionType::None: {
-      unreachable();
+      SOF_UNREACHABLE();
     }
   }
 
@@ -652,7 +652,7 @@ PollResult UciServerConnector::poll() {
 }
 
 ApiResult UciServerConnector::connect(SoFEngineBase::Client *client) {
-  if (unlikely(client_)) {
+  if (SOF_UNLIKELY(client_)) {
     panic("The client is already connected");
   }
   client_ = client;
@@ -675,7 +675,7 @@ UciServerConnector::UciServerConnector(std::istream &in, std::ostream &out, std:
       err_(err) {}
 
 UciServerConnector::~UciServerConnector() {
-  if (unlikely(client_)) {
+  if (SOF_UNLIKELY(client_)) {
     panic("Client was not disconnected properly");
   }
 }

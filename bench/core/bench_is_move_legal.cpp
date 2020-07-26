@@ -16,7 +16,7 @@ inline void runCheckValid(benchmark::State &state, const char *fen) {
   size_t cnt = genAllMoves(board, moves);
 
   for (auto _ : state) {
-    unused(_);
+    SOF_UNUSED(_);
     for (size_t i = 0; i < cnt; ++i) {
       benchmark::DoNotOptimize(isMoveValid(board, moves[i]));
     }

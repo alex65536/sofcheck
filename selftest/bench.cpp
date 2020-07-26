@@ -14,7 +14,7 @@ inline void runGenMoves(benchmark::State &state, const char *fen) {
 
   Board board = boardFromFen(fen);
   for (auto _ : state) {
-    unused(_);
+    SOF_UNUSED(_);
     MoveList moves = generateMoves(board);
     benchmark::DoNotOptimize(moves);
   }
@@ -44,7 +44,7 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
   });
 
   for (auto _ : state) {
-    unused(_);
+    SOF_UNUSED(_);
     for (int i = 0; i < cnt; ++i) {
       MovePersistence p = makeMove(board, moves[i]);
       unmakeMove(board, moves[i], p);
@@ -66,7 +66,7 @@ inline void runIsAttacked(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for (auto _ : state) {
-    unused(_);
+    SOF_UNUSED(_);
     for (bool color : {true, false}) {
       for (char y = '8'; y >= '1'; --y) {
         for (char x = 'a'; x <= 'h'; ++x) {
@@ -91,7 +91,7 @@ inline void runKingAttack(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for (auto _ : state) {
-    unused(_);
+    SOF_UNUSED(_);
     benchmark::DoNotOptimize(isOpponentKingAttacked(board));
   }
 }
@@ -130,7 +130,7 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for (auto _ : state) {
-    unused(_);
+    SOF_UNUSED(_);
     int d = state.range(0);
     recurseSearch(board, d);
   }

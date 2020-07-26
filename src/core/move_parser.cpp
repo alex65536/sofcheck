@@ -11,7 +11,7 @@ ParsedMove ParsedMove::fromStr(const char *first, const char *last) {
     return INVALID_PARSED_MOVE;
   }
   // Parse null move (it is written as "0000")
-  if (unlikely(last == first + 4 && std::equal(first, last, "0000"))) {
+  if (SOF_UNLIKELY(last == first + 4 && std::equal(first, last, "0000"))) {
     return ParsedMove{0, 0, 0, 0};
   }
   if (!isYCharValid(first[0]) || !isXCharValid(first[1]) || !isYCharValid(first[2]) ||
@@ -44,18 +44,18 @@ ParsedMove ParsedMove::fromStr(const char *first, const char *last) {
 template <Color C>
 inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
   // Convert invalid ParsedMove into invalid Move
-  if (unlikely(p == INVALID_PARSED_MOVE)) {
+  if (SOF_UNLIKELY(p == INVALID_PARSED_MOVE)) {
     return Move::invalid();
   }
   
   // Convert null move
   constexpr ParsedMove nullParsedMove{0, 0, 0, 0};
-  if (unlikely(p == nullParsedMove)) {
+  if (SOF_UNLIKELY(p == nullParsedMove)) {
     return Move::null();
   }
 
   // Convert promote
-  if (unlikely(p.promote != 0)) {
+  if (SOF_UNLIKELY(p.promote != 0)) {
     if (board.cells[p.src] != makeCell(C, Piece::Pawn)) {
       return Move::invalid();
     }
@@ -78,13 +78,13 @@ inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
   }
 
   // Convert castling
-  if (unlikely(board.cells[p.src] == makeCell(C, Piece::King))) {
+  if (SOF_UNLIKELY(board.cells[p.src] == makeCell(C, Piece::King))) {
     constexpr subcoord_t x = Private::castlingRow(C);
-    if (unlikely(p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 6))) {
+    if (SOF_UNLIKELY(p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 6))) {
       result.kind = MoveKind::CastlingKingside;
       return result;
     }
-    if (unlikely(p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 2))) {
+    if (SOF_UNLIKELY(p.src == makeCoord(x, 4) && p.dst == makeCoord(x, 2))) {
       result.kind = MoveKind::CastlingQueenside;
       return result;
     }

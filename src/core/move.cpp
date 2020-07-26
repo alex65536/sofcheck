@@ -277,7 +277,7 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
       break;
     }
     case MoveKind::Invalid: {
-      unreachable();
+      SOF_UNREACHABLE();
       break;
     }
   }
@@ -354,7 +354,7 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
       break;
     }
     case MoveKind::Invalid: {
-      unreachable();
+      SOF_UNREACHABLE();
       break;
     }
   }
