@@ -41,6 +41,8 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
   endif()
 endif()
 
+include(BoostStacktrace)
+
 check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
 
@@ -86,6 +88,7 @@ add_library(sof_util STATIC
   src/util/strutil.cpp
   src/util/random.cpp
 )
+target_link_libraries(sof_util PRIVATE ${BOOST_STACKTRACE_TARGET})
 
 add_library(sof_core STATIC
   src/core/board.cpp

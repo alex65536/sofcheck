@@ -7,4 +7,7 @@
 // The system has stpcpy function?
 #cmakedefine USE_SYSTEM_STPCPY
 
+// Print stacktraces using boost::stacktrace?
+#cmakedefine USE_BOOST_STACKTRACE
+
 #endif  // SOF_CONFIG_INCLUDED
