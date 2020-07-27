@@ -50,7 +50,7 @@ static_assert(BUFSZ_BOARD_PRETTY_ASCII <= BUFSZ_BOARD_PRETTY);
 static_assert(BUFSZ_BOARD_PRETTY_UTF8 <= BUFSZ_BOARD_PRETTY);
 
 struct Board {
-  static constexpr size_t BB_PIECES_SZ = 15;
+  static constexpr cell_t BB_PIECES_SZ = 15;
 
   // Essential fields that indicate the current position
   cell_t cells[64];
