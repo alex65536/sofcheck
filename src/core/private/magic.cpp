@@ -97,7 +97,7 @@ static void initMagic() {
           res |= coordToBitboard(p);
           const subcoord_t nx = coordX(p) + static_cast<subcoord_t>(dx[direction]);
           const subcoord_t ny = coordY(p) + static_cast<subcoord_t>(dy[direction]);
-          if (nx >= 8 || ny >= 8 || (coordToBitboard(p) & occupied)) {
+          if (nx < 0 || nx >= 8 || ny < 0 || ny >= 8 || (coordToBitboard(p) & occupied)) {
             break;
           }
           p = makeCoord(nx, ny);

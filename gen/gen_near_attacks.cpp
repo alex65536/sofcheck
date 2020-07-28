@@ -18,7 +18,7 @@ std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[
     for (size_t direction = 0; direction < size; ++direction) {
       const subcoord_t nx = x + static_cast<subcoord_t>(offX[direction]);
       const subcoord_t ny = y + static_cast<subcoord_t>(offY[direction]);
-      if (nx < 8 && ny < 8) {
+      if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
         bb |= coordToBitboard(makeCoord(nx, ny));
       }
     }

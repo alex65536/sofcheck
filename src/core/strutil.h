@@ -12,7 +12,7 @@ namespace SoFCore {
 
 inline constexpr char cellToChar(cell_t cell) {
   constexpr char transpos[] = ".PKNBRQ??pknbrq?";
-  if (SOF_UNLIKELY(cell >= 16)) {
+  if (SOF_UNLIKELY(cell < 0 || cell >= 16)) {
     return '?';
   }
   return transpos[cell];
@@ -21,7 +21,7 @@ inline constexpr char cellToChar(cell_t cell) {
 inline constexpr const char *cellToUtf8(cell_t cell) {
   constexpr const char *transpos[] = {".", "♙", "♔", "♘", "♗", "♖", "♕", "?",
                                       "?", "♟", "♚", "♞", "♝", "♜", "♛", "?"};
-  if (SOF_UNLIKELY(cell >= 16)) {
+  if (SOF_UNLIKELY(cell < 0 || cell >= 16)) {
     return "?";
   }
   return transpos[cell];

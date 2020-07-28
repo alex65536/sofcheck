@@ -111,7 +111,7 @@ inline static size_t genPawnCapture(const Board &b, Move *list) {
 template <Color C>
 inline static size_t genPawnEnpassant(const Board &b, Move *list) {
   const coord_t enpassantCoord = b.enpassantCoord;
-  SOF_ASSUME(enpassantCoord == INVALID_COORD || enpassantCoord < 64);
+  SOF_ASSUME(enpassantCoord == INVALID_COORD || (enpassantCoord >= 0 && enpassantCoord < 64));
   if (enpassantCoord == INVALID_COORD) {
     return 0;
   }

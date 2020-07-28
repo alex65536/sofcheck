@@ -11,7 +11,7 @@
 namespace SoFCore {
 
 bool Move::isWellFormed(Color c) const {
-  if (src >= 64 || dst >= 64) {
+  if (src < 0 || src >= 64 || dst < 0 || dst >= 64) {
     return false;
   }
   if (kind != MoveKind::Null && src == dst) {

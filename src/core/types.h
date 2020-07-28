@@ -25,13 +25,13 @@ using bitboard_t = uint64_t;
 //    a  b  c  d  e  f  g  h
 //
 // This encoding is called Big-Endian Rank-File Mapping on Chess Programming Wiki.
-using coord_t = uint8_t;
+using coord_t = int8_t;
 
 // X, Y subcoordinates type
-using subcoord_t = uint8_t;
+using subcoord_t = int8_t;
 
 // Cell contents type
-using cell_t = uint8_t;
+using cell_t = int8_t;
 
 // Castling flags type
 using castling_t = uint8_t;
@@ -40,10 +40,10 @@ using castling_t = uint8_t;
 using board_hash_t = uint64_t;
 
 // Cell color type
-enum class Color : uint8_t { White = 0, Black = 1 };
+enum class Color : int8_t { White = 0, Black = 1 };
 
 // Piece kind type
-enum class Piece : uint8_t { Pawn = 0, King = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5 };
+enum class Piece : int8_t { Pawn = 0, King = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5 };
 
 // Castling flag constants
 constexpr castling_t CASTLING_WHITE_QUEENSIDE = 1;
@@ -72,7 +72,7 @@ inline constexpr castling_t castlingKingside(Color c) {
   return c == Color::White ? CASTLING_WHITE_KINGSIDE : CASTLING_BLACK_KINGSIDE;
 }
 
-inline constexpr Color invert(Color c) { return static_cast<Color>(static_cast<uint8_t>(c) ^ 1); }
+inline constexpr Color invert(Color c) { return static_cast<Color>(static_cast<int8_t>(c) ^ 1); }
 
 inline constexpr coord_t makeCoord(subcoord_t x, subcoord_t y) { return (x << 3) | y; }
 

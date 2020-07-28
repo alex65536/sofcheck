@@ -5,7 +5,7 @@
 
 namespace SoFCore {
 
-enum MoveKind : uint8_t {
+enum MoveKind : int8_t {
   Null = 0,
   Simple = 1,
   PawnDoubleMove = 2,
