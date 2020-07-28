@@ -16,6 +16,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
   set(USE_BMI2 OFF CACHE BOOL "Use BMI2 insruction set (x86_64 only)")
 endif()
 set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
+set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
 
 
 # Detect system configuration
@@ -60,6 +61,17 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic)
+
+if(USE_NO_EXCEPTIONS)
+  if(USE_BOOST_STACKTRACE)
+    message(WARNING
+      "USE_NO_EXCEPTIONS conflicts with USE_BOOST_STACKTRACE. Disabling boost::stacktrace support."
+    )
+    set(USE_BOOST_STACKTRACE OFF)
+  endif()
+  add_compile_options(-fno-exceptions)
+endif()
+
 if(USE_SANITIZERS)
   set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address -fsanitize=leak -fsanitize=undefined")
 endif()

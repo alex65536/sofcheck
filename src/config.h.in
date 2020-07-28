@@ -10,4 +10,7 @@
 // Print stacktraces using boost::stacktrace?
 #cmakedefine USE_BOOST_STACKTRACE
 
+// Build without exceptions?
+#cmakedefine USE_NO_EXCEPTIONS
+
 #endif  // SOF_CONFIG_INCLUDED
