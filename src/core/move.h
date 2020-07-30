@@ -56,8 +56,11 @@ struct Move {
   // little-endian architectures. The engine is not optimized for big-endian now, so there is no
   // fast implementation for such architectures at the moment.
   inline constexpr uint32_t asUint() const {
-    return static_cast<uint32_t>(kind) | (static_cast<uint32_t>(src) << 8) |
-           (static_cast<uint32_t>(dst) << 16) | (static_cast<uint32_t>(tag) << 24);
+    const auto uintKind = static_cast<uint8_t>(kind);
+    const auto uintSrc = static_cast<uint8_t>(src);
+    const auto uintDst = static_cast<uint8_t>(dst);
+    return static_cast<uint32_t>(uintKind) | (static_cast<uint32_t>(uintSrc) << 8) |
+           (static_cast<uint32_t>(uintDst) << 16) | (static_cast<uint32_t>(tag) << 24);
   }
 };
 

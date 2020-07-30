@@ -10,13 +10,7 @@
 namespace SoFCore {
 
 // The piece to promote the pawn. Set to `None` if the move is not a promotion.
-enum class PromotePiece : int8_t {
-  None = 0,
-  Knight = 1,
-  Bishop = 2,
-  Rook = 3,
-  Queen = 4
-};
+enum class PromotePiece : int8_t { None = 0, Knight = 1, Bishop = 2, Rook = 3, Queen = 4 };
 
 struct ParsedMove {
   PromotePiece promote;
@@ -38,8 +32,11 @@ struct ParsedMove {
   // little-endian architectures. The engine is not optimized for big-endian now, so there is no
   // fast implementation for such architectures at the moment.
   inline constexpr uint32_t asUint() const {
-    return static_cast<uint32_t>(unused) | (static_cast<uint32_t>(src) << 8) |
-           (static_cast<uint32_t>(dst) << 16) | (static_cast<uint32_t>(promote) << 24);
+    const auto uintPromote = static_cast<uint8_t>(promote);
+    const auto uintSrc = static_cast<uint8_t>(src);
+    const auto uintDst = static_cast<uint8_t>(dst);
+    return static_cast<uint32_t>(uintPromote) | (static_cast<uint32_t>(uintSrc) << 8) |
+           (static_cast<uint32_t>(uintDst) << 16) | (static_cast<uint32_t>(unused) << 24);
   }
 };
 

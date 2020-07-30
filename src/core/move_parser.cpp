@@ -56,9 +56,9 @@ inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
 
   // Convert promote
   if (p.promote != PromotePiece::None) {
-    const MoveKind kind = static_cast<MoveKind>(static_cast<int8_t>(p.promote) -
-                                                static_cast<int8_t>(PromotePiece::Knight) +
-                                                static_cast<int8_t>(MoveKind::PromoteKnight));
+    const auto kind = static_cast<MoveKind>(static_cast<int8_t>(p.promote) -
+                                            static_cast<int8_t>(PromotePiece::Knight) +
+                                            static_cast<int8_t>(MoveKind::PromoteKnight));
     return Move{kind, p.src, p.dst, 0};
   }
 
