@@ -1,11 +1,11 @@
-#include "engine_base/options.h"
+#include "bot_api/options.h"
 
 #include <algorithm>
 #include <type_traits>
 
 #include "util/misc.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 using SoFUtil::panic;
 
@@ -174,4 +174,4 @@ bool isOptionNameValid(const std::string &s) {
   return true;
 }
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi

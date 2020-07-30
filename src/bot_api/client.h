@@ -1,16 +1,16 @@
-#ifndef SOF_ENGINE_BASE_CLIENT_INCLUDED
-#define SOF_ENGINE_BASE_CLIENT_INCLUDED
+#ifndef SOF_BOT_API_CLIENT_INCLUDED
+#define SOF_BOT_API_CLIENT_INCLUDED
 
 #include <cstdint>
 #include <string>
 
 #include "core/board.h"
 #include "core/move.h"
-#include "engine_base/api_base.h"
-#include "engine_base/types.h"
+#include "bot_api/api_base.h"
+#include "bot_api/types.h"
 #include "util/misc.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 // TODO : add API for ponder
 // TODO : add API for "go" subcommands: "searchmoves", "mate"
@@ -111,6 +111,6 @@ protected:
   virtual void disconnect() = 0;
 };
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi
 
-#endif  // SOF_ENGINE_BASE_CLIENT_INCLUDED
+#endif  // SOF_BOT_API_CLIENT_INCLUDED

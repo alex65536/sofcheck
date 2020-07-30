@@ -37,11 +37,11 @@ may depend on private API
 
 - `util` implements helper utilities. It must not depend on any other module
 - `core` is a fast implementation of basic chess rules
-- `engine_base` contains APIs for communication between the engine and the GUI. The implementation 
+- `bot_api` contains APIs for communication between the engine and the GUI. The implementation 
 of these APIs is located in other modules
-- `engine_clients` contains various implementations of engine communication protocols. This module 
-is useful for developing chess engines. It uses the interfaces described in `engine_base` module. 
-Currently, only UCI is implemented, but support for more protocols will be added later
+  - `bot_api/clients` contains various implementations of engine communication protocols. This 
+module is useful for developing chess engines. It uses the interfaces described in `bot_api` 
+module. Currently, only UCI is implemented, but support for more protocols will be added later
 - more modules coming soon...
 
 # Main design principles

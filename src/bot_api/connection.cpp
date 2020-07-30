@@ -1,8 +1,8 @@
-#include "engine_base/connection.h"
+#include "bot_api/connection.h"
 
 #include <utility>
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 SoFUtil::Result<Connection, ApiResult> Connection::clientSide(
     std::unique_ptr<Client> client, std::unique_ptr<ServerConnector> server) {
@@ -63,4 +63,4 @@ Connection::~Connection() {
   }
 }
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi

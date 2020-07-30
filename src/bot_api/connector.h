@@ -1,10 +1,10 @@
-#ifndef SOF_ENGINE_BASE_CONNECTOR_INCLUDED
-#define SOF_ENGINE_BASE_CONNECTOR_INCLUDED
+#ifndef SOF_BOT_API_CONNECTOR_INCLUDED
+#define SOF_BOT_API_CONNECTOR_INCLUDED
 
-#include "engine_base/client.h"
-#include "engine_base/server.h"
+#include "bot_api/client.h"
+#include "bot_api/server.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 // Results of `poll()` calls
 enum class PollResult {
@@ -33,6 +33,6 @@ class ClientConnector : public Client, public Connector {};
 // Connector that emulates a server. Calls server API
 class ServerConnector : public Server, public Connector {};
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi
 
-#endif  // SOF_ENGINE_BASE_CONNECTOR_INCLUDED
+#endif  // SOF_BOT_API_CONNECTOR_INCLUDED

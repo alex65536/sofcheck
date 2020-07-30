@@ -1,15 +1,15 @@
-#ifndef SOF_ENGINE_BASE_CONNECTION_INCLUDED
-#define SOF_ENGINE_BASE_CONNECTION_INCLUDED
+#ifndef SOF_BOT_API_CONNECTION_INCLUDED
+#define SOF_BOT_API_CONNECTION_INCLUDED
 
 #include <memory>
 
-#include "engine_base/api_base.h"
-#include "engine_base/client.h"
-#include "engine_base/connector.h"
-#include "engine_base/server.h"
+#include "bot_api/api_base.h"
+#include "bot_api/client.h"
+#include "bot_api/connector.h"
+#include "bot_api/server.h"
 #include "util/result.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 // Class that holds the connection between the client and the server
 class Connection {
@@ -55,6 +55,6 @@ private:
   Connector *connector_;  // Equal either to client or to server, won't be freed automatically
 };
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi
 
-#endif  // SOF_ENGINE_BASE_CONNECTION_INCLUDED
+#endif  // SOF_BOT_API_CONNECTION_INCLUDED

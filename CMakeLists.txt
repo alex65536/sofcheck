@@ -121,18 +121,18 @@ add_library(sof_core STATIC
 )
 target_link_libraries(sof_core PUBLIC sof_util)
 
-add_library(sof_engine_base STATIC
-  src/engine_base/connection.cpp
-  src/engine_base/options.cpp
-  src/engine_base/strutil.cpp
+add_library(sof_bot_api STATIC
+  src/bot_api/connection.cpp
+  src/bot_api/options.cpp
+  src/bot_api/strutil.cpp
 )
-target_link_libraries(sof_engine_base PUBLIC sof_core sof_util)
+target_link_libraries(sof_bot_api PUBLIC sof_core sof_util)
 
-add_library(sof_engine_clients STATIC
-  src/engine_clients/private/uci_option_escape.cpp
-  src/engine_clients/uci.cpp
+add_library(sof_bot_api_clients STATIC
+  src/bot_api/clients/private/uci_option_escape.cpp
+  src/bot_api/clients/uci.cpp
 )
-target_link_libraries(sof_engine_clients PUBLIC sof_core sof_util sof_engine_base)
+target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
@@ -148,7 +148,7 @@ add_executable(gen_magic_consts
 add_executable(sofcheck
   src/main.cpp
 )
-target_link_libraries(sofcheck sof_core sof_util sof_engine_base sof_engine_clients)
+target_link_libraries(sofcheck sof_core sof_util sof_bot_api sof_bot_api_clients)
 
 
 # Add benchmarks
@@ -165,29 +165,29 @@ add_subdirectory(selftest)
 enable_testing()
 
 add_executable(test_uci_client
-  src/engine_clients/test/uci.cpp
+  src/bot_api/clients/test/uci.cpp
 )
-target_link_libraries(test_uci_client sof_core sof_util sof_engine_clients)
+target_link_libraries(test_uci_client sof_core sof_util sof_bot_api_clients)
 if(UNIX)
   # TODO : add code to detect the presence of Python in the system
   add_test(
     NAME uci-client-1
-    COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
+    COMMAND ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh
     ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
     ${PROJECT_BINARY_DIR}/test_uci_client
-    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in1.txt
+    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in1.txt
     ${PROJECT_BINARY_DIR}/test_uci_client_log1.txt
-    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out1.txt
+    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out1.txt
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
   add_test(
     NAME uci-client-2
-    COMMAND ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_run.sh
+    COMMAND ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh
     ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
     ${PROJECT_BINARY_DIR}/test_uci_client
-    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_in2.txt
+    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in2.txt
     ${PROJECT_BINARY_DIR}/test_uci_client_log2.txt
-    ${PROJECT_SOURCE_DIR}/src/engine_clients/test/uci_out2.txt
+    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
 endif()

@@ -1,21 +1,17 @@
-#ifndef SOF_ENGINE_CLIENTS_UCI_INCLUDED
-#define SOF_ENGINE_CLIENTS_UCI_INCLUDED
+#ifndef SOF_BOT_API_CLIENTS_UCI_INCLUDED
+#define SOF_BOT_API_CLIENTS_UCI_INCLUDED
 
 #include <chrono>
 #include <istream>
 #include <ostream>
 
 #include "core/move.h"
-#include "engine_base/client.h"
-#include "engine_base/connector.h"
-#include "engine_base/server.h"
+#include "bot_api/client.h"
+#include "bot_api/connector.h"
+#include "bot_api/server.h"
 #include "util/no_copy_move.h"
 
-namespace SoFEngineClients {
-
-using SoFEngineBase::ApiResult;
-using SoFEngineBase::Client;
-using SoFEngineBase::PollResult;
+namespace SoFBotApi::Clients {
 
 // A server connector for UCI chess engines. The main goals of this implementation are conformance
 // with the official docs and strict input validation.
@@ -28,16 +24,16 @@ using SoFEngineBase::PollResult;
 // are allowed.
 // - the UCI docs assume that the options are case-insensitive. This implementation assumes that
 // they are case-sensitive.
-class UciServerConnector final : public SoFEngineBase::ServerConnector, public SoFUtil::NoCopyMove {
+class UciServerConnector final : public SoFBotApi::ServerConnector, public SoFUtil::NoCopyMove {
 public:
   const char *name() const override { return "UCI Server Connector"; }
   const char *author() const override { return "SoFCheck developers"; }
 
   ApiResult finishSearch(SoFCore::Move bestMove) override;
   ApiResult sendString(const char *str) override;
-  ApiResult sendResult(const SoFEngineBase::SearchResult &result) override;
+  ApiResult sendResult(const SoFBotApi::SearchResult &result) override;
   ApiResult sendNodeCount(uint64_t nodes) override;
-  ApiResult sendHashFull(SoFEngineBase::permille_t hashFull) override;
+  ApiResult sendHashFull(SoFBotApi::permille_t hashFull) override;
   ApiResult sendCurrMove(SoFCore::Move move, size_t moveNumber = 0) override;
   ApiResult reportError(const char *message) override;
 
@@ -101,6 +97,6 @@ private:
   std::ostream &err_;
 };
 
-}  // namespace SoFEngineClients
+}  // namespace SoFBotApi::Clients
 
-#endif  // SOF_ENGINE_CLIENTS_UCI_INCLUDED
+#endif  // SOF_BOT_API_CLIENTS_UCI_INCLUDED

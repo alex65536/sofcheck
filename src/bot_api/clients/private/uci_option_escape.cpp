@@ -1,11 +1,11 @@
-#include "engine_clients/private/uci_option_escape.h"
+#include "bot_api/clients/private/uci_option_escape.h"
 
 #include <algorithm>
 #include <cstring>
 
 #include "util/strutil.h"
 
-namespace SoFEngineClients::Private {
+namespace SoFBotApi::Clients::Private {
 
 // Tokenizes the string `name`, transforms each token and rebuilds the string
 template <typename Transform>
@@ -68,4 +68,4 @@ std::string uciEnumNameEscape(const std::string &item) { return uciNameEscape(it
 
 std::string uciEnumNameUnescape(const std::string &item) { return uciNameUnescape(item); }
 
-}  // namespace SoFEngineClients::Private
+}  // namespace SoFBotApi::Clients::Private

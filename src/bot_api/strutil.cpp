@@ -1,6 +1,6 @@
-#include "engine_base/strutil.h"
+#include "bot_api/strutil.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 const char *apiResultToStr(const ApiResult res) {
   switch (res) {
@@ -38,4 +38,4 @@ const char *pollResultToStr(const PollResult res) {
   return "";
 }
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi

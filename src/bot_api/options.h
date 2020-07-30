@@ -1,5 +1,5 @@
-#ifndef SOF_ENGINE_BASE_OPTIONS_INCLUDED
-#define SOF_ENGINE_BASE_OPTIONS_INCLUDED
+#ifndef SOF_BOT_API_OPTIONS_INCLUDED
+#define SOF_BOT_API_OPTIONS_INCLUDED
 
 #include <cstdint>
 #include <string>
@@ -8,10 +8,10 @@
 #include <variant>
 #include <vector>
 
-#include "engine_base/api_base.h"
+#include "bot_api/api_base.h"
 #include "util/no_copy_move.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 enum class OptionType { Bool = 0, Int = 1, String = 2, Enum = 3, Action = 4, None = 255 };
 
@@ -167,6 +167,6 @@ private:
 // - the string is not empty
 bool isOptionNameValid(const std::string &s);
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi
 
-#endif  // SOF_ENGINE_BASE_OPTIONS_INCLUDED
+#endif  // SOF_BOT_API_OPTIONS_INCLUDED

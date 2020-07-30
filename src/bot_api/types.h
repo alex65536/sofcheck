@@ -1,5 +1,5 @@
-#ifndef SOF_ENGINE_BASE_TYPES_INCLUDED
-#define SOF_ENGINE_BASE_TYPES_INCLUDED
+#ifndef SOF_BOT_API_TYPES_INCLUDED
+#define SOF_BOT_API_TYPES_INCLUDED
 
 #include <chrono>
 #include <cstdint>
@@ -7,7 +7,7 @@
 
 #include "core/types.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 using std::chrono::milliseconds;
 
@@ -124,6 +124,6 @@ struct SearchResult {
   PositionCostBound bound;  // Is position cost exact?
 };
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi
 
-#endif  // SOF_ENGINE_BASE_TYPES_INCLUDED
+#endif  // SOF_BOT_API_TYPES_INCLUDED

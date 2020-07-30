@@ -1,4 +1,4 @@
-#include "engine_clients/uci.h"
+#include "bot_api/clients/uci.h"
 
 #include <iostream>
 #include <string>
@@ -6,26 +6,26 @@
 
 #include "core/init.h"
 #include "core/strutil.h"
-#include "engine_base/client.h"
-#include "engine_base/connection.h"
-#include "engine_base/options.h"
-#include "engine_base/strutil.h"
+#include "bot_api/client.h"
+#include "bot_api/connection.h"
+#include "bot_api/options.h"
+#include "bot_api/strutil.h"
 #include "util/misc.h"
 #include "util/no_copy_move.h"
 
-using SoFEngineBase::ApiResult;
-using SoFEngineBase::Connection;
-using SoFEngineBase::PollResult;
-using SoFEngineBase::PositionCost;
-using SoFEngineBase::PositionCostBound;
-using SoFEngineClients::UciServerConnector;
+using SoFBotApi::ApiResult;
+using SoFBotApi::Connection;
+using SoFBotApi::PollResult;
+using SoFBotApi::PositionCost;
+using SoFBotApi::PositionCostBound;
+using SoFBotApi::Clients::UciServerConnector;
 using SoFUtil::panic;
 using std::cerr;
 using std::endl;
 
-class TestEngine : public SoFEngineBase::Client,
+class TestEngine : public SoFBotApi::Client,
                    public SoFUtil::NoCopyMove,
-                   private SoFEngineBase::OptionObserver {
+                   private SoFBotApi::OptionObserver {
 public:
   const char *name() const override { return "Test Engine"; }
   const char *author() const override { return "Test Author"; }
@@ -72,10 +72,10 @@ public:
     return ApiResult::Ok;
   }
 
-  ApiResult searchTimeControl(const SoFEngineBase::TimeControl &control) override {
+  ApiResult searchTimeControl(const SoFBotApi::TimeControl &control) override {
     cerr << "searchTimeControl(" << control.white.time.count() << ", " << control.white.inc.count()
          << ", " << control.black.time.count() << ", " << control.black.inc.count();
-    if (control.movesToGo != SoFEngineBase::INFINITE_MOVES) {
+    if (control.movesToGo != SoFBotApi::INFINITE_MOVES) {
       cerr << ", movesToGo = " << control.movesToGo;
     }
     cerr << ")" << endl;
@@ -102,14 +102,14 @@ public:
     return ApiResult::Ok;
   }
 
-  SoFEngineBase::Options &options() override { return options_; }
+  SoFBotApi::Options &options() override { return options_; }
 
-  const SoFEngineBase::Options &options() const override { return options_; }
+  const SoFBotApi::Options &options() const override { return options_; }
 
   TestEngine() : options_(buildOptions(this)) {}
 
 private:
-  ApiResult connect(SoFEngineBase::Server *server) override {
+  ApiResult connect(SoFBotApi::Server *server) override {
     server_ = server;
     return ApiResult::Ok;
   }
@@ -124,7 +124,7 @@ private:
     return ApiResult::Ok;
   }
 
-  SoFEngineBase::ApiResult setInt(const std::string &key, int64_t value) override {
+  SoFBotApi::ApiResult setInt(const std::string &key, int64_t value) override {
     cerr << "setInt(" << key << ", " << value << ")" << endl;
     if (key == "int" && value == 42) {
       return ApiResult::RuntimeError;
@@ -132,20 +132,20 @@ private:
     return ApiResult::Ok;
   }
 
-  SoFEngineBase::ApiResult setString(const std::string &key, const std::string &value) override {
+  SoFBotApi::ApiResult setString(const std::string &key, const std::string &value) override {
     cerr << "setString(" << key << ", " << value << ")" << endl;
     return ApiResult::Ok;
   }
 
-  SoFEngineBase::ApiResult triggerAction(const std::string &key) override {
+  SoFBotApi::ApiResult triggerAction(const std::string &key) override {
     cerr << "triggerAction(" << key << ")" << endl;
     return ApiResult::Ok;
   }
 
   void disconnect() override { server_ = nullptr; }
 
-  static SoFEngineBase::Options buildOptions(SoFEngineBase::OptionObserver *observer) {
-    return SoFEngineBase::OptionBuilder(observer)
+  static SoFBotApi::Options buildOptions(SoFBotApi::OptionObserver *observer) {
+    return SoFBotApi::OptionBuilder(observer)
         .addBool("true bool", true)
         .addBool("false bool", false)
         .addBool("name value", true)
@@ -162,8 +162,8 @@ private:
         .options();
   }
 
-  SoFEngineBase::Options options_;
-  SoFEngineBase::Server *server_ = nullptr;
+  SoFBotApi::Options options_;
+  SoFBotApi::Server *server_ = nullptr;
 };
 
 int main() {
@@ -172,12 +172,12 @@ int main() {
   auto connResult = Connection::clientSide<TestEngine, UciServerConnector>();
   if (connResult.isErr()) {
     panic(std::string("Connection failed: ") +
-          SoFEngineBase::apiResultToStr(connResult.unwrapErr()));
+          SoFBotApi::apiResultToStr(connResult.unwrapErr()));
   }
   auto connection = connResult.unwrap();
   PollResult result = connection.runPollLoop();
   if (result != PollResult::Ok) {
-    panic(std::string("Poll failed: ") + SoFEngineBase::pollResultToStr(result));
+    panic(std::string("Poll failed: ") + SoFBotApi::pollResultToStr(result));
   }
 
   return 0;

@@ -1,14 +1,14 @@
-#ifndef SOF_ENGINE_BASE_SERVER_INCLUDED
-#define SOF_ENGINE_BASE_SERVER_INCLUDED
+#ifndef SOF_BOT_API_SERVER_INCLUDED
+#define SOF_BOT_API_SERVER_INCLUDED
 
 #include <string>
 
 #include "core/move.h"
-#include "engine_base/api_base.h"
-#include "engine_base/types.h"
+#include "bot_api/api_base.h"
+#include "bot_api/types.h"
 #include "util/misc.h"
 
-namespace SoFEngineBase {
+namespace SoFBotApi {
 
 // TODO : support multi-PV mode
 // TODO : support reporting refutations
@@ -78,6 +78,6 @@ protected:
   virtual void disconnect() = 0;
 };
 
-}  // namespace SoFEngineBase
+}  // namespace SoFBotApi
 
-#endif  // SOF_ENGINE_BASE_SERVER_INCLUDED
+#endif  // SOF_BOT_API_SERVER_INCLUDED

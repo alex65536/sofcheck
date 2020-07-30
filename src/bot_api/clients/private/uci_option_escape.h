@@ -1,9 +1,9 @@
-#ifndef SOF_ENGINE_CLIENTS_PRIVATE_UCI_OPTION_ESCAPE_INCLUDED
-#define SOF_ENGINE_CLIENTS_PRIVATE_UCI_OPTION_ESCAPE_INCLUDED
+#ifndef SOF_BOT_API_CLIENTS_PRIVATE_UCI_OPTION_ESCAPE_INCLUDED
+#define SOF_BOT_API_CLIENTS_PRIVATE_UCI_OPTION_ESCAPE_INCLUDED
 
 #include <string>
 
-namespace SoFEngineClients::Private {
+namespace SoFBotApi::Clients::Private {
 
 // Escapes UCI option name `name`. The UCI documentation requires that the option name cannot
 // contain "name" and "value" tokens. `name` must be a list of tokens separated by a single space.
@@ -21,6 +21,6 @@ std::string uciEnumNameEscape(const std::string &item);
 // Unescapes UCI enumeration item `item`
 std::string uciEnumNameUnescape(const std::string &item);
 
-}  // namespace SoFEngineClients::Private
+}  // namespace SoFBotApi::Clients::Private
 
-#endif  // SOF_ENGINE_CLIENTS_PRIVATE_UCI_OPTION_ESCAPE_INCLUDED
+#endif  // SOF_BOT_API_CLIENTS_PRIVATE_UCI_OPTION_ESCAPE_INCLUDED
