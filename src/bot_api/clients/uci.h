@@ -5,10 +5,10 @@
 #include <istream>
 #include <ostream>
 
-#include "core/move.h"
 #include "bot_api/client.h"
 #include "bot_api/connector.h"
 #include "bot_api/server.h"
+#include "core/move.h"
 #include "util/no_copy_move.h"
 
 namespace SoFBotApi::Clients {

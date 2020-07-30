@@ -3,9 +3,9 @@
 
 #include <string>
 
-#include "core/move.h"
 #include "bot_api/api_base.h"
 #include "bot_api/types.h"
+#include "core/move.h"
 #include "util/misc.h"
 
 namespace SoFBotApi {

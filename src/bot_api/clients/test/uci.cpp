@@ -4,12 +4,12 @@
 #include <string>
 #include <utility>
 
-#include "core/init.h"
-#include "core/strutil.h"
 #include "bot_api/client.h"
 #include "bot_api/connection.h"
 #include "bot_api/options.h"
 #include "bot_api/strutil.h"
+#include "core/init.h"
+#include "core/strutil.h"
 #include "util/misc.h"
 #include "util/no_copy_move.h"
 
@@ -171,8 +171,7 @@ int main() {
 
   auto connResult = Connection::clientSide<TestEngine, UciServerConnector>();
   if (connResult.isErr()) {
-    panic(std::string("Connection failed: ") +
-          SoFBotApi::apiResultToStr(connResult.unwrapErr()));
+    panic(std::string("Connection failed: ") + SoFBotApi::apiResultToStr(connResult.unwrapErr()));
   }
   auto connection = connResult.unwrap();
   PollResult result = connection.runPollLoop();

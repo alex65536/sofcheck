@@ -4,10 +4,10 @@
 #include <cstdint>
 #include <string>
 
-#include "core/board.h"
-#include "core/move.h"
 #include "bot_api/api_base.h"
 #include "bot_api/types.h"
+#include "core/board.h"
+#include "core/move.h"
 #include "util/misc.h"
 
 namespace SoFBotApi {
