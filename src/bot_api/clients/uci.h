@@ -24,16 +24,16 @@ namespace SoFBotApi::Clients {
 // are allowed.
 // - the UCI docs assume that the options are case-insensitive. This implementation assumes that
 // they are case-sensitive.
-class UciServerConnector final : public SoFBotApi::ServerConnector, public SoFUtil::NoCopyMove {
+class UciServerConnector final : public ServerConnector, public SoFUtil::NoCopyMove {
 public:
   const char *name() const override { return "UCI Server Connector"; }
   const char *author() const override { return "SoFCheck developers"; }
 
   ApiResult finishSearch(SoFCore::Move bestMove) override;
   ApiResult sendString(const char *str) override;
-  ApiResult sendResult(const SoFBotApi::SearchResult &result) override;
+  ApiResult sendResult(const SearchResult &result) override;
   ApiResult sendNodeCount(uint64_t nodes) override;
-  ApiResult sendHashFull(SoFBotApi::permille_t hashFull) override;
+  ApiResult sendHashFull(permille_t hashFull) override;
   ApiResult sendCurrMove(SoFCore::Move move, size_t moveNumber = 0) override;
   ApiResult reportError(const char *message) override;
 

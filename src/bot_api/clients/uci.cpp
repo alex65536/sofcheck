@@ -85,7 +85,7 @@ ApiResult UciServerConnector::sendCurrMove(const SoFCore::Move move, const size_
   return ApiResult::Ok;
 }
 
-ApiResult UciServerConnector::sendHashFull(const SoFBotApi::permille_t hashFull) {
+ApiResult UciServerConnector::sendHashFull(const permille_t hashFull) {
   ensureClient();
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
@@ -128,7 +128,7 @@ ApiResult UciServerConnector::sendNodeCount(const uint64_t nodes) {
   return ApiResult::Ok;
 }
 
-ApiResult UciServerConnector::sendResult(const SoFBotApi::SearchResult &result) {
+ApiResult UciServerConnector::sendResult(const SearchResult &result) {
   ensureClient();
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
@@ -178,13 +178,13 @@ ApiResult UciServerConnector::checkClient(ApiResult result) {
   if (result == ApiResult::Ok || result == ApiResult::NotSupported) {
     return result;
   }
-  err_ << "UCI client error: " << SoFBotApi::apiResultToStr(result) << endl;
+  err_ << "UCI client error: " << apiResultToStr(result) << endl;
   return result;
 }
 
 PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) {
   if (searchStartResult != ApiResult::Ok) {
-    const char *strResult = SoFBotApi::apiResultToStr(searchStartResult);
+    const char *strResult = apiResultToStr(searchStartResult);
     err_ << "UCI client error: Cannot start search: " << strResult << endl;
     D_CHECK_POLL_IO(out_ << "info string Cannot start search: " << strResult << endl);
     // We cannot start search from our side because of API call error. But it's better to tell the
@@ -244,7 +244,7 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
   // If such parser behaviour causes bugs in some GUIs, feel free to report a bug and send the
   // string received by the engine, and I will patch this logic to include such weird cases.
   bool hasTimeControl = false;
-  SoFBotApi::TimeControl timeControl;
+  TimeControl timeControl;
   for (;;) {
     string token;
     if (!(tokens >> token)) {
@@ -647,7 +647,7 @@ PollResult UciServerConnector::poll() {
   return PollResult::NoData;
 }
 
-ApiResult UciServerConnector::connect(SoFBotApi::Client *client) {
+ApiResult UciServerConnector::connect(Client *client) {
   if (SOF_UNLIKELY(client_)) {
     panic("The client is already connected");
   }
