@@ -9,12 +9,20 @@
 
 namespace SoFCore {
 
+// The piece to promote the pawn. Set to `None` if the move is not a promotion.
+enum class PromotePiece : int8_t {
+  None = 0,
+  Knight = 1,
+  Bishop = 2,
+  Rook = 3,
+  Queen = 4
+};
+
 struct ParsedMove {
-  uint8_t unused;  // Padding field, shall be set to zero
+  PromotePiece promote;
   coord_t src;
   coord_t dst;
-  cell_t promote;  // This field holds only `EMPTY_CELL` or a white piece. If, for example, the move
-                   // is a promote to black queen, this field holds white queen.
+  uint8_t unused;  // Padding field, shall be set to zero
 
   // Returns ParsedMove from its UCI string representation. `first` is the pointer to the beginning
   // of the string, and `last` is the pointer past the end of the string. If the given string cannot
@@ -35,7 +43,7 @@ struct ParsedMove {
   }
 };
 
-constexpr ParsedMove INVALID_PARSED_MOVE{0, INVALID_COORD, INVALID_COORD, 0};
+constexpr ParsedMove INVALID_PARSED_MOVE{PromotePiece::None, INVALID_COORD, INVALID_COORD, 0};
 
 inline constexpr bool operator==(ParsedMove a, ParsedMove b) { return a.asUint() == b.asUint(); }
 

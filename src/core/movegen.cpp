@@ -52,10 +52,10 @@ template <Color C>
 inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t src,
                                         const coord_t dst, const subcoord_t x) {
   if (x == Private::promoteSrcRow(C)) {
-    list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Knight)};
-    list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Bishop)};
-    list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Rook)};
-    list[size++] = Move{MoveKind::Promote, src, dst, makeCell(C, Piece::Queen)};
+    list[size++] = Move{MoveKind::PromoteKnight, src, dst, 0};
+    list[size++] = Move{MoveKind::PromoteBishop, src, dst, 0};
+    list[size++] = Move{MoveKind::PromoteRook, src, dst, 0};
+    list[size++] = Move{MoveKind::PromoteQueen, src, dst, 0};
   } else {
     list[size++] = Move{MoveKind::Simple, src, dst, 0};
   }
@@ -291,7 +291,7 @@ inline static size_t isMoveValidImpl(const Board &b, const Move move) {
              dst == static_cast<coord_t>(b.enpassantCoord + Private::pawnMoveDelta(C));
     }
     constexpr subcoord_t promoteX = Private::promoteSrcRow(C);
-    if (move.kind != MoveKind::Promote && coordX(src) == promoteX) {
+    if (!isMoveKindPromote(move.kind) && coordX(src) == promoteX) {
       return false;
     }
     if (dstCell == EMPTY_CELL) {

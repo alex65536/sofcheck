@@ -129,26 +129,21 @@ void runSelfTest(Board b) {
                             MoveKind::Simple,
                             MoveKind::PawnDoubleMove,
                             MoveKind::Enpassant,
-                            MoveKind::Promote,
+                            MoveKind::PromoteKnight,
+                            MoveKind::PromoteBishop,
+                            MoveKind::PromoteRook,
+                            MoveKind::PromoteQueen,
                             MoveKind::CastlingKingside,
                             MoveKind::CastlingQueenside};
-  const cell_t promotes[] = {EMPTY_CELL, makeCell(b.side, Piece::Knight),
-                             makeCell(b.side, Piece::Bishop), makeCell(b.side, Piece::Rook),
-                             makeCell(b.side, Piece::Queen)};
   for (MoveKind kind : kinds) {
-    for (cell_t promote : promotes) {
-      if ((promote != EMPTY_CELL) != (kind == MoveKind::Promote)) {
-        continue;
-      }
-      for (coord_t src = 0; src < 64; ++src) {
-        for (coord_t dst = 0; dst < 64; ++dst) {
-          const Move move{kind, src, dst, promote};
-          if (!move.isWellFormed(b.side)) {
-            continue;
-          }
-          if (isMoveValid(b, move)) {
-            validMoves.push_back(move);
-          }
+    for (coord_t src = 0; src < 64; ++src) {
+      for (coord_t dst = 0; dst < 64; ++dst) {
+        const Move move{kind, src, dst, 0};
+        if (!move.isWellFormed(b.side)) {
+          continue;
+        }
+        if (isMoveValid(b, move)) {
+          validMoves.push_back(move);
         }
       }
     }

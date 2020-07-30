@@ -12,15 +12,32 @@ enum MoveKind : int8_t {
   Enpassant = 3,
   CastlingKingside = 4,
   CastlingQueenside = 5,
-  Promote = 6,
-  Invalid = 7
+  PromoteKnight = 6,
+  PromoteBishop = 7,
+  PromoteRook = 8,
+  PromoteQueen = 9,
+  Invalid = 10
 };
+
+// Returns `true` if the move is a pawn promote
+inline constexpr bool isMoveKindPromote(const MoveKind kind) {
+  return kind == MoveKind::PromoteKnight || kind == MoveKind::PromoteBishop ||
+         kind == MoveKind::PromoteRook || kind == MoveKind::PromoteQueen;
+}
+
+// Returns the promote piece if `isMoveKindPromote()` is `true`. Otherwise, the behaviour is
+// undefined
+inline constexpr Piece moveKindPromotePiece(const MoveKind kind) {
+  return static_cast<Piece>(static_cast<int8_t>(kind) -
+                            static_cast<int8_t>(MoveKind::PromoteKnight) +
+                            static_cast<int8_t>(Piece::Knight));
+}
 
 struct Move {
   MoveKind kind;
   coord_t src;
   coord_t dst;
-  cell_t promote;
+  uint8_t tag;  // Can be used to store additional info about the move. Zeroed by default
 
   // Checks if the move is well-formed for moving side `c`.
   //
@@ -40,7 +57,7 @@ struct Move {
   // fast implementation for such architectures at the moment.
   inline constexpr uint32_t asUint() const {
     return static_cast<uint32_t>(kind) | (static_cast<uint32_t>(src) << 8) |
-           (static_cast<uint32_t>(dst) << 16) | (static_cast<uint32_t>(promote) << 24);
+           (static_cast<uint32_t>(dst) << 16) | (static_cast<uint32_t>(tag) << 24);
   }
 };
 

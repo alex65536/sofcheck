@@ -19,9 +19,9 @@ void moveToStr(const SoFCore::Move move, char *str) {
   *(str++) = xSubToChar(coordX(move.src));
   *(str++) = ySubToChar(coordY(move.dst));
   *(str++) = xSubToChar(coordX(move.dst));
-  if (move.promote != 0) {
-    const char transpos[] = ".pknbrq?";
-    *(str++) = transpos[move.promote & 7];
+  if (isMoveKindPromote(move.kind)) {
+    const char transpos[] = "pknbrq";
+    *(str++) = transpos[static_cast<int8_t>(moveKindPromotePiece(move.kind))];
   }
   *str = '\0';
 }

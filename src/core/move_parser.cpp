@@ -12,27 +12,27 @@ ParsedMove ParsedMove::fromStr(const char *first, const char *last) {
   }
   // Parse null move (it is written as "0000")
   if (SOF_UNLIKELY(last == first + 4 && std::equal(first, last, "0000"))) {
-    return ParsedMove{0, 0, 0, 0};
+    return ParsedMove{PromotePiece::None, 0, 0, 0};
   }
   if (!isYCharValid(first[0]) || !isXCharValid(first[1]) || !isYCharValid(first[2]) ||
       !isXCharValid(first[3])) {
     return INVALID_PARSED_MOVE;
   }
-  ParsedMove result{0, charsToCoord(first[0], first[1]), charsToCoord(first[2], first[3]),
-                    EMPTY_CELL};
+  ParsedMove result{PromotePiece::None, charsToCoord(first[0], first[1]),
+                    charsToCoord(first[2], first[3]), 0};
   if (last == first + 5) {
     switch (first[4]) {
       case 'n':
-        result.promote = makeCell(Color::White, Piece::Knight);
+        result.promote = PromotePiece::Knight;
         break;
       case 'b':
-        result.promote = makeCell(Color::White, Piece::Bishop);
+        result.promote = PromotePiece::Bishop;
         break;
       case 'r':
-        result.promote = makeCell(Color::White, Piece::Rook);
+        result.promote = PromotePiece::Rook;
         break;
       case 'q':
-        result.promote = makeCell(Color::White, Piece::Queen);
+        result.promote = PromotePiece::Queen;
         break;
       default:
         return INVALID_PARSED_MOVE;
@@ -49,14 +49,17 @@ inline static Move moveFromParsedImpl(const ParsedMove p, const Board &board) {
   }
 
   // Convert null move
-  constexpr ParsedMove nullParsedMove{0, 0, 0, 0};
+  constexpr ParsedMove nullParsedMove{PromotePiece::None, 0, 0, 0};
   if (SOF_UNLIKELY(p == nullParsedMove)) {
     return Move::null();
   }
 
   // Convert promote
-  if (p.promote != 0) {
-    return Move{MoveKind::Promote, p.src, p.dst, makeCell(C, cellPiece(p.promote))};
+  if (p.promote != PromotePiece::None) {
+    const MoveKind kind = static_cast<MoveKind>(static_cast<int8_t>(p.promote) -
+                                                static_cast<int8_t>(PromotePiece::Knight) +
+                                                static_cast<int8_t>(MoveKind::PromoteKnight));
+    return Move{kind, p.src, p.dst, 0};
   }
 
   Move result{MoveKind::Simple, p.src, p.dst, 0};

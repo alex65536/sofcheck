@@ -19,22 +19,20 @@ bool Move::isWellFormed(Color c) const {
   }
   switch (kind) {
     case MoveKind::Simple: {
-      if (promote != 0) {
-        return false;
-      }
+      // No need to perform additional checks.
       break;
     }
     case MoveKind::PawnDoubleMove: {
-      if (promote != 0) {
-        return false;
-      }
       if (coordX(src) != Private::doubleMoveSrcRow(c) ||
           coordX(dst) != Private::doubleMoveDstRow(c) || coordY(src) != coordY(dst)) {
         return false;
       }
       break;
     }
-    case MoveKind::Promote: {
+    case MoveKind::PromoteKnight:
+    case MoveKind::PromoteBishop:
+    case MoveKind::PromoteRook:
+    case MoveKind::PromoteQueen: {
       if (coordX(src) != Private::promoteSrcRow(c) || coordX(dst) != Private::promoteDstRow(c)) {
         return false;
       }
@@ -43,16 +41,9 @@ bool Move::isWellFormed(Color c) const {
       if (srcY + 1 != dstY && srcY != dstY && srcY - 1 != dstY) {
         return false;
       }
-      if (promote != makeCell(c, Piece::Knight) && promote != makeCell(c, Piece::Bishop) &&
-          promote != makeCell(c, Piece::Rook) && promote != makeCell(c, Piece::Queen)) {
-        return false;
-      }
       break;
     }
     case MoveKind::CastlingKingside: {
-      if (promote != 0) {
-        return false;
-      }
       const subcoord_t x = Private::castlingRow(c);
       if (src != makeCoord(x, 4) || dst != makeCoord(x, 6)) {
         return false;
@@ -60,9 +51,6 @@ bool Move::isWellFormed(Color c) const {
       break;
     }
     case MoveKind::CastlingQueenside: {
-      if (promote != 0) {
-        return false;
-      }
       const subcoord_t x = Private::castlingRow(c);
       if (src != makeCoord(x, 4) || dst != makeCoord(x, 2)) {
         return false;
@@ -70,15 +58,12 @@ bool Move::isWellFormed(Color c) const {
       break;
     }
     case MoveKind::Null: {
-      if (src != 0 || dst != 0 || promote != 0) {
+      if (src != 0 || dst != 0) {
         return false;
       }
       break;
     }
     case MoveKind::Enpassant: {
-      if (promote != 0) {
-        return false;
-      }
       if (coordX(src) != Private::enpassantSrcRow(c) ||
           coordX(dst) != Private::enpassantDstRow(c)) {
         return false;
@@ -246,15 +231,19 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
       makePawnDoubleMove<C, false>(b, move, bbChange);
       break;
     }
-    case MoveKind::Promote: {
+    case MoveKind::PromoteKnight:
+    case MoveKind::PromoteBishop:
+    case MoveKind::PromoteRook:
+    case MoveKind::PromoteQueen: {
+      const cell_t promote = makeCell(C, moveKindPromotePiece(move.kind));
       b.cells[move.src] = EMPTY_CELL;
-      b.cells[move.dst] = move.promote;
+      b.cells[move.dst] = promote;
       b.hash ^= Private::g_zobristPieces[srcCell][move.src] ^
-                Private::g_zobristPieces[move.promote][move.dst] ^
+                Private::g_zobristPieces[promote][move.dst] ^
                 Private::g_zobristPieces[dstCell][move.dst];
       b.bbColor(C) ^= bbChange;
       b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbSrc;
-      b.bbPieces[move.promote] ^= bbDst;
+      b.bbPieces[promote] ^= bbDst;
       b.bbColor(invert(C)) &= ~bbDst;
       b.bbPieces[dstCell] &= ~bbDst;
       updateCastling(b, bbChange);
@@ -325,12 +314,16 @@ void moveUnmakeImpl(Board &b, const Move move, const MovePersistence p) {
       makePawnDoubleMove<C, true>(b, move, bbChange);
       break;
     }
-    case MoveKind::Promote: {
+    case MoveKind::PromoteKnight:
+    case MoveKind::PromoteBishop:
+    case MoveKind::PromoteRook:
+    case MoveKind::PromoteQueen: {
+      const cell_t promote = makeCell(C, moveKindPromotePiece(move.kind));
       b.cells[move.src] = makeCell(C, Piece::Pawn);
       b.cells[move.dst] = dstCell;
       b.bbColor(C) ^= bbChange;
       b.bbPieces[makeCell(C, Piece::Pawn)] ^= bbSrc;
-      b.bbPieces[move.promote] ^= bbDst;
+      b.bbPieces[promote] ^= bbDst;
       if (dstCell != EMPTY_CELL) {
         b.bbColor(invert(C)) |= bbDst;
         b.bbPieces[dstCell] |= bbDst;
