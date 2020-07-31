@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <limits>
 
+#include "core/move.h"
 #include "core/types.h"
 
 namespace SoFBotApi {
