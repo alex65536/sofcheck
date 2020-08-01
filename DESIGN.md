@@ -42,6 +42,8 @@ of these APIs is located in other modules
   - `bot_api/clients` contains various implementations of engine communication protocols. This 
 module is useful for developing chess engines. It uses the interfaces described in `bot_api` 
 module. Currently, only UCI is implemented, but support for more protocols will be added later
+- `search` contains the chess engine implementation. It uses the interface described in `bot_api`
+  - `search/bin` contains the chess engine executable
 - more modules coming soon...
 
 # Main design principles

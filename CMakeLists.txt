@@ -134,6 +134,11 @@ add_library(sof_bot_api_clients STATIC
 )
 target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
+add_library(sof_search STATIC
+  src/search/search.cpp
+)
+target_link_libraries(sof_search PUBLIC sof_core sof_util sof_bot_api)
+
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
   gen/gen_main.cpp
@@ -146,9 +151,9 @@ add_executable(gen_magic_consts
 )
 
 add_executable(sofcheck
-  src/main.cpp
+  src/search/bin/main.cpp
 )
-target_link_libraries(sofcheck sof_core sof_util sof_bot_api sof_bot_api_clients)
+target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 
 
 # Add benchmarks
