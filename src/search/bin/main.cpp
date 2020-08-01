@@ -8,12 +8,11 @@
 #include "search/search.h"
 #include "util/misc.h"
 
-using SoFBotApi::ApiResult;
 using SoFBotApi::Connection;
 using SoFBotApi::PollResult;
 using SoFUtil::panic;
 
-const char banner[] = R"R(
+static const char BANNER[] = R"R(
                  /    ^   ^    \
                 /    / 0 0 \    \
                ||    \  v  /    ||
@@ -35,7 +34,7 @@ int main(int argc, const char *argv[]) {
 
   SoFCore::init();
 
-  std::cout << banner << std::endl;
+  std::cout << BANNER << std::endl;
 
   auto connResult =
       Connection::clientSide<SoFSearch::Engine, SoFBotApi::Clients::UciServerConnector>();
