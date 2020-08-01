@@ -23,7 +23,7 @@ enum class PollResult {
 // Abstract class that is used to connect to client or server. It can wait until it gets some data
 class Connector {
 public:
-  // Block current thread until the connector gets some data
+  // Blocks current thread until the connector gets some data
   virtual PollResult poll() = 0;
 };
 
