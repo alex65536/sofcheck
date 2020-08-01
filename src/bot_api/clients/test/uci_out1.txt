@@ -16,10 +16,10 @@ O option name _name _value type check default true
 O option name true bool type check default true
 O uciok
 I setoption empty
-E UCI server warning: "name" token expected
-E UCI server error: no such option "empty"
+E Warning [UCI server]: "name" token expected
+E Error [UCI server]: No such option "empty"
 I setoption empty string value 42
-E UCI server warning: "name" token expected
+E Warning [UCI server]: "name" token expected
 E setString(empty string, 42)
 I setoption name empty string value   <empty>    
 E setString(empty string, )
@@ -38,21 +38,21 @@ E setBool(false bool, 0)
 I setoption name _name _value value true
 E setBool(name value, 1)
 I setoption name true bool value bad
-E UCI server error: expected "0", "1", "true" or "false", "bad" found
+E Error [UCI server]: Expected "0", "1", "true" or "false", "bad" found
 I setoption
-E UCI server error: cannot read option name
+E Error [UCI server]: Cannot read option name
 I setoption name enum value _value
 E setEnum(enum, 1)
 I setoption name enum value   my   _value
-E UCI client error: Invalid parameters given
+E Error [UCI client]: Invalid parameters given
 I setoption name enum value   my   _val
 E setEnum(enum, 4)
 I setoption name enum value my _name
 E setEnum(enum, 3)
 I setoption name enum value 
-E UCI client error: Invalid parameters given
+E Error [UCI client]: Invalid parameters given
 I setoption name enum value yes
-E UCI client error: Invalid parameters given
+E Error [UCI client]: Invalid parameters given
 I setoption name enum _value value v1
 E setEnum(enum value, 0)
 I setoption name enum _value value v2
@@ -63,13 +63,13 @@ I setoption name int value 33
 E setInt(int, 33)
 I setoption name int value 42
 E setInt(int, 42)
-E UCI client error: Unknown error
+E Error [UCI client]: Unknown error
 I setoption name int value int value -14159753975197319753197
-E UCI server error: "int" is not int64
+E Error [UCI server]: "int" is not int64
 I setoption name int value -444444444444444444444444444444444444444
-E UCI server error: "-444444444444444444444444444444444444444" is not int64
+E Error [UCI server]: "-444444444444444444444444444444444444444" is not int64
 I setoption name int value 1001
-E UCI client error: Invalid parameters given
+E Error [UCI client]: Invalid parameters given
 I setoption name int 2 value -42
 E setInt(int 2, -42)
 I setoption name _name _val
@@ -83,17 +83,17 @@ E triggerAction(__name __value)
 I setoption name name val
 E triggerAction(name val)
 I debug off
-E UCI server warning: Debug is already disabled
+E Warning [UCI server]: Debug is already disabled
 I debug kkk
-E UCI server error: Token "on" or "off" expected after "debug"
+E Error [UCI server]: Token "on" or "off" expected after "debug"
 I debug   on
 E enterDebugMode()
 I debug on
-E UCI server warning: Debug is already enabled
+E Warning [UCI server]: Debug is already enabled
 I debug off
 E leaveDebugMode()
 I debug off
-E UCI server warning: Debug is already disabled
+E Warning [UCI server]: Debug is already disabled
 I isready
 O readyok
 I ucinewgame
@@ -103,22 +103,22 @@ E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1, e2e4, e7
 I position r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4 moves
 E setPosition(r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4)
 I position startpos moves g2g4 e7e5 f2f3 d8h5 a2a3
-E UCI server error: Move "d8h5" is invalid
+E Error [UCI server]: Move "d8h5" is invalid
 I position startpos moves g2g4 e7e5 f2f3 d8h4 a2a3
-E UCI server error: Move "a2a3" is not legal
+E Error [UCI server]: Move "a2a3" is not legal
 I position startpos
 E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
 I position startpos moves moves
-E UCI server error: Move "moves" is invalid
+E Error [UCI server]: Move "moves" is invalid
 I position rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves
-E UCI server error: Position "rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" is invalid: One of the sides doesn't have a king
+E Error [UCI server]: Position "rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" is invalid: One of the sides doesn't have a king
 I position startpos moves
 E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
 I go searchmoves e2e4 d2d4
-E UCI server warning: No useful parameters specified for "go"; running infinite search
+E Warning [UCI server]: No useful parameters specified for "go"; running infinite search
 E searchInfinite()
 I go searchmoves e2e4 d2d4 infinite
-E UCI server error: Search is already started
+E Error [UCI server]: Search is already started
 I stop
 O info string :)
 O info hashfull 500
@@ -142,15 +142,15 @@ I go nodes 18484414
 O info string Cannot start search: Command not supported
 O bestmove 0000
 E searchFixedNodes(18484414) // not supported
-E UCI client error: Cannot start search: Command not supported
+E Error [UCI client]: Cannot start search: Command not supported
 I stop
-E UCI server error: Cannot stop search, as it is not started
+E Error [UCI server]: Cannot stop search, as it is not started
 I stop
-E UCI server error: Cannot stop search, as it is not started
+E Error [UCI server]: Cannot stop search, as it is not started
 I go winc 30000 wtime 1000000 btime 2000000
 E searchTimeControl(1000000, 30000, 2000000, 0)
 I go winc 30000 wtime 1000000 btime 2000000 movestogo 20
-E UCI server error: Search is already started
+E Error [UCI server]: Search is already started
 I stop
 O info string :)
 O info hashfull 500
@@ -171,8 +171,8 @@ O info hashfull 500
 O bestmove e2e4
 E stopSearch()
 I unknown command
-E UCI server error: Cannot interpret line as UCI command
+E Error [UCI server]: Cannot interpret line as UCI command
 I quit
-E Stopping.
+E Info [UCI server]: Stopping.
 M Close
 M Exited with exitcode 0
