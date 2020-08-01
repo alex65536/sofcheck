@@ -100,6 +100,7 @@ add_custom_command(
 
 # Add targets to build
 add_library(sof_util STATIC
+  src/util/logging.cpp
   src/util/misc.cpp
   src/util/strutil.cpp
   src/util/random.cpp

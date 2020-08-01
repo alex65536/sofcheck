@@ -44,7 +44,7 @@ public:
   UciServerConnector();
 
   // Constructs `UciServerConnector` with custom streams
-  UciServerConnector(std::istream &in, std::ostream &out, std::ostream &err);
+  UciServerConnector(std::istream &in, std::ostream &out);
 
   ~UciServerConnector() override;
 
@@ -99,7 +99,6 @@ private:
   Client *client_;
   std::istream &in_;
   std::ostream &out_;
-  std::ostream &err_;
 };
 
 }  // namespace SoFBotApi::Clients

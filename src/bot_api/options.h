@@ -14,6 +14,8 @@
 
 namespace SoFBotApi {
 
+// TODO : make options case-insensitive
+
 enum class OptionType { Bool = 0, Int = 1, String = 2, Enum = 3, Action = 4, None = 255 };
 
 struct BoolOption {
