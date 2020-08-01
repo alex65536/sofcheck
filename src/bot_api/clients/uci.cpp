@@ -359,6 +359,17 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
 }
 
 PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
+  // Scan the position type (there must be "startpos" or "fen") keyword
+  string positionType;
+  if (!(tokens >> positionType)) {
+    logError(UCI_SERVER) << "Position type expected, end of line found";
+    return PollResult::NoData;
+  }
+  if (positionType != "startpos" && positionType != "fen") {
+    logError(UCI_SERVER) << R"R(Expected "startpos" or "fen", found ")R" << positionType << "\"";
+    return PollResult::NoData;
+  }
+
   // Scan the position description (until the end of line or "moves" token)
   string fenString;
   string token;
@@ -374,13 +385,16 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
 
   // Convert the position description into `Board` structure
   Board board;  // NOLINT : the board will be initialized below
-  if (fenString == "startpos") {
+  if (positionType == "startpos") {
+    if (!fenString.empty()) {
+      logWarn(UCI_SERVER) << R"R(Extra tokens between "startpos" and "moves")R";
+    }
     board.setInitialPosition();
   } else {
     SoFCore::FenParseResult parseRes = board.setFromFen(fenString.c_str());
     if (parseRes != SoFCore::FenParseResult::Ok) {
       logError(UCI_SERVER) << "Cannot parse position \"" << fenString
-                           << "\" << : " << fenParseResultToStr(parseRes);
+                           << "\": " << fenParseResultToStr(parseRes);
       return PollResult::NoData;
     }
     SoFCore::ValidateResult validateRes = board.validate();
