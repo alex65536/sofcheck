@@ -13,6 +13,8 @@ using SoFBotApi::ApiResult;
 using SoFBotApi::Options;
 using SoFBotApi::Server;
 
+class EnginePrivate;
+
 // The chess engine class which uses `SoFBotApi::Client` as an interface
 class Engine final : public SoFBotApi::Client, private SoFBotApi::OptionObserver {
 public:
@@ -55,10 +57,13 @@ private:
   ApiResult triggerAction(const std::string &key) override;
 
 private:
-  static Options makeOptions(SoFBotApi::OptionObserver *observer);
+  static SoFBotApi::OptionStorage makeOptions(Engine *engine);
 
-  Options options_;
+  friend class EnginePrivate;
+
+  SoFBotApi::OptionStorage options_;
   Server *server_;
+  std::unique_ptr<EnginePrivate> p_;
 };
 
 }  // namespace SoFSearch

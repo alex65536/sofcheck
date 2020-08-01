@@ -8,6 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
+find_package(Threads)
 
 
 # Declare configuration options
@@ -137,8 +138,9 @@ target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
 add_library(sof_search STATIC
   src/search/search.cpp
+  src/search/private/job.cpp
 )
-target_link_libraries(sof_search PUBLIC sof_core sof_util sof_bot_api)
+target_link_libraries(sof_search PUBLIC sof_core sof_util sof_bot_api PRIVATE Threads::Threads)
 
 add_executable(gen_near_attacks
   gen/gen_near_attacks.cpp
