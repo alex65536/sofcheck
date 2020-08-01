@@ -387,7 +387,7 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   Board board;  // NOLINT : the board will be initialized below
   if (positionType == "startpos") {
     if (!fenString.empty()) {
-      logWarn(UCI_SERVER) << R"R(Extra tokens between "startpos" and "moves")R";
+      logWarn(UCI_SERVER) << "Extra tokens after \"startpos\"";
     }
     board.setInitialPosition();
   } else {
