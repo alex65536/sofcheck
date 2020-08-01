@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <istream>
+#include <mutex>
 #include <ostream>
 
 #include "bot_api/client.h"
@@ -73,6 +74,9 @@ private:
   // Processes "go" command
   PollResult processUciGo(std::istream &tokens);
 
+  // Processes UCI command line given as a stream of tokens
+  PollResult processUciCommand(std::istream &tokens);
+
   // Tries to interpret the next token on the stream as integral type and put it to `val`. Returns
   // true on success. Otherwise, returns `false`, reports the error and doesn't perform any writes
   // into `val`. `intType` parameter is used for error reporting and denotes reported type name.
@@ -88,6 +92,7 @@ private:
   // is undefined
   inline auto getSearchTime() const { return std::chrono::steady_clock::now() - searchStartTime_; }
 
+  std::recursive_mutex mutex_;
   bool searchStarted_;
   bool debugEnabled_;
   std::chrono::time_point<std::chrono::steady_clock> searchStartTime_;

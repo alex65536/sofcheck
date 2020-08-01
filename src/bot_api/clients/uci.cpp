@@ -57,6 +57,7 @@ void UciServerConnector::ensureClient() {
 
 ApiResult UciServerConnector::finishSearch(const SoFCore::Move bestMove) {
   ensureClient();
+  std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
@@ -67,6 +68,7 @@ ApiResult UciServerConnector::finishSearch(const SoFCore::Move bestMove) {
 
 ApiResult UciServerConnector::reportError(const char *message) {
   ensureClient();
+  std::lock_guard guard(mutex_);
   err_ << "UCI client error: " << message << endl;
   D_CHECK_IO(out_ << "info string UCI client error: " << SoFUtil::sanitizeEol(message) << endl);
   return ApiResult::Ok;
@@ -74,6 +76,7 @@ ApiResult UciServerConnector::reportError(const char *message) {
 
 ApiResult UciServerConnector::sendCurrMove(const SoFCore::Move move, const size_t moveNumber) {
   ensureClient();
+  std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
@@ -87,6 +90,7 @@ ApiResult UciServerConnector::sendCurrMove(const SoFCore::Move move, const size_
 
 ApiResult UciServerConnector::sendHashFull(const permille_t hashFull) {
   ensureClient();
+  std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
@@ -114,6 +118,7 @@ inline static bool calcNodesPerSecond(const uint64_t nodes, const Duration time,
 
 ApiResult UciServerConnector::sendNodeCount(const uint64_t nodes) {
   ensureClient();
+  std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
@@ -130,6 +135,7 @@ ApiResult UciServerConnector::sendNodeCount(const uint64_t nodes) {
 
 ApiResult UciServerConnector::sendResult(const SearchResult &result) {
   ensureClient();
+  std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
@@ -170,6 +176,8 @@ ApiResult UciServerConnector::sendResult(const SearchResult &result) {
 }
 
 ApiResult UciServerConnector::sendString(const char *str) {
+  ensureClient();
+  std::lock_guard guard(mutex_);
   D_CHECK_IO(out_ << "info string " << SoFUtil::sanitizeEol(str) << endl);
   return ApiResult::Ok;
 }
@@ -563,12 +571,18 @@ PollResult UciServerConnector::poll() {
     return PollResult::NoData;
   }
 
+  std::istringstream tokens(cmdLine);
+  return processUciCommand(tokens);
+}
+
+PollResult UciServerConnector::processUciCommand(std::istream &tokens) {
+  std::lock_guard guard(mutex_);
+
   // Scan for command name. UCI standard says that we can safely skip all the words we don't know
   // and use the first known word as UCI command. For example, "joho debug on\n" will be
   // interperted just like "debug on\n"
-  std::istringstream cmdTokens(cmdLine);
   string command;
-  while (cmdTokens >> command) {
+  while (tokens >> command) {
     if (command == "uci") {
       D_CHECK_POLL_IO(out_ << "id name " << SoFUtil::sanitizeEol(client_->name()) << endl);
       D_CHECK_POLL_IO(out_ << "id author " << SoFUtil::sanitizeEol(client_->author()) << endl);
@@ -582,7 +596,7 @@ PollResult UciServerConnector::poll() {
     if (command == "debug") {
       // Expect one of the tokens "on" or "off"
       string value;
-      cmdTokens >> value;
+      tokens >> value;
       if (value != "on" && value != "off") {
         err_ << R"(UCI server error: Token "on" or "off" expected after "debug")" << endl;
         return PollResult::NoData;
@@ -607,7 +621,7 @@ PollResult UciServerConnector::poll() {
       return PollResult::Ok;
     }
     if (command == "setoption") {
-      return processUciSetOption(cmdTokens);
+      return processUciSetOption(tokens);
     }
     if (command == "register") {
       // Not supported.
@@ -618,10 +632,10 @@ PollResult UciServerConnector::poll() {
       return PollResult::Ok;
     }
     if (command == "position") {
-      return processUciPosition(cmdTokens);
+      return processUciPosition(tokens);
     }
     if (command == "go") {
-      return processUciGo(cmdTokens);
+      return processUciGo(tokens);
     }
     if (command == "stop") {
       if (!searchStarted_) {
