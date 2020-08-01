@@ -20,8 +20,9 @@ using SoFCore::MovePersistence;
 // TODO : rewrite it completely!
 score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, score_t alpha, score_t beta,
                               Move *pv, size_t &pvLen, JobControl &control, JobStats &stats) {
+  pvLen = 0;
+
   if (depth == 0) {
-    pvLen = 0;
     using SoFCore::Color;
     using SoFCore::Piece;
     const Color us = board.side;

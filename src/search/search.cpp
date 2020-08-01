@@ -70,7 +70,7 @@ public:
     hasJob_ = false;
   }
 
-  EnginePrivate(Engine *engine)
+  explicit EnginePrivate(Engine *engine)
       : d_(engine), board_(Board::initialPosition()), job_(std::nullopt), hasJob_(false) {}
 
 private:
