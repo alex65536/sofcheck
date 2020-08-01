@@ -1,0 +1,96 @@
+#ifndef SOF_UTIL_LOGGING_INCLUDED
+#define SOF_UTIL_LOGGING_INCLUDED
+
+#include <sstream>
+
+namespace SoFUtil {
+
+// Type of the log entry
+enum LogLevel { Debug = 0, Info = 1, Warn = 2, Error = 3, Fatal = 4 };
+
+// Comparison operators for `LogLevel`
+#define D_LOGLEVEL_COMPARE_OP(op)                               \
+  inline constexpr bool operator op(LogLevel l1, LogLevel l2) { \
+    return static_cast<int>(l1) op static_cast<int>(l2);        \
+  }
+
+D_LOGLEVEL_COMPARE_OP(<)
+D_LOGLEVEL_COMPARE_OP(<=)
+D_LOGLEVEL_COMPARE_OP(>)
+D_LOGLEVEL_COMPARE_OP(>=)
+D_LOGLEVEL_COMPARE_OP(==)
+D_LOGLEVEL_COMPARE_OP(!=)
+
+#undef D_LOGLEVEL_COMPARE_OP
+
+// Converts `LogLevel` to string
+const char *logLevelToStr(LogLevel level);
+
+// Log writer. This class is a singleton and is accessible only via `logger()` function. All the
+// methods in this class are thread-safe.
+class Logger {
+public:
+  // Adds a log entry. `level` denotes the importance of the entry, `type` denotes where the log
+  // entry came from, and `message` is the message to be written into logs.
+  void log(LogLevel level, const char *type, const std::string &message);
+
+  // Convenience methods to add a log entry of a specific level
+  inline void debug(const char *type, const std::string &message) {
+    log(LogLevel::Debug, type, message);
+  }
+
+  inline void info(const char *type, const std::string &message) {
+    log(LogLevel::Info, type, message);
+  }
+
+  inline void warn(const char *type, const std::string &message) {
+    log(LogLevel::Warn, type, message);
+  }
+
+  inline void error(const char *type, const std::string &message) {
+    log(LogLevel::Error, type, message);
+  }
+
+  inline void fatal(const char *type, const std::string &message) {
+    log(LogLevel::Fatal, type, message);
+  }
+
+private:
+  friend Logger &logger();
+
+  Logger() {}
+};
+
+Logger &logger();
+
+// Convenience class to make logging simpler. It builds the log entry with `<<` operator and adds it
+// on destruction.
+class LogEntryStream {
+public:
+  inline LogEntryStream(LogLevel level, const char *type) : level_(level), type_(type) {}
+  inline ~LogEntryStream() { logger().log(level_, type_, stream_.str()); }
+
+  template <typename T>
+  LogEntryStream &operator<<(const T &item) {
+    stream_ << item;
+    return *this;
+  }
+
+private:
+  LogLevel level_;
+  const char *type_;
+  std::ostringstream stream_;
+};
+
+// Convenience functions. The usage pattern looks like this:
+//
+// debug("My type") << "Debug info: " << info;
+inline LogEntryStream logDebug(const char *type) { return LogEntryStream(LogLevel::Debug, type); }
+inline LogEntryStream logInfo(const char *type) { return LogEntryStream(LogLevel::Info, type); }
+inline LogEntryStream logWarn(const char *type) { return LogEntryStream(LogLevel::Warn, type); }
+inline LogEntryStream logError(const char *type) { return LogEntryStream(LogLevel::Error, type); }
+inline LogEntryStream logFatal(const char *type) { return LogEntryStream(LogLevel::Fatal, type); }
+
+}  // namespace SoFUtil
+
+#endif  // SOF_UTIL_LOGGING_INCLUDED

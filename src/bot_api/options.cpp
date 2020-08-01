@@ -9,7 +9,15 @@ namespace SoFBotApi {
 
 using SoFUtil::panic;
 
-std::vector<std::pair<std::string, OptionType>> Options::list() const {
+OptionType OptionStorage::type(const std::string &key) const {
+  auto iter = values_.find(key);
+  if (iter == values_.end()) {
+    return OptionType::None;
+  }
+  return static_cast<OptionType>(iter->second.index());
+}
+
+std::vector<std::pair<std::string, OptionType>> OptionStorage::list() const {
   std::vector<std::pair<std::string, OptionType>> result;
   result.reserve(values_.size());
   for (const auto &[key, value] : values_) {
@@ -19,8 +27,8 @@ std::vector<std::pair<std::string, OptionType>> Options::list() const {
 }
 
 template <typename T, typename Val, typename Validator, typename Observer>
-ApiResult Options::setT(const std::string &key, const Val &value, Validator validate,
-                        Observer observe) noexcept {
+ApiResult OptionStorage::setT(const std::string &key, const Val &value, Validator validate,
+                              Observer observe) noexcept {
   T *option = getMutT<T>(key);
   if (!option || !validate(*option)) {
     return ApiResult::InvalidArgument;
@@ -39,19 +47,19 @@ ApiResult Options::setT(const std::string &key, const Val &value, Validator vali
   return ApiResult::Ok;
 }
 
-ApiResult Options::setBool(const std::string &key, const bool value) noexcept {
+ApiResult OptionStorage::setBool(const std::string &key, const bool value) {
   return setT<BoolOption>(
       key, value, [&](const BoolOption &) { return true; },
       [&]() { return observer_->setBool(key, value); });
 }
 
-ApiResult Options::setEnum(const std::string &key, const size_t index) noexcept {
+ApiResult OptionStorage::setEnum(const std::string &key, const size_t index) {
   return setT<EnumOption>(
       key, index, [&](const EnumOption &o) { return index < o.items.size(); },
       [&]() { return observer_->setEnum(key, index); });
 }
 
-ApiResult Options::setEnum(const std::string &key, const std::string &value) noexcept {
+ApiResult OptionStorage::setEnum(const std::string &key, const std::string &value) {
   auto option = getMutT<EnumOption>(key);
   if (!option) {
     return ApiResult::InvalidArgument;
@@ -72,19 +80,19 @@ ApiResult Options::setEnum(const std::string &key, const std::string &value) noe
   return ApiResult::Ok;
 }
 
-ApiResult Options::setInt(const std::string &key, const int64_t value) noexcept {
+ApiResult OptionStorage::setInt(const std::string &key, const int64_t value) {
   return setT<IntOption>(
       key, value, [&](const IntOption &o) { return o.minValue <= value && value <= o.maxValue; },
       [&]() { return observer_->setInt(key, value); });
 }
 
-ApiResult Options::setString(const std::string &key, const std::string &value) noexcept {
+ApiResult OptionStorage::setString(const std::string &key, const std::string &value) {
   return setT<StringOption>(
       key, value, [&](const StringOption &) { return true; },
       [&]() { return observer_->setString(key, value); });
 }
 
-ApiResult Options::triggerAction(const std::string &key) noexcept {
+ApiResult OptionStorage::triggerAction(const std::string &key) {
   auto option = getMutT<ActionOption>(key);
   if (!option) {
     return ApiResult::InvalidArgument;

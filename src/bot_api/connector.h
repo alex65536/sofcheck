@@ -23,14 +23,14 @@ enum class PollResult {
 // Abstract class that is used to connect to client or server. It can wait until it gets some data
 class Connector {
 public:
-  // Block current thread until the connector gets some data
+  // Blocks current thread until the connector gets some data. This method is not thread-safe.
   virtual PollResult poll() = 0;
 };
 
 // Connector that emulates a client. Calls server API
 class ClientConnector : public Client, public Connector {};
 
-// Connector that emulates a server. Calls server API
+// Connector that emulates a server. Calls client API
 class ServerConnector : public Server, public Connector {};
 
 }  // namespace SoFBotApi

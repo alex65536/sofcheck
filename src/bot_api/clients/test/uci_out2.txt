@@ -25,5 +25,5 @@ O info hashfull 500
 O bestmove e2e4
 E stopSearch()
 M Close
-E Stopping.
+E Info [UCI server]: Stopping.
 M Exited with exitcode 0

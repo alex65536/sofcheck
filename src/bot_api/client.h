@@ -26,7 +26,13 @@ class Options;
 // own validation and throw `ApiResult::UnexpectedCall` or `ApiResult::InvalidArgument` in case of
 // errors.
 //
-// Note that this API is not assumed to be thread-safe.
+// Thread-safety note:
+// - if you implement a client, then the API calls don't need to be thread safe. They will be called
+// by the server in a synchronized manner. In contrast, the server you are connected to must be
+// thread safe.
+// - if you implement a client connector, then the API calls must be thread safe. This rule also
+// applies to option storage (use `SyncOptionStorage` to store the options). The server you are
+// connected to is not thread-safe.
 class Client {
 public:
   // Returns engine name

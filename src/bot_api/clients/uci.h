@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <istream>
+#include <mutex>
 #include <ostream>
 
 #include "bot_api/client.h"
@@ -43,7 +44,7 @@ public:
   UciServerConnector();
 
   // Constructs `UciServerConnector` with custom streams
-  UciServerConnector(std::istream &in, std::ostream &out, std::ostream &err);
+  UciServerConnector(std::istream &in, std::ostream &out);
 
   ~UciServerConnector() override;
 
@@ -73,6 +74,9 @@ private:
   // Processes "go" command
   PollResult processUciGo(std::istream &tokens);
 
+  // Processes UCI command line given as a stream of tokens
+  PollResult processUciCommand(std::istream &tokens);
+
   // Tries to interpret the next token on the stream as integral type and put it to `val`. Returns
   // true on success. Otherwise, returns `false`, reports the error and doesn't perform any writes
   // into `val`. `intType` parameter is used for error reporting and denotes reported type name.
@@ -88,13 +92,13 @@ private:
   // is undefined
   inline auto getSearchTime() const { return std::chrono::steady_clock::now() - searchStartTime_; }
 
+  std::recursive_mutex mutex_;
   bool searchStarted_;
   bool debugEnabled_;
   std::chrono::time_point<std::chrono::steady_clock> searchStartTime_;
   Client *client_;
   std::istream &in_;
   std::ostream &out_;
-  std::ostream &err_;
 };
 
 }  // namespace SoFBotApi::Clients
