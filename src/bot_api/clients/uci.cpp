@@ -63,13 +63,13 @@ void UciServerConnector::ensureClient() {
   }
 }
 
-ApiResult UciServerConnector::finishSearch(const SoFCore::Move bestMove) {
+ApiResult UciServerConnector::finishSearch(const Move bestMove) {
   ensureClient();
   std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
-  D_CHECK_IO(out_ << "bestmove " << SoFCore::moveToStr(bestMove) << endl);
+  D_CHECK_IO(out_ << "bestmove " << moveToStr(bestMove) << endl);
   searchStarted_ = false;
   return ApiResult::Ok;
 }
@@ -82,13 +82,13 @@ ApiResult UciServerConnector::reportError(const char *message) {
   return ApiResult::Ok;
 }
 
-ApiResult UciServerConnector::sendCurrMove(const SoFCore::Move move, const size_t moveNumber) {
+ApiResult UciServerConnector::sendCurrMove(const Move move, const size_t moveNumber) {
   ensureClient();
   std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
-  D_CHECK_IO(out_ << "info currmove " << SoFCore::moveToStr(move));
+  D_CHECK_IO(out_ << "info currmove " << moveToStr(move));
   if (moveNumber != 0) {
     D_CHECK_IO(out_ << " currmovenumber " << moveNumber);
   }
@@ -152,7 +152,7 @@ ApiResult UciServerConnector::sendResult(const SearchResult &result) {
   if (result.pvLen != 0) {
     D_CHECK_IO(out_ << " pv");
     for (size_t i = 0; i < result.pvLen; ++i) {
-      D_CHECK_IO(out_ << " " << SoFCore::moveToStr(result.pv[i]));
+      D_CHECK_IO(out_ << " " << moveToStr(result.pv[i]));
     }
   }
   switch (result.cost.type()) {
@@ -380,13 +380,13 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
     SoFCore::FenParseResult parseRes = board.setFromFen(fenString.c_str());
     if (parseRes != SoFCore::FenParseResult::Ok) {
       logError(UCI_SERVER) << "Cannot parse position \"" << fenString
-                           << "\" << : " << SoFCore::fenParseResultToStr(parseRes);
+                           << "\" << : " << fenParseResultToStr(parseRes);
       return PollResult::NoData;
     }
     SoFCore::ValidateResult validateRes = board.validate();
     if (validateRes != SoFCore::ValidateResult::Ok) {
       logError(UCI_SERVER) << "Position \"" << fenString
-                           << "\" is invalid: " << SoFCore::validateResultToStr(validateRes);
+                           << "\" is invalid: " << validateResultToStr(validateRes);
       return PollResult::NoData;
     }
   }
@@ -395,14 +395,14 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   Board dstBoard = board;
   vector<Move> moves;
   while (tokens >> token) {
-    const Move move = SoFCore::moveParse(token.c_str(), dstBoard);
-    if (!move.isWellFormed(dstBoard.side) || !SoFCore::isMoveValid(dstBoard, move)) {
+    const Move move = moveParse(token.c_str(), dstBoard);
+    if (!move.isWellFormed(dstBoard.side) || !isMoveValid(dstBoard, move)) {
       logError(UCI_SERVER) << "Move \"" << token << "\" is invalid";
       return PollResult::NoData;
     }
     moves.push_back(move);
-    SoFCore::moveMake(dstBoard, move);
-    if (!SoFCore::isMoveLegal(dstBoard)) {
+    moveMake(dstBoard, move);
+    if (!isMoveLegal(dstBoard)) {
       logError(UCI_SERVER) << "Move \"" << token << "\" is not legal";
       return PollResult::NoData;
     }
