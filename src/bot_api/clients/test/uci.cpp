@@ -144,8 +144,8 @@ private:
 
   void disconnect() override { server_ = nullptr; }
 
-  static SoFBotApi::Options buildOptions(SoFBotApi::OptionObserver *observer) {
-    return SoFBotApi::OptionBuilder(observer)
+  static SoFBotApi::OptionStorage buildOptions(TestEngine *engine) {
+    return SoFBotApi::OptionBuilder(engine)
         .addBool("true bool", true)
         .addBool("false bool", false)
         .addBool("name value", true)
@@ -162,7 +162,7 @@ private:
         .options();
   }
 
-  SoFBotApi::Options options_;
+  SoFBotApi::OptionStorage options_;
   SoFBotApi::Server *server_ = nullptr;
 };
 
