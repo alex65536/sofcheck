@@ -8,7 +8,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
-find_package(Threads)
+find_package(Threads REQUIRED)
 
 
 # Declare configuration options
