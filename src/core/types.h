@@ -82,6 +82,12 @@ inline constexpr subcoord_t coordX(coord_t coord) { return coord >> 3; }
 // Extracts Y subcoordinate from `coord`
 inline constexpr subcoord_t coordY(coord_t coord) { return coord & 7; }
 
+// Flips X subcoordinate. This is equal to `makeCoord(7 - x, y)`
+inline constexpr subcoord_t coordFlipX(coord_t coord) { return coord ^ 56; }
+
+// Flips Y subcoordinate. This is equal to `makeCell(x, 7 - y)`
+inline constexpr subcoord_t coordFlipY(coord_t coord) { return coord ^ 7; }
+
 // Returns a bitboard that has only one set bit. This bit corresponds to coordinate `coord`
 inline constexpr bitboard_t coordToBitboard(coord_t coord) {
   return static_cast<bitboard_t>(1) << coord;

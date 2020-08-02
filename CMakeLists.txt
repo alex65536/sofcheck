@@ -85,6 +85,7 @@ include_directories(src)
 
 # Generate files
 file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/core/private)
+file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/search/private)
 
 configure_file(src/config.h.in ${PROJECT_BINARY_DIR}/src/config.h)
 add_custom_command(
@@ -96,6 +97,11 @@ add_custom_command(
   OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
   COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
   DEPENDS gen_magic_consts
+)
+add_custom_command(
+  OUTPUT ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
+  COMMAND gen_piece_square_table ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
+  DEPENDS gen_piece_square_table
 )
 
 
@@ -139,6 +145,7 @@ target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 add_library(sof_search STATIC
   src/search/search.cpp
   src/search/private/job.cpp
+  ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
 )
 target_link_libraries(sof_search PUBLIC sof_core sof_util sof_bot_api PRIVATE Threads::Threads)
 
@@ -149,6 +156,11 @@ add_executable(gen_near_attacks
 )
 add_executable(gen_magic_consts
   gen/gen_magic_consts.cpp
+  gen/gen_main.cpp
+  gen/common.cpp
+)
+add_executable(gen_piece_square_table
+  gen/gen_piece_square_table.cpp
   gen/gen_main.cpp
   gen/common.cpp
 )

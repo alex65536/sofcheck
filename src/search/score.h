@@ -109,6 +109,7 @@ inline constexpr score_t scorePairSecond(const score_pair_t pair) {
 }
 
 // Compile-time tests for score pairs
+// TODO : write real tests for score pairs. The runtime tests must be run with ctest
 static_assert(scorePairFirst(makeScorePair(1000, 8000)) == 1000);
 static_assert(scorePairFirst(makeScorePair(1000, -8000)) == 1000);
 static_assert(scorePairFirst(makeScorePair(-1000, 8000)) == -1000);
@@ -121,6 +122,8 @@ static_assert(makeScorePair(-1, 5) + makeScorePair(3, -8) == makeScorePair(2, -3
 static_assert(makeScorePair(-1, -5) + makeScorePair(-3, -8) == makeScorePair(-4, -13));
 static_assert(makeScorePair(1, -5) + makeScorePair(3, -8) == makeScorePair(4, -13));
 static_assert(makeScorePair(1, 5) + makeScorePair(-3, -8) == makeScorePair(-2, -3));
+static_assert(-makeScorePair(3, 4) == makeScorePair(-3, -4));
+static_assert(-makeScorePair(3, -4) == makeScorePair(-3, 4));
 
 }  // namespace SoFSearch
 
