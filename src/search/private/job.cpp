@@ -84,7 +84,7 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
     state.stats.incCacheHits();
     hashMove = data.move();
     const score_t score = adjustCheckmate(data.score(), idepth);
-    if (data.depth() >= depth) {
+    if (data.depth() == depth) {
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           pvLen = 1;
@@ -92,7 +92,7 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
           return score;
         }
         case PositionCostBound::Lowerbound: {
-          alpha = std::max(beta, score);
+          alpha = std::max(alpha, score);
           break;
         }
         case PositionCostBound::Upperbound: {
