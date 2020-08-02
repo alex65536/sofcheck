@@ -117,6 +117,10 @@ static_assert(scorePairSecond(makeScorePair(1000, 8000)) == 8000);
 static_assert(scorePairSecond(makeScorePair(1000, -8000)) == -8000);
 static_assert(scorePairSecond(makeScorePair(-1000, 8000)) == 8000);
 static_assert(scorePairSecond(makeScorePair(-1000, -8000)) == -8000);
+static_assert(makeScorePair(-1, 5) + makeScorePair(3, -8) == makeScorePair(2, -3));
+static_assert(makeScorePair(-1, -5) + makeScorePair(-3, -8) == makeScorePair(-4, -13));
+static_assert(makeScorePair(1, -5) + makeScorePair(3, -8) == makeScorePair(4, -13));
+static_assert(makeScorePair(1, 5) + makeScorePair(-3, -8) == makeScorePair(-2, -3));
 
 }  // namespace SoFSearch
 
