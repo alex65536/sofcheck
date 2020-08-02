@@ -11,13 +11,13 @@ namespace SoFSearch::Private {
 class KillerLine {
 public:
   // Returns first killer
-  inline SoFCore::Move first() const { return first_; }
+  inline constexpr SoFCore::Move first() const { return first_; }
 
   // Returns second killer
-  inline SoFCore::Move second() const { return second_; }
+  inline constexpr SoFCore::Move second() const { return second_; }
 
   // Adds killer move to the line
-  inline void add(const SoFCore::Move move) {
+  inline constexpr void add(const SoFCore::Move move) {
     second_ = first_;
     first_ = move;
   }
@@ -36,7 +36,7 @@ public:
   inline uint64_t operator[](const SoFCore::Move move) const { return tab_[indexOf(move)]; }
 
 private:
-  inline size_t indexOf(const SoFCore::Move move) const {
+  inline constexpr size_t indexOf(const SoFCore::Move move) const {
     return (static_cast<size_t>(move.src) << 6) | static_cast<size_t>(move.dst);
   }
 
