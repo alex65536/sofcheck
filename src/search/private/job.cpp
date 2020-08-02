@@ -105,8 +105,6 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
         return alpha;
       }
     }
-  } else {
-    state.stats.incCacheMisses();
   }
 
   bool hasMove = false;

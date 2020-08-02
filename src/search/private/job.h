@@ -29,11 +29,9 @@ class JobStats {
 public:
   inline uint64_t nodes() const { return getRelaxed(nodes_); }
   inline uint64_t cacheHits() const { return getRelaxed(cacheHits_); }
-  inline uint64_t cacheMisses() const { return getRelaxed(cacheMisses_); }
 
   inline void incNodes() { incRelaxed(nodes_); }
   inline void incCacheHits() { incRelaxed(cacheHits_); }
-  inline void incCacheMisses() { incRelaxed(cacheMisses_); }
 
 private:
   inline static uint64_t getRelaxed(const std::atomic<uint64_t> &value) {
@@ -47,7 +45,6 @@ private:
 
   std::atomic<uint64_t> nodes_ = 0;
   std::atomic<uint64_t> cacheHits_ = 0;
-  std::atomic<uint64_t> cacheMisses_ = 0;
 };
 
 class Job {
