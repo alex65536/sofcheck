@@ -144,6 +144,7 @@ target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
 add_library(sof_search STATIC
   src/search/search.cpp
+  src/search/private/evaluate.cpp
   src/search/private/job.cpp
   ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
 )

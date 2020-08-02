@@ -114,6 +114,8 @@ void printPieceSquareTables(std::ostream &out) {
   for (auto &scoreVec : scores) {
     scoreVec.assign(64, makeScorePair(0));
   }
+
+  // Generate piece-square tables
   for (Piece piece :
        {Piece::Pawn, Piece::King, Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen}) {
     for (coord_t i = 0; i < 64; ++i) {
@@ -133,7 +135,21 @@ void printPieceSquareTables(std::ostream &out) {
       out << ",\n";
     }
   }
-  out << "\n};\n";
+  out << "\n};\n\n";
+
+  // Precalculate position cost changes after castling
+  constexpr cell_t whiteKing = makeCell(Color::White, Piece::King);
+  constexpr cell_t whiteRook = makeCell(Color::White, Piece::Rook);
+  const score_pair_t castlingKingsideUpdate =
+      scores[whiteKing][makeCoord(7, 6)] - scores[whiteKing][makeCoord(7, 4)] +
+      scores[whiteRook][makeCoord(7, 5)] - scores[whiteRook][makeCoord(7, 7)];
+  const score_pair_t castlingQueensideUpdate =
+      scores[whiteKing][makeCoord(7, 2)] - scores[whiteKing][makeCoord(7, 4)] +
+      scores[whiteRook][makeCoord(7, 3)] - scores[whiteRook][makeCoord(7, 0)];
+  out << "constexpr score_pair_t SCORE_CASTLING_KINGSIDE_UPD[2] = {" << castlingKingsideUpdate
+      << ", " << -castlingKingsideUpdate << "};\n";
+  out << "constexpr score_pair_t SCORE_CASTLING_QUEENSIDE_UPD[2] = {" << castlingQueensideUpdate
+      << ", " << -castlingQueensideUpdate << "};\n";
 }
 
 void doGenerate(std::ostream &out) {

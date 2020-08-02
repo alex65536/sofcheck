@@ -1,6 +1,7 @@
 #include "search/private/job.h"
 
 #include "core/movegen.h"
+#include "search/private/evaluate.h"
 #include "search/score.h"
 
 // TODO : remove these headers
@@ -24,27 +25,12 @@ constexpr const char *SEARCH_JOB = "Search job";
 // This very-very simple alpha-beta search is here for testing only
 // TODO : rewrite it completely!
 score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, const int8_t idepth, score_t alpha,
-                              score_t beta, Move *pv, size_t &pvLen, JobControl &control,
-                              JobStats &stats) {
+                              score_t beta, score_pair_t psq, Move *pv, size_t &pvLen,
+                              JobControl &control, JobStats &stats) {
   pvLen = 0;
 
   if (depth == 0) {
-    using SoFCore::Color;
-    using SoFCore::Piece;
-    const Color us = board.side;
-    const Color enemy = invert(us);
-    score_t score = 0;
-    score += 100 * SoFUtil::popcount(board.bbPieces[makeCell(us, Piece::Pawn)]);
-    score += 320 * SoFUtil::popcount(board.bbPieces[makeCell(us, Piece::Knight)]);
-    score += 330 * SoFUtil::popcount(board.bbPieces[makeCell(us, Piece::Bishop)]);
-    score += 500 * SoFUtil::popcount(board.bbPieces[makeCell(us, Piece::Rook)]);
-    score += 900 * SoFUtil::popcount(board.bbPieces[makeCell(us, Piece::Queen)]);
-    score -= 100 * SoFUtil::popcount(board.bbPieces[makeCell(enemy, Piece::Pawn)]);
-    score -= 320 * SoFUtil::popcount(board.bbPieces[makeCell(enemy, Piece::Knight)]);
-    score -= 330 * SoFUtil::popcount(board.bbPieces[makeCell(enemy, Piece::Bishop)]);
-    score -= 500 * SoFUtil::popcount(board.bbPieces[makeCell(enemy, Piece::Rook)]);
-    score -= 900 * SoFUtil::popcount(board.bbPieces[makeCell(enemy, Piece::Queen)]);
-    return score;
+    return (board.side == SoFCore::Color::White) ? psq : -psq;
   }
 
   if (control.isStopped()) {
@@ -56,6 +42,7 @@ score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, const int8_t ide
   bool hasMove = false;
   const size_t moveCnt = genAllMoves(board, moves);
   for (size_t i = 0; i < moveCnt; ++i) {
+    const score_pair_t newPsq = boardUpdatePsqScore(board, moves[i], psq);
     const MovePersistence persistence = moveMake(board, moves[i]);
     if (!isMoveLegal(board)) {
       moveUnmake(board, moves[i], persistence);
@@ -64,8 +51,8 @@ score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, const int8_t ide
     hasMove = true;
     Move newPv[128];
     size_t newPvLen;
-    const score_t score = -stupidAlphaBetaSearch(board, depth - 1, idepth + 1, -beta, -alpha, newPv,
-                                                 newPvLen, control, stats);
+    const score_t score = -stupidAlphaBetaSearch(board, depth - 1, idepth + 1, -beta, -alpha,
+                                                 newPsq, newPv, newPvLen, control, stats);
     moveUnmake(board, moves[i], persistence);
     if (score > alpha) {
       alpha = score;
@@ -97,7 +84,8 @@ void Job::run(Board board, const Move *moves, size_t count) {
     Move pv[128];
     size_t pvLen;
     const score_t score =
-        stupidAlphaBetaSearch(board, depth, 0, -SCORE_INF, SCORE_INF, pv, pvLen, control_, stats_);
+        stupidAlphaBetaSearch(board, depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board), pv,
+                              pvLen, control_, stats_);
     if (!isScoreValid(score)) {
       logError(SEARCH_JOB) << "Search returned invalid score " << score;
     }
@@ -105,8 +93,7 @@ void Job::run(Board board, const Move *moves, size_t count) {
       server_->finishSearch(bestMove);
       return;
     }
-    server_->sendResult({static_cast<size_t>(depth), pv, pvLen,
-                         scoreToPositionCost(score),
+    server_->sendResult({static_cast<size_t>(depth), pv, pvLen, scoreToPositionCost(score),
                          SoFBotApi::PositionCostBound::Exact});
     bestMove = pv[0];
   }
