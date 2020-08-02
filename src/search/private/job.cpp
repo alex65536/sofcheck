@@ -1,7 +1,7 @@
 #include "search/private/job.h"
 
 #include "core/movegen.h"
-#include "search/private/types.h"
+#include "search/score.h"
 
 // TODO : remove these headers
 #include <algorithm>
