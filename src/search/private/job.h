@@ -7,6 +7,7 @@
 #include "bot_api/server.h"
 #include "core/board.h"
 #include "core/move.h"
+#include "search/private/transposition_table.h"
 
 namespace SoFSearch::Private {
 
@@ -26,22 +27,33 @@ private:
 // infinitely many reader threads.
 class JobStats {
 public:
-  inline uint64_t nodes() const { return nodes_.load(std::memory_order_relaxed); }
+  inline uint64_t nodes() const { return getRelaxed(nodes_); }
+  inline uint64_t cacheHits() const { return getRelaxed(cacheHits_); }
+  inline uint64_t cacheMisses() const { return getRelaxed(cacheMisses_); }
 
   inline void incNodes() { incRelaxed(nodes_); }
+  inline void incCacheHits() { incRelaxed(cacheHits_); }
+  inline void incCacheMisses() { incRelaxed(cacheMisses_); }
 
 private:
+  inline static uint64_t getRelaxed(const std::atomic<uint64_t> &value) {
+    return value.load(std::memory_order_relaxed);
+  }
+
   inline static void incRelaxed(std::atomic<uint64_t> &value) {
     const uint64_t newValue = value.load(std::memory_order_relaxed) + 1;
     value.store(newValue, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> nodes_ = 0;
+  std::atomic<uint64_t> cacheHits_ = 0;
+  std::atomic<uint64_t> cacheMisses_ = 0;
 };
 
 class Job {
 public:
-  Job(JobControl &control, SoFBotApi::Server *server) : control_(control), server_(server) {}
+  Job(JobControl &control, TranspositionTable &tt, SoFBotApi::Server *server)
+      : control_(control), tt_(tt), server_(server) {}
 
   inline constexpr const JobStats &stats() const { return stats_; }
 
@@ -49,6 +61,7 @@ public:
 
 private:
   JobControl &control_;
+  TranspositionTable &tt_;
   JobStats stats_;
   SoFBotApi::Server *server_;
 };

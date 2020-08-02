@@ -8,6 +8,7 @@
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/job.h"
+#include "search/private/transposition_table.h"
 #include "util/logging.h"
 #include "util/misc.h"
 
@@ -37,7 +38,7 @@ public:
       panic("Cannot start search: server is null");
     }
     clear();
-    job_.emplace(control_, d_->server_);
+    job_.emplace(control_, tt_, d_->server_);
     threads_.emplace_back([this]() {
       // Controller thread
       runControlThread();
@@ -94,6 +95,7 @@ private:
   std::vector<std::thread> threads_;
   Private::JobControl control_;
   std::optional<Private::Job> job_;
+  Private::TranspositionTable tt_;
   bool hasJob_;
 };
 

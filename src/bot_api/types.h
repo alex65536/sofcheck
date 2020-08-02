@@ -41,7 +41,7 @@ struct TimeControl {
 };
 
 // The type denoting if the position cost is exact, or it is a lower/upper bound
-enum class PositionCostBound : uint8_t { Exact, Lowerbound, Upperbound };
+enum class PositionCostBound : uint8_t { Exact = 0, Lowerbound = 1, Upperbound = 2 };
 
 // Type of the position cost
 enum class PositionCostType {
