@@ -18,6 +18,9 @@ public:
 
   // Adds killer move to the line
   inline constexpr void add(const SoFCore::Move move) {
+    if (move == first_) {
+      return;
+    }
     second_ = first_;
     first_ = move;
   }

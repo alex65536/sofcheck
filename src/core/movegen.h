@@ -49,6 +49,11 @@ size_t genCaptures(const Board &b, Move *list);
 // returned by `genAllMoves()`.
 bool isMoveValid(const Board &b, Move move);
 
+// Returns `true` if the move is capture
+inline constexpr bool isMoveCapture(const Board &b, const Move move) {
+  return b.cells[move.dst] != EMPTY_CELL || move.kind == MoveKind::Enpassant;
+}
+
 }  // namespace SoFCore
 
 #endif  // SOF_CORE_MOVEGEN_INCLUDED

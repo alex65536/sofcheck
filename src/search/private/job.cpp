@@ -1,7 +1,6 @@
 #include "search/private/job.h"
 
 #include "bot_api/types.h"
-#include "core/movegen.h"
 #include "search/private/evaluate.h"
 #include "search/private/move_picker.h"
 #include "search/private/score.h"
@@ -10,6 +9,7 @@
 // TODO : remove these headers
 #include <algorithm>
 
+#include "core/movegen.h"
 #include "core/strutil.h"
 #include "core/types.h"
 #include "util/bit.h"

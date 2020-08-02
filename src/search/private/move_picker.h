@@ -45,7 +45,7 @@ public:
       nextStage();
     }
     const Move move = moves_[movePosition_++];
-    return (move == hashMove_) ? Move::null() : move;
+    return (stage_ != MovePickerStage::HashMove && move == hashMove_) ? Move::null() : move;
   }
 
   MovePicker(const Board &board, const Move hashMove, const KillerLine &killers,

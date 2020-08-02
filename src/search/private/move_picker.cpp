@@ -45,11 +45,11 @@ void MovePicker::nextStage() {
       case MovePickerStage::Killer: {
         // Try two killers if they are valid
         const Move firstKiller = killers_.first();
-        if (isMoveValid(board_, firstKiller)) {
+        if (!isMoveCapture(board_, firstKiller) && isMoveValid(board_, firstKiller)) {
           moves_[moveCount_++] = firstKiller;
         }
         const Move secondKiller = killers_.second();
-        if (isMoveValid(board_, secondKiller)) {
+        if (!isMoveCapture(board_, secondKiller) && isMoveValid(board_, secondKiller)) {
           moves_[moveCount_++] = secondKiller;
         }
         savedKillers_[0] = firstKiller;
