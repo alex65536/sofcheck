@@ -85,22 +85,38 @@ using score_pair_t = int32_t;
 
 // Creates a score pair from two scores
 inline constexpr score_pair_t makeScorePair(const score_t first, const score_t second) {
-  const uint32_t unsignedRes =
-      (static_cast<uint32_t>(first) << 16) | (static_cast<uint32_t>(second) + 0x8000U);
-  return static_cast<score_pair_t>(unsignedRes);
+  return static_cast<score_pair_t>(second) * 0x10000 + static_cast<score_pair_t>(first);
+}
+
+// Creates a score pair from two equal scores
+inline constexpr score_pair_t makeScorePair(const score_t score) {
+  return makeScorePair(score, score);
 }
 
 // Extracts first item from the score pair
 inline constexpr score_t scorePairFirst(const score_pair_t pair) {
-  const uint16_t unsignedRes = static_cast<uint32_t>(pair) >> 16;
+  const uint16_t unsignedRes = static_cast<uint32_t>(pair) & 0xffffU;
   return static_cast<score_t>(unsignedRes);
 }
 
 // Extracts second item from the score pair
 inline constexpr score_t scorePairSecond(const score_pair_t pair) {
-  const uint16_t unsignedRes = static_cast<uint32_t>(pair) & 0xffffU;
-  return static_cast<score_t>(unsignedRes - 0x8000U);
+  uint16_t unsignedRes = static_cast<uint32_t>(pair) >> 16;
+  if (scorePairFirst(pair) < 0) {
+    ++unsignedRes;
+  }
+  return static_cast<score_t>(unsignedRes);
 }
+
+// Compile-time tests for score pairs
+static_assert(scorePairFirst(makeScorePair(1000, 8000)) == 1000);
+static_assert(scorePairFirst(makeScorePair(1000, -8000)) == 1000);
+static_assert(scorePairFirst(makeScorePair(-1000, 8000)) == -1000);
+static_assert(scorePairFirst(makeScorePair(-1000, -8000)) == -1000);
+static_assert(scorePairSecond(makeScorePair(1000, 8000)) == 8000);
+static_assert(scorePairSecond(makeScorePair(1000, -8000)) == -8000);
+static_assert(scorePairSecond(makeScorePair(-1000, 8000)) == 8000);
+static_assert(scorePairSecond(makeScorePair(-1000, -8000)) == -8000);
 
 }  // namespace SoFSearch
 
