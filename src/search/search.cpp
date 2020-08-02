@@ -33,19 +33,14 @@ public:
   }
 
   void start() {
+    if (SOF_UNLIKELY(!d_->server_)) {
+      panic("Cannot start search: server is null");
+    }
     clear();
     job_.emplace(control_, d_->server_);
-    threads_.emplace_back([&]() {
-      // Statistics thread
-      auto lastStatsUpdated = steady_clock::now();
-      while (!control_.isStopped()) {
-        std::this_thread::sleep_for(30ms);
-        auto now = steady_clock::now();
-        if (now - lastStatsUpdated > 2s) {
-          d_->server_->sendNodeCount(job_->stats().nodes());
-          lastStatsUpdated = now;
-        }
-      }
+    threads_.emplace_back([this]() {
+      // Controller thread
+      runControlThread();
     });
     threads_.emplace_back([board = board_, moves = moves_, &job = this->job_]() {
       // Job thread
@@ -74,6 +69,25 @@ public:
       : d_(engine), board_(Board::initialPosition()), job_(std::nullopt), hasJob_(false) {}
 
 private:
+  // Main function of the controller thread. It collects search statistics.
+  void runControlThread() {
+    auto lastStatsUpdated = steady_clock::now();
+
+    while (!control_.isStopped()) {
+      std::this_thread::sleep_for(30ms);
+
+      auto now = steady_clock::now();
+      bool sendStats = false;
+      while (now - lastStatsUpdated > 2s) {
+        sendStats = true;
+        lastStatsUpdated += 2s;
+      }
+      if (sendStats) {
+        d_->server_->sendNodeCount(job_->stats().nodes());
+      }
+    }
+  }
+
   Engine *d_;
   Board board_;
   std::vector<Move> moves_;
@@ -89,7 +103,7 @@ ApiResult Engine::connect(Server *server) {
 }
 
 void Engine::disconnect() {
-  // We must stop the search and clear the threads on disconnect
+  // We must stop all the threads and clear the state on disconnect
   p_->clear();
   server_ = nullptr;
 }

@@ -10,6 +10,8 @@
 
 namespace SoFSearch::Private {
 
+// Job controller class. It is used to send some information to all the threads. The control
+// information sent here will be read by the job threads from time to time.
 class JobControl {
 public:
   inline void stop() { stopped_.store(true, std::memory_order_relaxed); }
@@ -20,7 +22,7 @@ private:
   std::atomic<bool> stopped_ = false;
 };
 
-// Statistics collector. This class assumes assume that there can be only one writer thread and
+// Statistics collector class. It's assumed that there can be only one writer thread and
 // infinitely many reader threads.
 class JobStats {
 public:
