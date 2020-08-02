@@ -53,7 +53,7 @@ inline TranspositionTable::Data makeTtData(const Move move, const score_t alpha,
     score = beta;
     bound = PositionCostBound::Lowerbound;
   }
-  return TranspositionTable::Data(move, adjustCheckmate(score, idepth), depth, bound);
+  return TranspositionTable::Data(move, adjustCheckmate(score, -static_cast<int16_t>(idepth)), depth, bound);
 }
 
 // This very-very simple alpha-beta search is here for testing only
@@ -84,7 +84,7 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
     state.stats.incCacheHits();
     hashMove = data.move();
     const score_t score = adjustCheckmate(data.score(), idepth);
-    if (data.depth() == depth) {
+    if (data.depth() >= depth) {
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           pvLen = 1;

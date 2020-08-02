@@ -84,7 +84,7 @@ private:
         lastStatsUpdated += 2s;
       }
       if (sendStats) {
-        d_->server_->sendString("tthits " + std::to_string(job_->stats().cacheHits()));
+        d_->server_->sendString("Hashtable hits: " + std::to_string(job_->stats().cacheHits()));
         d_->server_->sendNodeCount(job_->stats().nodes());
       }
     }
