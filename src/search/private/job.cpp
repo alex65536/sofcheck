@@ -9,17 +9,23 @@
 #include "core/strutil.h"
 #include "core/types.h"
 #include "util/bit.h"
+#include "util/logging.h"
 
 namespace SoFSearch::Private {
 
 using SoFCore::Board;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
+using SoFUtil::logError;
+
+// Type of log entry
+constexpr const char *SEARCH_JOB = "Search job";
 
 // This very-very simple alpha-beta search is here for testing only
 // TODO : rewrite it completely!
-score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, score_t alpha, score_t beta,
-                              Move *pv, size_t &pvLen, JobControl &control, JobStats &stats) {
+score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, const int8_t idepth, score_t alpha,
+                              score_t beta, Move *pv, size_t &pvLen, JobControl &control,
+                              JobStats &stats) {
   pvLen = 0;
 
   if (depth == 0) {
@@ -58,8 +64,8 @@ score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, score_t alpha, s
     hasMove = true;
     Move newPv[128];
     size_t newPvLen;
-    const score_t score =
-        -stupidAlphaBetaSearch(board, depth - 1, -beta, -alpha, newPv, newPvLen, control, stats);
+    const score_t score = -stupidAlphaBetaSearch(board, depth - 1, idepth + 1, -beta, -alpha, newPv,
+                                                 newPvLen, control, stats);
     moveUnmake(board, moves[i], persistence);
     if (score > alpha) {
       alpha = score;
@@ -74,7 +80,7 @@ score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, score_t alpha, s
 
   if (!hasMove) {
     pvLen = 0;
-    return isCheck(board) ? -30000 : 0;
+    return isCheck(board) ? scoreCheckmateLose(idepth) : 0;
   }
   return alpha;
 }
@@ -91,13 +97,16 @@ void Job::run(Board board, const Move *moves, size_t count) {
     Move pv[128];
     size_t pvLen;
     const score_t score =
-        stupidAlphaBetaSearch(board, depth, -SCORE_INF, SCORE_INF, pv, pvLen, control_, stats_);
+        stupidAlphaBetaSearch(board, depth, 0, -SCORE_INF, SCORE_INF, pv, pvLen, control_, stats_);
+    if (!isScoreValid(score)) {
+      logError(SEARCH_JOB) << "Search returned invalid score " << score;
+    }
     if (control_.isStopped()) {
       server_->finishSearch(bestMove);
       return;
     }
     server_->sendResult({static_cast<size_t>(depth), pv, pvLen,
-                         SoFBotApi::PositionCost::centipawns(score),
+                         scoreToPositionCost(score),
                          SoFBotApi::PositionCostBound::Exact});
     bestMove = pv[0];
   }
