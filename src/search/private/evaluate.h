@@ -3,7 +3,7 @@
 
 #include "core/board.h"
 #include "core/move.h"
-#include "search/score.h"
+#include "search/private/score.h"
 
 namespace SoFSearch::Private {
 

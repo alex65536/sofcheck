@@ -4,10 +4,10 @@
 
 #include "common.h"
 #include "core/types.h"
-#include "search/score.h"
+#include "search/private/score.h"
 
-using namespace SoFCore;    // NOLINT
-using namespace SoFSearch;  // NOLINT
+using namespace SoFCore;             // NOLINT
+using namespace SoFSearch::Private;  // NOLINT
 
 static constexpr score_t PIECE_COSTS[6] = {100, 0, 350, 350, 525, 1000};
 
@@ -157,7 +157,7 @@ void doGenerate(std::ostream &out) {
   out << "#define SOF_SEARCH_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
   out << "\n";
   out << "#include \"core/types.h\"\n";
-  out << "#include \"search/score.h\"\n";
+  out << "#include \"search/private/score.h\"\n";
   out << "\n";
   out << "namespace SoFSearch::Private {\n";
   out << "\n";

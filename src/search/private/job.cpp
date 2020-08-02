@@ -2,7 +2,7 @@
 
 #include "core/movegen.h"
 #include "search/private/evaluate.h"
-#include "search/score.h"
+#include "search/private/score.h"
 
 // TODO : remove these headers
 #include <algorithm>
@@ -30,7 +30,8 @@ score_t stupidAlphaBetaSearch(Board &board, const int8_t depth, const int8_t ide
   pvLen = 0;
 
   if (depth == 0) {
-    return (board.side == SoFCore::Color::White) ? psq : -psq;
+    const score_t score = scorePairFirst(psq);
+    return (board.side == SoFCore::Color::White) ? score : -score;
   }
 
   if (control.isStopped()) {

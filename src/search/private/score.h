@@ -1,11 +1,11 @@
-#ifndef SOF_SEARCH_SCORE_INCLUDED
-#define SOF_SEARCH_SCORE_INCLUDED
+#ifndef SOF_SEARCH_PRIVATE_SCORE_INCLUDED
+#define SOF_SEARCH_PRIVATE_SCORE_INCLUDED
 
 #include <cstdint>
 
 #include "bot_api/types.h"
 
-namespace SoFSearch {
+namespace SoFSearch::Private {
 
 // Position score. The meaning of the position score depends on the value:
 // * `score < -SCORE_CHECKMATE`: invalid
@@ -125,6 +125,6 @@ static_assert(makeScorePair(1, 5) + makeScorePair(-3, -8) == makeScorePair(-2, -
 static_assert(-makeScorePair(3, 4) == makeScorePair(-3, -4));
 static_assert(-makeScorePair(3, -4) == makeScorePair(-3, 4));
 
-}  // namespace SoFSearch
+}  // namespace SoFSearch::Private
 
-#endif  // SOF_SEARCH_SCORE_INCLUDED
+#endif  // SOF_SEARCH_PRIVATE_SCORE_INCLUDED
