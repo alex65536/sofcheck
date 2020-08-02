@@ -146,6 +146,7 @@ add_library(sof_search STATIC
   src/search/search.cpp
   src/search/private/evaluate.cpp
   src/search/private/job.cpp
+  src/search/private/move_picker.cpp
   ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
 )
 target_link_libraries(sof_search PUBLIC sof_core sof_util sof_bot_api PRIVATE Threads::Threads)
