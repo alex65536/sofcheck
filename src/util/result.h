@@ -9,8 +9,8 @@
 
 namespace SoFUtil {
 
-// TODO: add more methods into `Result<T, E>`
-// TODO: ensure that there are no unnecessary copies and moves in `Result<T, E>`
+// TODO : add more methods into `Result<T, E>`
+// TODO : ensure that there are no unnecessary copies and moves in `Result<T, E>`
 
 template <typename T>
 class Ok;
