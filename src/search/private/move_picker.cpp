@@ -7,6 +7,24 @@
 
 namespace SoFSearch::Private {
 
+void sortMvvLva(const Board &board, Move *moves, const size_t count) {
+  constexpr uint8_t victimOrd[16] = {8, 8, 0, 16, 24, 32, 40, 0, 8, 8, 0, 16, 24, 32, 40, 0};
+  constexpr uint8_t attackerOrd[16] = {0, 6, 1, 5, 4, 3, 2, 0, 0, 6, 1, 5, 4, 3, 2, 0};
+  for (size_t i = 0; i < count; ++i) {
+    Move &move = moves[i];
+    move.tag = victimOrd[board.cells[move.dst]] + attackerOrd[board.cells[move.src]];
+  }
+  std::sort(moves, moves + count, [&](const Move m1, const Move m2) { return m1.tag > m2.tag; });
+  for (size_t i = 0; i < count; ++i) {
+    moves[i].tag = 0;
+  }
+}
+
+QuiescenseMovePicker::QuiescenseMovePicker(const Board &board) : movePosition_(0) {
+  moveCount_ = genCaptures(board, moves_);
+  sortMvvLva(board, moves_, moveCount_);
+}
+
 void MovePicker::nextStage() {
   movePosition_ = 0;
   moveCount_ = 0;
@@ -29,17 +47,7 @@ void MovePicker::nextStage() {
       case MovePickerStage::Capture: {
         // Generate captures and arrange them by MVV/LVA
         moveCount_ = genCaptures(board_, moves_);
-        constexpr uint8_t victimOrd[16] = {8, 8, 0, 16, 24, 32, 40, 0, 8, 8, 0, 16, 24, 32, 40, 0};
-        constexpr uint8_t attackerOrd[16] = {0, 6, 1, 5, 4, 3, 2, 0, 0, 6, 1, 5, 4, 3, 2, 0};
-        for (size_t i = 0; i < moveCount_; ++i) {
-          Move &move = moves_[i];
-          move.tag = victimOrd[board_.cells[move.dst]] + attackerOrd[board_.cells[move.src]];
-        }
-        std::sort(moves_, moves_ + moveCount_,
-                  [&](const Move m1, const Move m2) { return m1.tag > m2.tag; });
-        for (size_t i = 0; i < moveCount_; ++i) {
-          moves_[i].tag = 0;
-        }
+        sortMvvLva(board_, moves_, moveCount_);
         break;
       }
       case MovePickerStage::Killer: {

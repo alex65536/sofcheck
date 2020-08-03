@@ -53,10 +53,43 @@ inline TranspositionTable::Data makeTtData(const Move move, const score_t alpha,
     score = beta;
     bound = PositionCostBound::Lowerbound;
   }
-  return TranspositionTable::Data(move, adjustCheckmate(score, -static_cast<int16_t>(idepth)), depth, bound);
+  return TranspositionTable::Data(move, adjustCheckmate(score, -static_cast<int16_t>(idepth)),
+                                  depth, bound);
 }
 
-// This very-very simple alpha-beta search is here for testing only
+// TODO : rewrite it completely!
+score_t stupidQuiescenseSearch(Board &board, score_t alpha, score_t beta, score_pair_t psq) {
+  score_t score = scorePairFirst(psq);
+  if (board.side == SoFCore::Color::Black) {
+    score *= -1;
+  }
+  alpha = std::max(alpha, score);
+  if (alpha >= beta) {
+    return beta;
+  }
+
+  QuiescenseMovePicker picker(board);
+  for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
+    if (move == Move::null()) {
+      continue;
+    }
+    const score_pair_t newPsq = boardUpdatePsqScore(board, move, psq);
+    const MovePersistence persistence = moveMake(board, move);
+    if (!isMoveLegal(board)) {
+      moveUnmake(board, move, persistence);
+      continue;
+    }
+    const score_t score = -stupidQuiescenseSearch(board, -beta, -alpha, newPsq);
+    moveUnmake(board, move, persistence);
+    alpha = std::max(alpha, score);
+    if (alpha >= beta) {
+      return beta;
+    }
+  }
+
+  return alpha;
+}
+
 // TODO : rewrite it completely!
 score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t idepth,
                               score_t alpha, score_t beta, score_pair_t psq, Move *pv,
@@ -64,8 +97,7 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
   pvLen = 0;
 
   if (depth == 0) {
-    const score_t score = scorePairFirst(psq);
-    return (board.side == SoFCore::Color::White) ? score : -score;
+    return stupidQuiescenseSearch(board, alpha, beta, psq);
   }
 
   state.tt.prefetch(board.hash);
@@ -102,7 +134,7 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
       }
       if (alpha >= beta) {
         pvLen = 0;
-        return alpha;
+        return beta;
       }
     }
   }
@@ -137,8 +169,8 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
       pvLen = newPvLen + 1;
     }
     if (alpha >= beta) {
-      state.tt.store(board.hash, makeTtData(pv[0], oldAlpha, alpha, oldBeta, depth, idepth));
-      return alpha;
+      state.tt.store(board.hash, makeTtData(pv[0], oldAlpha, beta, oldBeta, depth, idepth));
+      return beta;
     }
   }
 
@@ -173,6 +205,7 @@ void Job::run(Board board, const Move *moves, size_t count) {
     }
     server_->sendResult({static_cast<size_t>(depth), pv, pvLen, scoreToPositionCost(score),
                          SoFBotApi::PositionCostBound::Exact});
+    server_->sendNodeCount(stats_.nodes());
     bestMove = pv[0];
   }
 

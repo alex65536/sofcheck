@@ -73,6 +73,23 @@ private:
   size_t movePosition_;
 };
 
+class QuiescenseMovePicker {
+public:
+  inline Move next() {
+    if (movePosition_ == moveCount_) {
+      return Move::invalid();
+    }
+    return moves_[movePosition_++];
+  }
+
+  QuiescenseMovePicker(const Board &board);
+
+private:
+  Move moves_[128];
+  size_t moveCount_;
+  size_t movePosition_;
+};
+
 }  // namespace SoFSearch::Private
 
 #endif  // SOF_SEARCH_PRIVATE_MOVE_PICKER_INCLUDED
