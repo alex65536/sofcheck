@@ -8,8 +8,8 @@ def make_header_guard(file_name):
     file_path = file_name.split('.')[0].split(os.path.sep)
     if file_path[0] == 'src':
         file_path[0] = 'sof'
-    elif file_path[0] == 'gen':
-        file_path[0] = 'sof_gen'
+    else:
+        file_path[0] = 'sof_' + file_path[0]
     return '_'.join([s.upper() for s in file_path]) + '_INCLUDED'
 
 
