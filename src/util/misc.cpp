@@ -21,4 +21,8 @@ namespace SoFUtil {
 
 [[noreturn]] void panic(const std::string &message) { panic(message.c_str()); }
 
+[[noreturn]] void Private::assertFail(const char *file, const int line, const char *cond) {
+  panic(std::string("Assertion failed: ") + file + ":" + std::to_string(line) + ": " + cond);
+}
+
 }  // namespace SoFUtil
