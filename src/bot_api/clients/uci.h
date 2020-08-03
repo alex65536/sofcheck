@@ -57,7 +57,7 @@ private:
   void ensureClient();
 
   // Reports failures from client side, if any. Returns `result` unchanged
-  ApiResult checkClient(ApiResult result);
+  static ApiResult checkClient(ApiResult result);
 
   // Lists engine options
   PollResult listOptions();
