@@ -1,5 +1,5 @@
-#ifndef BENCH_CORE_BENCH_BOARDS_INCLUDED
-#define BENCH_CORE_BENCH_BOARDS_INCLUDED
+#ifndef SOF_BENCH_CORE_BENCH_BOARDS_INCLUDED
+#define SOF_BENCH_CORE_BENCH_BOARDS_INCLUDED
 
 const char *g_fenInitial = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 const char *g_fenSicilian = "r1b1k2r/2qnbppp/p2ppn2/1p4B1/3NPPP1/2N2Q2/PPP4P/2KR1B1R w kq - 0 11";
@@ -12,4 +12,4 @@ const char *g_fenPawnsPromote = "8/PPPPPPPP/8/2k1K3/8/8/pppppppp/8 w - - 0 1";
 const char *g_fenCydonia = "5K2/1N1N1N2/8/1N1N1N2/1n1n1n2/8/1n1n1n2/5k2 w - - 0 1";
 const char *g_fenMax = "3Q4/1Q4Q1/4Q3/2Q4R/Q4Q2/3Q4/NR4Q1/kN1BB1K1 w - - 0 1";
 
-#endif  // BENCH_CORE_BENCH_BOARDS_INCLUDED
+#endif  // SOF_BENCH_CORE_BENCH_BOARDS_INCLUDED

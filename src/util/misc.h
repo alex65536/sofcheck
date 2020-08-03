@@ -31,11 +31,35 @@
     }                          \
   }
 
+// Concatenates two strings in preprocessor, even if one of the strings expands as a macro
+#define _SOF_PRIVATE_STRING_CONCAT(a, b) a##b
+#define SOF_STRING_CONCAT(a, b) _SOF_PRIVATE_STRING_CONCAT(a, b)
+
+// Creates a unique name which starts with `prefix`
+#define SOF_MAKE_UNIQUE(prefix) \
+  SOF_STRING_CONCAT(SOF_STRING_CONCAT(prefix, __COUNTER__), SOF_STRING_CONCAT(l, __LINE__))
+
+// Panics if the given condition is `false`. Unlike standard `assert`, the condition here is checked
+// both in debug and release modes.
+#define SOF_ASSERT(...)                                               \
+  {                                                                   \
+    if (SOF_UNLIKELY(!(__VA_ARGS__))) {                               \
+      SoFUtil::Private::assertFail(__FILE__, __LINE__, #__VA_ARGS__); \
+    }                                                                 \
+  }
+
 namespace SoFUtil {
 
 // Terminates the program with the given `message`
 [[noreturn]] void panic(const char *message);
 [[noreturn]] void panic(const std::string &message);
+
+namespace Private {
+
+// Implementation detail of `SOF_ASSERT`
+[[noreturn]] void assertFail(const char *file, int line, const char *cond);
+
+}  // namespace Private
 
 }  // namespace SoFUtil
 

@@ -25,6 +25,7 @@ Logger &logger() {
   return instance;
 }
 
+// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 void Logger::log(LogLevel level, const char *type, const std::string &message) {
   std::string str = std::string(logLevelToStr(level)) + " [" + type + "]: " + message + "\n";
   std::cerr << str << std::flush;
