@@ -12,14 +12,14 @@ namespace SoFBotApi {
 
 using std::chrono::milliseconds;
 
-constexpr size_t INFINITE_MOVES = static_cast<size_t>(-1);
+constexpr size_t MOVES_INFINITE = std::numeric_limits<size_t>::max();
 
 // Time control for one side
 struct TimeControlSide {
   milliseconds time;  // Time left on the clock (or `milliseconds::max()` if unset)
   milliseconds inc;   // Time added after each move
 
-  inline constexpr TimeControlSide() : time(milliseconds::max()), inc() {}
+  inline constexpr TimeControlSide() : time(milliseconds::max()), inc(0) {}
 };
 
 // Time control for both sides
@@ -27,9 +27,9 @@ struct TimeControl {
   TimeControlSide white;
   TimeControlSide black;
   size_t movesToGo;  // Positive number that represents the number of moves until time control
-                     // changes. If it doesn't change, the value is equal to `INFINITE_MOVES`
+                     // changes. If it doesn't change, the value is equal to `MOVES_INFINITE`
 
-  inline constexpr TimeControl() : movesToGo(INFINITE_MOVES) {}
+  inline constexpr TimeControl() : movesToGo(MOVES_INFINITE) {}
 
   inline constexpr TimeControlSide &operator[](SoFCore::Color color) {
     return (color == SoFCore::Color::White) ? white : black;
