@@ -75,7 +75,7 @@ public:
   ApiResult searchTimeControl(const SoFBotApi::TimeControl &control) override {
     cerr << "searchTimeControl(" << control.white.time.count() << ", " << control.white.inc.count()
          << ", " << control.black.time.count() << ", " << control.black.inc.count();
-    if (control.movesToGo != SoFBotApi::INFINITE_MOVES) {
+    if (control.movesToGo != SoFBotApi::MOVES_INFINITE) {
       cerr << ", movesToGo = " << control.movesToGo;
     }
     cerr << ")" << endl;
