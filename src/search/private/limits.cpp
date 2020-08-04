@@ -26,9 +26,7 @@ SearchLimits SearchLimits::withTimeControl(const SoFCore::Board &board,
     time += totalTime / 40;
   }
   time += inc;
-  if (inc > 30ms) {
-    time -= 30ms;
-  }
+  time = std::min(time, totalTime - 35ms);
   time = std::max(time, 1ms);
   return SearchLimits{DEPTH_UNLIMITED, NODES_UNLIMITED, time, timeControl};
 }
