@@ -39,6 +39,7 @@ struct StupidSearchState {
   SearchLimits limits;
   StupidSearchStackFrame stack[128];
   HistoryTable history;
+  RepetitionTable repetitions;
   steady_clock::time_point startTime;
 
   inline bool mustStop(const bool checkTime) const {
@@ -116,8 +117,6 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
     return stupidQuiescenseSearch(board, alpha, beta, psq);
   }
 
-  state.tt.prefetch(board.hash);
-
   static thread_local uint64_t counter = 0;
   ++counter;
 
@@ -174,8 +173,15 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
     hasMove = true;
     Move newPv[128];
     size_t newPvLen;
-    const score_t score = -stupidAlphaBetaSearch(board, depth - 1, idepth + 1, -beta, -alpha,
-                                                 newPsq, newPv, newPvLen, state);
+    score_t score;
+    state.tt.prefetch(board.hash);
+    if (!state.repetitions.insert(board.hash)) {
+      score = 0;
+    } else {
+      score = -stupidAlphaBetaSearch(board, depth - 1, idepth + 1, -beta, -alpha, newPsq, newPv,
+                                     newPvLen, state);
+      state.repetitions.erase(board.hash);
+    }
     moveUnmake(board, move, persistence);
     if (state.mustStop(false)) {
       return 0;
@@ -205,15 +211,19 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
 }
 
 void Job::run(Board board, const Move *moves, size_t count) {
-  // TODO : use repetition table
-
+  RepetitionTable singleRepeat;
+  RepetitionTable doubleRepeat;
   for (size_t i = 0; i < count; ++i) {
+    if (!singleRepeat.insert(board.hash)) {
+      doubleRepeat.insert(board.hash);
+    }
     moveMake(board, moves[i]);
   }
 
   StupidSearchState state(control_, stats_, tt_);
   state.limits = limits_;
   state.startTime = steady_clock::now();
+  state.repetitions = std::move(doubleRepeat);
   Move bestMove = Move::null();
   uint8_t maxDepth = 127;
   if (limits_.depth < maxDepth) {
@@ -222,8 +232,14 @@ void Job::run(Board board, const Move *moves, size_t count) {
   for (uint8_t depth = 1; depth <= maxDepth; ++depth) {
     Move pv[128];
     size_t pvLen;
-    const score_t score = stupidAlphaBetaSearch(board, depth, 0, -SCORE_INF, SCORE_INF,
-                                                boardGetPsqScore(board), pv, pvLen, state);
+    score_t score;
+    if (!state.repetitions.insert(board.hash)) {
+      score = 0;
+    } else {
+      score = stupidAlphaBetaSearch(board, depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board),
+                                    pv, pvLen, state);
+      state.repetitions.erase(board.hash);
+    }
     if (!isScoreValid(score)) {
       logError(SEARCH_JOB) << "Search returned invalid score " << score;
     }
