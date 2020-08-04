@@ -233,6 +233,7 @@ void Job::run(Board board, const Move *moves, size_t count) {
     Move pv[128];
     size_t pvLen;
     score_t score;
+    state.tt.prefetch(board.hash);
     if (!state.repetitions.insert(board.hash)) {
       score = 0;
     } else {
