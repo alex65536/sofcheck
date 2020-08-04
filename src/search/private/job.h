@@ -7,6 +7,7 @@
 #include "bot_api/server.h"
 #include "core/board.h"
 #include "core/move.h"
+#include "search/private/limits.h"
 #include "search/private/transposition_table.h"
 
 namespace SoFSearch::Private {
@@ -49,8 +50,9 @@ private:
 
 class Job {
 public:
-  Job(JobControl &control, TranspositionTable &tt, SoFBotApi::Server *server)
-      : control_(control), tt_(tt), server_(server) {}
+  Job(JobControl &control, TranspositionTable &tt, const SearchLimits &limits,
+      SoFBotApi::Server *server)
+      : control_(control), tt_(tt), limits_(limits), server_(server) {}
 
   inline constexpr const JobStats &stats() const { return stats_; }
 
@@ -59,6 +61,7 @@ public:
 private:
   JobControl &control_;
   TranspositionTable &tt_;
+  SearchLimits limits_;
   JobStats stats_;
   SoFBotApi::Server *server_;
 };

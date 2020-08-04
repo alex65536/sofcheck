@@ -22,6 +22,8 @@ using SoFCore::Board;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using SoFUtil::logError;
+using std::chrono::milliseconds;
+using std::chrono::steady_clock;
 
 // Type of log entry
 constexpr const char *SEARCH_JOB = "Search job";
@@ -34,8 +36,22 @@ struct StupidSearchState {
   JobControl &control;
   JobStats &stats;
   TranspositionTable &tt;
+  SearchLimits limits;
   StupidSearchStackFrame stack[128];
   HistoryTable history;
+  steady_clock::time_point startTime;
+
+  inline bool mustStop(const bool checkTime) const {
+    if (control.isStopped()) {
+      return true;
+    }
+    if (checkTime && limits.time != TIME_UNLIMITED &&
+        steady_clock::now() - startTime >= limits.time) {
+      control.stop();
+      return true;
+    }
+    return false;
+  }
 
   StupidSearchState(JobControl &control, JobStats &stats, TranspositionTable &tt)
       : control(control), stats(stats), tt(tt) {}
@@ -102,7 +118,10 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
 
   state.tt.prefetch(board.hash);
 
-  if (state.control.isStopped()) {
+  static thread_local uint64_t counter = 0;
+  ++counter;
+
+  if (state.mustStop(!(counter & 1023))) {
     return 0;
   }
   state.stats.incNodes();
@@ -158,6 +177,9 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
     const score_t score = -stupidAlphaBetaSearch(board, depth - 1, idepth + 1, -beta, -alpha,
                                                  newPsq, newPv, newPvLen, state);
     moveUnmake(board, move, persistence);
+    if (state.mustStop(false)) {
+      return 0;
+    }
     if (score > alpha) {
       if (picker.stage() >= MovePickerStage::Killer) {
         state.stack[idepth].killers.add(move);
@@ -190,8 +212,14 @@ void Job::run(Board board, const Move *moves, size_t count) {
   }
 
   StupidSearchState state(control_, stats_, tt_);
+  state.limits = limits_;
+  state.startTime = steady_clock::now();
   Move bestMove = Move::null();
-  for (uint8_t depth = 1; depth < 127; ++depth) {
+  uint8_t maxDepth = 127;
+  if (limits_.depth < maxDepth) {
+    maxDepth = limits_.depth;
+  }
+  for (uint8_t depth = 1; depth <= maxDepth; ++depth) {
     Move pv[128];
     size_t pvLen;
     const score_t score = stupidAlphaBetaSearch(board, depth, 0, -SCORE_INF, SCORE_INF,
@@ -199,8 +227,9 @@ void Job::run(Board board, const Move *moves, size_t count) {
     if (!isScoreValid(score)) {
       logError(SEARCH_JOB) << "Search returned invalid score " << score;
     }
-    if (control_.isStopped()) {
+    if (state.mustStop(true)) {
       server_->finishSearch(bestMove);
+      control_.stop();
       return;
     }
     server_->sendResult({static_cast<size_t>(depth), pv, pvLen, scoreToPositionCost(score),

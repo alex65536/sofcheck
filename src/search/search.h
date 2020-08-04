@@ -34,10 +34,9 @@ public:
                         size_t count) override;
 
   ApiResult searchInfinite() override;
-  // TODO : implement
-  // ApiResult searchFixedDepth(size_t depth) override;
-  // ApiResult searchFixedNodes(uint64_t nodes) override;
-  // ApiResult searchFixedTime(std::chrono::milliseconds time) override;
+  ApiResult searchFixedDepth(size_t depth) override;
+  ApiResult searchFixedNodes(uint64_t nodes) override;
+  ApiResult searchFixedTime(std::chrono::milliseconds time) override;
   ApiResult searchTimeControl(const SoFBotApi::TimeControl &control) override;
 
   ApiResult stopSearch() override;

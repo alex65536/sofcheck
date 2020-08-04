@@ -8,6 +8,7 @@
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/job.h"
+#include "search/private/limits.h"
 #include "search/private/transposition_table.h"
 #include "util/logging.h"
 #include "util/misc.h"
@@ -16,6 +17,7 @@ namespace SoFSearch {
 
 using namespace std::chrono_literals;
 
+using Private::SearchLimits;
 using SoFBotApi::TimeControl;
 using SoFCore::Board;
 using SoFCore::Move;
@@ -31,14 +33,19 @@ public:
   void setPosition(const Board &board, const SoFCore::Move *moves, size_t count) {
     board_ = board;
     moves_.assign(moves, moves + count);
+    curBoard_ = board;
+    for (size_t i = 0; i < count; ++i) {
+      moveMake(curBoard_, moves[i]);
+    }
   }
 
-  void start() {
+  void start(const SearchLimits &limits) {
     if (SOF_UNLIKELY(!d_->server_)) {
       panic("Cannot start search: server is null");
     }
     clear();
-    job_.emplace(control_, tt_, d_->server_);
+    limits_ = limits;
+    job_.emplace(control_, tt_, limits_, d_->server_);
     threads_.emplace_back([this]() {
       // Controller thread
       runControlThread();
@@ -49,6 +56,8 @@ public:
     });
     hasJob_ = true;
   }
+
+  inline Board curBoard() const { return curBoard_; }
 
   void stop() { control_.stop(); }
 
@@ -72,12 +81,18 @@ public:
 private:
   // Main function of the controller thread. It collects search statistics.
   void runControlThread() {
-    auto lastStatsUpdated = steady_clock::now();
+    auto startTime = steady_clock::now();
+    auto lastStatsUpdated = startTime;
 
     while (!control_.isStopped()) {
       std::this_thread::sleep_for(30ms);
 
       auto now = steady_clock::now();
+      const uint64_t nodes = job_->stats().nodes();
+      if (nodes > limits_.nodes ||
+          (limits_.time != Private::TIME_UNLIMITED && now - startTime > limits_.time)) {
+        control_.stop();
+      }
       bool sendStats = false;
       while (now - lastStatsUpdated > 2s) {
         sendStats = true;
@@ -85,7 +100,7 @@ private:
       }
       if (sendStats) {
         d_->server_->sendString("Hashtable hits: " + std::to_string(job_->stats().cacheHits()));
-        d_->server_->sendNodeCount(job_->stats().nodes());
+        d_->server_->sendNodeCount(nodes);
       }
     }
   }
@@ -93,10 +108,12 @@ private:
   Engine *d_;
   Board board_;
   std::vector<Move> moves_;
+  Board curBoard_;
   std::vector<std::thread> threads_;
   Private::JobControl control_;
   std::optional<Private::Job> job_;
   Private::TranspositionTable tt_;
+  SearchLimits limits_;
   bool hasJob_;
 };
 
@@ -132,14 +149,28 @@ ApiResult Engine::reportError(const char *message) {
 }
 
 ApiResult Engine::searchInfinite() {
-  p_->start();
+  p_->start(SearchLimits::withInfiniteTime());
+  return ApiResult::Ok;
+}
+
+ApiResult Engine::searchFixedDepth(size_t depth) {
+  p_->start(SearchLimits::withFixedDepth(depth));
+  return ApiResult::Ok;
+}
+
+ApiResult Engine::searchFixedNodes(uint64_t nodes) {
+  p_->start(SearchLimits::withFixedNodes(nodes));
+  return ApiResult::Ok;
+}
+
+ApiResult Engine::searchFixedTime(std::chrono::milliseconds time) {
+  p_->start(SearchLimits::withFixedTime(time));
   return ApiResult::Ok;
 }
 
 ApiResult Engine::searchTimeControl(const TimeControl &control) {
-  // TODO : implement
-  SOF_UNUSED(control);
-  return ApiResult::NotSupported;
+  p_->start(SearchLimits::withTimeControl(p_->curBoard(), control));
+  return ApiResult::Ok;
 }
 
 ApiResult Engine::setPosition(const SoFCore::Board &board, const SoFCore::Move *moves,

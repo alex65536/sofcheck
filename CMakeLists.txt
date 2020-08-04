@@ -145,6 +145,7 @@ target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 add_library(sof_search STATIC
   src/search/search.cpp
   src/search/private/evaluate.cpp
+  src/search/private/limits.cpp
   src/search/private/job.cpp
   src/search/private/move_picker.cpp
   src/search/private/transposition_table.cpp
