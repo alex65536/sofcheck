@@ -591,6 +591,14 @@ PollResult UciServerConnector::poll() {
     return PollResult::NoData;
   }
 
+  // Easter egg :) We need to treat this case in a special way
+  if (cmdLine == "how to draw an owl" || cmdLine == "how to draw owl") {
+    std::lock_guard guard(mutex_);
+    D_CHECK_POLL_IO(out_ << "1) Draw circles" << endl);
+    D_CHECK_POLL_IO(out_ << "2) Draw the rest of the owl" << endl);
+    return PollResult::NoData;
+  }
+
   std::istringstream tokens(cmdLine);
   return processUciCommand(tokens);
 }
