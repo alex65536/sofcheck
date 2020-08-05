@@ -76,7 +76,11 @@ public:
   }
 
   explicit EnginePrivate(Engine *engine)
-      : d_(engine), board_(Board::initialPosition()), job_(std::nullopt), hasJob_(false) {}
+      : d_(engine),
+        board_(Board::initialPosition()),
+        curBoard_(Board::initialPosition()),
+        job_(std::nullopt),
+        hasJob_(false) {}
 
 private:
   // Main function of the controller thread. It collects search statistics.

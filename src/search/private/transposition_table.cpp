@@ -29,6 +29,7 @@ TranspositionTable::Data TranspositionTable::load(const board_hash_t key) {
 
 void TranspositionTable::prefetch(const board_hash_t key) {
   const size_t idx = key & (size_ - 1);
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-vararg)
   __builtin_prefetch(&table_[idx], 0, 1);
 }
 
@@ -46,9 +47,9 @@ void TranspositionTable::resize(size_t maxSize) {
     return;
   }
 
-  Entry *newData = new Entry[newSize];
+  std::unique_ptr<Entry[]> newData(new Entry[newSize]);
   if (newSize > size_) {
-    clear(newData, newSize);
+    clear(newData.get(), newSize);
     for (size_t i = 0; i < size_; ++i) {
       const Entry &entry = table_[i];
       const Data value = entry.value.load(std::memory_order_relaxed);
@@ -62,7 +63,7 @@ void TranspositionTable::resize(size_t maxSize) {
     }
   }
 
-  table_.reset(newData);
+  table_ = std::move(newData);
 }
 
 void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data value) {

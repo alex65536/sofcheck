@@ -9,7 +9,7 @@ void RepetitionTable::grow() {
   capacity_ *= 2;
   mask_ = mask_ * 2 + 1;
   --bits_;
-  board_hash_t *newTab = new board_hash_t[2 * capacity_];
+  std::unique_ptr<board_hash_t[]> newTab(new board_hash_t[2 * capacity_]);
   for (size_t i = 0; i < 2 * capacity_; ++i) {
     newTab[i] = 0;
   }
@@ -19,7 +19,7 @@ void RepetitionTable::grow() {
     const size_t idx = (newTab[lo] == 0) ? lo : hashHi(item);
     newTab[idx] = item;
   }
-  tab_.reset(newTab);
+  tab_ = std::move(newTab);
 }
 
 }  // namespace SoFSearch::Private

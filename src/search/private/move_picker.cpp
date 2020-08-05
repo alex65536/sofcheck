@@ -20,6 +20,7 @@ void sortMvvLva(const Board &board, Move *moves, const size_t count) {
   }
 }
 
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 QuiescenseMovePicker::QuiescenseMovePicker(const Board &board) : movePosition_(0) {
   moveCount_ = genCaptures(board, moves_);
   sortMvvLva(board, moves_, moveCount_);

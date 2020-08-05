@@ -172,7 +172,7 @@ score_t stupidAlphaBetaSearch(Board &board, const uint8_t depth, const uint8_t i
     }
     hasMove = true;
     Move newPv[128];
-    size_t newPvLen;
+    size_t newPvLen = 0;
     score_t score;
     state.tt.prefetch(board.hash);
     if (!state.repetitions.insert(board.hash)) {

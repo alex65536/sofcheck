@@ -4,7 +4,6 @@ namespace SoFSearch::Private {
 
 using namespace std::chrono_literals;
 
-using SoFCore::Color;
 using std::chrono::milliseconds;
 
 SearchLimits SearchLimits::withTimeControl(const SoFCore::Board &board,
