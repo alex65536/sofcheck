@@ -55,16 +55,21 @@ private:
 class RepetitionTable {
 public:
   inline RepetitionTable()
-      : tab_(new SoFCore::board_hash_t[2 * INITIAL_CAPACITY]),
-        capacity_(INITIAL_CAPACITY),
-        mask_(INITIAL_CAPACITY - 1),
-        bits_(64 - INITIAL_CAPACITY_BITS) {
-    std::fill(tab_.get(), tab_.get() + 2 * capacity_, 0);
+      : tab_(new SoFCore::board_hash_t[INITIAL_BUCKET_COUNT * BUCKET_SIZE]),
+        bucketCount_(INITIAL_BUCKET_COUNT),
+        mask_((INITIAL_BUCKET_COUNT - 1) * BUCKET_SIZE) {
+    std::fill(tab_.get(), tab_.get() + INITIAL_BUCKET_COUNT * BUCKET_SIZE, 0);
   }
 
   // Returns `true` if `board` is present in the hash table
   inline bool has(const SoFCore::board_hash_t board) const {
-    return tab_[hashLo(board)] == board || tab_[hashHi(board)] == board;
+    const size_t idx = board & mask_;
+    for (size_t i = 0; i < BUCKET_SIZE; ++i) {
+      if (tab_[idx + i] == board) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // Inserts item `board` into the hash table. Returns `false` if the item is already present
@@ -73,15 +78,12 @@ public:
       return false;
     }
     for (;;) {
-      const size_t lo = hashLo(board);
-      if (SOF_LIKELY(tab_[lo] == 0)) {
-        tab_[lo] = board;
-        return true;
-      }
-      const size_t hi = hashHi(board);
-      if (tab_[hi] == 0) {
-        tab_[hi] = board;
-        return true;
+      const size_t idx = board & mask_;
+      for (size_t i = 0; i < BUCKET_SIZE; ++i) {
+        if (SOF_LIKELY(tab_[idx + i] == 0)) {
+          tab_[idx + i] = board;
+          return true;
+        }
       }
       grow();
     }
@@ -89,27 +91,24 @@ public:
 
   // Removes `board` from the hash table. If it's not present, the behavior is undefined
   inline void erase(const SoFCore::board_hash_t board) {
-    const size_t lo = hashLo(board);
-    const size_t idx = (tab_[lo] == board) ? lo : hashHi(board);
-    tab_[idx] = 0;
+    const size_t idx = board & mask_;
+    for (size_t i = 0; i < BUCKET_SIZE; ++i) {
+      if (tab_[idx + i] == board) {
+        tab_[idx + i] = 0;
+        return;
+      }
+    }
   }
 
 private:
   void grow();
 
-  inline size_t hashLo(const SoFCore::board_hash_t board) const { return board & mask_; }
-
-  inline size_t hashHi(const SoFCore::board_hash_t board) const {
-    return capacity_ + (board >> bits_);
-  }
-
   std::unique_ptr<SoFCore::board_hash_t[]> tab_;
-  size_t capacity_;
-  size_t mask_;  // Equal to `capacity - 1`
-  size_t bits_;  // Equal to `64 - log2(capacity)`
+  size_t bucketCount_;
+  size_t mask_;  // Equal to `(bucketCount - 1) * BUCKET_SIZE`
 
-  static constexpr size_t INITIAL_CAPACITY_BITS = 6;
-  static constexpr size_t INITIAL_CAPACITY = 1 << INITIAL_CAPACITY_BITS;
+  static constexpr size_t INITIAL_BUCKET_COUNT = 32;
+  static constexpr size_t BUCKET_SIZE = 4;
 };
 
 }  // namespace SoFSearch::Private
