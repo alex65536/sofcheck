@@ -33,7 +33,7 @@ void TranspositionTable::prefetch(const board_hash_t key) {
   __builtin_prefetch(&table_[idx], 0, 1);
 }
 
-void TranspositionTable::resize(size_t maxSize) {
+void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
   maxSize = std::max<size_t>(maxSize, 1 << 20);
 
   // Determine the new table size
@@ -48,7 +48,9 @@ void TranspositionTable::resize(size_t maxSize) {
   }
 
   std::unique_ptr<Entry[]> newData(new Entry[newSize]);
-  if (newSize > size_) {
+  if (clearTable) {
+    clear(newData.get(), newSize);
+  } else if (newSize > size_) {
     clear(newData.get(), newSize);
     for (size_t i = 0; i < size_; ++i) {
       const Entry &entry = table_[i];

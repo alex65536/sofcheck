@@ -86,10 +86,11 @@ public:
   TranspositionTable();
 
   // Resize the hash table. The new table size (in bytes) will be the maximum power of two not
-  // exceeding `max(1048576, maxSize)`.
+  // exceeding `max(1048576, maxSize)`. If `clearTable` is `true`, the table is cleared after
+  // resize. Otherwise, we try to retain some information that already exists in the hash table.
   //
   // This function is not thread-safe. No other thread should use the table while resizing.
-  void resize(size_t maxSize);
+  void resize(size_t maxSize, bool clearTable);
 
   // Return the has table size in bytes
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }
