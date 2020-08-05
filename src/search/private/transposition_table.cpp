@@ -46,9 +46,6 @@ void TranspositionTable::resize(size_t maxSize) {
     return;
   }
 
-  const size_t bits = SoFUtil::getLowest(size_);
-  const size_t newBits = SoFUtil::getLowest(newSize);
-
   Entry *newData = new Entry[newSize];
   if (newSize > size_) {
     clear(newData, newSize);
@@ -61,7 +58,7 @@ void TranspositionTable::resize(size_t maxSize) {
     }
   } else {
     for (size_t i = 0; i < newSize; ++i) {
-      newData[i].assignRelaxed(table_[i << (bits - newBits)]);
+      newData[i].assignRelaxed(table_[i]);
     }
   }
 
