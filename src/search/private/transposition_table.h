@@ -29,18 +29,19 @@ public:
     }
 
     inline constexpr score_t score() const { return score_; }
-
     inline constexpr uint8_t depth() const { return move_.tag; }
-
     inline constexpr bool isValid() const { return !(flags_ & FLAG_IS_INVALID); }
-
+    inline constexpr bool isPv() const { return flags_ & FLAG_IS_PV; }
     inline constexpr PositionCostBound bound() const {
       return static_cast<PositionCostBound>(flags_ & 3);
     }
 
     inline constexpr Data(const Move move, const score_t score, const uint8_t depth,
-                          const PositionCostBound bound)
-        : move_(move), score_(score), flags_(static_cast<uint8_t>(bound)), padding_(0) {
+                          const PositionCostBound bound, const bool isPv)
+        : move_(move),
+          score_(score),
+          flags_(static_cast<uint8_t>(bound) | (isPv ? FLAG_IS_PV : 0)),
+          padding_(0) {
       move_.tag = depth;
     }
 
@@ -81,7 +82,11 @@ public:
     uint8_t padding_;
 
     static constexpr uint8_t FLAG_IS_INVALID = 8;
+    static constexpr uint8_t FLAG_IS_PV = 16;
   };
+
+  // Default size of the transposition table
+  constexpr static size_t DEFAULT_SIZE = 1 << 25;
 
   TranspositionTable();
 
@@ -103,7 +108,7 @@ public:
   void prefetch(board_hash_t key);
 
   // Returns the entry with the key `key`. If such entry doesn't exist, return `Data::invalid()`.
-  Data load(board_hash_t key);
+  Data load(board_hash_t key) const;
 
   // Stores `value` for the key `key`.
   void store(board_hash_t key, Data value);

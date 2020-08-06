@@ -16,7 +16,7 @@ void TranspositionTable::clear(TranspositionTable::Entry *table, const size_t si
 
 void TranspositionTable::clear() { clear(table_.get(), size_); }
 
-TranspositionTable::Data TranspositionTable::load(const board_hash_t key) {
+TranspositionTable::Data TranspositionTable::load(const board_hash_t key) const {
   const size_t idx = key & (size_ - 1);
   const Entry &entry = table_[idx];
   const Data entryData = entry.value.load(std::memory_order_relaxed);
@@ -44,6 +44,9 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
   newSize >>= 1;
   newSize /= sizeof(Entry);
   if (newSize == size_) {
+    if (clearTable) {
+      clear();
+    }
     return;
   }
 
@@ -74,6 +77,6 @@ void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data 
   table_[idx].assignRelaxed(value, key);
 }
 
-TranspositionTable::TranspositionTable() : size_(1 << 21), table_(new Entry[size_]) { clear(); }
+TranspositionTable::TranspositionTable() : size_(DEFAULT_SIZE / sizeof(Entry)), table_(new Entry[size_]) { clear(); }
 
 }  // namespace SoFSearch::Private

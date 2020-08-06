@@ -13,7 +13,9 @@ using SoFBotApi::ApiResult;
 using SoFBotApi::Options;
 using SoFBotApi::Server;
 
-class EnginePrivate;
+namespace Private {
+class SearchLimits;
+}
 
 // The chess engine class which uses `SoFBotApi::Client` as an interface
 class Engine final : public SoFBotApi::Client, private SoFBotApi::OptionObserver {
@@ -24,9 +26,8 @@ public:
   Options &options() override { return options_; }
   const Options &options() const override { return options_; }
 
-  // TODO : implement
-  // void enterDebugMode() override;
-  // void leaveDebugMode() override;
+  void enterDebugMode() override {}
+  void leaveDebugMode() override {}
 
   ApiResult newGame() override;
 
@@ -58,11 +59,13 @@ private:
 private:
   static SoFBotApi::OptionStorage makeOptions(Engine *engine);
 
-  friend class EnginePrivate;
+  struct Impl;
+
+  ApiResult doSearch(const Private::SearchLimits &limits);
 
   SoFBotApi::OptionStorage options_;
   Server *server_;
-  std::unique_ptr<EnginePrivate> p_;
+  std::unique_ptr<Impl> p_;
 };
 
 }  // namespace SoFSearch

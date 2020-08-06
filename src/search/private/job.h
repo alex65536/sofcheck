@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <cstdint>
+#include <vector>
 
 #include "bot_api/server.h"
 #include "core/board.h"
@@ -12,58 +13,88 @@
 
 namespace SoFSearch::Private {
 
-// Job controller class. It is used to send some information to all the threads. The control
-// information sent here will be read by the job threads from time to time.
-class JobControl {
+// Shared data between jobs, which allows them to communicate with each other and with outer world
+class JobCommunicator {
 public:
-  inline void stop() { stopped_.store(true, std::memory_order_relaxed); }
-  inline void reset() { stopped_.store(false, std::memory_order_relaxed); }
+  inline void stop() { stopped_.store(1, std::memory_order_relaxed); }
+
   inline bool isStopped() const { return stopped_.load(std::memory_order_relaxed); }
+  inline size_t depth() const { return depth_.load(std::memory_order_relaxed); }
+
+  // Resets the job into its default state. This function cannot be called when jobs are running.
+  inline void reset() {
+    depth_.store(1, std::memory_order_relaxed);
+    stopped_.store(false, std::memory_order_relaxed);
+  }
+
+  // Indicates that the job has finished to search on depth `depth`. Returns `true` if it was the
+  // first job to finish search on this depth, otherwise returns false.
+  inline bool finishDepth(size_t depth) { return depth_.compare_exchange_strong(depth, depth + 1); }
 
 private:
-  std::atomic<bool> stopped_ = false;
+  std::atomic<size_t> depth_ = 1;
+  std::atomic<size_t> stopped_ = false;
 };
 
-// Statistics collector class. It's assumed that there can be only one writer thread and
-// infinitely many reader threads.
-class JobStats {
+// Job results and statistics. This class is thread-safe if there is no more than one writer thread.
+// If two threads write concurrently, the data race occurs.
+class JobResults {
 public:
   inline uint64_t nodes() const { return getRelaxed(nodes_); }
-  inline uint64_t cacheHits() const { return getRelaxed(cacheHits_); }
+  inline uint64_t ttHits() const { return getRelaxed(ttHits_); }
+  inline size_t depth() const { return getRelaxed(depth_); }
+  inline SoFCore::Move bestMove() const { return getRelaxed(bestMove_); }
 
   inline void incNodes() { incRelaxed(nodes_); }
-  inline void incCacheHits() { incRelaxed(cacheHits_); }
+  inline void incTtHits() { incRelaxed(ttHits_); }
+
+  inline void setBestMove(const size_t depth, const SoFCore::Move move) {
+    depth_.store(depth, std::memory_order_relaxed);
+    bestMove_.store(move, std::memory_order_relaxed);
+  }
 
 private:
-  inline static uint64_t getRelaxed(const std::atomic<uint64_t> &value) {
+  template <typename T>
+  inline static T getRelaxed(const std::atomic<T> &value) {
     return value.load(std::memory_order_relaxed);
   }
 
-  inline static void incRelaxed(std::atomic<uint64_t> &value) {
+  template <typename T>
+  inline static void incRelaxed(std::atomic<T> &value) {
     const uint64_t newValue = value.load(std::memory_order_relaxed) + 1;
     value.store(newValue, std::memory_order_relaxed);
   }
 
   std::atomic<uint64_t> nodes_ = 0;
-  std::atomic<uint64_t> cacheHits_ = 0;
+  std::atomic<uint64_t> ttHits_ = 0;
+  std::atomic<size_t> depth_ = 0;
+  std::atomic<SoFCore::Move> bestMove_ = SoFCore::Move::null();
 };
+
+// Ensure that the necessary atomics are lock-free
+static_assert(std::atomic<uint64_t>::is_always_lock_free);
+static_assert(std::atomic<size_t>::is_always_lock_free);
+static_assert(std::atomic<SoFCore::Move>::is_always_lock_free);
 
 class Job {
 public:
-  Job(JobControl &control, TranspositionTable &tt, const SearchLimits &limits,
-      SoFBotApi::Server *server)
-      : control_(control), tt_(tt), limits_(limits), server_(server) {}
+  inline Job(JobCommunicator &communicator, TranspositionTable &table, SoFBotApi::Server *server,
+             size_t id)
+      : communicator_(communicator), table_(table), server_(server), id_(id) {}
 
-  inline constexpr const JobStats &stats() const { return stats_; }
+  inline const JobResults &results() const { return results_; }
 
-  void run(SoFCore::Board board, const SoFCore::Move *moves, size_t count);
+  void run(SoFCore::Board board, const std::vector<SoFCore::Move> &moves,
+           const SearchLimits &limits);
 
 private:
-  JobControl &control_;
-  TranspositionTable &tt_;
-  SearchLimits limits_;
-  JobStats stats_;
+  friend class Searcher;
+
+  JobCommunicator &communicator_;
+  TranspositionTable &table_;
   SoFBotApi::Server *server_;
+  size_t id_;
+  JobResults results_;
 };
 
 }  // namespace SoFSearch::Private

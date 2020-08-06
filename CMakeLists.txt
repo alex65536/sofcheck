@@ -147,6 +147,7 @@ add_library(sof_search STATIC
   src/search/private/evaluate.cpp
   src/search/private/limits.cpp
   src/search/private/job.cpp
+  src/search/private/job_runner.cpp
   src/search/private/move_picker.cpp
   src/search/private/transposition_table.cpp
   src/search/private/types.cpp

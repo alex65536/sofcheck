@@ -1,15 +1,12 @@
 #include "search/search.h"
 
-#include <chrono>
 #include <optional>
-#include <thread>
 #include <vector>
 
 #include "core/board.h"
 #include "core/move.h"
-#include "search/private/job.h"
+#include "search/private/job_runner.h"
 #include "search/private/limits.h"
-#include "search/private/transposition_table.h"
 #include "util/logging.h"
 #include "util/misc.h"
 
@@ -23,117 +20,30 @@ using SoFCore::Board;
 using SoFCore::Move;
 using SoFUtil::logError;
 using SoFUtil::panic;
-using std::chrono::steady_clock;
 
 // Type of log entry
 constexpr const char *ENGINE = "Engine";
 
-class EnginePrivate {
-public:
-  void setPosition(const Board &board, const SoFCore::Move *moves, size_t count) {
-    board_ = board;
-    moves_.assign(moves, moves + count);
-    curBoard_ = board;
-    for (size_t i = 0; i < count; ++i) {
-      moveMake(curBoard_, moves[i]);
-    }
-  }
-
-  void start(const SearchLimits &limits) {
-    if (SOF_UNLIKELY(!d_->server_)) {
-      panic("Cannot start search: server is null");
-    }
-    clear();
-    limits_ = limits;
-    job_.emplace(control_, tt_, limits_, d_->server_);
-    threads_.emplace_back([this]() {
-      // Controller thread
-      runControlThread();
-    });
-    threads_.emplace_back([board = board_, moves = moves_, &job = this->job_]() {
-      // Job thread
-      job->run(board, moves.data(), moves.size());
-    });
-    hasJob_ = true;
-  }
-
-  inline Board curBoard() const { return curBoard_; }
-
-  void stop() { control_.stop(); }
-
-  void clear() {
-    if (!hasJob_) {
-      return;
-    }
-    control_.stop();
-    for (std::thread &thread : threads_) {
-      thread.join();
-    }
-    threads_.clear();
-    control_.reset();
-    job_.reset();
-    hasJob_ = false;
-  }
-
-  explicit EnginePrivate(Engine *engine)
-      : d_(engine),
-        board_(Board::initialPosition()),
-        curBoard_(Board::initialPosition()),
-        job_(std::nullopt),
-        hasJob_(false) {}
-
-private:
-  // Main function of the controller thread. It collects search statistics.
-  void runControlThread() {
-    auto startTime = steady_clock::now();
-    auto lastStatsUpdated = startTime;
-
-    while (!control_.isStopped()) {
-      std::this_thread::sleep_for(30ms);
-
-      auto now = steady_clock::now();
-      const uint64_t nodes = job_->stats().nodes();
-      if (nodes > limits_.nodes ||
-          (limits_.time != Private::TIME_UNLIMITED && now - startTime > limits_.time)) {
-        control_.stop();
-      }
-      bool sendStats = false;
-      while (now - lastStatsUpdated > 2s) {
-        sendStats = true;
-        lastStatsUpdated += 2s;
-      }
-      if (sendStats) {
-        d_->server_->sendString("Hashtable hits: " + std::to_string(job_->stats().cacheHits()));
-        d_->server_->sendNodeCount(nodes);
-      }
-    }
-  }
-
-  Engine *d_;
-  Board board_;
-  std::vector<Move> moves_;
-  Board curBoard_;
-  std::vector<std::thread> threads_;
-  Private::JobControl control_;
-  std::optional<Private::Job> job_;
-  Private::TranspositionTable tt_;
-  SearchLimits limits_;
-  bool hasJob_;
+struct Engine::Impl {
+  std::optional<Private::JobRunner> runner;
+  Board board = Board::initialPosition();
+  Board curBoard = Board::initialPosition();
+  std::vector<Move> moves;
 };
 
 ApiResult Engine::connect(Server *server) {
   server_ = server;
+  p_->runner.emplace(server_);
   return ApiResult::Ok;
 }
 
 void Engine::disconnect() {
-  // We must stop all the threads and clear the state on disconnect
-  p_->clear();
+  p_->runner->join();
+  p_->runner.reset();
   server_ = nullptr;
 }
 
-Engine::Engine()
-    : options_(makeOptions(this)), server_(nullptr), p_(std::make_unique<EnginePrivate>(this)) {}
+Engine::Engine() : options_(makeOptions(this)), server_(nullptr), p_(std::make_unique<Impl>()) {}
 
 Engine::~Engine() {
   if (SOF_UNLIKELY(server_)) {
@@ -142,7 +52,11 @@ Engine::~Engine() {
 }
 
 SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
-  return SoFBotApi::OptionBuilder(engine).options();
+  return SoFBotApi::OptionBuilder(engine)
+      .addInt("Hash", 1, Private::TranspositionTable::DEFAULT_SIZE >> 20, 131'072)
+      .addInt("Threads", 1, 1, 512)
+      .addAction("Clear hash")
+      .options();
 }
 
 ApiResult Engine::newGame() { return ApiResult::Ok; }
@@ -152,46 +66,62 @@ ApiResult Engine::reportError(const char *message) {
   return ApiResult::Ok;
 }
 
-ApiResult Engine::searchInfinite() {
-  p_->start(SearchLimits::withInfiniteTime());
+ApiResult Engine::doSearch(const Private::SearchLimits &limits) {
+  p_->runner->start(p_->board, p_->moves, limits, options_.getInt("Threads")->value);
   return ApiResult::Ok;
 }
 
+ApiResult Engine::searchInfinite() { return doSearch(SearchLimits::withInfiniteTime()); }
+
 ApiResult Engine::searchFixedDepth(size_t depth) {
-  p_->start(SearchLimits::withFixedDepth(depth));
-  return ApiResult::Ok;
+  return doSearch(SearchLimits::withFixedDepth(depth));
 }
 
 ApiResult Engine::searchFixedNodes(uint64_t nodes) {
-  p_->start(SearchLimits::withFixedNodes(nodes));
-  return ApiResult::Ok;
+  return doSearch(SearchLimits::withFixedNodes(nodes));
 }
 
 ApiResult Engine::searchFixedTime(std::chrono::milliseconds time) {
-  p_->start(SearchLimits::withFixedTime(time));
-  return ApiResult::Ok;
+  return doSearch(SearchLimits::withFixedTime(time));
 }
 
 ApiResult Engine::searchTimeControl(const TimeControl &control) {
-  p_->start(SearchLimits::withTimeControl(p_->curBoard(), control));
-  return ApiResult::Ok;
+  return doSearch(SearchLimits::withTimeControl(p_->curBoard, control));
 }
 
 ApiResult Engine::setPosition(const SoFCore::Board &board, const SoFCore::Move *moves,
                               size_t count) {
-  p_->setPosition(board, moves, count);
+  p_->board = board;
+  p_->curBoard = board;
+  p_->moves.assign(moves, moves + count);
+  for (size_t i = 0; i < count; ++i) {
+    moveMake(p_->curBoard, moves[i]);
+  }
   return ApiResult::Ok;
 }
 
 ApiResult Engine::stopSearch() {
-  p_->stop();
+  p_->runner->stop();
   return ApiResult::Ok;
 }
 
 ApiResult Engine::setBool(const std::string &, bool) { return ApiResult::Ok; }
 ApiResult Engine::setEnum(const std::string &, size_t) { return ApiResult::Ok; }
-ApiResult Engine::setInt(const std::string &, int64_t) { return ApiResult::Ok; }
+
+ApiResult Engine::setInt(const std::string &key, const int64_t value) {
+  if (key == "Hash") {
+    p_->runner->hashResize(value >> 20);
+  }
+  return ApiResult::Ok;
+}
+
 ApiResult Engine::setString(const std::string &, const std::string &) { return ApiResult::Ok; }
-ApiResult Engine::triggerAction(const std::string &) { return ApiResult::Ok; }
+
+ApiResult Engine::triggerAction(const std::string &key) {
+  if (key == "Clear hash") {
+    p_->runner->hashClear();
+  }
+  return ApiResult::Ok;
+}
 
 }  // namespace SoFSearch
