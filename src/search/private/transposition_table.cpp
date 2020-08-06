@@ -69,6 +69,7 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
   }
 
   table_ = std::move(newData);
+  size_ = newSize;
 }
 
 void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data value) {
