@@ -63,10 +63,7 @@ private:
         return true;
       }
     }
-    if (comm_.depth() != depth_) {
-      return true;
-    }
-    return false;
+    return comm_.depth() != depth_;
   }
 
   template <NodeKind Node>
@@ -99,6 +96,7 @@ private:
   steady_clock::time_point startTime_;
 };
 
+// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 class RootNodeMovePicker {
 public:
   RootNodeMovePicker(MovePicker picker, const size_t jobId) : moveCount_(0), pos_(0) {
