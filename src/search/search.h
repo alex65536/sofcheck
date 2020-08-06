@@ -14,7 +14,7 @@ using SoFBotApi::Options;
 using SoFBotApi::Server;
 
 namespace Private {
-class SearchLimits;
+struct SearchLimits;
 }
 
 // The chess engine class which uses `SoFBotApi::Client` as an interface
