@@ -290,16 +290,22 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
 }
 
 std::vector<Move> unwindPv(Board board, const Move bestMove, const TranspositionTable &tt) {
+  RepetitionTable repetitions;
+  repetitions.insert(board.hash);
   std::vector<Move> pv{bestMove};
   moveMake(board, bestMove);
+  repetitions.insert(board.hash);
   for (;;) {
     TranspositionTable::Data data = tt.load(board.hash);
     if (!data.isValid() || data.move() == Move::null()) {
       break;
     }
     const Move move = data.move();
-    pv.push_back(move);
     moveMake(board, move);
+    if (!repetitions.insert(board.hash)) {
+      break;
+    }
+    pv.push_back(move);
   }
   return pv;
 }
