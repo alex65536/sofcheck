@@ -110,7 +110,7 @@ ApiResult Engine::setEnum(const std::string &, size_t) { return ApiResult::Ok; }
 
 ApiResult Engine::setInt(const std::string &key, const int64_t value) {
   if (key == "Hash") {
-    p_->runner->hashResize(value >> 20);
+    p_->runner->hashResize(value << 20);
   }
   return ApiResult::Ok;
 }
