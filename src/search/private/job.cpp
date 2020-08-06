@@ -57,7 +57,7 @@ private:
       return true;
     }
     ++counter_;
-    if (counter_ & 1023) {
+    if (!(counter_ & 4095)) {
       if (limits_.time != TIME_UNLIMITED && steady_clock::now() - startTime_ >= limits_.time) {
         comm_.stop();
         return true;
