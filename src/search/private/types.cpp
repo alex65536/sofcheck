@@ -12,6 +12,9 @@ void RepetitionTable::grow() {
   std::fill(newTab.get(), newTab.get() + bucketCount_ * BUCKET_SIZE, 0);
   for (size_t i = 0; i < oldBucketCount * BUCKET_SIZE; ++i) {
     const board_hash_t item = tab_[i];
+    if (item == 0) {
+      continue;
+    }
     const size_t idx = item & mask_;
     for (size_t j = 0; j < BUCKET_SIZE; ++j) {
       if (newTab[idx + j] == 0) {

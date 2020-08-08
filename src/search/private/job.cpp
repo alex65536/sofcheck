@@ -35,11 +35,11 @@ public:
         results_(job.results_),
         repetitions_(repetitions),
         limits_(limits),
-        jobId_(job.id_) {}
+        jobId_(job.id_),
+        startTime_(steady_clock::now()) {}
 
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
-    startTime_ = steady_clock::now();
     const score_t score =
         search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board_));
     bestMove = stack_[0].bestMove;
@@ -96,9 +96,9 @@ private:
   steady_clock::time_point startTime_;
 };
 
-// NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
 class RootNodeMovePicker {
 public:
+  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
   RootNodeMovePicker(MovePicker picker, const size_t jobId) : moveCount_(0), pos_(0) {
     for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
       if (move == Move::null()) {
@@ -270,10 +270,14 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     if (score > alpha) {
       alpha = score;
       frame.bestMove = move;
-      frame.killers.add(move);
     }
     if (alpha >= beta) {
-      history_[move] += depth * depth;
+      if constexpr (Node != NodeKind::Root) {
+        if (picker.stage() >= MovePickerStage::Killer) {
+          frame.killers.add(move);
+          history_[move] += depth * depth;
+        }
+      }
       ttStore(beta, false);
       return beta;
     }

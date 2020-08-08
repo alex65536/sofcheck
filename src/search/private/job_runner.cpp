@@ -47,6 +47,7 @@ void JobRunner::hashResize(const size_t size) {
 
 void JobRunner::join() {
   if (mainThread_.joinable()) {
+    comm_.stop();
     mainThread_.join();
   }
 }
