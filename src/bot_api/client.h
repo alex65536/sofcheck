@@ -8,7 +8,6 @@
 #include "bot_api/types.h"
 #include "core/board.h"
 #include "core/move.h"
-#include "util/misc.h"
 
 namespace SoFBotApi {
 
@@ -73,20 +72,17 @@ public:
   virtual ApiResult searchInfinite() = 0;
 
   // Search on the fixed depth
-  virtual ApiResult searchFixedDepth(size_t depth) {
-    SOF_UNUSED(depth);
+  virtual ApiResult searchFixedDepth([[maybe_unused]] size_t depth) {
     return ApiResult::NotSupported;
   }
 
   // Search no more than `nodes` nodes
-  virtual ApiResult searchFixedNodes(uint64_t nodes) {
-    SOF_UNUSED(nodes);
+  virtual ApiResult searchFixedNodes([[maybe_unused]] uint64_t nodes) {
     return ApiResult::NotSupported;
   }
 
   // Search for fixed amount of time
-  virtual ApiResult searchFixedTime(std::chrono::milliseconds time) {
-    SOF_UNUSED(time);
+  virtual ApiResult searchFixedTime([[maybe_unused]] std::chrono::milliseconds time) {
     return ApiResult::NotSupported;
   }
 

@@ -4,13 +4,11 @@
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/score.h"
-#include "util/misc.h"
 
 namespace SoFSearch::Private {
 
 // Returns the position cost of `b`. `psq` must be strictly equal to `boardGetPsqScore(b)`.
-inline score_pair_t evaluate(const SoFCore::Board &b, const score_pair_t psq) {
-  SOF_UNUSED(b);
+inline score_pair_t evaluate([[maybe_unused]] const SoFCore::Board &b, const score_pair_t psq) {
   return scorePairFirst(psq);
 }
 

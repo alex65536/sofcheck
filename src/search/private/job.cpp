@@ -131,8 +131,7 @@ private:
 template <Searcher::NodeKind Kind>
 struct MovePickerFactory {
   template <typename... Args>
-  inline static MovePicker create(const size_t jobId, Args &&... args) {
-    SOF_UNUSED(jobId);
+  inline static MovePicker create([[maybe_unused]] const size_t jobId, Args &&... args) {
     return MovePicker(std::forward<Args>(args)...);
   }
 };

@@ -28,10 +28,7 @@ static const char BANNER[] = R"R(
   \__/  \__/  |        \__/  |  |  \__   \__  | \
 )R";
 
-int main(int argc, const char *argv[]) {
-  SOF_UNUSED(argc);
-  SOF_UNUSED(argv);
-
+int main() {
   SoFCore::init();
 
   std::cout << BANNER << std::endl;

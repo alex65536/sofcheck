@@ -20,9 +20,6 @@
 // statement, then the behaviour is undefined
 #define SOF_UNREACHABLE() __builtin_unreachable()
 
-// Indicate that the variable is unused and ignore compiler/linter warnings about it
-#define SOF_UNUSED(x) (void)(x)
-
 // Assume that x is true
 #define SOF_ASSUME(x)          \
   {                            \
