@@ -9,10 +9,6 @@
 
 namespace SoFSearch {
 
-using SoFBotApi::ApiResult;
-using SoFBotApi::Options;
-using SoFBotApi::Server;
-
 namespace Private {
 struct SearchLimits;
 }
@@ -23,48 +19,48 @@ public:
   virtual const char *name() const override { return "SoFCheck pre-alpha"; }
   const char *author() const override { return "SoFCheck developers"; }
 
-  Options &options() override { return options_; }
-  const Options &options() const override { return options_; }
+  SoFBotApi::Options &options() override { return options_; }
+  const SoFBotApi::Options &options() const override { return options_; }
 
   void enterDebugMode() override;
   void leaveDebugMode() override;
 
-  ApiResult newGame() override;
+  SoFBotApi::ApiResult newGame() override;
 
-  ApiResult setPosition(const SoFCore::Board &board, const SoFCore::Move *moves,
-                        size_t count) override;
+  SoFBotApi::ApiResult setPosition(const SoFCore::Board &board, const SoFCore::Move *moves,
+                                   size_t count) override;
 
-  ApiResult searchInfinite() override;
-  ApiResult searchFixedDepth(size_t depth) override;
-  ApiResult searchFixedNodes(uint64_t nodes) override;
-  ApiResult searchFixedTime(std::chrono::milliseconds time) override;
-  ApiResult searchTimeControl(const SoFBotApi::TimeControl &control) override;
+  SoFBotApi::ApiResult searchInfinite() override;
+  SoFBotApi::ApiResult searchFixedDepth(size_t depth) override;
+  SoFBotApi::ApiResult searchFixedNodes(uint64_t nodes) override;
+  SoFBotApi::ApiResult searchFixedTime(std::chrono::milliseconds time) override;
+  SoFBotApi::ApiResult searchTimeControl(const SoFBotApi::TimeControl &control) override;
 
-  ApiResult stopSearch() override;
-  ApiResult reportError(const char *message) override;
+  SoFBotApi::ApiResult stopSearch() override;
+  SoFBotApi::ApiResult reportError(const char *message) override;
 
   Engine();
   ~Engine();
 
 private:
-  ApiResult connect(Server *server) override;
+  SoFBotApi::ApiResult connect(SoFBotApi::Server *server) override;
   void disconnect() override;
 
-  ApiResult setBool(const std::string &key, bool value) override;
-  ApiResult setEnum(const std::string &key, size_t index) override;
-  ApiResult setInt(const std::string &key, int64_t value) override;
-  ApiResult setString(const std::string &key, const std::string &value) override;
-  ApiResult triggerAction(const std::string &key) override;
+  SoFBotApi::ApiResult setBool(const std::string &key, bool value) override;
+  SoFBotApi::ApiResult setEnum(const std::string &key, size_t index) override;
+  SoFBotApi::ApiResult setInt(const std::string &key, int64_t value) override;
+  SoFBotApi::ApiResult setString(const std::string &key, const std::string &value) override;
+  SoFBotApi::ApiResult triggerAction(const std::string &key) override;
 
 private:
   static SoFBotApi::OptionStorage makeOptions(Engine *engine);
 
   struct Impl;
 
-  ApiResult doSearch(const Private::SearchLimits &limits);
+  SoFBotApi::ApiResult doSearch(const Private::SearchLimits &limits);
 
   SoFBotApi::OptionStorage options_;
-  Server *server_;
+  SoFBotApi::Server *server_;
   std::unique_ptr<Impl> p_;
 };
 

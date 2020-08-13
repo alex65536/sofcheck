@@ -8,9 +8,6 @@
 
 namespace SoFSearch::Private {
 
-using SoFCore::Board;
-using SoFCore::Move;
-
 // Types of moves that can be returned by `MovePicker`. This enumeration represents different stages
 // of move sorting.
 enum class MovePickerStage {
@@ -34,7 +31,8 @@ public:
 
   // Returns the next move. If the move is equal to `Move::invalid()`, then there are no moves left.
   // If the move is equal to `Move::null()`, then it must be skipped.
-  inline Move next() {
+  inline SoFCore::Move next() {
+    using SoFCore::Move;
     if (movePosition_ == moveCount_) {
       nextStage();
     }
@@ -42,14 +40,14 @@ public:
     return (stage_ != MovePickerStage::HashMove && move == hashMove_) ? Move::null() : move;
   }
 
-  MovePicker(const Board &board, const Move hashMove, const KillerLine &killers,
+  MovePicker(const SoFCore::Board &board, const SoFCore::Move hashMove, const KillerLine &killers,
              const HistoryTable &history)
       : stage_(MovePickerStage::Start),
         hashMove_(hashMove),
         board_(board),
         killers_(killers),
         history_(history),
-        savedKillers_{Move::null(), Move::null()},
+        savedKillers_{SoFCore::Move::null(), SoFCore::Move::null()},
         moveCount_(0),
         movePosition_(0) {}
 
@@ -57,12 +55,12 @@ private:
   void nextStage();
 
   MovePickerStage stage_;
-  Move hashMove_;
-  const Board &board_;
+  SoFCore::Move hashMove_;
+  const SoFCore::Board &board_;
   const KillerLine &killers_;
   const HistoryTable &history_;
-  Move moves_[256];
-  Move savedKillers_[2];
+  SoFCore::Move moves_[256];
+  SoFCore::Move savedKillers_[2];
   size_t moveCount_;
   size_t movePosition_;
 };
@@ -73,17 +71,17 @@ class QuiescenseMovePicker {
 public:
   // Returns the next move. If the move is equal to `Move::invalid()`, then there are no moves left.
   // If the move is equal to `Move::null()`, then it must be skipped.
-  inline Move next() {
+  inline SoFCore::Move next() {
     if (movePosition_ == moveCount_) {
-      return Move::invalid();
+      return SoFCore::Move::invalid();
     }
     return moves_[movePosition_++];
   }
 
-  QuiescenseMovePicker(const Board &board);
+  QuiescenseMovePicker(const SoFCore::Board &board);
 
 private:
-  Move moves_[128];
+  SoFCore::Move moves_[128];
   size_t moveCount_;
   size_t movePosition_;
 };

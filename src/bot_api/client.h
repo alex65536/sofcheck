@@ -85,7 +85,7 @@ public:
   }
 
   // Search for fixed amount of time
-  virtual ApiResult searchFixedTime(milliseconds time) {
+  virtual ApiResult searchFixedTime(std::chrono::milliseconds time) {
     SOF_UNUSED(time);
     return ApiResult::NotSupported;
   }

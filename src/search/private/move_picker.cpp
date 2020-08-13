@@ -7,6 +7,9 @@
 
 namespace SoFSearch::Private {
 
+using SoFCore::Board;
+using SoFCore::Move;
+
 void sortMvvLva(const Board &board, Move *moves, const size_t count) {
   constexpr uint8_t victimOrd[16] = {8, 8, 0, 16, 24, 32, 40, 0, 8, 8, 0, 16, 24, 32, 40, 0};
   constexpr uint8_t attackerOrd[16] = {0, 6, 1, 5, 4, 3, 2, 0, 0, 6, 1, 5, 4, 3, 2, 0};

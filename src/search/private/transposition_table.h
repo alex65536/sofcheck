@@ -14,18 +14,14 @@
 
 namespace SoFSearch::Private {
 
-using SoFBotApi::PositionCostBound;
-using SoFCore::board_hash_t;
-using SoFCore::Move;
-
 // Stores the information about the already searched nodes in a hash table
 class TranspositionTable : public SoFUtil::NoCopy {
 public:
   // Transposition table entry which contains a search result for some position
   class Data {
   public:
-    inline constexpr Move move() const {
-      Move result = move_;
+    inline constexpr SoFCore::Move move() const {
+      SoFCore::Move result = move_;
       result.tag = 0;
       return result;
     }
@@ -34,12 +30,12 @@ public:
     inline constexpr uint8_t depth() const { return move_.tag; }
     inline constexpr bool isValid() const { return !(flags_ & FLAG_IS_INVALID); }
     inline constexpr bool isPv() const { return flags_ & FLAG_IS_PV; }
-    inline constexpr PositionCostBound bound() const {
-      return static_cast<PositionCostBound>(flags_ & 3);
+    inline constexpr SoFBotApi::PositionCostBound bound() const {
+      return static_cast<SoFBotApi::PositionCostBound>(flags_ & 3);
     }
 
-    inline constexpr Data(const Move move, const score_t score, const uint8_t depth,
-                          const PositionCostBound bound, const bool isPv)
+    inline constexpr Data(const SoFCore::Move move, const score_t score, const uint8_t depth,
+                          const SoFBotApi::PositionCostBound bound, const bool isPv)
         : move_(move),
           score_(score),
           flags_(static_cast<uint8_t>(bound) | (isPv ? FLAG_IS_PV : 0)),
@@ -49,9 +45,12 @@ public:
 
     inline Data() noexcept {}
 
-    inline static constexpr Data zero() { return Data(PrivateTag{}, Move::null(), 0, 0, 0); }
+    inline static constexpr Data zero() {
+      return Data(PrivateTag{}, SoFCore::Move::null(), 0, 0, 0);
+    }
+
     inline static constexpr Data invalid() {
-      return Data(PrivateTag{}, Move::null(), 0, FLAG_IS_INVALID, 0);
+      return Data(PrivateTag{}, SoFCore::Move::null(), 0, FLAG_IS_INVALID, 0);
     }
 
     // Serializes the structure as `uint64_t`. Should work efficiently for little-endian
@@ -74,11 +73,11 @@ public:
     // Tag to explicitly mark the private constructor
     struct PrivateTag {};
 
-    inline constexpr Data(PrivateTag, const Move move, const score_t score, const uint8_t flags,
-                          const uint8_t padding)
+    inline constexpr Data(PrivateTag, const SoFCore::Move move, const score_t score,
+                          const uint8_t flags, const uint8_t padding)
         : move_(move), score_(score), flags_(flags), padding_(padding) {}
 
-    Move move_;
+    SoFCore::Move move_;
     score_t score_;
     uint8_t flags_;
     uint8_t padding_;
@@ -108,22 +107,22 @@ public:
 
   // Try to load the entry with the key `key` into CPU cache. You can invoke the method early before
   // you plan to use the cache entry and do soemthing before it loads into CPU cache.
-  void prefetch(board_hash_t key);
+  void prefetch(SoFCore::board_hash_t key);
 
   // Returns the entry with the key `key`. If such entry doesn't exist, returns `Data::invalid()`.
-  Data load(board_hash_t key) const;
+  Data load(SoFCore::board_hash_t key) const;
 
   // Stores `value` for the key `key`.
-  void store(board_hash_t key, Data value);
+  void store(SoFCore::board_hash_t key, Data value);
 
 private:
   struct Entry {
     std::atomic<Data> value;
-    std::atomic<board_hash_t> key;
+    std::atomic<SoFCore::board_hash_t> key;
 
     inline void clear() { assignRelaxed(Data::zero(), 0); }
 
-    inline void assignRelaxed(const Data value, const board_hash_t key) {
+    inline void assignRelaxed(const Data value, const SoFCore::board_hash_t key) {
       this->value.store(value, std::memory_order_relaxed);
       this->key.store(key, std::memory_order_relaxed);
     }
@@ -135,7 +134,7 @@ private:
 
   friend void doClear(Entry *table, size_t size);
 
-  static_assert(std::atomic<board_hash_t>::is_always_lock_free);
+  static_assert(std::atomic<SoFCore::board_hash_t>::is_always_lock_free);
   static_assert(std::atomic<Data>::is_always_lock_free);
   static_assert(sizeof(Entry) == 16);
 
