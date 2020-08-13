@@ -3,7 +3,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -162,66 +161,76 @@ template <typename Mutex>
 class SyncOptionStorage final : public Options {
 public:
   OptionType type(const std::string &key) const override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.type(key);
   }
 
   std::vector<std::pair<std::string, OptionType>> list() const override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.list();
   }
 
   MaybeBoolOption getBool(const std::string &key) const override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.getBool(key);
   }
 
   MaybeIntOption getInt(const std::string &key) const override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.getInt(key);
   }
 
   MaybeEnumOption getEnum(const std::string &key) const override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.getEnum(key);
   }
 
   MaybeStringOption getString(const std::string &key) const override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.getString(key);
   }
 
   ApiResult setBool(const std::string &key, bool value) override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.setBool(key, value);
   }
 
   ApiResult setInt(const std::string &key, int64_t value) override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.setInt(key, value);
   }
 
   ApiResult setEnum(const std::string &key, size_t index) override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.setEnum(key, index);
   }
 
   ApiResult setEnum(const std::string &key, const std::string &value) override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.setEnum(key, value);
   }
 
   ApiResult setString(const std::string &key, const std::string &value) override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.setString(key, value);
   }
 
   ApiResult triggerAction(const std::string &key) override {
-    std::lock_guard guard(mutex_);
+    LockGuard guard(mutex_);
     return options_.triggerAction(key);
   }
 
 private:
+  // We don't want to depend on `<mutex>` header, so use our own lock guard
+  class LockGuard : public SoFUtil::NoCopyMove {
+  public:
+    explicit LockGuard(Mutex &mutex) : mutex_(mutex) { mutex_.lock(); }
+    ~LockGuard() { mutex_.unlock(); }
+
+  private:
+    Mutex &mutex_;
+  };
+
   friend class OptionBuilder;
 
   SyncOptionStorage(OptionStorage options, Mutex &mutex)
