@@ -26,8 +26,8 @@ class Client;
 //
 // Thread-safety note:
 // - if you implement a server, then the API calls don't need to be thread safe. They will be called
-// by the client in a synchronized manner. In contrast, the client you are connected to must be thread
-// safe.
+// by the client in a synchronized manner. In contrast, the client you are connected to must be
+// thread safe.
 // - if you implement a server connector, then the API calls must be thread safe. The server you are
 // connected to is not thread-safe.
 class Server {
