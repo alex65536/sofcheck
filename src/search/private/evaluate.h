@@ -4,17 +4,23 @@
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/score.h"
+#include "util/misc.h"
 
 namespace SoFSearch::Private {
 
-inline score_pair_t evaluate(const SoFCore::Board &, const score_pair_t psq) {
+// Returns the position cost of `b`. `psq` must be strictly equal to `boardGetPsqScore(b)`.
+inline score_pair_t evaluate(const SoFCore::Board &b, const score_pair_t psq) {
+  SOF_UNUSED(b);
   return scorePairFirst(psq);
 }
 
+// Returns the position cost of `b` based on piece-square tables.
 score_pair_t boardGetPsqScore(const SoFCore::Board &b);
 
-score_pair_t boardUpdatePsqScore(const SoFCore::Board &b, const SoFCore::Move move,
-                                 score_pair_t score);
+// Returns the position cost of the board which is obtained by applying move `move` to board `b`.
+// This position cost is based on piece-square tables. `psq` must be strictly equal to
+// `boardGetPsqScore(b)`.
+score_pair_t boardUpdatePsqScore(const SoFCore::Board &b, SoFCore::Move move, score_pair_t psq);
 
 }  // namespace SoFSearch::Private
 

@@ -24,9 +24,8 @@ struct SearchLimits {
   // Time control (default-constructed if not present)
   SoFBotApi::TimeControl timeControl;
 
-  inline static SearchLimits withInfiniteTime() {
-    return SearchLimits{};
-  }
+  // Constructs `SearchLimits` with infinite time
+  inline static SearchLimits withInfiniteTime() { return SearchLimits{}; }
 
   // Constructs `SearchLimits` for fixed depth
   inline static SearchLimits withFixedDepth(const size_t depth) {
@@ -43,7 +42,8 @@ struct SearchLimits {
     return SearchLimits{DEPTH_UNLIMITED, NODES_UNLIMITED, time, SoFBotApi::TimeControl{}};
   }
 
-  // Constructs `SearchLimits` for given time control
+  // Constructs `SearchLimits` for given time control. This function also determines thinking time
+  // based on the given time control.
   static SearchLimits withTimeControl(const SoFCore::Board &board,
                                       const SoFBotApi::TimeControl &timeControl);
 };

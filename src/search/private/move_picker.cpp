@@ -46,7 +46,7 @@ void MovePicker::nextStage() {
         break;
       }
       case MovePickerStage::Capture: {
-        // Generate captures and arrange them by MVV/LVA
+        // Generate captures and sort them by MVV/LVA
         moveCount_ = genCaptures(board_, moves_);
         sortMvvLva(board_, moves_, moveCount_);
         break;

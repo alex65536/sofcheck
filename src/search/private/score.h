@@ -56,9 +56,9 @@ inline constexpr bool isScoreValid(const score_t score) {
   return true;
 }
 
-// Adjusts the score as follows:
+// Adjusts `score` as follows:
 // - if the score denotes a checkmate, then `delta` is added to the number of plies before checkmate
-// - otherwise, returns the initial value unchanged
+// - otherwise, returns `score` unchanged
 inline constexpr score_t adjustCheckmate(const score_t score, int16_t delta) {
   if (score >= SCORE_CHECKMATE_THRESHOLD) {
     delta *= -1;
@@ -68,7 +68,8 @@ inline constexpr score_t adjustCheckmate(const score_t score, int16_t delta) {
   return score + delta;
 }
 
-// The score must be valid here, otherwise the behaviour is undefined
+// Converts `score` into `SoFBotApi::PositionCost`. Note that the score must be valid here,
+// otherwise the behaviour is undefined
 inline constexpr SoFBotApi::PositionCost scoreToPositionCost(const score_t score) {
   using SoFBotApi::PositionCost;
   if (score <= -SCORE_CHECKMATE_THRESHOLD) {
@@ -109,21 +110,38 @@ inline constexpr score_t scorePairSecond(const score_pair_t pair) {
 }
 
 // Compile-time tests for score pairs
-// TODO : write real tests for score pairs. The runtime tests must be run with ctest
 static_assert(scorePairFirst(makeScorePair(1000, 8000)) == 1000);
 static_assert(scorePairFirst(makeScorePair(1000, -8000)) == 1000);
 static_assert(scorePairFirst(makeScorePair(-1000, 8000)) == -1000);
 static_assert(scorePairFirst(makeScorePair(-1000, -8000)) == -1000);
+static_assert(scorePairFirst(makeScorePair(-1000, 0)) == -1000);
+static_assert(scorePairFirst(makeScorePair(1000, 0)) == 1000);
+static_assert(scorePairFirst(makeScorePair(0, -1000)) == 0);
+static_assert(scorePairFirst(makeScorePair(0, 1000)) == 0);
+static_assert(scorePairFirst(makeScorePair(0, 0)) == 0);
+
 static_assert(scorePairSecond(makeScorePair(1000, 8000)) == 8000);
 static_assert(scorePairSecond(makeScorePair(1000, -8000)) == -8000);
 static_assert(scorePairSecond(makeScorePair(-1000, 8000)) == 8000);
 static_assert(scorePairSecond(makeScorePair(-1000, -8000)) == -8000);
+static_assert(scorePairSecond(makeScorePair(-1000, 0)) == 0);
+static_assert(scorePairSecond(makeScorePair(1000, 0)) == 0);
+static_assert(scorePairSecond(makeScorePair(0, -1000)) == -1000);
+static_assert(scorePairSecond(makeScorePair(0, 1000)) == 1000);
+static_assert(scorePairSecond(makeScorePair(0, 0)) == 0);
+
 static_assert(makeScorePair(-1, 5) + makeScorePair(3, -8) == makeScorePair(2, -3));
 static_assert(makeScorePair(-1, -5) + makeScorePair(-3, -8) == makeScorePair(-4, -13));
 static_assert(makeScorePair(1, -5) + makeScorePair(3, -8) == makeScorePair(4, -13));
 static_assert(makeScorePair(1, 5) + makeScorePair(-3, -8) == makeScorePair(-2, -3));
+static_assert(makeScorePair(1, -5) + makeScorePair(-3, 0) == makeScorePair(-2, -5));
+static_assert(makeScorePair(-1, -5) + makeScorePair(0, 6) == makeScorePair(-1, 1));
+
 static_assert(-makeScorePair(3, 4) == makeScorePair(-3, -4));
-static_assert(-makeScorePair(3, -4) == makeScorePair(-3, 4));
+static_assert(-makeScorePair(3, 4) == makeScorePair(-3, -4));
+static_assert(-makeScorePair(3, 0) == makeScorePair(-3, 0));
+static_assert(-makeScorePair(0, -3) == makeScorePair(0, 3));
+static_assert(-makeScorePair(0, 0) == makeScorePair(0, 0));
 
 }  // namespace SoFSearch::Private
 

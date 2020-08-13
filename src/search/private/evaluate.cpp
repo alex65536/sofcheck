@@ -21,26 +21,26 @@ score_pair_t boardGetPsqScore(const Board &b) {
   return result;
 }
 
-score_pair_t boardUpdatePsqScore(const Board &b, const Move move, score_pair_t score) {
+score_pair_t boardUpdatePsqScore(const Board &b, const Move move, score_pair_t psq) {
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
-    return score + SCORE_CASTLING_KINGSIDE_UPD[static_cast<size_t>(color)];
+    return psq + SCORE_CASTLING_KINGSIDE_UPD[static_cast<size_t>(color)];
   }
   if (move.kind == MoveKind::CastlingQueenside) {
-    return score + SCORE_CASTLING_QUEENSIDE_UPD[static_cast<size_t>(color)];
+    return psq + SCORE_CASTLING_QUEENSIDE_UPD[static_cast<size_t>(color)];
   }
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
-  score -= PIECE_SQUARE_TABLE[srcCell][move.src] + PIECE_SQUARE_TABLE[dstCell][move.dst];
+  psq -= PIECE_SQUARE_TABLE[srcCell][move.src] + PIECE_SQUARE_TABLE[dstCell][move.dst];
   if (isMoveKindPromote(move.kind)) {
-    return score + PIECE_SQUARE_TABLE[makeCell(color, moveKindPromotePiece(move.kind))][move.dst];
+    return psq + PIECE_SQUARE_TABLE[makeCell(color, moveKindPromotePiece(move.kind))][move.dst];
   }
-  score += PIECE_SQUARE_TABLE[srcCell][move.dst];
+  psq += PIECE_SQUARE_TABLE[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {
     const coord_t tmp = (color == Color::White) ? (move.dst + 8) : (move.dst - 8);
-    score -= PIECE_SQUARE_TABLE[makeCell(invert(color), Piece::Pawn)][tmp];
+    psq -= PIECE_SQUARE_TABLE[makeCell(invert(color), Piece::Pawn)][tmp];
   }
-  return score;
+  return psq;
 }
 
 }  // namespace SoFSearch::Private

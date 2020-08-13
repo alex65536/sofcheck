@@ -63,6 +63,7 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
     std::unique_lock lock(hashChangeLock_);
     tt_.resize(hashSize_, clearHash_);
     hashSize_ = tt_.sizeBytes();
+    clearHash_ = false;
     canChangeHash_ = true;
   });
 
@@ -81,6 +82,7 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
   static constexpr auto STATS_UPDATE_INTERVAL = 3s;
   static constexpr auto THREAD_TICK_INTERVAL = 30ms;
 
+  // Run loop in which we check the jobs' status
   const auto startTime = steady_clock::now();
   auto statsLastUpdatedTime = startTime;
   while (!comm_.isStopped()) {
@@ -95,14 +97,16 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
 
     // Check if it's time to stop
     if (stats.nodes > limits.nodes ||
-        (limits.time != Private::TIME_UNLIMITED && now - startTime > limits.time)) {
+        (limits.time != TIME_UNLIMITED && now - startTime > limits.time)) {
       comm_.stop();
     }
 
     // Print stats
     if (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
-      server_->sendNodeCount(stats.nodes);
-      server_->sendString("Hash table hits: " + std::to_string(stats.ttHits));
+      server_.sendNodeCount(stats.nodes);
+      if (isDebugMode()) {
+        server_.sendString("Hash table hits: " + std::to_string(stats.ttHits));
+      }
       while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }
@@ -124,7 +128,7 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
       bestMove = job.results().bestMove();
     }
   }
-  server_->finishSearch(bestMove);
+  server_.finishSearch(bestMove);
 }
 
 void JobRunner::start(const Board &board, const std::vector<Move> &moves,

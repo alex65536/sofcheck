@@ -33,7 +33,7 @@ struct Engine::Impl {
 
 ApiResult Engine::connect(Server *server) {
   server_ = server;
-  p_->runner.emplace(server_);
+  p_->runner.emplace(*server_);
   return ApiResult::Ok;
 }
 
@@ -60,6 +60,10 @@ SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
 }
 
 ApiResult Engine::newGame() { return ApiResult::Ok; }
+
+void Engine::enterDebugMode() { p_->runner->setDebugMode(true); }
+
+void Engine::leaveDebugMode() { p_->runner->setDebugMode(false); }
 
 ApiResult Engine::reportError(const char *message) {
   logError(ENGINE) << "Got server error: " << message;

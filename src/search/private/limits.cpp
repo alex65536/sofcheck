@@ -12,7 +12,7 @@ SearchLimits SearchLimits::withTimeControl(const SoFCore::Board &board,
   const milliseconds inc = timeControl[board.side].inc;
   if (totalTime == milliseconds::max()) {
     // This happens when the server didn't set time properly. I don't know whether such cases are
-    // valid, but it's better to come up with some definite value rather than infinity.
+    // valid, but it's better to come up with some definite value other than infinity.
     totalTime = 1h;
   }
   milliseconds time = totalTime;

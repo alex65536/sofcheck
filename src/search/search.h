@@ -26,8 +26,8 @@ public:
   Options &options() override { return options_; }
   const Options &options() const override { return options_; }
 
-  void enterDebugMode() override {}
-  void leaveDebugMode() override {}
+  void enterDebugMode() override;
+  void leaveDebugMode() override;
 
   ApiResult newGame() override;
 

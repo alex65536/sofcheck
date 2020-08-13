@@ -9,7 +9,6 @@
 #include "search/private/move_picker.h"
 #include "search/private/score.h"
 #include "search/private/types.h"
-#include "util/defer.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -89,7 +88,7 @@ private:
   SearchLimits limits_;
   size_t jobId_;
 
-  Frame stack_[MAX_DEPTH + 1];
+  Frame stack_[MAX_DEPTH + 10];
   HistoryTable history_;
   size_t depth_ = 0;
   mutable size_t counter_ = 0;
@@ -99,7 +98,7 @@ private:
 class RootNodeMovePicker {
 public:
   // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
-  RootNodeMovePicker(MovePicker picker, const size_t jobId) : moveCount_(0), pos_(0) {
+  RootNodeMovePicker(MovePicker picker, const size_t jobId) {
     for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
       if (move == Move::null()) {
         continue;
@@ -125,8 +124,8 @@ public:
 
 private:
   Move moves_[300];
-  size_t moveCount_;
-  size_t pos_;
+  size_t moveCount_ = 0;
+  size_t pos_ = 0;
 };
 
 template <Searcher::NodeKind Kind>
@@ -146,7 +145,7 @@ struct MovePickerFactory<Searcher::NodeKind::Root> {
   }
 };
 
-score_t quiescenseSearch(Board &board, score_t alpha, score_t beta, const score_pair_t psq) {
+score_t quiescenseSearch(Board &board, score_t alpha, const score_t beta, const score_pair_t psq) {
   score_t score = evaluate(board, psq);
   if (board.side == Color::Black) {
     score *= -1;
@@ -186,7 +185,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   Frame &frame = stack_[idepth];
   frame.bestMove = Move::null();
 
-  // 1. If the depth is zero, run quiescence search
+  // 1. Run quiescence search in leaf node
   if (depth == 0) {
     return quiescenseSearch(board_, alpha, beta, psq);
   }
@@ -212,8 +211,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
 
   // 2. Probe the transposition table
   Move hashMove = Move::null();
-  const TranspositionTable::Data data = tt_.load(board_.hash);
-  if (data.isValid()) {
+  if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
     results_.incTtHits();
     hashMove = data.move();
     if (Node == NodeKind::Simple && data.depth() >= depth) {
@@ -338,7 +336,7 @@ void Job::run(Board board, const std::vector<Move> &moves, const SearchLimits &l
       // FIXME: check that best move is not null and score is valid
       results_.setBestMove(depth, bestMove);
       std::vector<Move> pv = unwindPv(board, bestMove, table_);
-      server_->sendResult(
+      server_.sendResult(
           {depth, pv.data(), pv.size(), scoreToPositionCost(score), PositionCostBound::Exact});
     }
   }

@@ -18,8 +18,10 @@ using SoFBotApi::PositionCostBound;
 using SoFCore::board_hash_t;
 using SoFCore::Move;
 
+// Stores the information about the already searched nodes in a hash table
 class TranspositionTable : public SoFUtil::NoCopy {
 public:
+  // Transposition table entry which contains a search result for some position
   class Data {
   public:
     inline constexpr Move move() const {
@@ -90,24 +92,25 @@ public:
 
   TranspositionTable();
 
-  // Resize the hash table. The new table size (in bytes) will be the maximum power of two not
+  // Resizes the hash table. The new table size (in bytes) will be the maximum power of two not
   // exceeding `max(1048576, maxSize)`. If `clearTable` is `true`, the table is cleared after
   // resize. Otherwise, we try to retain some information that already exists in the hash table.
   //
   // This function is not thread-safe. No other thread should use the table while resizing.
   void resize(size_t maxSize, bool clearTable);
 
-  // Return the has table size in bytes
+  // Returns the hash table size (in bytes)
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }
 
-  // This function is not thread-safe. No other thread should use the table while resizing.
+  // Clears the hash table. This function is not thread-safe. No other thread should use the table
+  // while resizing.
   void clear();
 
   // Try to load the entry with the key `key` into CPU cache. You can invoke the method early before
   // you plan to use the cache entry and do soemthing before it loads into CPU cache.
   void prefetch(board_hash_t key);
 
-  // Returns the entry with the key `key`. If such entry doesn't exist, return `Data::invalid()`.
+  // Returns the entry with the key `key`. If such entry doesn't exist, returns `Data::invalid()`.
   Data load(board_hash_t key) const;
 
   // Stores `value` for the key `key`.
@@ -130,16 +133,13 @@ private:
     }
   };
 
-  static void clear(Entry *table, size_t size);
+  friend void doClear(Entry *table, size_t size);
 
-  // Ensure that the hash entry is lock-free
   static_assert(std::atomic<board_hash_t>::is_always_lock_free);
   static_assert(std::atomic<Data>::is_always_lock_free);
-
-  // Ensure that the hash entry size is 16
   static_assert(sizeof(Entry) == 16);
 
-  size_t size_;  // Must be power of two
+  size_t size_;  // Number of entries, must be power of two
   std::unique_ptr<Entry[]> table_;
 };
 

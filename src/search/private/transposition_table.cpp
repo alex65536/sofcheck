@@ -8,13 +8,13 @@ namespace SoFSearch::Private {
 
 // TODO : clear and rehash the transposition table in a multithreaded way
 
-void TranspositionTable::clear(TranspositionTable::Entry *table, const size_t size) {
+void doClear(TranspositionTable::Entry *table, const size_t size) {
   for (size_t i = 0; i < size; ++i) {
     table[i].clear();
   }
 }
 
-void TranspositionTable::clear() { clear(table_.get(), size_); }
+void TranspositionTable::clear() { doClear(table_.get(), size_); }
 
 TranspositionTable::Data TranspositionTable::load(const board_hash_t key) const {
   const size_t idx = key & (size_ - 1);
@@ -52,9 +52,9 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
 
   std::unique_ptr<Entry[]> newData(new Entry[newSize]);
   if (clearTable) {
-    clear(newData.get(), newSize);
+    doClear(newData.get(), newSize);
   } else if (newSize > size_) {
-    clear(newData.get(), newSize);
+    doClear(newData.get(), newSize);
     for (size_t i = 0; i < size_; ++i) {
       const Entry &entry = table_[i];
       const Data value = entry.value.load(std::memory_order_relaxed);
@@ -63,6 +63,7 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
       newData[idx].assignRelaxed(value, key);
     }
   } else {
+    // TODO : retain the best entry, not the first one
     for (size_t i = 0; i < newSize; ++i) {
       newData[i].assignRelaxed(table_[i]);
     }
@@ -78,6 +79,9 @@ void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data 
   table_[idx].assignRelaxed(value, key);
 }
 
-TranspositionTable::TranspositionTable() : size_(DEFAULT_SIZE / sizeof(Entry)), table_(new Entry[size_]) { clear(); }
+TranspositionTable::TranspositionTable()
+    : size_(DEFAULT_SIZE / sizeof(Entry)), table_(new Entry[size_]) {
+  clear();
+}
 
 }  // namespace SoFSearch::Private

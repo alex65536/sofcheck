@@ -16,12 +16,16 @@ namespace SoFSearch::Private {
 // Shared data between jobs, which allows them to communicate with each other and with outer world
 class JobCommunicator {
 public:
+  // Tells all the jobs that they must stop the search
   inline void stop() { stopped_.store(1, std::memory_order_relaxed); }
 
+  // Returns `true` if the jobs must stop the search
   inline bool isStopped() const { return stopped_.load(std::memory_order_relaxed); }
+
+  // Returns the depth on which the jobs must search now
   inline size_t depth() const { return depth_.load(std::memory_order_relaxed); }
 
-  // Resets the job into its default state. This function cannot be called when jobs are running.
+  // Resets the job into its default state. This function must not be called when jobs are running.
   inline void reset() {
     depth_.store(1, std::memory_order_relaxed);
     stopped_.store(false, std::memory_order_relaxed);
@@ -40,14 +44,15 @@ private:
 // If two threads write concurrently, the data race occurs.
 class JobResults {
 public:
+  // These functions return the job results. They can be called by reader threads.
   inline uint64_t nodes() const { return getRelaxed(nodes_); }
   inline uint64_t ttHits() const { return getRelaxed(ttHits_); }
   inline size_t depth() const { return getRelaxed(depth_); }
   inline SoFCore::Move bestMove() const { return getRelaxed(bestMove_); }
 
+  // These functions update the job results. They can be called by a single writer thread.
   inline void incNodes() { incRelaxed(nodes_); }
   inline void incTtHits() { incRelaxed(ttHits_); }
-
   inline void setBestMove(const size_t depth, const SoFCore::Move move) {
     depth_.store(depth, std::memory_order_relaxed);
     bestMove_.store(move, std::memory_order_relaxed);
@@ -61,7 +66,7 @@ private:
 
   template <typename T>
   inline static void incRelaxed(std::atomic<T> &value) {
-    const uint64_t newValue = value.load(std::memory_order_relaxed) + 1;
+    const T newValue = value.load(std::memory_order_relaxed) + 1;
     value.store(newValue, std::memory_order_relaxed);
   }
 
@@ -71,19 +76,22 @@ private:
   std::atomic<SoFCore::Move> bestMove_ = SoFCore::Move::null();
 };
 
-// Ensure that the necessary atomics are lock-free
 static_assert(std::atomic<uint64_t>::is_always_lock_free);
 static_assert(std::atomic<size_t>::is_always_lock_free);
 static_assert(std::atomic<SoFCore::Move>::is_always_lock_free);
 
+// A class that represents a single search job.
 class Job {
 public:
-  inline Job(JobCommunicator &communicator, TranspositionTable &table, SoFBotApi::Server *server,
+  inline Job(JobCommunicator &communicator, TranspositionTable &table, SoFBotApi::Server &server,
              size_t id)
       : communicator_(communicator), table_(table), server_(server), id_(id) {}
 
+  // Returns the current results of the search job. The results are updated while the job is
+  // running.
   inline const JobResults &results() const { return results_; }
 
+  // Starts the search job. This function must be called exactly once.
   void run(SoFCore::Board board, const std::vector<SoFCore::Move> &moves,
            const SearchLimits &limits);
 
@@ -92,7 +100,7 @@ private:
 
   JobCommunicator &communicator_;
   TranspositionTable &table_;
-  SoFBotApi::Server *server_;
+  SoFBotApi::Server &server_;
   size_t id_;
   JobResults results_;
 };

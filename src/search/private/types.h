@@ -72,7 +72,7 @@ public:
     return false;
   }
 
-  // Inserts item `board` into the hash table. Returns `false` if the item is already present
+  // Inserts `board` into the hash table. Returns `false` if `board` is already present
   inline bool insert(const SoFCore::board_hash_t board) {
     if (has(board)) {
       return false;
@@ -93,8 +93,9 @@ public:
   inline void erase(const SoFCore::board_hash_t board) {
     const size_t idx = board & mask_;
     for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-      if (tab_[idx + i] == board) {
-        tab_[idx + i] = 0;
+      uint64_t &val = tab_[idx + i];
+      if (val == board) {
+        val = 0;
         return;
       }
     }

@@ -10,6 +10,8 @@ namespace SoFSearch::Private {
 using SoFCore::Board;
 using SoFCore::Move;
 
+// Types of moves that can be returned by `MovePicker`. This enumeration represents different stages
+// of move sorting.
 enum class MovePickerStage {
   Start = 0,
   HashMove = 1,
@@ -34,8 +36,12 @@ D_MOVEPICKER_STAGE_COMPARE_OP(!=)
 
 #undef D_MOVEPICKER_STAGE_COMPARE_OP
 
+// Iterates over all the pseudo-legal moves in a given position. The moves arrive in an order which
+// is good for alpha-beta search.
 class MovePicker {
 public:
+  // Returns the type of the last move returned by the last call of `next()`. See `MovePickerStage`
+  // description for more details.
   inline MovePickerStage stage() const { return stage_; }
 
   // Returns the next move. If the move is equal to `Move::invalid()`, then there are no moves left.
@@ -73,8 +79,12 @@ private:
   size_t movePosition_;
 };
 
+// Iterates over all the moves that must be considered in quiescense search. The moves arrive in a
+// "good" order, i.e. the order to make the quiescense search work faster.
 class QuiescenseMovePicker {
 public:
+  // Returns the next move. If the move is equal to `Move::invalid()`, then there are no moves left.
+  // If the move is equal to `Move::null()`, then it must be skipped.
   inline Move next() {
     if (movePosition_ == moveCount_) {
       return Move::invalid();
