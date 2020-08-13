@@ -435,28 +435,28 @@ PollResult UciServerConnector::listOptions() {
     D_CHECK_POLL_IO(out_ << "option name " << Private::uciOptionNameEscape(key) << " type");
     switch (type) {
       case OptionType::Bool: {
-        const auto *option = opts.getBool(key);
+        const auto option = opts.getBool(key);
         D_CHECK_POLL_IO(out_ << " check default " << (option->value ? "true" : "false") << endl);
         break;
       }
       case OptionType::Enum: {
-        const auto *option = opts.getEnum(key);
+        const auto option = opts.getEnum(key);
         D_CHECK_POLL_IO(out_ << " combo default "
-                             << Private::uciEnumNameEscape(option->items[option->index]));
-        for (const string &item : option->items) {
+                             << Private::uciEnumNameEscape(option->items->at(option->index)));
+        for (const string &item : *option->items) {
           D_CHECK_POLL_IO(out_ << " val " << Private::uciEnumNameEscape(item));
         }
         D_CHECK_POLL_IO(out_ << endl);
         break;
       }
       case OptionType::Int: {
-        const auto *option = opts.getInt(key);
+        const auto option = opts.getInt(key);
         D_CHECK_POLL_IO(out_ << " spin default " << option->value << " min " << option->minValue
                              << " max " << option->maxValue << endl);
         break;
       }
       case OptionType::String: {
-        const auto *option = opts.getString(key);
+        const auto option = opts.getString(key);
         string value = SoFUtil::sanitizeEol(option->value);
         // If the string is empty or consists only of spaces, then print special value <empty>
         if (*SoFUtil::scanTokenStart(value.c_str()) == '\0') {

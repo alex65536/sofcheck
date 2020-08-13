@@ -55,7 +55,7 @@ ApiResult OptionStorage::setBool(const std::string &key, const bool value) {
 
 ApiResult OptionStorage::setEnum(const std::string &key, const size_t index) {
   return setT<EnumOption>(
-      key, index, [&](const EnumOption &o) { return index < o.items.size(); },
+      key, index, [&](const EnumOption &o) { return index < o.items->size(); },
       [&]() { return observer_->setEnum(key, index); });
 }
 
@@ -64,7 +64,7 @@ ApiResult OptionStorage::setEnum(const std::string &key, const std::string &valu
   if (!option) {
     return ApiResult::InvalidArgument;
   }
-  const std::vector<std::string> &items = option->items;
+  const std::vector<std::string> &items = *option->items;
   auto iter = std::find(items.begin(), items.end(), value);
   if (iter == items.end()) {
     return ApiResult::InvalidArgument;
@@ -133,7 +133,8 @@ OptionBuilder &OptionBuilder::addEnum(const std::string &key, std::vector<std::s
   if (hasRepetitions(items)) {
     panic("Some enumeration items repeat");
   }
-  return addT(key, EnumOption{std::move(items), index});
+  auto ptrItems = std::make_shared<const std::vector<std::string>>(std::move(items));
+  return addT(key, EnumOption{ptrItems, index});
 }
 
 OptionBuilder &OptionBuilder::addInt(const std::string &key, const int64_t min, const int64_t value,

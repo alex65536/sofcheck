@@ -2,7 +2,9 @@
 #define SOF_BOT_API_OPTIONS_INCLUDED
 
 #include <cstdint>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -33,11 +35,17 @@ struct StringOption {
 };
 
 struct EnumOption {
-  std::vector<std::string> items;
+  std::shared_ptr<const std::vector<std::string>> items;
   size_t index;
 };
 
 struct ActionOption {};
+
+using MaybeBoolOption = std::optional<BoolOption>;
+using MaybeIntOption = std::optional<IntOption>;
+using MaybeStringOption = std::optional<StringOption>;
+using MaybeEnumOption = std::optional<EnumOption>;
+using MaybeActionOption = std::optional<ActionOption>;
 
 // The observer for `OptionStorage` class. It receives the updates of the options.
 class OptionObserver {
@@ -61,12 +69,12 @@ public:
   // Lists all the options and their types
   virtual std::vector<std::pair<std::string, OptionType>> list() const = 0;
 
-  // Returns pointer to the option `key` if this option is of type `Bool`. Otherwise returns
-  // `nullptr`. The other `get...()` methods behave in the similar way.
-  virtual const BoolOption *getBool(const std::string &key) const = 0;
-  virtual const IntOption *getInt(const std::string &key) const = 0;
-  virtual const EnumOption *getEnum(const std::string &key) const = 0;
-  virtual const StringOption *getString(const std::string &key) const = 0;
+  // Returns value of the option `key` if it has type `Bool`. Otherwise returns `std::nullopt`. The
+  // other `get...()` methods behave in the similar way.
+  virtual MaybeBoolOption getBool(const std::string &key) const = 0;
+  virtual MaybeIntOption getInt(const std::string &key) const = 0;
+  virtual MaybeEnumOption getEnum(const std::string &key) const = 0;
+  virtual MaybeStringOption getString(const std::string &key) const = 0;
 
   // Sets value `value` to the option `key` and returns the result of this operation.
   virtual ApiResult setBool(const std::string &key, bool value) = 0;
@@ -87,10 +95,10 @@ public:
 
   std::vector<std::pair<std::string, OptionType>> list() const override;
 
-  const BoolOption *getBool(const std::string &key) const override { return getT<BoolOption>(key); }
-  const IntOption *getInt(const std::string &key) const override { return getT<IntOption>(key); }
-  const EnumOption *getEnum(const std::string &key) const override { return getT<EnumOption>(key); }
-  const StringOption *getString(const std::string &key) const override {
+  MaybeBoolOption getBool(const std::string &key) const override { return getT<BoolOption>(key); }
+  MaybeIntOption getInt(const std::string &key) const override { return getT<IntOption>(key); }
+  MaybeEnumOption getEnum(const std::string &key) const override { return getT<EnumOption>(key); }
+  MaybeStringOption getString(const std::string &key) const override {
     return getT<StringOption>(key);
   }
 
@@ -116,12 +124,16 @@ private:
 
   // Helper method for `asBool`, `asInt`, `asString` and `asEnum`
   template <typename T>
-  inline const T *getT(const std::string &key) const {
+  inline std::optional<T> getT(const std::string &key) const {
     auto iter = values_.find(key);
     if (iter == values_.end()) {
-      return nullptr;
+      return std::nullopt;
     }
-    return std::get_if<T>(&iter->second);
+    const T *result = std::get_if<T>(&iter->second);
+    if (!result) {
+      return std::nullopt;
+    }
+    return *result;
   }
 
   // Helper method for `setBool`, `setInt`, `setString` and `setEnum`
@@ -159,22 +171,22 @@ public:
     return options_.list();
   }
 
-  const BoolOption *getBool(const std::string &key) const override {
+  MaybeBoolOption getBool(const std::string &key) const override {
     std::lock_guard guard(mutex_);
     return options_.getBool(key);
   }
 
-  const IntOption *getInt(const std::string &key) const override {
+  MaybeIntOption getInt(const std::string &key) const override {
     std::lock_guard guard(mutex_);
     return options_.getInt(key);
   }
 
-  const EnumOption *getEnum(const std::string &key) const override {
+  MaybeEnumOption getEnum(const std::string &key) const override {
     std::lock_guard guard(mutex_);
     return options_.getEnum(key);
   }
 
-  const StringOption *getString(const std::string &key) const override {
+  MaybeStringOption getString(const std::string &key) const override {
     std::lock_guard guard(mutex_);
     return options_.getString(key);
   }
