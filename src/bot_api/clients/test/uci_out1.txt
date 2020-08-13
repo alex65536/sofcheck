@@ -101,6 +101,8 @@ E newGame()
 I position startpos moves e2e4 e7e5
 E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1, e2e4, e7e5)
 I position r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4 moves
+E Error [UCI server]: Expected "startpos" or "fen", found "r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R"
+I position fen r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4 moves
 E setPosition(r1bqk1nr/pppp1ppp/2n5/2b1p3/2B1P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 4 4)
 I position startpos moves g2g4 e7e5 f2f3 d8h5 a2a3
 E Error [UCI server]: Move "d8h5" is invalid
@@ -110,7 +112,7 @@ I position startpos
 E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
 I position startpos moves moves
 E Error [UCI server]: Move "moves" is invalid
-I position rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves
+I position fen rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1 moves
 E Error [UCI server]: Position "rnbq1bnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1" is invalid: One of the sides doesn't have a king
 I position startpos moves
 E setPosition(rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1)
