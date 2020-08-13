@@ -4,6 +4,7 @@
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/types.h"
+#include "util/operators.h"
 
 namespace SoFSearch::Private {
 
@@ -21,20 +22,7 @@ enum class MovePickerStage {
   End = 5
 };
 
-// Comparison operators for `MovePickerStage`
-#define D_MOVEPICKER_STAGE_COMPARE_OP(op)                                     \
-  inline constexpr bool operator op(MovePickerStage l1, MovePickerStage l2) { \
-    return static_cast<int>(l1) op static_cast<int>(l2);                      \
-  }
-
-D_MOVEPICKER_STAGE_COMPARE_OP(<)
-D_MOVEPICKER_STAGE_COMPARE_OP(<=)
-D_MOVEPICKER_STAGE_COMPARE_OP(>)
-D_MOVEPICKER_STAGE_COMPARE_OP(>=)
-D_MOVEPICKER_STAGE_COMPARE_OP(==)
-D_MOVEPICKER_STAGE_COMPARE_OP(!=)
-
-#undef D_MOVEPICKER_STAGE_COMPARE_OP
+SOF_ENUM_COMPARE(MovePickerStage, int)
 
 // Iterates over all the pseudo-legal moves in a given position. The moves arrive in an order which
 // is good for alpha-beta search.

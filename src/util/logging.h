@@ -3,25 +3,14 @@
 
 #include <sstream>
 
+#include "util/operators.h"
+
 namespace SoFUtil {
 
 // Type of the log entry
 enum LogLevel { Debug = 0, Info = 1, Warn = 2, Error = 3, Fatal = 4 };
 
-// Comparison operators for `LogLevel`
-#define D_LOGLEVEL_COMPARE_OP(op)                               \
-  inline constexpr bool operator op(LogLevel l1, LogLevel l2) { \
-    return static_cast<int>(l1) op static_cast<int>(l2);        \
-  }
-
-D_LOGLEVEL_COMPARE_OP(<)
-D_LOGLEVEL_COMPARE_OP(<=)
-D_LOGLEVEL_COMPARE_OP(>)
-D_LOGLEVEL_COMPARE_OP(>=)
-D_LOGLEVEL_COMPARE_OP(==)
-D_LOGLEVEL_COMPARE_OP(!=)
-
-#undef D_LOGLEVEL_COMPARE_OP
+SOF_ENUM_COMPARE(LogLevel, int)
 
 // Converts `LogLevel` to string
 const char *logLevelToStr(LogLevel level);
