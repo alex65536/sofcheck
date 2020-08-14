@@ -22,11 +22,10 @@
 
 namespace SoFBotApi::Clients {
 
+using namespace SoFUtil::Logging;
+
 using SoFCore::Board;
 using SoFCore::Move;
-using SoFUtil::logError;
-using SoFUtil::logInfo;
-using SoFUtil::logWarn;
 using SoFUtil::panic;
 using std::endl;
 using std::pair;

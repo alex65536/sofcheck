@@ -13,13 +13,13 @@
 namespace SoFSearch {
 
 using namespace std::chrono_literals;
+using namespace SoFUtil::Logging;
 
 using Private::SearchLimits;
 using SoFBotApi::ApiResult;
 using SoFBotApi::TimeControl;
 using SoFCore::Board;
 using SoFCore::Move;
-using SoFUtil::logError;
 using SoFUtil::panic;
 
 // Type of log entry

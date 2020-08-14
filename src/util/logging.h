@@ -74,11 +74,15 @@ private:
 // Convenience functions. The usage pattern looks like this:
 //
 // debug("My type") << "Debug info: " << info;
+//
+// You can add `using namespace SoFUtil::Logging;` into your code in order to use these functions
+namespace Logging {
 inline LogEntryStream logDebug(const char *type) { return LogEntryStream(LogLevel::Debug, type); }
 inline LogEntryStream logInfo(const char *type) { return LogEntryStream(LogLevel::Info, type); }
 inline LogEntryStream logWarn(const char *type) { return LogEntryStream(LogLevel::Warn, type); }
 inline LogEntryStream logError(const char *type) { return LogEntryStream(LogLevel::Error, type); }
 inline LogEntryStream logFatal(const char *type) { return LogEntryStream(LogLevel::Fatal, type); }
+}  // namespace Logging
 
 }  // namespace SoFUtil
 
