@@ -2,6 +2,7 @@ Checks: "-*, \
 bugprone-*, \
 cert-*, \
 clang-analyzer-*, \
+clang-diagnostic-*, \
 cppcoreguidelines-*, \
 hicpp-*, \
 misc-*, \
@@ -9,19 +10,24 @@ modernize-*, \
 performance-*, \
 portability-*, \
 readability-*, \
+llvm-namespace-comment, \
 -bugprone-exception-escape, \
 -bugprone-suspicious-semicolon, \
 -modernize-use-trailing-return-type, \
 -modernize-avoid-c-arrays, \
+-cert-err58-cpp, \
 -cppcoreguidelines-avoid-c-arrays, \
 -cppcoreguidelines-avoid-magic-numbers, \
 -cppcoreguidelines-macro-usage, \
+-cppcoreguidelines-owning-memory, \
 -cppcoreguidelines-pro-bounds-*, \
 -cppcoreguidelines-pro-type-reinterpret-cast, \
+-cppcoreguidelines-special-member-functions, \
 -hicpp-avoid-c-arrays, \
 -hicpp-braces-around-statements, \
 -hicpp-no-array-decay, \
 -hicpp-signed-bitwise, \
+-hicpp-special-member-functions, \
 -modernize-use-nodiscard, \
 -misc-non-private-member-variables-in-classes, \
 -readability-braces-around-statements, \
@@ -41,7 +47,11 @@ readability-*, \
 # - bugprone-suspicious-semicolon is also buggy with if constexpr.
 # - readability-braces-around-statements is also buggy with if constexpr.
 # - misc-non-private-member-variables-in-classes is disabled by design.
-# - bugprone-exception-escape is very expesive and can be false-positive on Result<T, E>.
+# - bugprone-exception-escape is very expensive and can be false-positive on Result<T, E>.
+# - cppcoreguidelines-owning-memory has false-positives with Google Test
+# - cppcoreguidelines-special-member-functions also has false-positives with Google Test
+# - hicpp-special-member-functions also has false-positives with Google Test
+# - cert-err58-cpp also has false-positives with Google Test
 
 CheckOptions:
     - key: readability-identifier-naming.ClassCase

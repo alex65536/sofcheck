@@ -6,7 +6,7 @@
 #include "core/private/magic_util.h"
 #include "util/bit.h"
 
-using namespace SoFCore;  // NOLINT
+using namespace SoFCore;
 using SoFCore::Private::MagicType;
 
 template <MagicType M>

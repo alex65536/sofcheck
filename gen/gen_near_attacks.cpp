@@ -5,7 +5,7 @@
 #include "common.h"
 #include "core/types.h"
 
-using namespace SoFCore;  // NOLINT
+using namespace SoFCore;
 
 std::vector<bitboard_t> generateDirected(const int8_t offX[], const int8_t offY[],
                                          const size_t size) {

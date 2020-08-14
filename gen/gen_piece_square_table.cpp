@@ -6,8 +6,8 @@
 #include "core/types.h"
 #include "search/private/score.h"
 
-using namespace SoFCore;             // NOLINT
-using namespace SoFSearch::Private;  // NOLINT
+using namespace SoFCore;
+using namespace SoFSearch::Private;
 
 static constexpr score_t PIECE_COSTS[6] = {100, 0, 350, 350, 525, 1000};
 
