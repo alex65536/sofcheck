@@ -80,6 +80,8 @@ private:
   template <NodeKind Node>
   score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq);
 
+  score_t quiescenseSearch(score_t alpha, score_t beta, score_pair_t psq);
+
   Board &board_;
   TranspositionTable &tt_;
   JobCommunicator &comm_;
@@ -144,9 +146,9 @@ struct MovePickerFactory<Searcher::NodeKind::Root> {
   }
 };
 
-score_t quiescenseSearch(Board &board, score_t alpha, const score_t beta, const score_pair_t psq) {
-  score_t score = evaluate(board, psq);
-  if (board.side == Color::Black) {
+score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
+  score_t score = evaluate(board_, psq);
+  if (board_.side == Color::Black) {
     score *= -1;
   }
   alpha = std::max(alpha, score);
@@ -154,19 +156,20 @@ score_t quiescenseSearch(Board &board, score_t alpha, const score_t beta, const 
     return beta;
   }
 
-  QuiescenseMovePicker picker(board);
+  QuiescenseMovePicker picker(board_);
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
     }
-    const score_pair_t newPsq = boardUpdatePsqScore(board, move, psq);
-    const MovePersistence persistence = moveMake(board, move);
-    if (!isMoveLegal(board)) {
-      moveUnmake(board, move, persistence);
+    const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
+    const MovePersistence persistence = moveMake(board_, move);
+    if (!isMoveLegal(board_)) {
+      moveUnmake(board_, move, persistence);
       continue;
     }
-    const score_t score = -quiescenseSearch(board, -beta, -alpha, newPsq);
-    moveUnmake(board, move, persistence);
+    results_.incNodes();
+    const score_t score = -quiescenseSearch(-beta, -alpha, newPsq);
+    moveUnmake(board_, move, persistence);
     alpha = std::max(alpha, score);
     if (alpha >= beta) {
       return beta;
@@ -186,13 +189,12 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
 
   // 1. Run quiescence search in leaf node
   if (depth == 0) {
-    return quiescenseSearch(board_, alpha, beta, psq);
+    return quiescenseSearch(alpha, beta, psq);
   }
 
   if (mustStop()) {
     return 0;
   }
-  results_.incNodes();
 
   auto ttStore = [&](score_t score, const bool isPv) {
     PositionCostBound bound = PositionCostBound::Upperbound;
@@ -249,6 +251,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       moveUnmake(board_, move, persistence);
       continue;
     }
+    results_.incNodes();
     if (hasMove &&
         -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq) <= alpha) {
       moveUnmake(board_, move, persistence);
