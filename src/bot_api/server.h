@@ -55,6 +55,9 @@ public:
   // Send number of nodes currently searched. Call this method only during the search
   virtual ApiResult sendNodeCount(uint64_t nodes) = 0;
 
+  // Send number of hash table hits. Call this method only during the search
+  virtual ApiResult sendHashHits(uint64_t hits) = 0;
+
   // Send permille of hash full. Call this method only during the search
   virtual ApiResult sendHashFull(permille_t hashFull) = 0;
 

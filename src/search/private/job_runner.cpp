@@ -104,9 +104,7 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
     // Print stats
     if (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
       server_.sendNodeCount(stats.nodes);
-      if (isDebugMode()) {
-        server_.sendString("Hash table hits: " + std::to_string(stats.ttHits));
-      }
+      server_.sendHashHits(stats.ttHits);
       while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }

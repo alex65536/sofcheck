@@ -34,6 +34,7 @@ public:
   ApiResult sendString(const char *str) override;
   ApiResult sendResult(const SearchResult &result) override;
   ApiResult sendNodeCount(uint64_t nodes) override;
+  ApiResult sendHashHits(uint64_t hits) override;
   ApiResult sendHashFull(permille_t hashFull) override;
   ApiResult sendCurrMove(SoFCore::Move move, size_t moveNumber = 0) override;
   ApiResult reportError(const char *message) override;

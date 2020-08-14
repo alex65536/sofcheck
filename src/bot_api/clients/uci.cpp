@@ -95,6 +95,18 @@ ApiResult UciServerConnector::sendCurrMove(const Move move, const size_t moveNum
   return ApiResult::Ok;
 }
 
+ApiResult UciServerConnector::sendHashHits(const uint64_t hits) {
+  ensureClient();
+  std::lock_guard guard(mutex_);
+  if (!searchStarted_) {
+    return ApiResult::UnexpectedCall;
+  }
+  if (debugEnabled_) {
+    D_CHECK_IO(out_ << "info string Hash table hits: " << std::to_string(hits) << endl);
+  }
+  return ApiResult::Ok;
+}
+
 ApiResult UciServerConnector::sendHashFull(const permille_t hashFull) {
   ensureClient();
   std::lock_guard guard(mutex_);
