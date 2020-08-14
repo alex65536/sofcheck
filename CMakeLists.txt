@@ -195,10 +195,21 @@ add_subdirectory(selftest)
 # Add tests
 enable_testing()
 
+find_package(GTest)
+
 add_executable(test_uci_client
   src/bot_api/clients/test/uci.cpp
 )
 target_link_libraries(test_uci_client sof_core sof_util sof_bot_api_clients)
+
+if(GTest_FOUND)
+  include(GoogleTest)
+
+  add_executable(test_search_unit_test src/search/test/unit_test.cpp)
+  target_link_libraries(test_search_unit_test GTest::GTest GTest::Main)
+  gtest_add_tests(TARGET test_search_unit_test)
+endif()
+
 if(UNIX)
   # TODO : add code to detect the presence of Python in the system
   add_test(
