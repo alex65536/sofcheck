@@ -32,13 +32,15 @@ function(add_chess_impl impl_name)
   )
   target_compile_definitions(test_${impl_name} PUBLIC INTF_${impl_name_upper})
 
-  add_executable(bench_${impl_name}
-    bench.cpp
-    ${ARGN}
-  )
-  target_benchmark(bench_${impl_name})
-  target_include_directories(bench_${impl_name} PRIVATE ${PROJECT_SOURCE_DIR}/../bench)
-  target_compile_definitions(bench_${impl_name} PUBLIC INTF_${impl_name_upper})
+  if(benchmark_FOUND)
+    add_executable(bench_${impl_name}
+      bench.cpp
+      ${ARGN}
+    )
+    target_benchmark(bench_${impl_name})
+    target_include_directories(bench_${impl_name} PRIVATE ${PROJECT_SOURCE_DIR}/../bench)
+    target_compile_definitions(bench_${impl_name} PUBLIC INTF_${impl_name_upper})
+  endif()
 endfunction()
 
 
@@ -54,7 +56,9 @@ add_chess_impl(dodecahedron
 
 add_chess_impl(sofcheck)
 target_link_libraries(test_sofcheck sof_core sof_util)
-target_link_libraries(bench_sofcheck sof_core sof_util)
+if(benchmark_FOUND)
+  target_link_libraries(bench_sofcheck sof_core sof_util)
+endif()
 
 enable_testing()
 

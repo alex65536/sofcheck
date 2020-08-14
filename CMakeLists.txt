@@ -181,9 +181,11 @@ target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 
 
 # Add benchmarks
-add_executable(bench_is_move_legal bench/core/bench_is_move_legal.cpp)
-target_benchmark(bench_is_move_legal)
-target_link_libraries(bench_is_move_legal sof_core sof_util)
+if(benchmark_FOUND)
+  add_executable(bench_is_move_legal bench/core/bench_is_move_legal.cpp)
+  target_benchmark(bench_is_move_legal)
+  target_link_libraries(bench_is_move_legal sof_core sof_util)
+endif()
 
 
 # Add self-tests
