@@ -14,7 +14,8 @@ matrix:
             - libboost-stacktrace-dev
             - cmake
       env:
-         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=OFF"
+         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=ON"
 
     - dist: bionic
       addons:
@@ -25,10 +26,9 @@ matrix:
             - libboost-stacktrace-dev
             - cmake
       compiler: clang
-
-env:
-  - BMI2_CMD=""
-  - BMI2_CMD="-DUSE_BMI2"
+      env:
+        - BMI2_CMD="-DUSE_BMI2=OFF"
+        - BMI2_CMD="-DUSE_BMI2=ON"
 
 before_install:
   - eval "${MATRIX_EVAL}"
@@ -38,6 +38,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS ..
+  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON ..
   - make -j2
   - ctest
