@@ -1,12 +1,12 @@
 #include "search/search.h"
 
 #include <optional>
-#include <vector>
 
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/job_runner.h"
 #include "search/private/limits.h"
+#include "search/private/types.h"
 #include "util/logging.h"
 #include "util/misc.h"
 

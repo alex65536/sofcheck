@@ -1,5 +1,5 @@
-#ifndef SOF_SEARCH_PRIVATE_TYPES_INCLUDED
-#define SOF_SEARCH_PRIVATE_TYPES_INCLUDED
+#ifndef SOF_SEARCH_PRIVATE_UTIL_INCLUDED
+#define SOF_SEARCH_PRIVATE_UTIL_INCLUDED
 
 #include <algorithm>
 #include <memory>
@@ -114,4 +114,4 @@ private:
 
 }  // namespace SoFSearch::Private
 
-#endif  // SOF_SEARCH_PRIVATE_TYPES_INCLUDED
+#endif  // SOF_SEARCH_PRIVATE_UTIL_INCLUDED

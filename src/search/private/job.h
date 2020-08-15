@@ -3,13 +3,13 @@
 
 #include <atomic>
 #include <cstdint>
-#include <vector>
 
 #include "bot_api/server.h"
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/limits.h"
 #include "search/private/transposition_table.h"
+#include "search/private/types.h"
 
 namespace SoFSearch::Private {
 
@@ -79,22 +79,6 @@ private:
 static_assert(std::atomic<uint64_t>::is_always_lock_free);
 static_assert(std::atomic<size_t>::is_always_lock_free);
 static_assert(std::atomic<SoFCore::Move>::is_always_lock_free);
-
-// Position with saved previous moves
-struct Position {
-  SoFCore::Board first;
-  std::vector<SoFCore::Move> moves;
-  SoFCore::Board last;
-
-  // Constructs `Position` from `first` and `moves`, calculating `last`
-  inline static Position from(const SoFCore::Board &first, std::vector<SoFCore::Move> moves) {
-    Position position{first, std::move(moves), first};
-    for (SoFCore::Move move : position.moves) {
-      moveMake(position.last, move);
-    }
-    return position;
-  }
-};
 
 // A class that represents a single search job.
 class Job {

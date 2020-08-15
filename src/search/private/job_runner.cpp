@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include "core/board.h"
+#include "core/move.h"
 #include "core/movegen.h"
 #include "util/defer.h"
 #include "util/logging.h"

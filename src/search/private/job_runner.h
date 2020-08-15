@@ -6,11 +6,10 @@
 #include <thread>
 
 #include "bot_api/server.h"
-#include "core/board.h"
-#include "core/move.h"
 #include "search/private/job.h"
 #include "search/private/limits.h"
 #include "search/private/transposition_table.h"
+#include "search/private/types.h"
 
 namespace SoFSearch::Private {
 

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <vector>
 
 #include "bot_api/types.h"
 #include "core/movegen.h"
