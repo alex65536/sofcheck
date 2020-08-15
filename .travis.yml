@@ -9,7 +9,7 @@ addons:
     packages:
       - g++-8
       - clang++-8
-      - libgtest-dev
+      - googletest
       - libbenchmark-dev
       - libboost-stacktrace-dev
       - cmake
@@ -25,13 +25,15 @@ before_install:
 
 install:
   - cp -r /usr/src/googletest .
-  - ( cd googletest && cmake . && make -j2 )
+  - mkdir googletest/prefix
+  - ( cd googletest && cmake . && make -j2 && make DESTDIR=prefix install )
+  - export GTEST_ROOT="$PWD/googletest/prefix/usr/local"
 
 before_script:
   - mkdir build
   - cd build
 
 script:
-  - cmake -DGTEST_ROOT=../googletest -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON ..
+  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON ..
   - make -j2
   - ctest
