@@ -1,6 +1,6 @@
 # SoF Check
 
-![Build status](https://travis-ci.com/alex65536/sofcheck.svg?branch=master)
+[![Build Status](https://travis-ci.com/alex65536/sofcheck.svg?branch=master)](https://travis-ci.com/alex65536/sofcheck)
 
 ~~~~~
                  /    ^---^    \

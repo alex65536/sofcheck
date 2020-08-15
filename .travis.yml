@@ -1,5 +1,4 @@
-language: cpp
-
+sudo: required
 dist: bionic
 addons:
   apt:
@@ -8,21 +7,21 @@ addons:
   packages:
     - g++-8
     - clang++-8
-    - libgtest-dev
     - libbenchmark-dev
     - libboost-stacktrace-dev
     - cmake
 
 env:
-  - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=OFF"
-  - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=ON"
-  - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8" BMI2_CMD="-DUSE_BMI2=OFF"
-  - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8" BMI2_CMD="-DUSE_BMI2=ON"
+  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
 
 before_install:
   - eval "${MATRIX_EVAL}"
 
 install:
+  - sudo apt install libgtest-dev
   - cp -r /usr/src/googletest .
   - ( cd googletest && cmake . && make -j2 )
   - CMAKE_LIBRARY_PATH="$PWD/googletest/lib/"
