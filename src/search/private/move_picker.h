@@ -3,6 +3,7 @@
 
 #include "core/board.h"
 #include "core/move.h"
+#include "core/movegen.h"
 #include "search/private/util.h"
 #include "util/operators.h"
 
@@ -59,7 +60,7 @@ private:
   const SoFCore::Board &board_;
   const KillerLine &killers_;
   const HistoryTable &history_;
-  SoFCore::Move moves_[256];
+  SoFCore::Move moves_[SoFCore::BUFSZ_MOVES];
   SoFCore::Move savedKillers_[2];
   size_t moveCount_;
   size_t movePosition_;
@@ -81,7 +82,7 @@ public:
   QuiescenseMovePicker(const SoFCore::Board &board);
 
 private:
-  SoFCore::Move moves_[128];
+  SoFCore::Move moves_[SoFCore::BUFSZ_CAPTURES];
   size_t moveCount_;
   size_t movePosition_;
 };

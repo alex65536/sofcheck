@@ -17,8 +17,10 @@ using Board = SoFCore::Board;
 using Move = SoFCore::Move;
 using MovePersistence = SoFCore::MovePersistence;
 
+constexpr int MOVES_MAX = SoFCore::BUFSZ_MOVES;
+
 struct MoveList {
-  Move moves[240];
+  Move moves[MOVES_MAX];
   int count;
 };
 

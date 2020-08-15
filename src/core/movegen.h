@@ -42,6 +42,14 @@ size_t genAllMoves(const Board &b, Move *list);
 size_t genSimpleMoves(const Board &b, Move *list);
 size_t genCaptures(const Board &b, Move *list);
 
+// Upper bound for total number of pseudo-legal moves in any valid position. You can use it as a
+// buffer size for `genAllMoves()`.
+constexpr size_t BUFSZ_MOVES = 300;
+
+// Upper bound for total number of pseudo-legal captures in any valid position. You can use it as a
+// buffer size for `genCaptures()`.
+constexpr size_t BUFSZ_CAPTURES = 128;
+
 // Returns `true` if the move `move` can be returned by `genAllMoves()`
 //
 // The move must be well-formed (i.e. `move.isWellFormed(b.side)` must return `true`), otherwise the

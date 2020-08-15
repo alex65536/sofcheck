@@ -2,7 +2,6 @@
 
 #include <algorithm>
 
-#include "core/movegen.h"
 #include "util/misc.h"
 
 namespace SoFSearch::Private {

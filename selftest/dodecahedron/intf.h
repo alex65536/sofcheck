@@ -15,8 +15,10 @@ using Board = BOARD;
 using Move = MOVE;
 using MovePersistence = MOVE_PERSISTENCE;
 
+constexpr int MOVES_MAX = 240;
+
 struct MoveList {
-    Move moves[240];
+    Move moves[MOVES_MAX];
     int count;
 };
 

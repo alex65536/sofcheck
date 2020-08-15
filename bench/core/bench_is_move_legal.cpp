@@ -11,7 +11,7 @@ inline void runCheckValid(benchmark::State &state, const char *fen) {
   init();
 
   Board board = Board::fromFen(fen).unwrap();
-  Move moves[240];
+  Move moves[BUFSZ_MOVES];
   size_t cnt = genAllMoves(board, moves);
 
   for ([[maybe_unused]] auto _ : state) {

@@ -32,7 +32,7 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
   MoveList moveList = generateMoves(board);
 
-  Move moves[240];
+  Move moves[MOVES_MAX];
   int cnt = getMoveCount(moveList);
   for (int i = 0; i < cnt; ++i) {
     moves[i] = getMove(moveList, i);

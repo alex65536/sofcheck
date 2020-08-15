@@ -126,7 +126,7 @@ public:
   }
 
 private:
-  Move moves_[300];
+  Move moves_[SoFCore::BUFSZ_MOVES];
   size_t moveCount_ = 0;
   size_t pos_ = 0;
 };

@@ -62,7 +62,7 @@ void JobRunner::join() {
 }
 
 static Move pickRandomMove(Board board) {
-  Move moves[300];
+  Move moves[SoFCore::BUFSZ_MOVES];
   const size_t count = genAllMoves(board, moves);
   SoFUtil::randomShuffle(moves, moves + count);
   for (size_t i = 0; i < count; ++i) {
