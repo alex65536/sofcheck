@@ -3,7 +3,7 @@
 
 #include "core/board.h"
 #include "core/move.h"
-#include "search/private/types.h"
+#include "search/private/util.h"
 #include "util/operators.h"
 
 namespace SoFSearch::Private {

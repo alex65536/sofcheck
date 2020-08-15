@@ -8,7 +8,7 @@
 #include "search/private/evaluate.h"
 #include "search/private/move_picker.h"
 #include "search/private/score.h"
-#include "search/private/types.h"
+#include "search/private/util.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {

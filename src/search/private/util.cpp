@@ -1,4 +1,4 @@
-#include "search/private/types.h"
+#include "search/private/util.h"
 
 namespace SoFSearch::Private {
 
