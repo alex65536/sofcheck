@@ -1,37 +1,31 @@
 language: cpp
 
-matrix:
-  include:
-    - dist: bionic
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - g++-8
-            - libgtest-dev
-            - libbenchmark-dev
-            - libboost-stacktrace-dev
-            - cmake
-      env:
-         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=OFF"
-         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=ON"
+dist: bionic
+addons:
+  apt:
+  sources:
+    - ubuntu-toolchain-r-test
+  packages:
+    - g++-8
+    - clang++-8
+    - libgtest-dev
+    - libbenchmark-dev
+    - libboost-stacktrace-dev
+    - cmake
 
-    - dist: bionic
-      addons:
-        apt:
-          packages:
-            - libgtest-dev
-            - libbenchmark-dev
-            - libboost-stacktrace-dev
-            - cmake
-      compiler: clang
-      env:
-        - BMI2_CMD="-DUSE_BMI2=OFF"
-        - BMI2_CMD="-DUSE_BMI2=ON"
+env:
+  - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=OFF"
+  - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8" BMI2_CMD="-DUSE_BMI2=ON"
+  - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8" BMI2_CMD="-DUSE_BMI2=OFF"
+  - MATRIX_EVAL="CC=clang-8 && CXX=clang++-8" BMI2_CMD="-DUSE_BMI2=ON"
 
 before_install:
   - eval "${MATRIX_EVAL}"
+
+install:
+  - cp -r /usr/src/googletest .
+  - ( cd googletest && cmake . && make -j2 )
+  - CMAKE_LIBRARY_PATH="$PWD/googletest/lib/"
 
 before_script:
   - mkdir build
