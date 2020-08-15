@@ -1,4 +1,4 @@
-sudo: required
+language: cpp
 os: linux
 dist: bionic
 
@@ -15,10 +15,10 @@ addons:
       - cmake
 
 env:
-  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
-  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
-  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="CC=clang-8 && CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
 
 before_install:
   - eval "${MATRIX_EVAL}"
