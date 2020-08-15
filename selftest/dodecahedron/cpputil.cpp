@@ -69,7 +69,7 @@ void out_int(int64_t i)
 
 void in_line(char* c, int max_len)
 {
-    fgets(c, max_len, stdin);
+    (void)fgets(c, max_len, stdin);
 }
 
 #ifdef __WIN32

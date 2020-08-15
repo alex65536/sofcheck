@@ -136,4 +136,4 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
 #include "core/bench_xmacro.h"
 #undef BENCH_DO
 
-BENCHMARK_MAIN();
+BENCHMARK_MAIN()

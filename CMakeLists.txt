@@ -61,7 +61,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
   endif()
 endif()
 
-add_compile_options(-Wall -Wextra -Wpedantic)
+add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 
 if(USE_NO_EXCEPTIONS)
   if(USE_BOOST_STACKTRACE)
