@@ -1,0 +1,43 @@
+language: cpp
+
+matrix:
+  include:
+    - dist: bionic
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
+            - libgtest-dev
+            - libbenchmark-dev
+            - libboost-stacktrace-dev
+            - cmake
+      env:
+         - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+
+    - dist: bionic
+      addons:
+        apt:
+          packages:
+            - libgtest-dev
+            - libbenchmark-dev
+            - libboost-stacktrace-dev
+            - cmake
+      compiler: clang
+
+env:
+  - BMI2_CMD=""
+  - BMI2_CMD="-DUSE_BMI2"
+
+before_install:
+  - eval "${MATRIX_EVAL}"
+
+before_script:
+  - mkdir build
+  - cd build
+
+script:
+  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS ..
+  - make -j2
+  - ctest
