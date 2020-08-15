@@ -22,6 +22,22 @@ using SoFCore::MovePersistence;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
+void JobCommunicator::stop() {
+  size_t tmp = 0;
+  if (!stopped_.compare_exchange_strong(tmp, 1, std::memory_order_seq_cst)) {
+    return;
+  }
+  // Lock and unlock `stopLock_` to ensure that we are not checking for `isStopped()` in
+  // `this->wait()` now. If we remove lock/unlock from here, the following may happen:
+  // - `this->wait()` checks for `isStopped()`, which returns `false`
+  // - we change `stopped_` to `1` and notify all the waiting threads
+  // - `this->wait()` goes to `stopEvent_.wait()` and doesn't wake, since the thread didn't started
+  // waiting when nofitication arrived
+  stopLock_.lock();
+  stopLock_.unlock();
+  stopEvent_.notify_all();
+}
+
 constexpr size_t MAX_DEPTH = 255;
 
 class Searcher {

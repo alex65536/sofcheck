@@ -2,7 +2,10 @@
 #define SOF_SEARCH_PRIVATE_JOB_INCLUDED
 
 #include <atomic>
+#include <chrono>
+#include <condition_variable>
 #include <cstdint>
+#include <mutex>
 
 #include "bot_api/server.h"
 #include "core/board.h"
@@ -17,7 +20,20 @@ namespace SoFSearch::Private {
 class JobCommunicator {
 public:
   // Tells all the jobs that they must stop the search
-  inline void stop() { stopped_.store(1, std::memory_order_relaxed); }
+  void stop();
+
+  // Waits until `stop()` is called or time period `time` is expired. If `stop()` was called before
+  // or during waiting, returns `true`. Note that this function may sometimes return before `time`
+  // is expired.
+  template <class Rep, class Period>
+  bool wait(const std::chrono::duration<Rep, Period> time) {
+    std::unique_lock lock(stopLock_);
+    if (isStopped()) {
+      return true;
+    }
+    stopEvent_.wait_for(lock, time);
+    return isStopped();
+  }
 
   // Returns `true` if the jobs must stop the search
   inline bool isStopped() const { return stopped_.load(std::memory_order_relaxed); }
@@ -38,6 +54,9 @@ public:
 private:
   std::atomic<size_t> depth_ = 1;
   std::atomic<size_t> stopped_ = false;
+
+  std::condition_variable stopEvent_;
+  std::mutex stopLock_;
 };
 
 // Job results and statistics. This class is thread-safe if there is no more than one writer thread.

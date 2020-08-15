@@ -110,8 +110,7 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
   // Run loop in which we check the jobs' status
   const auto startTime = steady_clock::now();
   auto statsLastUpdatedTime = startTime;
-  while (!comm_.isStopped()) {
-    std::this_thread::sleep_for(THREAD_TICK_INTERVAL);
+  do {
     const auto now = steady_clock::now();
 
     // Collect stats
@@ -134,7 +133,7 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }
     }
-  }
+  } while (!comm_.wait(THREAD_TICK_INTERVAL));
 
   // Join job threads
   for (std::thread &thread : threads) {
