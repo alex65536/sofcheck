@@ -42,7 +42,7 @@ The project is using [CMake](https://cmake.org) as a build system. You will also
 C++17-compatible compiler. The engine is tested on the following compilers:
 
 - GCC >= 8 (GCC 7 and earlier don't support `<charconv>` header)
-- Clang >= 9 (older versions may work, but I didn't checked if the engine compiles on them)
+- Clang >= 8 (Clang 7 and earlier don't support `<charconv>` header)
 
 Other compilers are not tested.
 
