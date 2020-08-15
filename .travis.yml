@@ -32,6 +32,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DGTEST_ROOT=../googletest/lib -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON ..
+  - cmake -DGTEST_ROOT=../googletest -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON ..
   - make -j2
   - ctest
