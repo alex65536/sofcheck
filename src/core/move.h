@@ -73,7 +73,7 @@ struct MovePersistence {
   board_hash_t hash;
   // The order of the fields here is important, as it matches with the similar fields in `Board`.
   // This allows us to save and load these fields in one `mov` instruction or something like this
-  castling_t castling;
+  Castling castling;
   coord_t enpassantCoord;
   uint16_t moveCounter;
   cell_t dstCell;

@@ -56,7 +56,7 @@ struct Board {
   cell_t cells[64];
   uint8_t unused;  // Unused field, required for alignment, must be set to zero
   Color side;
-  castling_t castling;
+  Castling castling;
   coord_t enpassantCoord;  // Position of pawn that performed last double move (or `INVALID_COORD`)
   uint16_t moveCounter;
   uint16_t moveNumber;
@@ -106,14 +106,17 @@ struct Board {
   void update();
 
   // Helper methods to change castling flags
-  inline constexpr void clearCastling() { castling = 0; }
-  inline constexpr void setAllCastling() { castling = CASTLING_ALL; }
+  inline constexpr void clearCastling() { castling = Castling::None; }
+  inline constexpr void setAllCastling() { castling = Castling::All; }
 
-  inline constexpr bool isAnyCastling() const { return castling != 0; }
+  inline constexpr bool isAnyCastling() const { return has(castling); }
 
-  inline constexpr bool isKingsideCastling(Color c) const { return castling & castlingKingside(c); }
+  inline constexpr bool isKingsideCastling(Color c) const {
+    return has(castling & castlingKingside(c));
+  }
+
   inline constexpr bool isQueensideCastling(Color c) const {
-    return castling & castlingQueenside(c);
+    return has(castling & castlingQueenside(c));
   }
 
   inline constexpr void setKingsideCastling(Color c) { castling |= castlingKingside(c); }

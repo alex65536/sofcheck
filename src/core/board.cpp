@@ -367,7 +367,7 @@ ValidateResult Board::validate() {
       return ValidateResult::BadData;
     }
   }
-  if ((castling & CASTLING_ALL) != castling) {
+  if ((castling & Castling::All) != castling) {
     return ValidateResult::BadData;
   }
   if (enpassantCoord != INVALID_COORD) {
@@ -455,7 +455,7 @@ void Board::update() {
   if (enpassantCoord != INVALID_COORD) {
     hash ^= Private::g_zobristEnpassant[enpassantCoord];
   }
-  hash ^= Private::g_zobristCastling[castling];
+  hash ^= Private::g_zobristCastling[static_cast<uint8_t>(castling)];
   for (coord_t i = 0; i < 64; ++i) {
     const cell_t cell = cells[i];
     if (cell == EMPTY_CELL) {

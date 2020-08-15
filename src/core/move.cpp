@@ -86,20 +86,20 @@ bool Move::isWellFormed(Color c) const {
 }
 
 // Helper macro for `updateCastling`
-#define D_CHECK_CASTLING_FLAG(type)                    \
+#define D_CHECK_CASTLING_FLAG(type, type1)             \
   if (bbChange & Private::BB_CASTLING_##type##_SRCS) { \
-    castlingMask ^= CASTLING_##type;                   \
+    castlingMask ^= Castling::type1;                   \
   }
 
 inline static void updateCastling(Board &b, const bitboard_t bbChange) {
-  castling_t castlingMask = CASTLING_ALL;
-  D_CHECK_CASTLING_FLAG(BLACK_KINGSIDE);
-  D_CHECK_CASTLING_FLAG(BLACK_QUEENSIDE);
-  D_CHECK_CASTLING_FLAG(WHITE_KINGSIDE);
-  D_CHECK_CASTLING_FLAG(WHITE_QUEENSIDE);
-  b.hash ^= Private::g_zobristCastling[b.castling];
+  Castling castlingMask = Castling::All;
+  D_CHECK_CASTLING_FLAG(BLACK_KINGSIDE, BlackKingside);
+  D_CHECK_CASTLING_FLAG(BLACK_QUEENSIDE, BlackQueenside);
+  D_CHECK_CASTLING_FLAG(WHITE_KINGSIDE, WhiteKingside);
+  D_CHECK_CASTLING_FLAG(WHITE_QUEENSIDE, WhiteQueenside);
+  b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
   b.castling &= castlingMask;
-  b.hash ^= Private::g_zobristCastling[b.castling];
+  b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
 }
 
 #undef D_CHECK_CASTLING_FLAG
@@ -125,9 +125,9 @@ inline static void makeKingsideCastling(Board &b) {
   b.bbPieces[rook] ^= static_cast<bitboard_t>(0xa0) << offset;
   b.bbPieces[king] ^= static_cast<bitboard_t>(0x50) << offset;
   if constexpr (!Inverse) {
-    b.hash ^= Private::g_zobristCastling[b.castling];
+    b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
     b.clearCastling(C);
-    b.hash ^= Private::g_zobristCastling[b.castling];
+    b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
   }
 }
 
@@ -152,9 +152,9 @@ inline static void makeQueensideCastling(Board &b) {
   b.bbPieces[rook] ^= static_cast<bitboard_t>(0x09) << offset;
   b.bbPieces[king] ^= static_cast<bitboard_t>(0x14) << offset;
   if constexpr (!Inverse) {
-    b.hash ^= Private::g_zobristCastling[b.castling];
+    b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
     b.clearCastling(C);
-    b.hash ^= Private::g_zobristCastling[b.castling];
+    b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
   }
 }
 

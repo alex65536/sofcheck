@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "util/operators.h"
+
 namespace SoFCore {
 
 // Bitboard type
@@ -33,24 +35,27 @@ using subcoord_t = int8_t;
 // Cell contents type
 using cell_t = int8_t;
 
-// Castling flags type
-using castling_t = uint8_t;
-
 // Board hash type
 using board_hash_t = uint64_t;
+
+// Castling flags type
+enum class Castling : uint8_t {
+  None = 0,
+  WhiteQueenside = 1,
+  WhiteKingside = 2,
+  BlackQueenside = 4,
+  BlackKingside = 8,
+  All = 15
+};
+
+SOF_ENUM_BITWISE(Castling, uint8_t)
+SOF_ENUM_EQUAL(Castling, uint8_t)
 
 // Cell color type
 enum class Color : int8_t { White = 0, Black = 1 };
 
 // Piece kind type
 enum class Piece : int8_t { Pawn = 0, King = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5 };
-
-// Castling flag constants
-constexpr castling_t CASTLING_WHITE_QUEENSIDE = 1;
-constexpr castling_t CASTLING_WHITE_KINGSIDE = 2;
-constexpr castling_t CASTLING_BLACK_QUEENSIDE = 4;
-constexpr castling_t CASTLING_BLACK_KINGSIDE = 8;
-constexpr castling_t CASTLING_ALL = 15;
 
 // Full bitboard (i.e. containing all bits set to one)
 constexpr bitboard_t BITBOARD_FULL = ~static_cast<bitboard_t>(0);
@@ -63,14 +68,17 @@ constexpr cell_t EMPTY_CELL = static_cast<cell_t>(0);
 constexpr coord_t INVALID_COORD = static_cast<coord_t>(-1);
 
 // Returns the queenside castling flag depending on color
-inline constexpr castling_t castlingQueenside(Color c) {
-  return c == Color::White ? CASTLING_WHITE_QUEENSIDE : CASTLING_BLACK_QUEENSIDE;
+inline constexpr Castling castlingQueenside(Color c) {
+  return (c == Color::White) ? Castling::WhiteQueenside : Castling::BlackQueenside;
 }
 
 // Returns the kingside castling flag depending on color
-inline constexpr castling_t castlingKingside(Color c) {
-  return c == Color::White ? CASTLING_WHITE_KINGSIDE : CASTLING_BLACK_KINGSIDE;
+inline constexpr Castling castlingKingside(Color c) {
+  return (c == Color::White) ? Castling::WhiteKingside : Castling::BlackKingside;
 }
+
+// Returns `true` if any of the castling flags are set
+inline constexpr bool has(Castling c) { return c != Castling::None; }
 
 inline constexpr Color invert(Color c) { return static_cast<Color>(static_cast<int8_t>(c) ^ 1); }
 
