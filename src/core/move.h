@@ -64,6 +64,12 @@ struct Move {
   }
 };
 
+// Given the move side `color` and enpassant destination cell `dst`, returns the cell on which the
+// attacked pawn is located.
+inline constexpr coord_t enpassantPawnPos(const Color color, const coord_t dst) {
+  return (color == Color::White) ? dst + 8 : dst - 8;
+}
+
 inline constexpr bool operator==(Move a, Move b) { return a.asUint() == b.asUint(); }
 
 inline constexpr bool operator!=(Move a, Move b) { return a.asUint() != b.asUint(); }

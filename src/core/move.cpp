@@ -160,7 +160,7 @@ inline static void makeQueensideCastling(Board &b) {
 
 template <Color C, bool Inverse>
 inline static void makeEnpassant(Board &b, const Move move, const bitboard_t bbChange) {
-  const coord_t taken = move.dst - Private::pawnMoveDelta(C);
+  const coord_t taken = enpassantPawnPos(C, move.dst);
   const bitboard_t bbTaken = coordToBitboard(taken);
   constexpr cell_t ourPawn = makeCell(C, Piece::Pawn);
   constexpr cell_t enemyPawn = makeCell(invert(C), Piece::Pawn);

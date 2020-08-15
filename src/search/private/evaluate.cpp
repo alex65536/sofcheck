@@ -37,8 +37,8 @@ score_pair_t boardUpdatePsqScore(const Board &b, const Move move, score_pair_t p
   }
   psq += PIECE_SQUARE_TABLE[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {
-    const coord_t tmp = (color == Color::White) ? (move.dst + 8) : (move.dst - 8);
-    psq -= PIECE_SQUARE_TABLE[makeCell(invert(color), Piece::Pawn)][tmp];
+    const coord_t pawnPos = enpassantPawnPos(color, move.dst);
+    psq -= PIECE_SQUARE_TABLE[makeCell(invert(color), Piece::Pawn)][pawnPos];
   }
   return psq;
 }
