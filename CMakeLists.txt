@@ -19,6 +19,8 @@ endif()
 set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
 
+set(GTEST_PATH "" CACHE STRING "Path to gtest")
+
 
 # Detect system configuration
 if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
