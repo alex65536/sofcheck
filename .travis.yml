@@ -26,7 +26,7 @@ before_install:
 install:
   - cp -r /usr/src/googletest .
   - ( cd googletest && cmake . && make -j2 )
-  - CMAKE_LIBRARY_PATH="$PWD/googletest/lib/"
+  - export CMAKE_LIBRARY_PATH="$PWD/googletest/lib/"
 
 before_script:
   - mkdir build
