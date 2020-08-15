@@ -15,6 +15,7 @@ namespace SoFSearch {
 using namespace std::chrono_literals;
 using namespace SoFUtil::Logging;
 
+using Private::Position;
 using Private::SearchLimits;
 using SoFBotApi::ApiResult;
 using SoFBotApi::TimeControl;
@@ -27,8 +28,7 @@ constexpr const char *ENGINE = "Engine";
 
 struct Engine::Impl {
   std::optional<Private::JobRunner> runner;
-  Board board = Board::initialPosition();
-  Board curBoard = Board::initialPosition();
+  Position position = Position::from(Board::initialPosition(), {});
   std::vector<Move> moves;
 };
 
@@ -72,7 +72,7 @@ ApiResult Engine::reportError(const char *message) {
 }
 
 ApiResult Engine::doSearch(const Private::SearchLimits &limits) {
-  p_->runner->start(p_->board, p_->moves, limits, options_.getInt("Threads")->value);
+  p_->runner->start(p_->position, limits, options_.getInt("Threads")->value);
   return ApiResult::Ok;
 }
 
@@ -91,17 +91,12 @@ ApiResult Engine::searchFixedTime(std::chrono::milliseconds time) {
 }
 
 ApiResult Engine::searchTimeControl(const TimeControl &control) {
-  return doSearch(SearchLimits::withTimeControl(p_->curBoard, control));
+  return doSearch(SearchLimits::withTimeControl(p_->position.last, control));
 }
 
 ApiResult Engine::setPosition(const SoFCore::Board &board, const SoFCore::Move *moves,
                               size_t count) {
-  p_->board = board;
-  p_->curBoard = board;
-  p_->moves.assign(moves, moves + count);
-  for (size_t i = 0; i < count; ++i) {
-    moveMake(p_->curBoard, moves[i]);
-  }
+  p_->position = Position::from(board, std::vector<Move>(moves, moves + count));
   return ApiResult::Ok;
 }
 

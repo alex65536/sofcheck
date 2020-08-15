@@ -6,15 +6,22 @@
 #include <utility>
 #include <vector>
 
+#include "core/movegen.h"
 #include "util/defer.h"
+#include "util/logging.h"
+#include "util/random.h"
 
 namespace SoFSearch::Private {
 
 using namespace std::chrono_literals;
+using namespace SoFUtil::Logging;
 
 using SoFCore::Board;
 using SoFCore::Move;
 using std::chrono::steady_clock;
+
+// Type of log entry
+constexpr const char *JOB_RUNNER = "JobRunner";
 
 struct Stats {
   uint64_t nodes = 0;
@@ -52,8 +59,25 @@ void JobRunner::join() {
   }
 }
 
-void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves,
-                              const SearchLimits &limits, const size_t numJobs) {
+static Move pickRandomMove(Board board) {
+  Move moves[300];
+  const size_t count = genAllMoves(board, moves);
+  SoFUtil::randomShuffle(moves, moves + count);
+  for (size_t i = 0; i < count; ++i) {
+    const Move move = moves[i];
+    const SoFCore::MovePersistence persistence = moveMake(board, move);
+    if (!isMoveLegal(board)) {
+      moveUnmake(board, move, persistence);
+      continue;
+    }
+    moveUnmake(board, move, persistence);
+    return move;
+  }
+  return Move::null();
+}
+
+void JobRunner::runMainThread(const Position &position, const SearchLimits &limits,
+                              const size_t numJobs) {
   {
     std::unique_lock lock(hashChangeLock_);
     canChangeHash_ = false;
@@ -75,8 +99,7 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
   }
   std::vector<std::thread> threads;
   for (size_t i = 0; i < numJobs; ++i) {
-    threads.emplace_back(
-        [&job = jobs[i], &board, &moves, &limits]() { job.run(board, moves, limits); });
+    threads.emplace_back([&job = jobs[i], &position, &limits]() { job.run(position, limits); });
   }
 
   static constexpr auto STATS_UPDATE_INTERVAL = 3s;
@@ -126,15 +149,20 @@ void JobRunner::runMainThread(const Board &board, const std::vector<Move> &moves
       bestMove = job.results().bestMove();
     }
   }
+  if (bestMove == Move::null()) {
+    if (bestDepth != 0) {
+      logError(JOB_RUNNER) << "At least one depth is calculated, but the best move is not found";
+    }
+    bestMove = pickRandomMove(position.last);
+  }
   server_.finishSearch(bestMove);
 }
 
-void JobRunner::start(const Board &board, const std::vector<Move> &moves,
-                      const SearchLimits &limits, const size_t numJobs) {
+void JobRunner::start(const Position &position, const SearchLimits &limits, const size_t numJobs) {
   join();
   comm_.reset();
   mainThread_ = std::thread(
-      [this, board, moves, limits, numJobs]() { runMainThread(board, moves, limits, numJobs); });
+      [this, position, limits, numJobs]() { runMainThread(position, limits, numJobs); });
 }
 
 void JobRunner::stop() { comm_.stop(); }

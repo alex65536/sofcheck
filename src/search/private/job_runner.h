@@ -31,8 +31,7 @@ public:
 
   // Starts the search. If the search is already started, the previous search is stopped in a
   // blocked manner (i.e. by calling `join()`)
-  void start(const SoFCore::Board &board, const std::vector<SoFCore::Move> &moves,
-             const SearchLimits &limits, const size_t numJobs);
+  void start(const Position &position, const SearchLimits &limits, const size_t numJobs);
 
   // Indicates that the hash table size (in bytes) must be changed to `size`. The resize operation
   // may be deferred until the search is stopped.
@@ -52,8 +51,7 @@ public:
 
 private:
   // Main function of the thread which controls all the running jobs.
-  void runMainThread(const SoFCore::Board &board, const std::vector<SoFCore::Move> &moves,
-                     const SearchLimits &limits, const size_t numJobs);
+  void runMainThread(const Position &position, const SearchLimits &limits, const size_t numJobs);
 
   JobCommunicator comm_;
   TranspositionTable tt_;

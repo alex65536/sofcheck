@@ -80,6 +80,22 @@ static_assert(std::atomic<uint64_t>::is_always_lock_free);
 static_assert(std::atomic<size_t>::is_always_lock_free);
 static_assert(std::atomic<SoFCore::Move>::is_always_lock_free);
 
+// Position with saved previous moves
+struct Position {
+  SoFCore::Board first;
+  std::vector<SoFCore::Move> moves;
+  SoFCore::Board last;
+
+  // Constructs `Position` from `first` and `moves`, calculating `last`
+  inline static Position from(const SoFCore::Board &first, std::vector<SoFCore::Move> moves) {
+    Position position{first, std::move(moves), first};
+    for (SoFCore::Move move : position.moves) {
+      moveMake(position.last, move);
+    }
+    return position;
+  }
+};
+
 // A class that represents a single search job.
 class Job {
 public:
@@ -92,8 +108,7 @@ public:
   inline const JobResults &results() const { return results_; }
 
   // Starts the search job. This function must be called exactly once.
-  void run(SoFCore::Board board, const std::vector<SoFCore::Move> &moves,
-           const SearchLimits &limits);
+  void run(const Position &position, const SearchLimits &limits);
 
 private:
   friend class Searcher;

@@ -313,11 +313,12 @@ std::vector<Move> unwindPv(Board board, const Move bestMove, const Transposition
   return pv;
 }
 
-void Job::run(Board board, const std::vector<Move> &moves, const SearchLimits &limits) {
+void Job::run(const Position &position, const SearchLimits &limits) {
   // Apply moves and fill repetition tables
+  Board board = position.first;
   RepetitionTable singleRepeat;
   RepetitionTable doubleRepeat;
-  for (const Move move : moves) {
+  for (const Move move : position.moves) {
     if (!singleRepeat.insert(board.hash)) {
       doubleRepeat.insert(board.hash);
     }
