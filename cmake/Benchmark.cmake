@@ -1,3 +1,5 @@
+include_guard(GLOBAL)
+
 find_package(benchmark)
 
 add_library(benchmark_main

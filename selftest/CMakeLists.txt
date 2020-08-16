@@ -1,10 +1,12 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 project(SoFCheck::SelfTest)
 
 
 # Set compiler flags
 set(CMAKE_CXX_STANDARD 17)
+
+include(Benchmark)
 
 
 # Add configuration options
