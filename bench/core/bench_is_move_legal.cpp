@@ -26,5 +26,3 @@ inline void runCheckValid(benchmark::State &state, const char *fen) {
   BENCHMARK(BM_CheckValid##name);
 #include "core/bench_xmacro.h"
 #undef BENCH_DO
-
-BENCHMARK_MAIN()

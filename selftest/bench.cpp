@@ -135,5 +135,3 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
   BENCHMARK(BM_Recurse##name)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Unit(benchmark::kMillisecond);
 #include "core/bench_xmacro.h"
 #undef BENCH_DO
-
-BENCHMARK_MAIN()
