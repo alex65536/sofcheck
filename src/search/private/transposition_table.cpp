@@ -1,6 +1,7 @@
 #include "search/private/transposition_table.h"
 
 #include <algorithm>
+#include <limits>
 
 #include "util/bit.h"
 
@@ -14,6 +15,18 @@ void doClear(TranspositionTable::Entry *table, const size_t size) {
   for (size_t i = 0; i < size; ++i) {
     table[i].clear();
   }
+}
+
+int32_t TranspositionTable::Data::weight(const uint8_t curEpoch) const {
+  if (*this == Data::zero()) {
+    return std::numeric_limits<int32_t>::min();
+  }
+  const uint8_t age = curEpoch - epoch_;
+  int32_t result = 4 * depth() - age;
+  if (bound() == SoFBotApi::PositionCostBound::Exact) {
+    result += 8;
+  }
+  return result;
 }
 
 void TranspositionTable::clear() { doClear(table_.get(), size_); }
@@ -77,8 +90,13 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
 
 void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data value) {
   const size_t idx = key & (size_ - 1);
+  const uint8_t epoch = epoch_;
+  Entry &entry = table_[idx];
+  if (entry.value.load(std::memory_order_relaxed).weight(epoch) > value.weight(epoch)) {
+    return;
+  }
   key ^= value.asUint();
-  table_[idx].assignRelaxed(value, key);
+  entry.assignRelaxed(value, key);
 }
 
 TranspositionTable::TranspositionTable()

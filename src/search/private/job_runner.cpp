@@ -162,6 +162,7 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
 void JobRunner::start(const Position &position, const SearchLimits &limits, const size_t numJobs) {
   join();
   comm_.reset();
+  tt_.nextEpoch();
   mainThread_ = std::thread(
       [this, position, limits, numJobs]() { runMainThread(position, limits, numJobs); });
 }

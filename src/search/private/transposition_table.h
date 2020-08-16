@@ -39,7 +39,7 @@ public:
         : move_(move),
           score_(score),
           flags_(static_cast<uint8_t>(bound) | (isPv ? FLAG_IS_PV : 0)),
-          padding_(0) {
+          epoch_(0) {
       move_.tag = depth;
     }
 
@@ -58,7 +58,7 @@ public:
     inline constexpr uint64_t asUint() const {
       const auto uintScore = static_cast<uint16_t>(score_);
       return static_cast<uint64_t>(move_.asUint()) | (static_cast<uint64_t>(uintScore) << 32) |
-             (static_cast<uint64_t>(flags_) << 48) | (static_cast<uint64_t>(padding_) << 56);
+             (static_cast<uint64_t>(flags_) << 48) | (static_cast<uint64_t>(epoch_) << 56);
     }
 
     inline constexpr friend bool operator==(const Data d1, const Data d2) {
@@ -74,13 +74,20 @@ public:
     struct PrivateTag {};
 
     inline constexpr Data(PrivateTag, const SoFCore::Move move, const score_t score,
-                          const uint8_t flags, const uint8_t padding)
-        : move_(move), score_(score), flags_(flags), padding_(padding) {}
+                          const uint8_t flags, const uint8_t epoch)
+        : move_(move), score_(score), flags_(flags), epoch_(epoch) {}
 
     SoFCore::Move move_;
     score_t score_;
     uint8_t flags_;
-    uint8_t padding_;
+    uint8_t epoch_;
+
+    friend class TranspositionTable;
+
+    // Computes the data weight of the table entry if the current epoch of the transposition table
+    // is `curEpoch`. Data weight controls entry replacement, so entries with lower weight are
+    // overwritten by entries with greater weight.
+    int32_t weight(uint8_t curEpoch) const;
 
     static constexpr uint8_t FLAG_IS_INVALID = 8;
     static constexpr uint8_t FLAG_IS_PV = 16;
@@ -97,6 +104,10 @@ public:
   //
   // This function is not thread-safe. No other thread should use the table while resizing.
   void resize(size_t maxSize, bool clearTable);
+
+  // Increments the hash table epoch. It is recommended to call this function once before the new
+  // search is started. Note that this function is not thread-safe.
+  inline void nextEpoch() { ++epoch_; }
 
   // Returns the hash table size (in bytes)
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }
@@ -140,6 +151,7 @@ private:
 
   size_t size_;  // Number of entries, must be power of two
   std::unique_ptr<Entry[]> table_;
+  uint8_t epoch_ = 0;
 };
 
 }  // namespace SoFSearch::Private
