@@ -59,19 +59,35 @@ private:
   std::mutex stopLock_;
 };
 
+// Type of job stats
+enum class JobStat : size_t {
+  Nodes,
+  TtHits,
+  Max  // Fake type to denote the total number of stats
+};
+
+// Number of job stats
+constexpr size_t JOB_STAT_SZ = static_cast<size_t>(JobStat::Max);
+
 // Job results and statistics. This class is thread-safe if there is no more than one writer thread.
 // If two threads write concurrently, the data race occurs.
 class JobResults {
 public:
   // These functions return the job results. They can be called by reader threads.
-  inline uint64_t nodes() const { return getRelaxed(nodes_); }
-  inline uint64_t ttHits() const { return getRelaxed(ttHits_); }
+  inline uint64_t get(const JobStat stat) const {
+    return getRelaxed(stats_[static_cast<size_t>(stat)]);
+  }
+
   inline size_t depth() const { return getRelaxed(depth_); }
   inline SoFCore::Move bestMove() const { return getRelaxed(bestMove_); }
 
   // These functions update the job results. They can be called by a single writer thread.
-  inline void incNodes() { incRelaxed(nodes_); }
-  inline void incTtHits() { incRelaxed(ttHits_); }
+  inline void inc(const JobStat stat) {
+    std::atomic<uint64_t> &value = stats_[static_cast<size_t>(stat)];
+    const uint64_t newValue = value.load(std::memory_order_relaxed) + 1;
+    value.store(newValue, std::memory_order_relaxed);
+  }
+
   inline void setBestMove(const size_t depth, const SoFCore::Move move) {
     depth_.store(depth, std::memory_order_relaxed);
     bestMove_.store(move, std::memory_order_relaxed);
@@ -83,14 +99,7 @@ private:
     return value.load(std::memory_order_relaxed);
   }
 
-  template <typename T>
-  inline static void incRelaxed(std::atomic<T> &value) {
-    const T newValue = value.load(std::memory_order_relaxed) + 1;
-    value.store(newValue, std::memory_order_relaxed);
-  }
-
-  std::atomic<uint64_t> nodes_ = 0;
-  std::atomic<uint64_t> ttHits_ = 0;
+  std::atomic<uint64_t> stats_[JOB_STAT_SZ] = {};
   std::atomic<size_t> depth_ = 0;
   std::atomic<SoFCore::Move> bestMove_ = SoFCore::Move::null();
 };

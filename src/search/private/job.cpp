@@ -183,7 +183,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
       moveUnmake(board_, move, persistence);
       continue;
     }
-    results_.incNodes();
+    results_.inc(JobStat::Nodes);
     const score_t score = -quiescenseSearch(-beta, -alpha, newPsq);
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
@@ -228,7 +228,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   // 2. Probe the transposition table
   Move hashMove = Move::null();
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
-    results_.incTtHits();
+    results_.inc(JobStat::TtHits);
     hashMove = data.move();
     if (Node == NodeKind::Simple && data.depth() >= depth) {
       const score_t score = adjustCheckmate(data.score(), idepth);
@@ -266,7 +266,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       moveUnmake(board_, move, persistence);
       continue;
     }
-    results_.incNodes();
+    results_.inc(JobStat::Nodes);
     if (hasMove &&
         -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq) <= alpha) {
       moveUnmake(board_, move, persistence);

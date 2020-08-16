@@ -25,14 +25,21 @@ using std::chrono::steady_clock;
 // Type of log entry
 constexpr const char *JOB_RUNNER = "JobRunner";
 
-struct Stats {
-  uint64_t nodes = 0;
-  uint64_t ttHits = 0;
+class Stats {
+public:
+  inline uint64_t get(const JobStat stat) const { return stats_[static_cast<size_t>(stat)]; }
 
-  void add(const JobResults &results) {
-    nodes += results.nodes();
-    ttHits += results.ttHits();
+  inline uint64_t nodes() const { return get(JobStat::Nodes); }
+  inline uint64_t ttHits() const { return get(JobStat::TtHits); }
+
+  inline void add(const JobResults &results) {
+    for (size_t i = 0; i < JOB_STAT_SZ; ++i) {
+      stats_[i] += results.get(static_cast<JobStat>(i));
+    }
   }
+
+private:
+  uint64_t stats_[JOB_STAT_SZ] = {};
 };
 
 void JobRunner::hashClear() {
@@ -120,15 +127,15 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
     }
 
     // Check if it's time to stop
-    if (stats.nodes > limits.nodes ||
+    if (stats.nodes() > limits.nodes ||
         (limits.time != TIME_UNLIMITED && now - startTime > limits.time)) {
       comm_.stop();
     }
 
     // Print stats
     if (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
-      server_.sendNodeCount(stats.nodes);
-      server_.sendHashHits(stats.ttHits);
+      server_.sendNodeCount(stats.nodes());
+      server_.sendHashHits(stats.ttHits());
       while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }
