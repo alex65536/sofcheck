@@ -29,16 +29,15 @@ public:
     inline constexpr score_t score() const { return score_; }
     inline constexpr uint8_t depth() const { return move_.tag; }
     inline constexpr bool isValid() const { return flags_ & FLAG_IS_VALID; }
-    inline constexpr bool isPv() const { return flags_ & FLAG_IS_PV; }
     inline constexpr SoFBotApi::PositionCostBound bound() const {
       return static_cast<SoFBotApi::PositionCostBound>(flags_ & 3);
     }
 
     inline constexpr Data(const SoFCore::Move move, const score_t score, const uint8_t depth,
-                          const SoFBotApi::PositionCostBound bound, const bool isPv)
+                          const SoFBotApi::PositionCostBound bound)
         : move_(move),
           score_(score),
-          flags_(static_cast<uint8_t>(bound) | FLAG_IS_VALID | (isPv ? FLAG_IS_PV : 0)),
+          flags_(static_cast<uint8_t>(bound) | FLAG_IS_VALID),
           epoch_(0) {
       move_.tag = depth;
     }
@@ -86,7 +85,6 @@ public:
     int32_t weight(uint8_t curEpoch) const;
 
     static constexpr uint8_t FLAG_IS_VALID = 8;
-    static constexpr uint8_t FLAG_IS_PV = 16;
   };
 
   // Default size of the transposition table

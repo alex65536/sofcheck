@@ -211,7 +211,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     return quiescenseSearch(alpha, beta, psq);
   }
 
-  auto ttStore = [&](score_t score, const bool isPv) {
+  auto ttStore = [&](score_t score) {
     PositionCostBound bound = PositionCostBound::Upperbound;
     if (score <= origAlpha) {
       score = origAlpha;
@@ -222,7 +222,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       bound = PositionCostBound::Lowerbound;
     }
     score = adjustCheckmate(score, -static_cast<int16_t>(idepth));
-    tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound, isPv));
+    tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
   };
 
   // 2. Probe the transposition table
@@ -293,7 +293,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
           history_[move] += depth * depth;
         }
       }
-      ttStore(beta, false);
+      ttStore(beta);
       return beta;
     }
   }
@@ -304,7 +304,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   }
 
   // 5. End of search
-  ttStore(alpha, Node == NodeKind::Root || Node == NodeKind::Pv);
+  ttStore(alpha);
   return alpha;
 }
 
