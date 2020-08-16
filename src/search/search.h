@@ -16,7 +16,7 @@ struct SearchLimits;
 // The chess engine class which uses `SoFBotApi::Client` as an interface
 class Engine final : public SoFBotApi::Client, private SoFBotApi::OptionObserver {
 public:
-  const char *name() const override { return "SoFCheck pre-alpha"; }
+  const char *name() const override { return "SoFCheck (early alpha)"; }
   const char *author() const override { return "SoFCheck developers"; }
 
   SoFBotApi::Options &options() override { return options_; }
