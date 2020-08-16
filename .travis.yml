@@ -9,7 +9,7 @@ addons:
     packages:
       - g++-8
       - clang++-8
-      - clang-tidy-8
+      - clang-tidy-9
       - libbenchmark-dev
       - libboost-stacktrace-dev
       - cmake
@@ -34,6 +34,6 @@ before_script:
   - cd build
 
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON -DCMAKE_CXX_CLANG_TIDY='clang-tidy;--warnings-as-errors=*' ..
+  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON -DCMAKE_CXX_CLANG_TIDY='clang-tidy-9;--warnings-as-errors=*' ..
   - make -j2
   - ctest
