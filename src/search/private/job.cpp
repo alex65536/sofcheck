@@ -212,7 +212,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   }
 
   auto ttStore = [&](score_t score) {
-    PositionCostBound bound = PositionCostBound::Upperbound;
+    PositionCostBound bound = PositionCostBound::Exact;
     if (score <= origAlpha) {
       score = origAlpha;
       bound = PositionCostBound::Upperbound;
