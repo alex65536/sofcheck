@@ -43,7 +43,7 @@ public:
       move_.tag = depth;
     }
 
-    inline Data() noexcept {}
+    inline Data() noexcept = default;
 
     inline static constexpr Data zero() {
       return Data(PrivateTag{}, SoFCore::Move::null(), 0, 0, 0);

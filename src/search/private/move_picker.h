@@ -79,7 +79,7 @@ public:
     return moves_[movePosition_++];
   }
 
-  QuiescenseMovePicker(const SoFCore::Board &board);
+  explicit QuiescenseMovePicker(const SoFCore::Board &board);
 
 private:
   SoFCore::Move moves_[SoFCore::BUFSZ_CAPTURES];

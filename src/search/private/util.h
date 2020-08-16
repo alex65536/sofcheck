@@ -42,7 +42,7 @@ public:
   inline uint64_t operator[](const SoFCore::Move move) const { return tab_[indexOf(move)]; }
 
 private:
-  inline constexpr size_t indexOf(const SoFCore::Move move) const {
+  inline constexpr static size_t indexOf(const SoFCore::Move move) {
     return (static_cast<size_t>(move.src) << 6) | static_cast<size_t>(move.dst);
   }
 
@@ -55,7 +55,7 @@ private:
 class RepetitionTable {
 public:
   inline RepetitionTable()
-      : tab_(new SoFCore::board_hash_t[INITIAL_BUCKET_COUNT * BUCKET_SIZE]),
+      : tab_(std::make_unique<SoFCore::board_hash_t[]>(INITIAL_BUCKET_COUNT * BUCKET_SIZE)),
         bucketCount_(INITIAL_BUCKET_COUNT),
         mask_((INITIAL_BUCKET_COUNT - 1) * BUCKET_SIZE) {
     std::fill(tab_.get(), tab_.get() + INITIAL_BUCKET_COUNT * BUCKET_SIZE, 0);

@@ -52,7 +52,7 @@ inline constexpr bool operator!=(ParsedMove a, ParsedMove b) { return a.asUint()
 //
 // In case where `parsedMove` cannot be interpreted as `Move`, it returns the move with `kind ==
 // MoveKind::Invalid`.
-Move moveFromParsed(const ParsedMove parsedMove, const Board &board);
+Move moveFromParsed(ParsedMove parsedMove, const Board &board);
 
 // Convenience function that converts the move directly from string. For details, see the
 // implementation of this function and the documentation for `ParsedMove::fromStr` and

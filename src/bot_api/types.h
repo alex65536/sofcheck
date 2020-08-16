@@ -54,7 +54,7 @@ constexpr int32_t MAX_POSITION_COST = 2'000'000'000;
 // Structure that represents the position cost
 struct PositionCost {
 public:
-  inline constexpr PositionCost() : value_(0) {}
+  inline constexpr PositionCost() = default;
 
   // Returns the position cost type
   inline constexpr PositionCostType type() const {
@@ -108,7 +108,7 @@ private:
 
   inline explicit constexpr PositionCost(int32_t value) : value_(value) {}
 
-  int32_t value_;
+  int32_t value_ = 0;
 };
 
 // The type that indicates number of permille

@@ -11,12 +11,12 @@ namespace SoFSearch {
 
 namespace Private {
 struct SearchLimits;
-}
+}  // namespace Private
 
 // The chess engine class which uses `SoFBotApi::Client` as an interface
 class Engine final : public SoFBotApi::Client, private SoFBotApi::OptionObserver {
 public:
-  virtual const char *name() const override { return "SoFCheck pre-alpha"; }
+  const char *name() const override { return "SoFCheck pre-alpha"; }
   const char *author() const override { return "SoFCheck developers"; }
 
   SoFBotApi::Options &options() override { return options_; }
@@ -40,7 +40,7 @@ public:
   SoFBotApi::ApiResult reportError(const char *message) override;
 
   Engine();
-  ~Engine();
+  ~Engine() override;
 
 private:
   SoFBotApi::ApiResult connect(SoFBotApi::Server *server) override;
@@ -60,7 +60,7 @@ private:
   SoFBotApi::ApiResult doSearch(const Private::SearchLimits &limits);
 
   SoFBotApi::OptionStorage options_;
-  SoFBotApi::Server *server_;
+  SoFBotApi::Server *server_ = nullptr;
   std::unique_ptr<Impl> p_;
 };
 

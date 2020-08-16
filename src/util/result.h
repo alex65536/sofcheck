@@ -54,8 +54,11 @@ public:
     return r1.variant_ != r2.variant_;
   }
 
+  // NOLINTNEXTLINE(hicpp-explicit-conversions)
   inline constexpr Result(Ok<T> &&ok) noexcept
       : variant_(std::in_place_index<0>, std::move(ok.value_)) {}
+
+  // NOLINTNEXTLINE(hicpp-explicit-conversions)
   inline constexpr Result(Err<E> &&err) noexcept
       : variant_(std::in_place_index<1>, std::move(err.err_)) {}
 

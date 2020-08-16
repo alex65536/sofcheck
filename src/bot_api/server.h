@@ -70,7 +70,7 @@ public:
   virtual ApiResult reportError(const char *message) = 0;
   ApiResult reportError(const std::string &message) { return reportError(message.c_str()); }
 
-  virtual ~Server() {}
+  virtual ~Server() = default;
 
   friend class Connection;
 

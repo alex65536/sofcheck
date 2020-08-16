@@ -116,7 +116,6 @@ private:
 
 class RootNodeMovePicker {
 public:
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-member-init, hicpp-member-init)
   RootNodeMovePicker(MovePicker picker, const size_t jobId) {
     for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
       if (move == Move::null()) {

@@ -13,7 +13,7 @@ namespace SoFUtil {
 template <typename Action>
 class DeferAction : public SoFUtil::NoCopyMove {
 public:
-  DeferAction(Action action) : action_(std::move(action)) {}
+  explicit DeferAction(Action action) : action_(std::move(action)) {}
   ~DeferAction() { action_(); }
 
 private:

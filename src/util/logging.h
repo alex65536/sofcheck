@@ -47,7 +47,7 @@ public:
 private:
   friend Logger &logger();
 
-  Logger() {}
+  Logger() = default;
 };
 
 Logger &logger();

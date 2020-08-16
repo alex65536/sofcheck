@@ -44,7 +44,7 @@ void Engine::disconnect() {
   server_ = nullptr;
 }
 
-Engine::Engine() : options_(makeOptions(this)), server_(nullptr), p_(std::make_unique<Impl>()) {}
+Engine::Engine() : options_(makeOptions(this)), p_(std::make_unique<Impl>()) {}
 
 Engine::~Engine() {
   if (SOF_UNLIKELY(server_)) {

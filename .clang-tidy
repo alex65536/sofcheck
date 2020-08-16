@@ -22,9 +22,11 @@ llvm-namespace-comment, \
 -cppcoreguidelines-owning-memory, \
 -cppcoreguidelines-pro-bounds-*, \
 -cppcoreguidelines-pro-type-reinterpret-cast, \
+-cppcoreguidelines-pro-type-member-init, \
 -cppcoreguidelines-special-member-functions, \
 -hicpp-avoid-c-arrays, \
 -hicpp-braces-around-statements, \
+-hicpp-member-init, \
 -hicpp-no-array-decay, \
 -hicpp-signed-bitwise, \
 -hicpp-special-member-functions, \
@@ -52,6 +54,8 @@ llvm-namespace-comment, \
 # - cppcoreguidelines-special-member-functions also has false-positives with Google Test
 # - hicpp-special-member-functions also has false-positives with Google Test
 # - cert-err58-cpp also has false-positives with Google Test
+
+HeaderFilterRegex: '(bench|gen|src)/.+'
 
 CheckOptions:
     - key: readability-identifier-naming.ClassCase
@@ -90,14 +94,6 @@ CheckOptions:
       value: UPPER_CASE
     - key: readability-identifier-naming.TemplateParameterCase
       value: CamelCase
-    - key: readability-identifier-naming.TypeAliasCase
-      value: lower_case
-    - key: readability-identifier-naming.TypeAliasCaseSuffix
-      value: _t
-    - key: readability-identifier-naming.TypedefCase
-      value: lower_case
-    - key: readability-identifier-naming.TypedefCaseSuffix
-      value: _t
     - key: readability-identifier-naming.UnionCase
       value: CamelCase
     - key: readability-identifier-naming.ValueTemplateParameterCase

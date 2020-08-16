@@ -29,8 +29,8 @@
   }
 
 // Concatenates two strings in preprocessor, even if one of the strings expands as a macro
-#define _SOF_PRIVATE_STRING_CONCAT(a, b) a##b
-#define SOF_STRING_CONCAT(a, b) _SOF_PRIVATE_STRING_CONCAT(a, b)
+#define SOF_PRIVATE_STRING_CONCAT(a, b) a##b
+#define SOF_STRING_CONCAT(a, b) SOF_PRIVATE_STRING_CONCAT(a, b)
 
 // Creates a unique name which starts with `prefix`
 #define SOF_MAKE_UNIQUE(prefix) \

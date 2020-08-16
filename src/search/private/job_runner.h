@@ -16,7 +16,7 @@ namespace SoFSearch::Private {
 // The class that runs multiple search jobs simultaneously and controls them.
 class JobRunner {
 public:
-  inline JobRunner(SoFBotApi::Server &server) : server_(server) {}
+  inline explicit JobRunner(SoFBotApi::Server &server) : server_(server) {}
 
   ~JobRunner();
 
@@ -30,11 +30,11 @@ public:
 
   // Starts the search. If the search is already started, the previous search is stopped in a
   // blocked manner (i.e. by calling `join()`)
-  void start(const Position &position, const SearchLimits &limits, const size_t numJobs);
+  void start(const Position &position, const SearchLimits &limits, size_t numJobs);
 
   // Indicates that the hash table size (in bytes) must be changed to `size`. The resize operation
   // may be deferred until the search is stopped.
-  void hashResize(const size_t size);
+  void hashResize(size_t size);
 
   // Indicates that the hash table must be cleared. The clear operation may be deferred until the
   // search is stopped.
@@ -50,7 +50,7 @@ public:
 
 private:
   // Main function of the thread which controls all the running jobs.
-  void runMainThread(const Position &position, const SearchLimits &limits, const size_t numJobs);
+  void runMainThread(const Position &position, const SearchLimits &limits, size_t numJobs);
 
   JobCommunicator comm_;
   TranspositionTable tt_;
