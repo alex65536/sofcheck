@@ -18,7 +18,7 @@ void doClear(TranspositionTable::Entry *table, const size_t size) {
 }
 
 int32_t TranspositionTable::Data::weight(const uint8_t curEpoch) const {
-  if (*this == Data::zero()) {
+  if (!isValid()) {
     return std::numeric_limits<int32_t>::min();
   }
   const uint8_t age = curEpoch - epoch_;
@@ -37,7 +37,7 @@ TranspositionTable::Data TranspositionTable::load(const board_hash_t key) const 
   const Data entryData = entry.value.load(std::memory_order_relaxed);
   const board_hash_t entryKey = entry.key.load(std::memory_order_relaxed) ^ entryData.asUint();
   if (entryKey != key) {
-    return Data::invalid();
+    return Data::zero();
   }
   return entryData;
 }

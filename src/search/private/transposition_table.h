@@ -28,7 +28,7 @@ public:
 
     inline constexpr score_t score() const { return score_; }
     inline constexpr uint8_t depth() const { return move_.tag; }
-    inline constexpr bool isValid() const { return !(flags_ & FLAG_IS_INVALID); }
+    inline constexpr bool isValid() const { return flags_ & FLAG_IS_VALID; }
     inline constexpr bool isPv() const { return flags_ & FLAG_IS_PV; }
     inline constexpr SoFBotApi::PositionCostBound bound() const {
       return static_cast<SoFBotApi::PositionCostBound>(flags_ & 3);
@@ -38,7 +38,7 @@ public:
                           const SoFBotApi::PositionCostBound bound, const bool isPv)
         : move_(move),
           score_(score),
-          flags_(static_cast<uint8_t>(bound) | (isPv ? FLAG_IS_PV : 0)),
+          flags_(static_cast<uint8_t>(bound) | FLAG_IS_VALID | (isPv ? FLAG_IS_PV : 0)),
           epoch_(0) {
       move_.tag = depth;
     }
@@ -47,10 +47,6 @@ public:
 
     inline static constexpr Data zero() {
       return Data(PrivateTag{}, SoFCore::Move::null(), 0, 0, 0);
-    }
-
-    inline static constexpr Data invalid() {
-      return Data(PrivateTag{}, SoFCore::Move::null(), 0, FLAG_IS_INVALID, 0);
     }
 
     // Serializes the structure as `uint64_t`. Should work efficiently for little-endian
@@ -89,7 +85,7 @@ public:
     // overwritten by entries with greater weight.
     int32_t weight(uint8_t curEpoch) const;
 
-    static constexpr uint8_t FLAG_IS_INVALID = 8;
+    static constexpr uint8_t FLAG_IS_VALID = 8;
     static constexpr uint8_t FLAG_IS_PV = 16;
   };
 
@@ -120,7 +116,7 @@ public:
   // you plan to use the cache entry and do soemthing before it loads into CPU cache.
   void prefetch(SoFCore::board_hash_t key);
 
-  // Returns the entry with the key `key`. If such entry doesn't exist, returns `Data::invalid()`.
+  // Returns the entry with the key `key`. If such entry doesn't exist, returns `Data::zero()`.
   Data load(SoFCore::board_hash_t key) const;
 
   // Stores `value` for the key `key`.
