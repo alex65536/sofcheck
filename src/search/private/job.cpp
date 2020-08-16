@@ -316,7 +316,8 @@ std::vector<Move> unwindPv(Board board, const Move bestMove, const Transposition
   repetitions.insert(board.hash);
   for (;;) {
     TranspositionTable::Data data = tt.load(board.hash);
-    if (!data.isValid() || data.move() == Move::null()) {
+    if (!data.isValid() || data.move() == Move::null() ||
+        data.bound() != PositionCostBound::Exact) {
       break;
     }
     const Move move = data.move();
