@@ -52,7 +52,7 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
     return;
   }
 
-  std::unique_ptr<Entry[]> newData(new Entry[newSize]);
+  auto newData = std::make_unique<Entry[]>(newSize);
   if (clearTable) {
     doClear(newData.get(), newSize);
   } else if (newSize > size_) {
@@ -82,7 +82,7 @@ void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data 
 }
 
 TranspositionTable::TranspositionTable()
-    : size_(DEFAULT_SIZE / sizeof(Entry)), table_(new Entry[size_]) {
+    : size_(DEFAULT_SIZE / sizeof(Entry)), table_(std::make_unique<Entry[]>(size_)) {
   clear();
 }
 

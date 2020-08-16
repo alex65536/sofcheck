@@ -7,7 +7,7 @@ using SoFCore::board_hash_t;
 void RepetitionTable::grow() {
   const size_t newBucketCount = bucketCount_ * 2;
   const size_t newMask = (newBucketCount - 1) * BUCKET_SIZE;
-  std::unique_ptr<board_hash_t[]> newTab(new board_hash_t[newBucketCount * BUCKET_SIZE]);
+  auto newTab = std::make_unique<board_hash_t[]>(newBucketCount * BUCKET_SIZE);
   std::fill(newTab.get(), newTab.get() + newBucketCount * BUCKET_SIZE, 0);
   for (size_t i = 0; i < bucketCount_ * BUCKET_SIZE; ++i) {
     const board_hash_t item = tab_[i];
