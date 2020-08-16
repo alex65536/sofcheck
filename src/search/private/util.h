@@ -36,7 +36,9 @@ private:
 // History table used for history heuristics
 class HistoryTable {
 public:
-  HistoryTable() : tab_(new uint64_t[TAB_SIZE]) { std::fill(tab_.get(), tab_.get() + TAB_SIZE, 0); }
+  HistoryTable() : tab_(std::make_unique<uint64_t[]>(TAB_SIZE)) {
+    std::fill(tab_.get(), tab_.get() + TAB_SIZE, 0);
+  }
 
   inline uint64_t &operator[](const SoFCore::Move move) { return tab_[indexOf(move)]; }
   inline uint64_t operator[](const SoFCore::Move move) const { return tab_[indexOf(move)]; }
