@@ -88,10 +88,11 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
   size_ = newSize;
 }
 
-void TranspositionTable::store(board_hash_t key, const TranspositionTable::Data value) {
+void TranspositionTable::store(board_hash_t key, TranspositionTable::Data value) {
   const size_t idx = key & (size_ - 1);
   const uint8_t epoch = epoch_;
   Entry &entry = table_[idx];
+  value.epoch_ = epoch;
   if (entry.value.load(std::memory_order_relaxed).weight(epoch) > value.weight(epoch)) {
     return;
   }
