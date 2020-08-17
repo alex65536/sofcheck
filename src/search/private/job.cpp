@@ -206,6 +206,11 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   Frame &frame = stack_[idepth];
   frame.bestMove = Move::null();
 
+  // 0. Check for draw by 50 moves
+  if (board_.moveCounter >= 100) {
+    return 0;
+  }
+
   // 1. Run quiescence search in leaf node
   if (depth == 0) {
     return quiescenseSearch(alpha, beta, psq);
@@ -230,7 +235,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
     results_.inc(JobStat::TtHits);
     hashMove = data.move();
-    if (Node == NodeKind::Simple && data.depth() >= depth) {
+    if (Node == NodeKind::Simple && data.depth() >= depth && board_.moveCounter < 90) {
       const score_t score = adjustCheckmate(data.score(), idepth);
       switch (data.bound()) {
         case PositionCostBound::Exact: {
