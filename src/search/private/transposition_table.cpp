@@ -78,9 +78,18 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
       newData[idx].assignRelaxed(value, key);
     }
   } else {
-    // TODO : retain the best entry, not the first one
     for (size_t i = 0; i < newSize; ++i) {
       newData[i].assignRelaxed(table_[i]);
+    }
+    const size_t mask = newSize - 1;
+    const uint8_t epoch = epoch_;
+    for (size_t i = newSize; i < size_; ++i) {
+      const Entry &oldEntry = table_[i];
+      Entry &newEntry = newData[i & mask];
+      if (oldEntry.value.load(std::memory_order_relaxed).weight(epoch) >
+          newEntry.value.load(std::memory_order_relaxed).weight(epoch)) {
+        newEntry.assignRelaxed(oldEntry);
+      }
     }
   }
 
