@@ -63,6 +63,7 @@ private:
 enum class JobStat : size_t {
   Nodes,
   TtHits,
+  TtExactHits,
   Max  // Fake type to denote the total number of stats
 };
 

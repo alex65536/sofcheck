@@ -240,6 +240,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           frame.bestMove = hashMove;
+          results_.inc(JobStat::TtExactHits);
           // Refresh the hash entry, as it may come from older epoch
           tt_.store(board_.hash, data);
           return score;
