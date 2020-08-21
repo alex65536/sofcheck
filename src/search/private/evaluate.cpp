@@ -43,4 +43,12 @@ score_pair_t boardUpdatePsqScore(const Board &b, const Move move, score_pair_t p
   return psq;
 }
 
+score_t evaluate(const SoFCore::Board &b, const score_pair_t psq) {
+  score_t value = scorePairFirst(psq);
+  if (b.side == Color::Black) {
+    value *=-1;
+  }
+  return value;
+}
+
 }  // namespace SoFSearch::Private

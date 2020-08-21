@@ -164,9 +164,6 @@ struct MovePickerFactory<Searcher::NodeKind::Root> {
 
 score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
   score_t score = evaluate(board_, psq);
-  if (board_.side == Color::Black) {
-    score *= -1;
-  }
   alpha = std::max(alpha, score);
   if (alpha >= beta) {
     return beta;
