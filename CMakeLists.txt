@@ -234,6 +234,11 @@ if(UNIX)
     ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
+  add_test(
+    NAME smoke
+    COMMAND ${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py
+    ${PROJECT_BINARY_DIR}/sofcheck
+  )
 endif()
 
 
