@@ -18,6 +18,8 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
 endif()
 set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
+set(USE_SEARCH_DIAGNOSTICS OFF CACHE BOOL
+  "Build with search diagnostics (the engine becomes slower but checks itself for errors)")
 
 
 # Detect system configuration

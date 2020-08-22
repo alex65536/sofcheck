@@ -13,4 +13,7 @@
 // Build without exceptions?
 #cmakedefine USE_NO_EXCEPTIONS
 
+// Build with diagnostics
+#cmakedefine USE_SEARCH_DIAGNOSTICS
+
 #endif  // SOF_CONFIG_INCLUDED

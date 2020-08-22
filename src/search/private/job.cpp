@@ -6,10 +6,13 @@
 
 #include "bot_api/types.h"
 #include "core/movegen.h"
+#include "core/strutil.h"
+#include "search/private/diagnostics.h"
 #include "search/private/evaluate.h"
 #include "search/private/move_picker.h"
 #include "search/private/score.h"
 #include "search/private/util.h"
+#include "util/misc.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -172,6 +175,25 @@ struct MovePickerFactory<Searcher::NodeKind::Root> {
   }
 };
 
+#ifdef USE_SEARCH_DIAGNOSTICS
+// Check that the moves are not repeated
+class DgnMoveRepeatChecker {
+public:
+  inline void add(const Move move) {
+    for (size_t i = 0; i < count_; ++i) {
+      if (SOF_UNLIKELY(moves_[i] == move)) {
+        SoFUtil::panic("Move " + moveToStr(move) + " is repeated twice!");
+      }
+    }
+    moves_[count_++] = move;
+  }
+
+private:
+  size_t count_ = 0;
+  Move moves_[SoFCore::BUFSZ_MOVES];
+};
+#endif
+
 score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
   score_t score = evaluate(board_, psq);
   if (board_.side == Color::Black) {
@@ -182,13 +204,16 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
     return beta;
   }
 
+  DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   QuiescenseMovePicker picker(board_);
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
     }
+    DIAGNOSTIC(dgnMoves.add(move);)
     const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
+    DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
       moveUnmake(board_, move, persistence);
       continue;
@@ -275,12 +300,15 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   // Iterate over the moves in the sorted order
   auto picker = MovePickerFactory<Node>::create(jobId_, board_, hashMove, frame.killers, history_);
   bool hasMove = false;
+  DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
     }
+    DIAGNOSTIC(dgnMoves.add(move);)
     const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
+    DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
       moveUnmake(board_, move, persistence);
       continue;
