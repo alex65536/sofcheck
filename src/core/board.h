@@ -132,6 +132,9 @@ struct Board {
   inline constexpr void flipQueensideCastling(Color c) { castling ^= castlingQueenside(c); }
 };
 
+// Returns `true` if the game is drawn by insufficient material
+bool isBoardDrawInsufficientMaterial(const Board &b);
+
 }  // namespace SoFCore
 
 #endif  // SOF_CORE_BOARD_INCLUDED

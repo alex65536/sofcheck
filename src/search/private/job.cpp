@@ -195,6 +195,10 @@ private:
 #endif
 
 score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
+  if (isBoardDrawInsufficientMaterial(board_)) {
+    return 0;
+  }
+
   score_t score = evaluate(board_, psq);
   if (board_.side == Color::Black) {
     score *= -1;
@@ -242,9 +246,14 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   Frame &frame = stack_[idepth];
   frame.bestMove = Move::null();
 
-  // Check for draw by 50 moves
-  if (board_.moveCounter >= 100) {
-    return 0;
+  // Check for draw
+  if constexpr (Node != NodeKind::Root) {
+    if (board_.moveCounter >= 100) {
+      return 0;
+    }
+    if (isBoardDrawInsufficientMaterial(board_)) {
+      return 0;
+    }
   }
 
   // Run quiescence search in leaf node
