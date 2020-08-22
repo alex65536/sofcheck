@@ -56,8 +56,8 @@ public:
 
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
-    const score_t score =
-        search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board_), 0);
+    const score_t score = search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF,
+                                                 boardGetPsqScore(board_), FLAGS_DEFAULT);
     bestMove = stack_[0].bestMove;
     return score;
   }
@@ -67,6 +67,15 @@ private:
     KillerLine killers;  // Must be preserved across recursive calls
     Move bestMove = Move::null();
   };
+
+  // Search flags type
+  using flags_t = uint64_t;
+
+  // Search flags
+  static constexpr flags_t FLAG_CAPTURE = 1;
+
+  // Predefined search flag sets
+  static constexpr flags_t FLAGS_DEFAULT = 0;
 
   inline bool mustStop() const {
     if (comm_.isStopped()) {
@@ -84,7 +93,7 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const score_pair_t psq, const uint64_t flags) {
+                        const score_t beta, const score_pair_t psq, const flags_t flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
@@ -96,10 +105,7 @@ private:
 
   template <NodeKind Node>
   score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq,
-                   uint64_t flags);
-
-  // Search flags
-  static constexpr uint64_t FLAG_CAPTURE = 1;
+                   flags_t flags);
 
   score_t quiescenseSearch(score_t alpha, score_t beta, score_pair_t psq);
 
@@ -205,7 +211,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
                            const score_t beta, const score_pair_t psq,
-                           [[maybe_unused]] const uint64_t flags) {
+                           [[maybe_unused]] const flags_t flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
@@ -280,7 +286,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       continue;
     }
     results_.inc(JobStat::Nodes);
-    const uint64_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
+    const flags_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
     if (hasMove && -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq,
                                              newFlags) <= alpha) {
       moveUnmake(board_, move, persistence);
