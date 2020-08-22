@@ -204,7 +204,8 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
 
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const score_pair_t psq, const uint64_t /*flags*/) {
+                           const score_t beta, const score_pair_t psq,
+                           [[maybe_unused]] const uint64_t flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
@@ -233,8 +234,6 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     score = adjustCheckmate(score, -static_cast<int16_t>(idepth));
     tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
   };
-
-
 
   // Probe the transposition table
   Move hashMove = Move::null();
@@ -282,8 +281,8 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
     results_.inc(JobStat::Nodes);
     const uint64_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
-    if (hasMove &&
-        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq, newFlags) <= alpha) {
+    if (hasMove && -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq,
+                                             newFlags) <= alpha) {
       moveUnmake(board_, move, persistence);
       if (mustStop()) {
         return 0;
