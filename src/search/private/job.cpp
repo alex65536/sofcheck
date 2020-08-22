@@ -57,7 +57,7 @@ public:
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
     const score_t score =
-        search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board_));
+        search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board_), 0);
     bestMove = stack_[0].bestMove;
     return score;
   }
@@ -84,18 +84,22 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const score_pair_t psq) {
+                        const score_t beta, const score_pair_t psq, const uint64_t flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
     }
-    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq);
+    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq, flags);
     repetitions_.erase(board_.hash);
     return score;
   }
 
   template <NodeKind Node>
-  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq);
+  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq,
+                   uint64_t flags);
+
+  // Search flags
+  static constexpr uint64_t FLAG_CAPTURE = 1;
 
   score_t quiescenseSearch(score_t alpha, score_t beta, score_pair_t psq);
 
@@ -200,18 +204,18 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
 
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const score_pair_t psq) {
+                           const score_t beta, const score_pair_t psq, const uint64_t /*flags*/) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
   frame.bestMove = Move::null();
 
-  // 0. Check for draw by 50 moves
+  // Check for draw by 50 moves
   if (board_.moveCounter >= 100) {
     return 0;
   }
 
-  // 1. Run quiescence search in leaf node
+  // Run quiescence search in leaf node
   if (depth == 0) {
     return quiescenseSearch(alpha, beta, psq);
   }
@@ -230,7 +234,9 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
   };
 
-  // 2. Probe the transposition table
+
+
+  // Probe the transposition table
   Move hashMove = Move::null();
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
     results_.inc(JobStat::TtHits);
@@ -261,7 +267,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
   }
 
-  // 3. Iterate over the moves in the sorted order
+  // Iterate over the moves in the sorted order
   auto picker = MovePickerFactory<Node>::create(jobId_, board_, hashMove, frame.killers, history_);
   bool hasMove = false;
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
@@ -275,8 +281,9 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       continue;
     }
     results_.inc(JobStat::Nodes);
+    const uint64_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
     if (hasMove &&
-        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq) <= alpha) {
+        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq, newFlags) <= alpha) {
       moveUnmake(board_, move, persistence);
       if (mustStop()) {
         return 0;
@@ -285,7 +292,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
     hasMove = true;
     constexpr NodeKind newNode = (Node == NodeKind::Simple ? NodeKind::Simple : NodeKind::Pv);
-    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newPsq);
+    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newPsq, newFlags);
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
@@ -306,12 +313,12 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
   }
 
-  // 4. Detect checkmate and stalemate
+  // Detect checkmate and stalemate
   if (!hasMove) {
     return isCheck(board_) ? scoreCheckmateLose(idepth) : 0;
   }
 
-  // 5. End of search
+  // End of search
   ttStore(alpha);
   return alpha;
 }
