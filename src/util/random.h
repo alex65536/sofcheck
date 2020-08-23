@@ -17,8 +17,8 @@ void randomShuffle(Iter first, Iter last) {
   struct Random {
     using result_type = uint64_t;
     inline result_type operator()() { return random(); }
-    inline result_type min() const { return std::numeric_limits<result_type>::min(); }
-    inline result_type max() const { return std::numeric_limits<result_type>::max(); }
+    inline static constexpr result_type min() { return std::numeric_limits<result_type>::min(); }
+    inline static constexpr result_type max() { return std::numeric_limits<result_type>::max(); }
   };
   std::shuffle(first, last, Random{});
 }
