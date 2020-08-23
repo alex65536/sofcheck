@@ -1,0 +1,56 @@
+* Add a script to build SoFCheck with profile-guided optimizations (aka PGO).
+  Profile-guided optimizations may give us some speed improvement. But building with PGO is not
+  that simple, as it requires two builds (one build to gather data and one build to perform the
+  optimizations based on that data). Ideally, we want a script in tools/ that is able to do all
+  the building work (create two directories, gather information on the first build, then invoke
+  the second build).
+
+* Make UCI options case-insensitive
+  UCI standard says than UCI options are case-insensitive, but they are case-sensitive in the
+  current implementation. We need to patch the `OptionStorage` class and all the observers that
+  check for option name. Do not forget to update UCI name escaping and baseline tests for UCI.
+  Better verify all the usages of UCI options whether they are still correct. Finally, state in
+  the docs that the options are now case-insensitive.
+
+* Write stricter `ValidateBoard`
+  Add more heuristics to check that the board is theoretically possible, i.e no more that 9 queens,
+  10 knights, 10 bishops etc. Now we check only for one king and no more than 16 pieces. This may
+  be good as it makes impossible to create a position in which the quiescense search runs for too
+  long. (Currently, the position with 15 rooks on both sides may hang the engine.) The downside is
+  as follows: some chess GUIs may accept the positions which won't pass our `ValidateBoard`, and
+  will think that our engine behaves incorrenly in such case.
+
+* Add `seltest_board_gen` to `sofcheck-engine-tester` repository
+  It will be good if we'll be able to regenerate the position set for self-tests. The current data
+  were generated half-automatically by parsing PGNs and adding ~100 random games, half-manually by
+  adding some interesting positions. The tool to create the self-test data exists, but is not
+  published yet. We need to publish this tool and modify it in such a way that it would produce the
+  whole self-test data file without adding the positions manually.
+
+* Add the functions to replace `std::from_chars` and `std::to_chars`
+  These two functions are declared in `<charconv>` and exist in C++17, but not every compiler
+  supports it. SoFCheck may gain support of older versions of Clang and GCC if we don't use the
+  `<charconv>` header on these platforms and use our hand-written functions instead. Now the issue
+  exists, as Ubuntu 18.04 uses GCC 7 as default compiler. But if it won't be fixed in the next
+  several years, we may simply consider that GCC 7 is old enough and unsupported, and just drop
+  this issue.
+
+* Rethink the Client/ServerConnector architecture
+  The architecture where each `Client` is connected to `ServerConnector` and each `Server` is
+  connected to `ClientConnector` is good now, but has some limitations which may arise in the
+  future. For instance, we may write an engine adapter, which will allow to launch an engine
+  without creating a `Server` instance. In this case it's not good to write a `ServerConnector`,
+  as the interactions with the client will be outside of `poll()` method, so implementing `poll()`
+  would be useless. Another thing worth rethinking is thread-safety. Currently, `Client` and
+  `Server` are not thread-safe, while `ClientConnector` and `ServerConnector` are thread-safe.
+  When we get rid of the current architecture, we will need another approach to define what must
+  be thread-safe.
+
+* Write framework to perform tuning of evaluation constants
+  Tuning constants to increase playing strength is always a good idea. We need a framework to
+  build versions of SoFCheck with different constants and compare these versions. The current
+  vision is to modify header files with constants (or create new ones and use them in a build),
+  then rebuild the engine with new constants as a shared library (not to UCI executable since we
+  don't want overhead from passing and parsing UCI messages). To compare the versions, we will
+  play many micro-matches between the versions (like BattleField does currently). To perform the
+  tuning, we can use some optimization methods, as Gradient descent.
