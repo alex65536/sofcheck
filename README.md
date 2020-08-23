@@ -42,7 +42,8 @@ The project is using [CMake](https://cmake.org) as a build system. You will also
 C++17-compatible compiler. The engine is tested on the following compilers:
 
 - GCC >= 8 (GCC 7 and earlier don't support `<charconv>` header)
-- Clang >= 8 (Clang 7 and earlier don't support `<charconv>` header)
+- Clang >= 8 (Clang 6 and earlier don't support `<charconv>` header, and Clang 7 fails with
+  linker error `undefined reference to '__muloti4'` in `std::from_chars`)
 
 Other compilers are not tested.
 

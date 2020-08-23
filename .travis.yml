@@ -8,7 +8,7 @@ addons:
       - ubuntu-toolchain-r-test
     packages:
       - g++-8
-      - clang++-7
+      - clang++-8
       - clang-tidy-9
       - libbenchmark-dev
       - libboost-stacktrace-dev
@@ -17,8 +17,8 @@ addons:
 env:
   - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
   - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
-  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=clang-7 && export CXX=clang++-7"
-  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=clang-7 && export CXX=clang++-7"
+  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
 
 before_install:
   - eval "${MATRIX_EVAL}"
