@@ -3,6 +3,7 @@
 #include <charconv>
 
 #include "core/movegen.h"
+#include "core/private/bit_consts.h"
 #include "core/private/geometry.h"
 #include "core/private/zobrist.h"
 #include "core/strutil.h"
@@ -463,6 +464,35 @@ void Board::update() {
     }
     hash ^= Private::g_zobristPieces[cell][i];
   }
+}
+
+bool isBoardDrawInsufficientMaterial(const Board &b) {
+  const bitboard_t bbNoKings = b.bbAll ^ (b.bbPieces[makeCell(Color::White, Piece::King)] |
+                                          b.bbPieces[makeCell(Color::Black, Piece::King)]);
+
+  // If we have pieces on both white and black squares, then no draw occurs. This cutoff optimizes
+  // the function in most positions.
+  if ((bbNoKings & Private::BB_CELLS_WHITE) && (bbNoKings & Private::BB_CELLS_BLACK)) {
+    return false;
+  }
+
+  // Two kings only
+  if (bbNoKings == 0) {
+    return true;
+  }
+
+  // King vs king + knight
+  const bitboard_t bbKnights = b.bbPieces[makeCell(Color::White, Piece::Knight)] |
+                               b.bbPieces[makeCell(Color::Black, Piece::Knight)];
+  if (bbNoKings == bbKnights && SoFUtil::popcount(bbKnights) == 1) {
+    return true;
+  }
+
+  // Kings and bishops of the same cell color. Note that we checked above that all the pieces have
+  // the same cell color, so we just need to ensure that all the pieces are bishops.
+  const bitboard_t bbBishops = b.bbPieces[makeCell(Color::White, Piece::Bishop)] |
+                               b.bbPieces[makeCell(Color::Black, Piece::Bishop)];
+  return bbNoKings == bbBishops;
 }
 
 }  // namespace SoFCore

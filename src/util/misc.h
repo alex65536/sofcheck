@@ -45,6 +45,17 @@
     }                                                                 \
   }
 
+// Panics if the given condition is `false`. Unlike standard `assert`, the condition here is checked
+// both in debug and release modes.
+//
+// This version displays `msg` instead of the expression in the error message.
+#define SOF_ASSERT_MSG(msg, ...)                               \
+  {                                                            \
+    if (SOF_UNLIKELY(!(__VA_ARGS__))) {                        \
+      SoFUtil::Private::assertFail(__FILE__, __LINE__, (msg)); \
+    }                                                          \
+  }
+
 namespace SoFUtil {
 
 // Terminates the program with the given `message`
@@ -54,7 +65,7 @@ namespace SoFUtil {
 namespace Private {
 
 // Implementation detail of `SOF_ASSERT`
-[[noreturn]] void assertFail(const char *file, int line, const char *cond);
+[[noreturn]] void assertFail(const char *file, int line, const char *msg);
 
 }  // namespace Private
 

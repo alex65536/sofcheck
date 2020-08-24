@@ -30,10 +30,14 @@ install:
   - export GTEST_ROOT="$PWD/googletest/prefix/usr/local"
 
 before_script:
-  - mkdir build
-  - cd build
+  - mkdir build build_dgn
 
 script:
+  - cd build
   - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON -DCMAKE_CXX_CLANG_TIDY='clang-tidy-9;--warnings-as-errors=*' ..
   - make -j2
   - ctest
+  - cd ../build_dgn
+  - cmake -DCMAKE_BUILD_TYPE=Release ${BMI2_CMD} -DUSE_NO_EXCEPTIONS=ON -DUSE_SEARCH_DIAGNOSTICS=ON ..
+  - make -j2
+  - ctest -R '^smoke$'

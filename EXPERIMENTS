@@ -1,2 +1,0 @@
-Some insane experiments to be conducted to optimize the move generator performance:
-- King: keep position explicitly or use bit tricks?

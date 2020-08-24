@@ -27,6 +27,9 @@ constexpr bitboard_t BB_COL[8] = {
     0x1010101010101010, 0x2020202020202020, 0x4040404040404040, 0x8080808080808080,
 };
 
+constexpr bitboard_t BB_CELLS_WHITE = 0xaa55aa55aa55aa55;
+constexpr bitboard_t BB_CELLS_BLACK = 0x55aa55aa55aa55aa;
+
 constexpr bitboard_t BB_ROW_FRAME = 0x8181818181818181;
 constexpr bitboard_t BB_COL_FRAME = 0xff000000000000ff;
 constexpr bitboard_t BB_DIAG_FRAME = 0xff818181818181ff;

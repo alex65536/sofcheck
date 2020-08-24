@@ -30,7 +30,8 @@ def print_queue(queue, prefix):
 
 
 if len(sys.argv) != 2:
-    sys.stderr("Usage: {argv[0]} EXECUTABLE")
+    sys.stderr.write("Usage: {} EXECUTABLE\n".format(sys.argv[0]))
+    sys.exit(1)
 
 exe = sys.argv[1]
 process = Popen([exe], bufsize=1, stdin=PIPE, stdout=PIPE, stderr=PIPE,

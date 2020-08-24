@@ -6,10 +6,13 @@
 
 #include "bot_api/types.h"
 #include "core/movegen.h"
+#include "core/strutil.h"
+#include "search/private/diagnostics.h"
 #include "search/private/evaluate.h"
 #include "search/private/move_picker.h"
 #include "search/private/score.h"
 #include "search/private/util.h"
+#include "util/misc.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -56,8 +59,8 @@ public:
 
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
-    const score_t score =
-        search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF, boardGetPsqScore(board_));
+    const score_t score = search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF,
+                                                 boardGetPsqScore(board_), FLAGS_DEFAULT);
     bestMove = stack_[0].bestMove;
     return score;
   }
@@ -67,6 +70,15 @@ private:
     KillerLine killers;  // Must be preserved across recursive calls
     Move bestMove = Move::null();
   };
+
+  // Search flags type
+  using flags_t = uint64_t;
+
+  // Search flags
+  static constexpr flags_t FLAG_CAPTURE = 1;
+
+  // Predefined search flag sets
+  static constexpr flags_t FLAGS_DEFAULT = 0;
 
   inline bool mustStop() const {
     if (comm_.isStopped()) {
@@ -84,18 +96,19 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const score_pair_t psq) {
+                        const score_t beta, const score_pair_t psq, const flags_t flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
     }
-    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq);
+    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq, flags);
     repetitions_.erase(board_.hash);
     return score;
   }
 
   template <NodeKind Node>
-  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq);
+  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq,
+                   flags_t flags);
 
   score_t quiescenseSearch(score_t alpha, score_t beta, score_pair_t psq);
 
@@ -162,20 +175,46 @@ struct MovePickerFactory<Searcher::NodeKind::Root> {
   }
 };
 
+#ifdef USE_SEARCH_DIAGNOSTICS
+// Check that the moves are not repeated
+class DgnMoveRepeatChecker {
+public:
+  inline void add(const Move move) {
+    for (size_t i = 0; i < count_; ++i) {
+      if (SOF_UNLIKELY(moves_[i] == move)) {
+        SoFUtil::panic("Move " + moveToStr(move) + " is repeated twice!");
+      }
+    }
+    moves_[count_++] = move;
+  }
+
+private:
+  size_t count_ = 0;
+  Move moves_[SoFCore::BUFSZ_MOVES];
+};
+#endif
+
 score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
+  if (isBoardDrawInsufficientMaterial(board_)) {
+    return 0;
+  }
   score_t score = evaluate(board_, psq, alpha, beta);
+
   alpha = std::max(alpha, score);
   if (alpha >= beta) {
     return beta;
   }
 
+  DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   QuiescenseMovePicker picker(board_);
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
     }
+    DIAGNOSTIC(dgnMoves.add(move);)
     const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
+    DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
       moveUnmake(board_, move, persistence);
       continue;
@@ -197,18 +236,24 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
 
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const score_pair_t psq) {
+                           const score_t beta, const score_pair_t psq,
+                           [[maybe_unused]] const flags_t flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
   frame.bestMove = Move::null();
 
-  // 0. Check for draw by 50 moves
-  if (board_.moveCounter >= 100) {
-    return 0;
+  // Check for draw
+  if constexpr (Node != NodeKind::Root) {
+    if (board_.moveCounter >= 100) {
+      return 0;
+    }
+    if (isBoardDrawInsufficientMaterial(board_)) {
+      return 0;
+    }
   }
 
-  // 1. Run quiescence search in leaf node
+  // Run quiescence search in leaf node
   if (depth == 0) {
     return quiescenseSearch(alpha, beta, psq);
   }
@@ -227,7 +272,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
   };
 
-  // 2. Probe the transposition table
+  // Probe the transposition table
   Move hashMove = Move::null();
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
     results_.inc(JobStat::TtHits);
@@ -258,22 +303,26 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
   }
 
-  // 3. Iterate over the moves in the sorted order
+  // Iterate over the moves in the sorted order
   auto picker = MovePickerFactory<Node>::create(jobId_, board_, hashMove, frame.killers, history_);
   bool hasMove = false;
+  DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
     }
+    DIAGNOSTIC(dgnMoves.add(move);)
     const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
+    DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
       moveUnmake(board_, move, persistence);
       continue;
     }
     results_.inc(JobStat::Nodes);
-    if (hasMove &&
-        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq) <= alpha) {
+    const flags_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
+    if (hasMove && -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq,
+                                             newFlags) <= alpha) {
       moveUnmake(board_, move, persistence);
       if (mustStop()) {
         return 0;
@@ -282,7 +331,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
     hasMove = true;
     constexpr NodeKind newNode = (Node == NodeKind::Simple ? NodeKind::Simple : NodeKind::Pv);
-    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newPsq);
+    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newPsq, newFlags);
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
@@ -303,12 +352,12 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
   }
 
-  // 4. Detect checkmate and stalemate
+  // Detect checkmate and stalemate
   if (!hasMove) {
     return isCheck(board_) ? scoreCheckmateLose(idepth) : 0;
   }
 
-  // 5. End of search
+  // End of search
   ttStore(alpha);
   return alpha;
 }

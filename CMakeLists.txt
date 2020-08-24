@@ -18,6 +18,8 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
 endif()
 set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
+set(USE_SEARCH_DIAGNOSTICS OFF CACHE BOOL
+  "Build with search diagnostics (the engine becomes slower but checks itself for errors)")
 
 
 # Detect system configuration
@@ -231,6 +233,11 @@ if(UNIX)
     ${PROJECT_BINARY_DIR}/test_uci_client_log2.txt
     ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+  )
+  add_test(
+    NAME smoke
+    COMMAND ${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py
+    ${PROJECT_BINARY_DIR}/sofcheck
   )
 endif()
 
