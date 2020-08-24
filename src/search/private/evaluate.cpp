@@ -50,28 +50,30 @@ constexpr int32_t BISHOP_STAGE = 1;
 constexpr int32_t ROOK_STAGE = 2;
 constexpr int32_t QUEEN_STAGE = 4;
 
-constexpr int32_t TOTAL_STAGE = PAWN_STAGE*16 + KNIGHT_STAGE * 4 + BISHOP_STAGE * 4 + ROOK_STAGE * 4 + QUEEN_STAGE * 2;
+constexpr int32_t TOTAL_STAGE =
+    PAWN_STAGE * 16 + KNIGHT_STAGE * 4 + BISHOP_STAGE * 4 + ROOK_STAGE * 4 + QUEEN_STAGE * 2;
 
 score_t evaluate(const SoFCore::Board &b, const score_pair_t psq) {
   score_t valueMid = scorePairFirst(psq);
   score_t valueEnd = scorePairSecond(psq);
-  //Calculating game stage: this is a number from 0 to 256, denoting the stage of the game: 0 is the start of the game
-  int32_t stage=TOTAL_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Pawn)])*PAWN_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Knight)])*KNIGHT_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Bishop)])*BISHOP_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Rook)])*ROOK_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Queen)])*QUEEN_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Pawn)])*PAWN_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Knight)])*KNIGHT_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Bishop)])*BISHOP_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Rook)])*ROOK_STAGE;
-  stage-=SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Queen)])*QUEEN_STAGE;
+  // Calculating game stage: this is a number from 0 to 256, denoting the stage of the game: 0 is
+  // the start of the game
+  int32_t stage = TOTAL_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Pawn)]) * PAWN_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Knight)]) * KNIGHT_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Bishop)]) * BISHOP_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Rook)]) * ROOK_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Queen)]) * QUEEN_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Pawn)]) * PAWN_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Knight)]) * KNIGHT_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Bishop)]) * BISHOP_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Rook)]) * ROOK_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Queen)]) * QUEEN_STAGE;
   stage = (stage * 256 + (TOTAL_STAGE / 2)) / TOTAL_STAGE;
-  //Calculating all dynamic values
-  int32_t value=((valueMid * (256 - stage)) + (valueEnd*stage))/256;
+  // Calculating all dynamic values
+  int32_t value = ((valueMid * (256 - stage)) + (valueEnd * stage)) / 256;
   if (b.side == Color::Black) {
-    value *=-1;
+    value *= -1;
   }
   return value;
 }
