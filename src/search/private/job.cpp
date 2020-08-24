@@ -237,8 +237,9 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           frame.bestMove = hashMove;
+          results_.inc(JobStat::TtExactHits);
           // Refresh the hash entry, as it may come from older epoch
-          tt_.store(board_.hash, data);
+          tt_.refresh(board_.hash, data);
           return score;
         }
         case PositionCostBound::Lowerbound: {
@@ -312,7 +313,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   return alpha;
 }
 
-std::vector<Move> unwindPv(Board board, const Move bestMove, const TranspositionTable &tt) {
+std::vector<Move> unwindPv(Board board, const Move bestMove, TranspositionTable &tt) {
   RepetitionTable repetitions;
   repetitions.insert(board.hash);
   std::vector<Move> pv{bestMove};
@@ -324,6 +325,8 @@ std::vector<Move> unwindPv(Board board, const Move bestMove, const Transposition
         data.bound() != PositionCostBound::Exact) {
       break;
     }
+    // Refresh the hash entry, as it may come from older epoch
+    tt.refresh(board.hash, data);
     const Move move = data.move();
     moveMake(board, move);
     if (!repetitions.insert(board.hash)) {
