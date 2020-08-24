@@ -53,9 +53,19 @@ constexpr int32_t QUEEN_STAGE = 4;
 constexpr int32_t TOTAL_STAGE =
     PAWN_STAGE * 16 + KNIGHT_STAGE * 4 + BISHOP_STAGE * 4 + ROOK_STAGE * 4 + QUEEN_STAGE * 2;
 
-score_t evaluate(const SoFCore::Board &b, const score_pair_t psq) {
-  score_t valueMid = scorePairFirst(psq);
-  score_t valueEnd = scorePairSecond(psq);
+
+template<Color C>
+inline static score_pair_t getMaterialEvaluation()
+{
+
+}
+
+inline static score_t taperedEval(const score_pair_t score, const int32_t stage)
+{
+    return ((scorePairFirst(score) * (256 - stage)) + (scorePairSecond(score) * stage)) >> 8;
+}
+
+inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq, const score_t alpha, const score_t beta) {
   // Calculating game stage: this is a number from 0 to 256, denoting the stage of the game: 0 is
   // the start of the game
   int32_t stage = TOTAL_STAGE;
@@ -71,9 +81,21 @@ score_t evaluate(const SoFCore::Board &b, const score_pair_t psq) {
   stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Queen)]) * QUEEN_STAGE;
   stage = (stage * 256 + (TOTAL_STAGE / 2)) / TOTAL_STAGE;
   // Calculating all dynamic values
-  int32_t value = ((valueMid * (256 - stage)) + (valueEnd * stage)) / 256;
-  if (b.side == Color::Black) {
-    value *= -1;
+  score_t value = taperedEval(psq, stage);
+  //First lazy evaluation
+  if (lazyEval()) return;
+  const score_pair_t materialValue=getMaterialEvaluation();
+  value+=materialValue;
+  //Second lazy evaluation
+  return value;
+}
+
+score_t evaluate(const SoFCore::Board &b, const score_pair_t psq, const score_t alpha, const score_t beta) {
+  const Color side = b.side;
+  score_t value=doEvaluate(b, psq, (side == Color::White) ? alpha : -beta, side == Color::White ? beta : -alpha);
+  if (side == Color::Black)
+  {
+    value*=-1;
   }
   return value;
 }
