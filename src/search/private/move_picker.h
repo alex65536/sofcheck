@@ -1,6 +1,8 @@
 #ifndef SOF_SEARCH_PRIVATE_MOVE_PICKER_INCLUDED
 #define SOF_SEARCH_PRIVATE_MOVE_PICKER_INCLUDED
 
+#include <algorithm>
+
 #include "core/board.h"
 #include "core/move.h"
 #include "core/movegen.h"
@@ -15,9 +17,10 @@ enum class MovePickerStage {
   Start = 0,
   HashMove = 1,
   Capture = 2,
-  Killer = 3,
-  History = 4,
-  End = 5
+  SimplePromote = 3,
+  Killer = 4,
+  History = 5,
+  End = 6
 };
 
 SOF_ENUM_COMPARE(MovePickerStage, int)
@@ -74,7 +77,13 @@ public:
   // If the move is equal to `Move::null()`, then it must be skipped.
   inline SoFCore::Move next() {
     if (movePosition_ == moveCount_) {
-      return SoFCore::Move::invalid();
+      if (stage_ == Stage::Capture) {
+        stage_ = Stage::SimplePromote;
+        addSimplePromotes();
+      }
+      if (movePosition_ == moveCount_) {
+        return SoFCore::Move::invalid();
+      }
     }
     return moves_[movePosition_++];
   }
@@ -82,9 +91,15 @@ public:
   explicit QuiescenseMovePicker(const SoFCore::Board &board);
 
 private:
-  SoFCore::Move moves_[SoFCore::BUFSZ_CAPTURES];
+  enum class Stage { Capture, SimplePromote };
+
+  void addSimplePromotes();
+
+  const SoFCore::Board &board_;
+  SoFCore::Move moves_[std::max(SoFCore::BUFSZ_CAPTURES, SoFCore::BUFSZ_SIMPLE_PROMOTES)];
   size_t moveCount_;
   size_t movePosition_;
+  Stage stage_;
 };
 
 }  // namespace SoFSearch::Private

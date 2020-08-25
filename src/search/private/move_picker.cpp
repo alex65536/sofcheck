@@ -22,9 +22,22 @@ void sortMvvLva(const Board &board, Move *moves, const size_t count) {
   }
 }
 
-QuiescenseMovePicker::QuiescenseMovePicker(const Board &board) : movePosition_(0) {
+QuiescenseMovePicker::QuiescenseMovePicker(const Board &board)
+    : board_(board), movePosition_(0), stage_(Stage::Capture) {
   moveCount_ = genCaptures(board, moves_);
   sortMvvLva(board, moves_, moveCount_);
+}
+
+void QuiescenseMovePicker::addSimplePromotes() {
+  moveCount_ = genSimplePromotes(board_, moves_);
+  movePosition_ = 0;
+  std::sort(moves_, moves_ + moveCount_, [&](const Move m1, const Move m2) {
+    return static_cast<int8_t>(m1.kind) > static_cast<int8_t>(m2.kind);
+  });
+}
+
+inline static bool isValidKiller(const Board &board, const Move move) {
+  return !isMoveCapture(board, move) && !isMoveKindPromote(move.kind) && isMoveValid(board, move);
 }
 
 void MovePicker::nextStage() {
@@ -52,14 +65,22 @@ void MovePicker::nextStage() {
         sortMvvLva(board_, moves_, moveCount_);
         break;
       }
+      case MovePickerStage::SimplePromote: {
+        // Generate simple promotes and sort them by promoting piece
+        moveCount_ = genSimplePromotes(board_, moves_);
+        std::sort(moves_, moves_ + moveCount_, [&](const Move m1, const Move m2) {
+          return static_cast<int8_t>(m1.kind) > static_cast<int8_t>(m2.kind);
+        });
+        break;
+      }
       case MovePickerStage::Killer: {
         // Try two killers if they are valid
         const Move firstKiller = killers_.first();
-        if (!isMoveCapture(board_, firstKiller) && isMoveValid(board_, firstKiller)) {
+        if (isValidKiller(board_, firstKiller)) {
           moves_[moveCount_++] = firstKiller;
         }
         const Move secondKiller = killers_.second();
-        if (!isMoveCapture(board_, secondKiller) && isMoveValid(board_, secondKiller)) {
+        if (isValidKiller(board_, secondKiller)) {
           moves_[moveCount_++] = secondKiller;
         }
         savedKillers_[0] = firstKiller;
@@ -68,7 +89,7 @@ void MovePicker::nextStage() {
       }
       case MovePickerStage::History: {
         // Sort the moves by history heuristic
-        moveCount_ = genSimpleMoves(board_, moves_);
+        moveCount_ = genSimpleMovesNoPromote(board_, moves_);
         std::sort(moves_, moves_ + moveCount_,
                   [&](const Move m1, const Move m2) { return history_[m1] > history_[m2]; });
         for (size_t i = 0; i < moveCount_; ++i) {
