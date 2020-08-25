@@ -62,10 +62,16 @@ inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t s
   return size;
 }
 
-template <Color C>
+enum class PromoteGenPolicy { All, PromoteOnly, NoPromote };
+
+template <Color C, PromoteGenPolicy P>
 inline static size_t genPawnSimple(const Board &b, Move *list) {
   size_t size = 0;
   bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
+  if constexpr (P != PromoteGenPolicy::All) {
+    constexpr bitboard_t bbPromote = Private::BB_ROW[Private::promoteSrcRow(C)];
+    bbPawns &= (P == PromoteGenPolicy::PromoteOnly) ? bbPromote : ~bbPromote;
+  }
   while (bbPawns) {
     const coord_t src = SoFUtil::extractLowest(bbPawns);
     const coord_t dst = src + Private::pawnMoveDelta(C);
@@ -75,10 +81,12 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
     }
     const subcoord_t x = coordX(src);
     size = addPawnWithPromote<C>(list, size, src, dst, x);
-    if (x == Private::doubleMoveSrcRow(C)) {
-      const coord_t dst2 = dst + Private::pawnMoveDelta(C);
-      if (b.cells[dst2] == EMPTY_CELL) {
-        list[size++] = Move{MoveKind::PawnDoubleMove, src, dst2, 0};
+    if constexpr (P != PromoteGenPolicy::PromoteOnly) {
+      if (x == Private::doubleMoveSrcRow(C)) {
+        const coord_t dst2 = dst + Private::pawnMoveDelta(C);
+        if (b.cells[dst2] == EMPTY_CELL) {
+          list[size++] = Move{MoveKind::PawnDoubleMove, src, dst2, 0};
+        }
       }
     }
   }
@@ -222,12 +230,14 @@ inline static size_t genCastling(const Board &b, Move *list) {
   return size;
 }
 
-template <Color C, bool GenSimple, bool GenCaptures>
+template <Color C, bool GenSimple, bool GenCaptures, bool GenSimplePromote>
 inline static size_t genImpl(const Board &b, Move *list) {
   static_assert(GenSimple || GenCaptures);
   size_t size = 0;
   if constexpr (GenSimple) {
-    size += genPawnSimple<C>(b, list + size);
+    constexpr PromoteGenPolicy promotePolicy =
+        GenSimplePromote ? PromoteGenPolicy::All : PromoteGenPolicy::NoPromote;
+    size += genPawnSimple<C, promotePolicy>(b, list + size);
   }
   if constexpr (GenCaptures) {
     size += genPawnCapture<C>(b, list + size);
@@ -244,18 +254,29 @@ inline static size_t genImpl(const Board &b, Move *list) {
 }
 
 size_t genCaptures(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, false, true>(b, list)
-                                  : genImpl<Color::Black, false, true>(b, list);
+  return (b.side == Color::White) ? genImpl<Color::White, false, true, true>(b, list)
+                                  : genImpl<Color::Black, false, true, true>(b, list);
 }
 
 size_t genAllMoves(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, true, true>(b, list)
-                                  : genImpl<Color::Black, true, true>(b, list);
+  return (b.side == Color::White) ? genImpl<Color::White, true, true, true>(b, list)
+                                  : genImpl<Color::Black, true, true, true>(b, list);
 }
 
 size_t genSimpleMoves(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, true, false>(b, list)
-                                  : genImpl<Color::Black, true, false>(b, list);
+  return (b.side == Color::White) ? genImpl<Color::White, true, false, true>(b, list)
+                                  : genImpl<Color::Black, true, false, true>(b, list);
+}
+
+size_t genSimpleMovesNoPromote(const Board &b, Move *list) {
+  return (b.side == Color::White) ? genImpl<Color::White, true, false, false>(b, list)
+                                  : genImpl<Color::Black, true, false, false>(b, list);
+}
+
+size_t genSimplePromotes(const Board &b, Move *list) {
+  return (b.side == Color::White)
+             ? genPawnSimple<Color::White, PromoteGenPolicy::PromoteOnly>(b, list)
+             : genPawnSimple<Color::Black, PromoteGenPolicy::PromoteOnly>(b, list);
 }
 
 template <Color C>

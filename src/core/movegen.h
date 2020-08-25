@@ -40,6 +40,8 @@ bool isCheck(const Board &b);
 // To generate only legal moves you can use `isMoveLegal()` function
 size_t genAllMoves(const Board &b, Move *list);
 size_t genSimpleMoves(const Board &b, Move *list);
+size_t genSimpleMovesNoPromote(const Board &b, Move *list);
+size_t genSimplePromotes(const Board &b, Move *list);
 size_t genCaptures(const Board &b, Move *list);
 
 // Upper bound for total number of pseudo-legal moves in any valid position. You can use it as a
@@ -49,6 +51,10 @@ constexpr size_t BUFSZ_MOVES = 300;
 // Upper bound for total number of pseudo-legal captures in any valid position. You can use it as a
 // buffer size for `genCaptures()`.
 constexpr size_t BUFSZ_CAPTURES = 128;
+
+// Upper bound for total number of pseudo-legal simple promotes in any valid position. You can use
+// it as a buffer size for `genSimplePromotes()`.
+constexpr size_t BUFSZ_SIMPLE_PROMOTES = 32;
 
 // Returns `true` if the move `move` can be returned by `genAllMoves()`
 //
