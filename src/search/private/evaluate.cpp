@@ -128,7 +128,7 @@ template<Color C>
 inline static score_t getMaterialEvaluation(const SoFCore::Board &b, int32_t evaluationStage)
 {
     score_t value = 0;
-    const bitboard_t bishops=SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Bishop)]);
+    const bitboard_t bishops=b.bbPieces[makeCell(C, Piece::Bishop)];
     if ((bishops & SoFCore::Private::BB_CELLS_WHITE) != 0 && (bishops & SoFCore::Private::BB_CELLS_BLACK) !=0 )
     {
         value+=BISHOP_PAIR[evaluationStage/2];
@@ -172,12 +172,10 @@ inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq
   // Calculating all dynamic values
   score_t value = taperedEval(psq, stage);
   //First lazy evaluation
-  if (lazyEval(alpha, beta, value, 900)) return value <= alpha ? alpha : beta;
+  if (lazyEval(alpha, beta, value, 500)) return value <= alpha ? alpha : beta;
   const score_t materialValue =
   getMaterialEvaluation<Color::White>(b, evaluationStage) - getMaterialEvaluation<Color::Black>(b, evaluationStage);
   value+=materialValue;
-  if (lazyEval(alpha, beta, value, 300)) return (value <= alpha) ? alpha : beta;
-  //Second lazy evaluation
   return value;
 }
 
