@@ -115,13 +115,13 @@ inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
 }
 
 //Here are all constants for the evaluation
-constexpr score_t BISHOP_PAIR[TOTAL_STAGE/2+1]={0,100,90,80,70,60,50,40,30,20,10,5,0};  //Pairs of bishops
+constexpr score_t BISHOP_PAIR[TOTAL_STAGE/2+1]={25,30,35,40,50,60,65,70,75,75,75,75,0};  //Pairs of bishops
 //are evaluated more in endspiel, and less in the early mittelspiel.
-constexpr score_t ROOK_PAIR=-25;  //This is called "principle of redundancy" by Larry Kaufman. It
+constexpr score_t ROOK_PAIR=-50;  //This is called "principle of redundancy" by Larry Kaufman. It
 //allows engine to understand that NB-RP is less that it learns from piece costs.
-constexpr score_t KNIGHT_PAIR=-25;  //This value is const, because BISHOP_PAIR is not const; NN is
+constexpr score_t KNIGHT_PAIR[TOTAL_STAGE/2+1]={0,-5,-10,-15,-25,-30,-35,-40,-50,-50,-50,-50,0};  //This value is const, because BISHOP_PAIR is not const; NN is
 //almost always weaker than NB or BB.
-constexpr score_t NO_PAWN=-300;  //It is much harder to win without pawns; in fact,
+constexpr score_t NO_PAWN=-200;  //It is much harder to win without pawns; in fact,
 //with almost equal material it is most commonly impossible.
 
 template<Color C>
@@ -134,7 +134,7 @@ inline static score_t getMaterialEvaluation(const SoFCore::Board &b, int32_t eva
         value+=BISHOP_PAIR[evaluationStage/2];
     }
     if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Rook)])>=2) value+=ROOK_PAIR;
-    if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)])>=2) value+=KNIGHT_PAIR;
+    if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)])>=2) value+=KNIGHT_PAIR[evaluationStage/2];
     if (b.bbPieces[makeCell(C, Piece::Pawn)] == 0) value+=NO_PAWN;
     return value;
 }
