@@ -9,8 +9,6 @@ namespace SoFSearch::Private {
 
 using SoFCore::board_hash_t;
 
-// TODO : clear and rehash the transposition table in a multithreaded way
-
 void doClear(TranspositionTable::Entry *table, const size_t size) {
   for (size_t i = 0; i < size; ++i) {
     table[i].clear();
