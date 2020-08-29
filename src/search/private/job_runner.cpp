@@ -85,7 +85,7 @@ static Move pickRandomMove(Board board) {
 }
 
 void JobRunner::runMainThread(const Position &position, const SearchLimits &limits,
-                              const size_t numJobs) {
+                              const size_t jobCount) {
   {
     std::unique_lock lock(hashChangeLock_);
     canChangeHash_ = false;
@@ -93,7 +93,7 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
   SOF_DEFER({
     // Perform delayed requests to modify transposition table
     std::unique_lock lock(hashChangeLock_);
-    tt_.resize(hashSize_, clearHash_, numJobs);
+    tt_.resize(hashSize_, clearHash_, jobCount);
     hashSize_ = tt_.sizeBytes();
     clearHash_ = false;
     canChangeHash_ = true;
@@ -102,11 +102,11 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
   // Create jobs and associated threads. We store the jobs in `deque` instead of `vector`, as `Job`
   // instances are not moveable
   std::deque<Job> jobs;
-  for (size_t i = 0; i < numJobs; ++i) {
+  for (size_t i = 0; i < jobCount; ++i) {
     jobs.emplace_back(comm_, tt_, server_, i);
   }
   std::vector<std::thread> threads;
-  for (size_t i = 0; i < numJobs; ++i) {
+  for (size_t i = 0; i < jobCount; ++i) {
     threads.emplace_back([&job = jobs[i], &position, &limits]() { job.run(position, limits); });
   }
 
@@ -172,8 +172,8 @@ void JobRunner::start(const Position &position, const SearchLimits &limits) {
   join();
   comm_.reset();
   tt_.nextEpoch();
-  mainThread_ = std::thread([this, position, limits, numJobs = this->numJobs_]() {
-    runMainThread(position, limits, numJobs);
+  mainThread_ = std::thread([this, position, limits, jobCount = this->numJobs_]() {
+    runMainThread(position, limits, jobCount);
   });
 }
 

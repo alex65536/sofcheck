@@ -55,7 +55,7 @@ Engine::~Engine() {
 SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
   return SoFBotApi::OptionBuilder(engine)
       .addInt("Hash", 1, Private::TranspositionTable::DEFAULT_SIZE >> 20, 131'072)
-      .addInt("Threads", 1, 1, 512)
+      .addInt("Threads", 1, Private::JobRunner::DEFAULT_NUM_JOBS, 512)
       .addAction("Clear hash")
       .options();
 }

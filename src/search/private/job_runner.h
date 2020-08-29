@@ -16,6 +16,9 @@ namespace SoFSearch::Private {
 // The class that runs multiple search jobs simultaneously and controls them.
 class JobRunner {
 public:
+  // Default number of jobs for `JobRunner`
+  static constexpr size_t DEFAULT_NUM_JOBS = 1;
+
   inline explicit JobRunner(SoFBotApi::Server &server) : server_(server) {}
 
   ~JobRunner();
@@ -57,7 +60,7 @@ public:
 
 private:
   // Main function of the thread which controls all the running jobs.
-  void runMainThread(const Position &position, const SearchLimits &limits, size_t numJobs);
+  void runMainThread(const Position &position, const SearchLimits &limits, size_t jobCount);
 
   JobCommunicator comm_;
   TranspositionTable tt_;
@@ -66,7 +69,7 @@ private:
   std::thread mainThread_;
   std::mutex hashChangeLock_;
   size_t hashSize_ = TranspositionTable::DEFAULT_SIZE;
-  size_t numJobs_ = 1;
+  size_t numJobs_ = DEFAULT_NUM_JOBS;
   std::atomic<bool> debugMode_ = false;
   bool clearHash_ = false;
   bool canChangeHash_ = true;
