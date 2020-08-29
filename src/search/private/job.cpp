@@ -61,6 +61,7 @@ public:
     depth_ = depth;
     const score_t score = search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF,
                                                  boardGetPsqScore(board_), FLAGS_DEFAULT);
+    DGN_ASSERT(isScoreValid(score));
     bestMove = stack_[0].bestMove;
     return score;
   }
@@ -102,7 +103,8 @@ private:
       return 0;
     }
     const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq, flags);
-    DGN_ASSERT(isScoreValid(score));
+    DGN_ASSERT(score <= alpha || score >= beta ||
+               isScoreValid(adjustCheckmate(score, -static_cast<int16_t>(idepth))));
     repetitions_.erase(board_.hash);
     return score;
   }
@@ -275,6 +277,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       bound = PositionCostBound::Lowerbound;
     }
     score = adjustCheckmate(score, -static_cast<int16_t>(idepth));
+    DGN_ASSERT(bound != PositionCostBound::Exact || isScoreValid(score));
     tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
   };
 

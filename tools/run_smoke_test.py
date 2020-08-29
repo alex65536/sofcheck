@@ -16,7 +16,8 @@ POSITIONS = [
     "5K2/1N1N1N2/8/1N1N1N2/1n1n1n2/8/1n1n1n2/5k2 w - - 0 1",
     "3Q4/1Q4Q1/4Q3/2Q4R/Q4Q2/3Q4/NR4Q1/kN1BB1K1 w - - 0 1",
     "r3k2r/pp4pp/8/3Pp3/8/8/PP4PP/R3K2R w KQkq e6 0 1",
-    "8/8/3k4/8/4Q1K1/8/8/8 w - - 0 1"
+    "8/8/3k4/8/4Q1K1/8/8/8 w - - 0 1",
+    "8/8/3k4/8/4Q1K1/8/8/8 b - - 0 1"
 ]
 MOVETIME = 4000
 
