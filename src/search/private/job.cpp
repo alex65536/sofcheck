@@ -102,6 +102,7 @@ private:
       return 0;
     }
     const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq, flags);
+    DGN_ASSERT(isScoreValid(score));
     repetitions_.erase(board_.hash);
     return score;
   }
@@ -203,6 +204,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
   if (board_.side == Color::Black) {
     score *= -1;
   }
+  DGN_ASSERT(isScoreValid(score));
   alpha = std::max(alpha, score);
   if (alpha >= beta) {
     return beta;
@@ -224,6 +226,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
     }
     results_.inc(JobStat::Nodes);
     const score_t score = -quiescenseSearch(-beta, -alpha, newPsq);
+    DGN_ASSERT(isScoreValid(score));
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
@@ -411,7 +414,7 @@ void Job::run(const Position &position, const SearchLimits &limits) {
       return;
     }
     if (communicator_.finishDepth(depth)) {
-      // FIXME: check that best move is not null and score is valid
+      DGN_ASSERT(bestMove != Move::null());
       results_.setBestMove(depth, bestMove);
       std::vector<Move> pv = unwindPv(board, bestMove, table_);
       server_.sendResult(
