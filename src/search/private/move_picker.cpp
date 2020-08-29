@@ -91,7 +91,7 @@ void MovePicker::nextStage() {
         // Sort the moves by history heuristic
         moveCount_ = genSimpleMovesNoPromote(board_, moves_);
         std::sort(moves_, moves_ + moveCount_,
-                  [](const Move m1, const Move m2) { return history_[m1] > history_[m2]; });
+                  [this](const Move m1, const Move m2) { return history_[m1] > history_[m2]; });
         for (size_t i = 0; i < moveCount_; ++i) {
           if (moves_[i] == savedKillers_[0] || moves_[i] == savedKillers_[1]) {
             moves_[i] = Move::null();
