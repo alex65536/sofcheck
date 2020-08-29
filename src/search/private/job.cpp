@@ -207,6 +207,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
     score *= -1;
   }
   DGN_ASSERT(isScoreValid(score));
+  DGN_ASSERT(score <= alpha || score >= beta || !isScoreCheckmate(score));
   alpha = std::max(alpha, score);
   if (alpha >= beta) {
     return beta;
@@ -229,6 +230,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
     results_.inc(JobStat::Nodes);
     const score_t score = -quiescenseSearch(-beta, -alpha, newPsq);
     DGN_ASSERT(isScoreValid(score));
+    DGN_ASSERT(score <= alpha || score >= beta || !isScoreCheckmate(score));
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
