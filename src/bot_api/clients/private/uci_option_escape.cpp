@@ -47,15 +47,15 @@ inline static bool isBadToken(const std::string &str) {
 }
 
 inline static std::string uciNameEscape(const std::string &name) {
-  return transformTokens(
-      name, [&](const std::string &str) { return (isBadToken(str) ? "_" : "") + str; });
+  return transformTokens(name,
+                         [](const std::string &str) { return (isBadToken(str) ? "_" : "") + str; });
 }
 
 inline static std::string uciNameUnescape(const std::string &name) {
   // NOTE: "value" escaped is "_value". When we try to unescape "_value", we get "value", when we
   // try to unescape "value", we also get "value". Maybe we should indicate that the string is
   // invalid in this case?
-  return transformTokens(name, [&](const std::string &str) {
+  return transformTokens(name, [](const std::string &str) {
     return (isBadToken(str) && str[0] == '_') ? str.substr(1) : str;
   });
 }

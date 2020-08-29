@@ -16,7 +16,7 @@ void sortMvvLva(const Board &board, Move *moves, const size_t count) {
     Move &move = moves[i];
     move.tag = victimOrd[board.cells[move.dst]] + attackerOrd[board.cells[move.src]];
   }
-  std::sort(moves, moves + count, [&](const Move m1, const Move m2) { return m1.tag > m2.tag; });
+  std::sort(moves, moves + count, [](const Move m1, const Move m2) { return m1.tag > m2.tag; });
   for (size_t i = 0; i < count; ++i) {
     moves[i].tag = 0;
   }
@@ -31,7 +31,7 @@ QuiescenseMovePicker::QuiescenseMovePicker(const Board &board)
 void QuiescenseMovePicker::addSimplePromotes() {
   moveCount_ = genSimplePromotes(board_, moves_);
   movePosition_ = 0;
-  std::sort(moves_, moves_ + moveCount_, [&](const Move m1, const Move m2) {
+  std::sort(moves_, moves_ + moveCount_, [](const Move m1, const Move m2) {
     return static_cast<int8_t>(m1.kind) > static_cast<int8_t>(m2.kind);
   });
 }
@@ -68,7 +68,7 @@ void MovePicker::nextStage() {
       case MovePickerStage::SimplePromote: {
         // Generate simple promotes and sort them by promoting piece
         moveCount_ = genSimplePromotes(board_, moves_);
-        std::sort(moves_, moves_ + moveCount_, [&](const Move m1, const Move m2) {
+        std::sort(moves_, moves_ + moveCount_, [](const Move m1, const Move m2) {
           return static_cast<int8_t>(m1.kind) > static_cast<int8_t>(m2.kind);
         });
         break;
@@ -91,7 +91,7 @@ void MovePicker::nextStage() {
         // Sort the moves by history heuristic
         moveCount_ = genSimpleMovesNoPromote(board_, moves_);
         std::sort(moves_, moves_ + moveCount_,
-                  [&](const Move m1, const Move m2) { return history_[m1] > history_[m2]; });
+                  [](const Move m1, const Move m2) { return history_[m1] > history_[m2]; });
         for (size_t i = 0; i < moveCount_; ++i) {
           if (moves_[i] == savedKillers_[0] || moves_[i] == savedKillers_[1]) {
             moves_[i] = Move::null();
