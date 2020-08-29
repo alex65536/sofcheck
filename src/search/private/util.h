@@ -1,7 +1,6 @@
 #ifndef SOF_SEARCH_PRIVATE_UTIL_INCLUDED
 #define SOF_SEARCH_PRIVATE_UTIL_INCLUDED
 
-#include <algorithm>
 #include <memory>
 
 #include "core/move.h"
@@ -36,9 +35,7 @@ private:
 // History table used for history heuristics
 class HistoryTable {
 public:
-  HistoryTable() : tab_(std::make_unique<uint64_t[]>(TAB_SIZE)) {
-    std::fill(tab_.get(), tab_.get() + TAB_SIZE, 0);
-  }
+  HistoryTable() : tab_(std::make_unique<uint64_t[]>(TAB_SIZE)) {}
 
   inline uint64_t &operator[](const SoFCore::Move move) { return tab_[indexOf(move)]; }
   inline uint64_t operator[](const SoFCore::Move move) const { return tab_[indexOf(move)]; }
@@ -59,9 +56,7 @@ public:
   inline RepetitionTable()
       : tab_(std::make_unique<SoFCore::board_hash_t[]>(INITIAL_BUCKET_COUNT * BUCKET_SIZE)),
         bucketCount_(INITIAL_BUCKET_COUNT),
-        mask_((INITIAL_BUCKET_COUNT - 1) * BUCKET_SIZE) {
-    std::fill(tab_.get(), tab_.get() + INITIAL_BUCKET_COUNT * BUCKET_SIZE, 0);
-  }
+        mask_((INITIAL_BUCKET_COUNT - 1) * BUCKET_SIZE) {}
 
   // Returns `true` if `board` is present in the hash table
   inline bool has(const SoFCore::board_hash_t board) const {
