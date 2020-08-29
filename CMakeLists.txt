@@ -111,10 +111,11 @@ add_custom_command(
 add_library(sof_util STATIC
   src/util/logging.cpp
   src/util/misc.cpp
+  src/util/parallel.cpp
   src/util/strutil.cpp
   src/util/random.cpp
 )
-target_link_libraries(sof_util PRIVATE ${BOOST_STACKTRACE_TARGET})
+target_link_libraries(sof_util PRIVATE Threads::Threads ${BOOST_STACKTRACE_TARGET})
 
 add_library(sof_core STATIC
   src/core/board.cpp
@@ -210,6 +211,10 @@ if(GTest_FOUND)
   add_executable(test_search_unit_test src/search/test/unit_test.cpp)
   target_link_libraries(test_search_unit_test GTest::GTest GTest::Main)
   gtest_add_tests(TARGET test_search_unit_test)
+
+  add_executable(test_util_unit_test src/util/test/unit_test.cpp)
+  target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)
+  gtest_add_tests(TARGET test_util_unit_test)
 endif()
 
 if(UNIX)
