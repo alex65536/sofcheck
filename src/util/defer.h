@@ -26,7 +26,7 @@ private:
 //   cout << "Scope has ended!" << endl;
 // })
 #define SOF_DEFER(...) \
-  SoFUtil::DeferAction SOF_MAKE_UNIQUE(sofDeferActionHolder__)([&]() __VA_ARGS__);
+  SoFUtil::DeferAction SOF_MAKE_UNIQUE(sofDeferActionHolder__)([&]() { __VA_ARGS__ });
 
 }  // namespace SoFUtil
 

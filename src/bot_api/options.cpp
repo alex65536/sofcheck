@@ -49,13 +49,13 @@ ApiResult OptionStorage::setT(const std::string &key, const Val &value, Validato
 
 ApiResult OptionStorage::setBool(const std::string &key, const bool value) {
   return setT<BoolOption>(
-      key, value, [&](const BoolOption &) { return true; },
+      key, value, [](const BoolOption &) { return true; },
       [&]() { return observer_->setBool(key, value); });
 }
 
 ApiResult OptionStorage::setEnum(const std::string &key, const size_t index) {
   return setT<EnumOption>(
-      key, index, [&](const EnumOption &o) { return index < o.items->size(); },
+      key, index, [index](const EnumOption &o) { return index < o.items->size(); },
       [&]() { return observer_->setEnum(key, index); });
 }
 
@@ -82,13 +82,14 @@ ApiResult OptionStorage::setEnum(const std::string &key, const std::string &valu
 
 ApiResult OptionStorage::setInt(const std::string &key, const int64_t value) {
   return setT<IntOption>(
-      key, value, [&](const IntOption &o) { return o.minValue <= value && value <= o.maxValue; },
+      key, value,
+      [value](const IntOption &o) { return o.minValue <= value && value <= o.maxValue; },
       [&]() { return observer_->setInt(key, value); });
 }
 
 ApiResult OptionStorage::setString(const std::string &key, const std::string &value) {
   return setT<StringOption>(
-      key, value, [&](const StringOption &) { return true; },
+      key, value, [](const StringOption &) { return true; },
       [&]() { return observer_->setString(key, value); });
 }
 
