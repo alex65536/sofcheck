@@ -47,7 +47,7 @@ void JobRunner::hashClear() {
     clearHash_ = true;
     return;
   }
-  tt_.clear();
+  tt_.clear(numJobs_);
 }
 
 void JobRunner::hashResize(const size_t size) {
@@ -56,7 +56,7 @@ void JobRunner::hashResize(const size_t size) {
     hashSize_ = size;
     return;
   }
-  tt_.resize(size, false);
+  tt_.resize(size, false, numJobs_);
   hashSize_ = tt_.sizeBytes();
 }
 
@@ -93,7 +93,7 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
   SOF_DEFER({
     // Perform delayed requests to modify transposition table
     std::unique_lock lock(hashChangeLock_);
-    tt_.resize(hashSize_, clearHash_);
+    tt_.resize(hashSize_, clearHash_, numJobs);
     hashSize_ = tt_.sizeBytes();
     clearHash_ = false;
     canChangeHash_ = true;
@@ -168,12 +168,13 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
   server_.finishSearch(bestMove);
 }
 
-void JobRunner::start(const Position &position, const SearchLimits &limits, const size_t numJobs) {
+void JobRunner::start(const Position &position, const SearchLimits &limits) {
   join();
   comm_.reset();
   tt_.nextEpoch();
-  mainThread_ = std::thread(
-      [this, position, limits, numJobs]() { runMainThread(position, limits, numJobs); });
+  mainThread_ = std::thread([this, position, limits, numJobs = this->numJobs_]() {
+    runMainThread(position, limits, numJobs);
+  });
 }
 
 void JobRunner::stop() { comm_.stop(); }

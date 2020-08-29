@@ -4,17 +4,18 @@
 #include <limits>
 
 #include "util/bit.h"
+#include "util/parallel.h"
 
 namespace SoFSearch::Private {
 
 using SoFCore::board_hash_t;
 
-// TODO : clear and rehash the transposition table in a multithreaded way
-
-void doClear(TranspositionTable::Entry *table, const size_t size) {
-  for (size_t i = 0; i < size; ++i) {
-    table[i].clear();
-  }
+void doClear(TranspositionTable::Entry *table, const size_t size, const size_t jobs) {
+  SoFUtil::processSegmentParallel(0, size, jobs, [table](const size_t left, const size_t right) {
+    for (size_t i = left; i < right; ++i) {
+      table[i].clear();
+    }
+  });
 }
 
 int32_t TranspositionTable::Data::weight(const uint8_t curEpoch) const {
@@ -29,7 +30,7 @@ int32_t TranspositionTable::Data::weight(const uint8_t curEpoch) const {
   return result;
 }
 
-void TranspositionTable::clear() { doClear(table_.get(), size_); }
+void TranspositionTable::clear(const size_t jobs) { doClear(table_.get(), size_, jobs); }
 
 TranspositionTable::Data TranspositionTable::load(const board_hash_t key) const {
   const size_t idx = key & (size_ - 1);
@@ -48,7 +49,7 @@ void TranspositionTable::prefetch(const board_hash_t key) {
   __builtin_prefetch(&table_[idx], 0, 1);
 }
 
-void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
+void TranspositionTable::resize(size_t maxSize, const bool clearTable, const size_t jobs) {
   maxSize = std::max<size_t>(maxSize, 1 << 20);
 
   // Determine the new table size
@@ -60,37 +61,44 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable) {
   newSize /= sizeof(Entry);
   if (newSize == size_) {
     if (clearTable) {
-      clear();
+      clear(jobs);
     }
     return;
   }
 
   auto newData = std::make_unique<Entry[]>(newSize);
   if (clearTable) {
-    doClear(newData.get(), newSize);
+    doClear(newData.get(), newSize, jobs);
   } else if (newSize > size_) {
-    doClear(newData.get(), newSize);
-    for (size_t i = 0; i < size_; ++i) {
-      const Entry &entry = table_[i];
-      const Data value = entry.value.load(std::memory_order_relaxed);
-      const board_hash_t key = entry.key.load(std::memory_order_relaxed);
-      const size_t idx = (key ^ value.asUint()) & (newSize - 1);
-      newData[idx].assignRelaxed(value, key);
-    }
+    doClear(newData.get(), newSize, jobs);
+    SoFUtil::processSegmentParallel(
+        0, size_, jobs, [this, newSize, &newData](const size_t left, const size_t right) {
+          for (size_t i = left; i < right; ++i) {
+            const Entry &entry = table_[i];
+            const Data value = entry.value.load(std::memory_order_relaxed);
+            const board_hash_t key = entry.key.load(std::memory_order_relaxed);
+            const size_t idx = (key ^ value.asUint()) & (newSize - 1);
+            newData[idx].assignRelaxed(value, key);
+          }
+        });
   } else {
-    for (size_t i = 0; i < newSize; ++i) {
-      newData[i].assignRelaxed(table_[i]);
-    }
-    const size_t mask = newSize - 1;
-    const uint8_t epoch = epoch_;
-    for (size_t i = newSize; i < size_; ++i) {
-      const Entry &oldEntry = table_[i];
-      Entry &newEntry = newData[i & mask];
-      if (oldEntry.value.load(std::memory_order_relaxed).weight(epoch) >
-          newEntry.value.load(std::memory_order_relaxed).weight(epoch)) {
-        newEntry.assignRelaxed(oldEntry);
-      }
-    }
+    SoFUtil::processSegmentParallel(
+        0, newSize, jobs, [this, newSize, &newData](const size_t left, const size_t right) {
+          for (size_t i = left; i < right; ++i) {
+            newData[i].assignRelaxed(table_[i]);
+          }
+          const uint8_t epoch = epoch_;
+          for (size_t offset = newSize; offset < size_; offset += newSize) {
+            for (size_t i = left; i < right; ++i) {
+              const Entry &oldEntry = table_[i + offset];
+              Entry &newEntry = newData[i];
+              if (oldEntry.value.load(std::memory_order_relaxed).weight(epoch) >
+                  newEntry.value.load(std::memory_order_relaxed).weight(epoch)) {
+                newEntry.assignRelaxed(oldEntry);
+              }
+            }
+          }
+        });
   }
 
   table_ = std::move(newData);
@@ -111,7 +119,7 @@ void TranspositionTable::store(board_hash_t key, TranspositionTable::Data value)
 
 TranspositionTable::TranspositionTable()
     : size_(DEFAULT_SIZE / sizeof(Entry)), table_(std::make_unique<Entry[]>(size_)) {
-  clear();
+  clear(1);
 }
 
 }  // namespace SoFSearch::Private

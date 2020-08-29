@@ -30,7 +30,7 @@ public:
 
   // Starts the search. If the search is already started, the previous search is stopped in a
   // blocked manner (i.e. by calling `join()`)
-  void start(const Position &position, const SearchLimits &limits, size_t numJobs);
+  void start(const Position &position, const SearchLimits &limits);
 
   // Indicates that the hash table size (in bytes) must be changed to `size`. The resize operation
   // may be deferred until the search is stopped.
@@ -39,6 +39,13 @@ public:
   // Indicates that the hash table must be cleared. The clear operation may be deferred until the
   // search is stopped.
   void hashClear();
+
+  // Returns the number of jobs to run
+  inline size_t numJobs() const { return numJobs_; }
+
+  // Sets the number of jobs to run. If the search is already running, the change will be applied
+  // only for the next search
+  inline void setNumJobs(const size_t value) { numJobs_ = value; }
 
   // Enables or disables debug mode. In debug mode the jobs may send extra information to server.
   inline void setDebugMode(const bool enable) {
@@ -59,6 +66,7 @@ private:
   std::thread mainThread_;
   std::mutex hashChangeLock_;
   size_t hashSize_ = TranspositionTable::DEFAULT_SIZE;
+  size_t numJobs_ = 1;
   std::atomic<bool> debugMode_ = false;
   bool clearHash_ = false;
   bool canChangeHash_ = true;

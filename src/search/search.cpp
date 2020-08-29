@@ -72,7 +72,7 @@ ApiResult Engine::reportError(const char *message) {
 }
 
 ApiResult Engine::doSearch(const Private::SearchLimits &limits) {
-  p_->runner->start(p_->position, limits, options_.getInt("Threads")->value);
+  p_->runner->start(p_->position, limits);
   return ApiResult::Ok;
 }
 
@@ -111,6 +111,8 @@ ApiResult Engine::setEnum(const std::string &, size_t) { return ApiResult::Ok; }
 ApiResult Engine::setInt(const std::string &key, const int64_t value) {
   if (key == "Hash") {
     p_->runner->hashResize(value << 20);
+  } else if (key == "Threads") {
+    p_->runner->setNumJobs(value);
   }
   return ApiResult::Ok;
 }

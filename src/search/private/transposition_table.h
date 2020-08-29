@@ -95,9 +95,10 @@ public:
   // Resizes the hash table. The new table size (in bytes) will be the maximum power of two not
   // exceeding `max(1048576, maxSize)`. If `clearTable` is `true`, the table is cleared after
   // resize. Otherwise, we try to retain some information that already exists in the hash table.
+  // Note that the hash table is resized in a multithreaded way, using `jobs` threads.
   //
   // This function is not thread-safe. No other thread should use the table while resizing.
-  void resize(size_t maxSize, bool clearTable);
+  void resize(size_t maxSize, bool clearTable, size_t jobs);
 
   // Increments the hash table epoch. It is recommended to call this function once before the new
   // search is started. Note that this function is not thread-safe.
@@ -106,9 +107,10 @@ public:
   // Returns the hash table size (in bytes)
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }
 
-  // Clears the hash table. This function is not thread-safe. No other thread should use the table
-  // while resizing.
-  void clear();
+  // Clears the hash table. The hash table is cleared in a multithreaded way, using `jobs` threads.
+  //
+  // This function is not thread-safe. No other thread should use the table while resizing.
+  void clear(size_t jobs);
 
   // Try to load the entry with the key `key` into CPU cache. You can invoke the method early before
   // you plan to use the cache entry and do soemthing before it loads into CPU cache.
@@ -144,7 +146,7 @@ private:
     }
   };
 
-  friend void doClear(Entry *table, size_t size);
+  friend void doClear(Entry *table, size_t size, size_t jobs);
 
   static_assert(std::atomic<SoFCore::board_hash_t>::is_always_lock_free);
   static_assert(std::atomic<Data>::is_always_lock_free);
