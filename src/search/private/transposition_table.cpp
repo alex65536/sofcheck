@@ -66,7 +66,8 @@ void TranspositionTable::resize(size_t maxSize, const bool clearTable, const siz
     return;
   }
 
-  auto newData = std::make_unique<Entry[]>(newSize);
+  // Do not use `std::make_unique` here, as we want the array to be uninitialized
+  std::unique_ptr<Entry[]> newData(new Entry[newSize]);
   if (clearTable) {
     doClear(newData.get(), newSize, jobs);
   } else if (newSize > size_) {
@@ -118,7 +119,7 @@ void TranspositionTable::store(board_hash_t key, TranspositionTable::Data value)
 }
 
 TranspositionTable::TranspositionTable()
-    : size_(DEFAULT_SIZE / sizeof(Entry)), table_(std::make_unique<Entry[]>(size_)) {
+    : size_(DEFAULT_SIZE / sizeof(Entry)), table_(new Entry[size_]) {
   clear(1);
 }
 
