@@ -9,8 +9,8 @@ namespace SoFSearch::Private {
 
 using SoFCore::Board;
 using SoFCore::cell_t;
-using SoFCore::Color;
 using SoFCore::coord_t;
+using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MoveKind;
 using SoFCore::Piece;
@@ -60,9 +60,9 @@ static_assert(TOTAL_STAGE % 2 == 0);
 template<Color C>
 inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
 {
-    Color D = invert(C);
+    Color d = invert(C);
     if (b.bbPieces[makeCell(C, Piece::Pawn)] != 0 ||
-    b.bbPieces[makeCell(D, Piece::Pawn)] != 0) return false;  //is there are pawns on the board
+    b.bbPieces[makeCell(d, Piece::Pawn)] != 0) return false;  //is there are pawns on the board
     //we cannot say if it is a draw.
     if (SoFUtil::popcount(b.bbAll)==4)
     {
@@ -70,7 +70,7 @@ inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
         //always a draw; KR vs. KN isn't a draw: if a knight is not close to the king it can be possible to win.
         //8/8/8/3K4/R7/7n/8/1k6 w - - 0 1 as an example.
         if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Rook)]) == 1 &&
-        SoFUtil::popcount(b.bbPieces[makeCell(D, Piece::Bishop)]) == 1) return true;
+        SoFUtil::popcount(b.bbPieces[makeCell(d, Piece::Bishop)]) == 1) return true;
         //KNN vs. K is almost always a draw.
         if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)]) == 2) return true;
         //100 is a pawn cost. We can check KN vs. KB, KN vs. KN and KB vs. KB in such way.
@@ -81,8 +81,8 @@ inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
         const size_t ourKnight = SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)]);
         const size_t ourBishop = SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Bishop)]);
         const size_t ourRook = SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Rook)]);
-        const size_t enemyKnight = SoFUtil::popcount(b.bbPieces[makeCell(D, Piece::Knight)]);
-        const size_t enemyBishop = SoFUtil::popcount(b.bbPieces[makeCell(D, Piece::Bishop)]);
+        const size_t enemyKnight = SoFUtil::popcount(b.bbPieces[makeCell(d, Piece::Knight)]);
+        const size_t enemyBishop = SoFUtil::popcount(b.bbPieces[makeCell(d, Piece::Bishop)]);
         //KNN vs. KN is draw
         if (ourKnight == 2 && enemyKnight == 1) return true;
         //KNN vs. KB is draw
@@ -105,7 +105,7 @@ inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
     {
         //KNN vs. KNN is draw
         if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)]) == 2 &&
-        SoFUtil::popcount(b.bbPieces[makeCell(D, Piece::Knight)]) == 2) return true;
+        SoFUtil::popcount(b.bbPieces[makeCell(d, Piece::Knight)]) == 2) return true;
         //Note that KNNN vs. KN is not a draw.
         //Note also that KBB vs. KNN is not a draw.
         //KNNN vs. KR is a draw, and KNNN vs. KB is not. This cases are not included, because NNN is too
