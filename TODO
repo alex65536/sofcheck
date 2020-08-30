@@ -20,13 +20,6 @@
   as follows: some chess GUIs may accept the positions which won't pass our `ValidateBoard`, and
   will think that our engine behaves incorrenly in such case.
 
-* Add `seltest_board_gen` to `sofcheck-engine-tester` repository
-  It will be good if we'll be able to regenerate the position set for self-tests. The current data
-  were generated half-automatically by parsing PGNs and adding ~100 random games, half-manually by
-  adding some interesting positions. The tool to create the self-test data exists, but is not
-  published yet. We need to publish this tool and modify it in such a way that it would produce the
-  whole self-test data file without adding the positions manually.
-
 * Add the functions to replace `std::from_chars` and `std::to_chars`
   These two functions are declared in `<charconv>` and exist in C++17, but not every compiler
   supports it. SoFCheck may gain support of older versions of Clang and GCC if we don't use the
