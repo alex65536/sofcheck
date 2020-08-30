@@ -16,7 +16,6 @@ namespace SoFSearch::Private {
 
 using SoFBotApi::PositionCostBound;
 using SoFCore::Board;
-using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using std::chrono::milliseconds;
