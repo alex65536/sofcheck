@@ -105,6 +105,11 @@ add_custom_command(
   COMMAND gen_piece_square_table ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
   DEPENDS gen_piece_square_table
 )
+add_custom_command(
+  OUTPUT ${PROJECT_BINARY_DIR}/src/search/private/eval_bitboards.h
+  COMMAND gen_eval_bitboards ${PROJECT_BINARY_DIR}/src/search/private/eval_bitboards.h
+  DEPENDS gen_eval_bitboards
+)
 
 
 # Add targets to build
@@ -154,6 +159,7 @@ add_library(sof_search STATIC
   src/search/private/transposition_table.cpp
   src/search/private/util.cpp
   ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
+  ${PROJECT_BINARY_DIR}/src/search/private/eval_bitboards.h
 )
 target_link_libraries(sof_search
   PUBLIC sof_core sof_util sof_bot_api
@@ -172,6 +178,11 @@ add_executable(gen_magic_consts
 )
 add_executable(gen_piece_square_table
   gen/gen_piece_square_table.cpp
+  gen/gen_main.cpp
+  gen/common.cpp
+)
+add_executable(gen_eval_bitboards
+  gen/gen_eval_bitboards.cpp
   gen/gen_main.cpp
   gen/common.cpp
 )

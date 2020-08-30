@@ -23,14 +23,14 @@ static void printArrayCommon(std::ostream &out, const std::vector<T> &array, Ite
 
 void printCoordArray(std::ostream &out, const std::vector<SoFCore::coord_t> &array,
                      const char *name) {
-  out << "constexpr coord_t " << name;
+  out << "constexpr SoFCore::coord_t " << name;
   printArrayCommon(out, array,
                    [](std::ostream &out, SoFCore::coord_t x) { out << static_cast<int>(x); });
 }
 
 void printBitboardArray(std::ostream &out, const std::vector<SoFCore::bitboard_t> &array,
                         const char *name) {
-  out << "constexpr bitboard_t " << name;
+  out << "constexpr SoFCore::bitboard_t " << name;
   printArrayCommon(out, array,
                    [](std::ostream &out, SoFCore::bitboard_t bb) { printBitboard(out, bb); });
 }

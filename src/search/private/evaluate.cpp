@@ -4,6 +4,7 @@
 #include "util/bit.h"
 #include "util/misc.h"
 #include "core/private/bit_consts.h"
+#include "search/private/eval_bitboards.h"
 
 namespace SoFSearch::Private {
 
@@ -139,6 +140,38 @@ inline static score_t getMaterialEvaluation(const SoFCore::Board &b, int32_t eva
     return value;
 }
 
+constexpr score_t BACKWARD_PAWN[TOTAL_STAGE/2+1]={-25,-25,-25,-20,-20,-20,-20,-10,-10,-10,-10,0,0};
+
+template<Color C>
+inline static score_t getPawnStructureEvaluation([[maybe_unused]] const SoFCore::Board &b, [[maybe_unused]] int32_t evaluationStage)
+{
+    [[maybe_unused]] Color d = invert(C);
+    score_t value = 0;
+    bitboard_t bbPawns=b.bbPieces[makeCell(C, Piece::Pawn)];
+    while (bbPawns)
+    {
+        const coord_t src = SoFUtil::extractLowest(bbPawns);
+        constexpr auto *bbBackward=
+      (C == Color::White) ? WHITE_BACKWARD_PAWN : BLACK_BACKWARD_PAWN;
+      constexpr auto *bbBackwardSentry=
+      (C == Color::White) ? WHITE_BACKWARD_PAWN_SENTRY : BLACK_BACKWARD_PAWN_SENTRY;
+        if (!(bbBackward[src] & b.bbPieces[makeCell(C, Piece::Pawn)]))
+        {
+            if (bbBackwardSentry[src] & b.bbPieces[makeCell(d, Piece::Pawn)])
+            value+=BACKWARD_PAWN[evaluationStage];
+        }
+    }
+    return value;
+}
+
+template<Color C>
+inline static score_t getPositionalEvaluation(const SoFCore::Board &b, int32_t evaluationStage)
+{
+    score_t value = 0;
+    value+=getPawnStructureEvaluation<C>(b, evaluationStage);
+    return value;
+}
+
 inline static score_t taperedEval(const score_pair_t score, const int32_t stage)
 {
     return (((scorePairFirst(score) * (256 - stage)) + (scorePairSecond(score) * stage)) >> 8);
@@ -149,7 +182,7 @@ inline static bool lazyEval(const score_t alpha, const score_t beta, const score
     return cost + diff <= alpha || cost - diff >= beta;
 }
 
-inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq, const score_t alpha, const score_t beta) {
+inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq, [[maybe_unused]] const score_t alpha, [[maybe_unused]] const score_t beta) {
   //First we should check some positions, that has a chance of being winned, but in fact it is draw.
   if (drawNode<Color::White>(b, psq)) return 0;
   if (drawNode<Color::Black>(b, psq)) return 0;
@@ -172,10 +205,13 @@ inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq
   // Calculating all dynamic values
   score_t value = taperedEval(psq, stage);
   //First lazy evaluation
-  if (lazyEval(alpha, beta, value, 500)) return value <= alpha ? alpha : beta;
+  //if (lazyEval(alpha, beta, value, 500)) return value <= alpha ? alpha : beta;
   const score_t materialValue =
   getMaterialEvaluation<Color::White>(b, evaluationStage) - getMaterialEvaluation<Color::Black>(b, evaluationStage);
   value+=materialValue;
+  const score_t positionalValue =
+  getPositionalEvaluation<Color::White>(b, evaluationStage) - getPositionalEvaluation<Color::Black>(b, evaluationStage);
+  value+=positionalValue;
   return value;
 }
 
