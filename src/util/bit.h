@@ -28,6 +28,9 @@ inline constexpr size_t extractLowest(uint64_t &x) {
   return res;
 }
 
+// Reverses the byte order in `x`
+inline constexpr uint64_t swapBytes(uint64_t x) { return __builtin_bswap64(x); }
+
 #ifdef USE_BMI2
 
 // The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)
