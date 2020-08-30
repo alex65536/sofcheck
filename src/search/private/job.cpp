@@ -19,7 +19,6 @@ namespace SoFSearch::Private {
 
 using SoFBotApi::PositionCostBound;
 using SoFCore::Board;
-using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using std::chrono::milliseconds;
@@ -200,9 +199,6 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
   }
 
   score_t score = evaluate(board_, psq);
-  if (board_.side == Color::Black) {
-    score *= -1;
-  }
   alpha = std::max(alpha, score);
   if (alpha >= beta) {
     return beta;
