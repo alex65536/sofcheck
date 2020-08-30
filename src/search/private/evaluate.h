@@ -8,7 +8,7 @@
 namespace SoFSearch::Private {
 
 // Returns the position cost of `b`. `psq` must be strictly equal to `boardGetPsqScore(b)`.
-score_t evaluate([[maybe_unused]] const SoFCore::Board &b, score_pair_t psq);
+score_t evaluate(const SoFCore::Board &b, score_pair_t psq);
 
 // Returns the position cost of `b` based on piece-square tables.
 score_pair_t boardGetPsqScore(const SoFCore::Board &b);
