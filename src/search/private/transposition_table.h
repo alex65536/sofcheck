@@ -120,6 +120,13 @@ public:
   // Stores `value` for the key `key`.
   void store(SoFCore::board_hash_t key, Data value);
 
+  // Stores `value` for the key `key` only if the epoch of `value` differs from the epoch of table
+  inline void refresh(const SoFCore::board_hash_t key, const Data value) {
+    if (value.epoch_ != epoch_) {
+      store(key, value);
+    }
+  }
+
 private:
   struct Entry {
     std::atomic<Data> value;

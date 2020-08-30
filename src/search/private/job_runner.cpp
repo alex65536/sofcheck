@@ -30,7 +30,6 @@ public:
   inline uint64_t get(const JobStat stat) const { return stats_[static_cast<size_t>(stat)]; }
 
   inline uint64_t nodes() const { return get(JobStat::Nodes); }
-  inline uint64_t ttHits() const { return get(JobStat::TtHits); }
 
   inline void add(const JobResults &results) {
     for (size_t i = 0; i < JOB_STAT_SZ; ++i) {
@@ -135,7 +134,10 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
     // Print stats
     if (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
       server_.sendNodeCount(stats.nodes());
-      server_.sendHashHits(stats.ttHits());
+      server_.sendHashHits(stats.get(JobStat::TtHits));
+      if (isDebugMode()) {
+        server_.sendString("Hash exact hits: " + std::to_string(stats.get(JobStat::TtExactHits)));
+      }
       while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }
