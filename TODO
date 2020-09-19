@@ -47,3 +47,14 @@
   don't want overhead from passing and parsing UCI messages). To compare the versions, we will
   play many micro-matches between the versions (like BattleField does currently). To perform the
   tuning, we can use some optimization methods, as Gradient descent.
+
+* Ensure that the transposition table doesn't change search results
+  To do this, we need to perform a simple test. Get the score from the transposition table only
+  when the depth is equal to our depth, not greater-or-equal. Then, compare the results with this
+  modification of transposition table and without any transposition table. They must be equal. The
+  test must be performed only one time, as it will be unable to perform it in the future, when many
+  other heuristics will appear.
+
+* Use flags in SoFCheck
+  `Searcher::doSearch()` contains `flags` parameter, which is unused now. We need to utilize it and
+  remove corresponding `[[maybe_unused]]` attributes.
