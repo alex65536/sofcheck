@@ -607,7 +607,7 @@ PollResult UciServerConnector::poll() {
     std::lock_guard guard(mutex_);
     D_CHECK_POLL_IO(out_ << "1) Draw circles" << endl);
     D_CHECK_POLL_IO(out_ << "2) Draw the rest of the owl" << endl);
-    return PollResult::NoData;
+    return PollResult::Ok;
   }
 
   std::istringstream tokens(cmdLine);
