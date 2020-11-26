@@ -60,7 +60,7 @@ SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
       .options();
 }
 
-ApiResult Engine::newGame() { return ApiResult::Ok; }
+ApiResult Engine::newGame() {p_->runner->hashClear(); return ApiResult::Ok; }
 
 void Engine::enterDebugMode() { p_->runner->setDebugMode(true); }
 

@@ -116,14 +116,15 @@ inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
 }
 
 //Here are all constants for the evaluation
-constexpr score_t BISHOP_PAIR[TOTAL_STAGE/2+1]={25,30,35,40,50,60,65,70,75,75,75,75,0};  //Pairs of bishops
+constexpr score_t BISHOP_PAIR[TOTAL_STAGE/2+1]={15,20,25,30,35,40,45,50,50,50,50,50,0};  //Pairs of bishops
 //are evaluated more in endspiel, and less in the early mittelspiel.
 constexpr score_t ROOK_PAIR=-50;  //This is called "principle of redundancy" by Larry Kaufman. It
 //allows engine to understand that NB-RP is less that it learns from piece costs.
-constexpr score_t KNIGHT_PAIR[TOTAL_STAGE/2+1]={0,-5,-10,-15,-25,-30,-35,-40,-50,-50,-50,-50,0};  //This value is const, because BISHOP_PAIR is not const; NN is
-//almost always weaker than NB or BB.
+constexpr score_t KNIGHT_PAIR[TOTAL_STAGE/2+1]={0,-5,-10,-15,-25,-30,-35,-40,-50,-50,-50,-50,0};
 constexpr score_t NO_PAWN=-200;  //It is much harder to win without pawns; in fact,
 //with almost equal material it is most commonly impossible.
+constexpr score_t KNIGHT_PAWN[9]={-20, -15, -10, -10, -5,  0,  5,  10, 15};
+constexpr score_t ROOK_PAWN[9]={20, 15, 10, 5, 0,  0,  0,  -5, -10};
 
 template<Color C>
 inline static score_t getMaterialEvaluation(const SoFCore::Board &b, int32_t evaluationStage)
@@ -137,32 +138,217 @@ inline static score_t getMaterialEvaluation(const SoFCore::Board &b, int32_t eva
     if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Rook)])>=2) value+=ROOK_PAIR;
     if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)])>=2) value+=KNIGHT_PAIR[evaluationStage/2];
     if (b.bbPieces[makeCell(C, Piece::Pawn)] == 0) value+=NO_PAWN;
+    value+=SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Knight)])*
+    KNIGHT_PAWN[SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Pawn)])];
+    value+=SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Rook)])*
+    ROOK_PAWN[SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Pawn)])];
     return value;
 }
 
-constexpr score_t BACKWARD_PAWN[TOTAL_STAGE/2+1]={-25,-25,-25,-20,-20,-20,-20,-10,-10,-10,-10,0,0};
+constexpr score_t BACKWARD_PAWN[TOTAL_STAGE/2+1]={0, -5, -10, -15, -20, -25, -25, -30, -30, -30, -30, -30, -30};
+// The pawn is called backward if it cannot be defensed by other pawns
+// and its stop square is controlled by an opponent's setnry.
+// Temporately it is zeroed, maybe later it will be deleted or fixed.
+
+constexpr score_t DOUBLE_PAWN[TOTAL_STAGE/2+1]={-20, -20, -25, -25, -25, -30, -30, -30, -35, -35, -40, -45, -50};
+// The pawn is called double if it has the pawn of the same color on its way.
+// The pawn is not considered as double if it has no pawns on its way, so every
+// passed pawn is not a double pawn.
+
+constexpr score_t ISOLATED_PAWN[TOTAL_STAGE/4 + 1][64]=
+{
+{
+    0,0,0,0,0,0,0,0,
+    0,0,-10,-15,-15,-10,0,0,
+    0,-10,-15,-20,-20,-15,-10,0,
+    -5,-15,-20,-25,-25,-20,-15,-5,
+    -5,-15,-20,-25,-25,-20,-15,-5,
+    0,-10,-15,-20,-20,-15,-10,0,
+    0,0,-10,-15,-15,-10,0,0,
+    0,0,0,0,0,0,0,0,
+},
+{
+    0,0,0,0,0,0,0,0,
+    0,0,-10,-10,-10,-10,0,0,
+    0,-10,-10,-15,-15,-10,-10,0,
+    -5,-10,-15,-20,-20,-15,-10,-5,
+    -5,-10,-15,-20,-20,-15,-10,-5,
+    0,-5,-10,-15,-15,-10,-10,0,
+    0,0,-5, -10,-10,-5,0,0,
+    0,0,0,0,0,0,0,0,
+},
+{
+    0,0,0,0,0,0,0,0,
+    0,0,0,-5,-5,0,0,0,
+    0,0,-5,-10,-10,-5,0,0,
+    0,-5,-10,-15,-15,-10,-5,0,
+    0,-5,-10,-15,-15,-10,-5,0,
+    0,0,-5,-10,-10,-5,0,0,
+    0,0,0,-5,-5,0,0,0,
+    0,0,0,0,0,0,0,0,
+},
+{
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+    0,0,0,0,0,0,0,0,
+}
+};
+
+// The pawn is called isolated when there anen't any pawns of the same color
+// on a adjacent verticals.
+
+static constexpr score_t PASS_PAWN[TOTAL_STAGE/2+1][8]=
+{
+{0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0},
+{0,10,5,5,5,5,0,0},
+{0,15,10,10,5,5,0,0},
+{0,15,15,15,10,5,0,0},
+{0,20,20,15,15,10,5,0},
+{0,25,25,20,20,10,5,0},
+{0,30,30,20,20,10,5,0},
+{0,40,30,20,20,10,10,0},
+{0,45,35,25,25,15,15,0},
+{0,50,40,25,25,20,20,0},
+};
+
+// passed pawns evaluation is one of the most important parts of the evaluatePawn function.
+// passed pawns evaluate more in endspiel, and when they are closer to the 8-th line.
+
+static constexpr score_t PASS_PAWN_DEF[TOTAL_STAGE/4+1][8]={
+{0,10,5,0,0,0,0,0},
+{0,15,10,5,0,0,0,0},
+{0,15,15,10,5,0,0,0},
+{0,25,20,15,10,5,0,0}
+};
+
+// also it is possible to give bonus for the connected pawns
+// connected Pawns - two or more pawns on adjacent files - as duo or phalanx on the same rank,
+// mutually protecting their stop squares - or either as defending or defended member of a pawn chain.
+// currently there is no implementation, because for now we don't have
+// good values for evaluting these pawns.
 
 template<Color C>
-inline static score_t getPawnStructureEvaluation([[maybe_unused]] const SoFCore::Board &b, [[maybe_unused]] int32_t evaluationStage)
+inline static score_t evaluatePawn(const SoFCore::Board &b, const coord_t &src, const bitboard_t &bbPawns, const bitboard_t &bbEnemyPawns, const int32_t &evaluationStage)
 {
-    [[maybe_unused]] Color d = invert(C);
-    score_t value = 0;
-    bitboard_t bbPawns=b.bbPieces[makeCell(C, Piece::Pawn)];
-    while (bbPawns)
+    score_t value=0;
+    if (C==Color::White)
     {
-        const coord_t src = SoFUtil::extractLowest(bbPawns);
-        constexpr auto *bbBackward=
-      (C == Color::White) ? WHITE_BACKWARD_PAWN : BLACK_BACKWARD_PAWN;
-      constexpr auto *bbBackwardSentry=
-      (C == Color::White) ? WHITE_BACKWARD_PAWN_SENTRY : BLACK_BACKWARD_PAWN_SENTRY;
-        if (!(bbBackward[src] & b.bbPieces[makeCell(C, Piece::Pawn)]))
+        if (!(WHITE_VERTICAL[src]&(bbPawns|bbEnemyPawns)))
         {
-            if (bbBackwardSentry[src] & b.bbPieces[makeCell(d, Piece::Pawn)])
-            value+=BACKWARD_PAWN[evaluationStage];
+            if (!(WHITE_PASS[src]&bbEnemyPawns))
+            {
+                value+=PASS_PAWN[evaluationStage/2][src>>3];
+                if (WHITE_PASS_DEF[src]&&bbPawns) value+=PASS_PAWN_DEF[evaluationStage/4][src>>3];
+            }
+        }
+        if (!(WHITE_BACKWARD_PAWN[src]&bbPawns))
+        {
+            if (WHITE_BACKWARD_PAWN_SENTRY[src]&bbEnemyPawns)
+            {
+                bitboard_t bbEnemyRook = b.bbPieces[makeCell(Color::Black, Piece::Rook)];
+                // It is much worse when backward pawn is located on the semi-open or open line
+                if ((BLACK_HALF_OPEN[src] & bbEnemyRook) && (!(BLACK_HALF_OPEN[src] & bbEnemyPawns)))
+                {
+                    value+=BACKWARD_PAWN[evaluationStage/2];
+                }
+                else
+                {
+                    value+=(BACKWARD_PAWN[evaluationStage/2]>>1);
+                }
+            }
+        }
+        if (WHITE_VERTICAL[src]&bbPawns)
+        {
+            value+=DOUBLE_PAWN[evaluationStage/2];
+        }
+        if (!(ISOLATED[src]&bbPawns))
+        {
+            bitboard_t bbEnemyRook = b.bbPieces[makeCell(Color::Black, Piece::Rook)];
+            // It is much worse when isolated pawn is located on the semi-open or open line
+            if ((BLACK_HALF_OPEN[src] & bbEnemyRook) && (!(BLACK_HALF_OPEN[src] & bbEnemyPawns)))
+            {
+                value+=ISOLATED_PAWN[evaluationStage/4][src];
+            }
+            else
+            {
+                value+=(ISOLATED_PAWN[evaluationStage/4][src]>>1);
+            }
+        }
+    }
+    else
+    {
+        if (!(BLACK_VERTICAL[src]&(bbPawns|bbEnemyPawns)))
+        {
+            if (!(BLACK_PASS[src]&bbEnemyPawns))
+            {
+                value+=PASS_PAWN[evaluationStage/2][7-(src>>3)];
+                if (BLACK_PASS_DEF[src]&&bbPawns) value+=PASS_PAWN_DEF[evaluationStage/4][7-(src>>3)];
+            }
+        }
+        if (!(BLACK_BACKWARD_PAWN[src]&bbPawns))
+        {
+            if (BLACK_BACKWARD_PAWN_SENTRY[src]&bbEnemyPawns)
+            {
+                bitboard_t bbEnemyRook = b.bbPieces[makeCell(Color::White, Piece::Rook)];
+                // It is much worse when backward pawn is located on the semi-open or open line
+                if ((WHITE_HALF_OPEN[src] & bbEnemyRook) && (!(WHITE_HALF_OPEN[src] & bbEnemyPawns)))
+                {
+                    value+=BACKWARD_PAWN[evaluationStage/2];
+                }
+                else
+                {
+                    value+=(BACKWARD_PAWN[evaluationStage/2]>>1);
+                }
+            }
+        }
+        if (BLACK_VERTICAL[src]&bbPawns)
+        {
+            value+=DOUBLE_PAWN[evaluationStage/2];
+        }
+        if (!(ISOLATED[src]&bbPawns))
+        {
+            bitboard_t bbEnemyRook = b.bbPieces[makeCell(Color::White, Piece::Rook)];
+            // It is much worse when isolated pawn is located on the semi-open or open line
+            if ((WHITE_HALF_OPEN[src] & bbEnemyRook) && (!(WHITE_HALF_OPEN[src] & bbEnemyPawns)))
+            {
+                value+=ISOLATED_PAWN[evaluationStage/4][src^63];
+            }
+            else
+            {
+                value+=(ISOLATED_PAWN[evaluationStage/4][src^63]>>1);
+            }
         }
     }
     return value;
 }
+
+template<Color C>
+inline static score_t getPawnStructureEvaluation(const SoFCore::Board &b, int32_t evaluationStage)
+{
+    Color d = invert(C);
+    score_t value = 0;
+    bitboard_t bbPawns=b.bbPieces[makeCell(C, Piece::Pawn)];
+    bitboard_t bbEnemyPawns=b.bbPieces[makeCell(d, Piece::Pawn)];
+    while (bbPawns)
+    {
+        const coord_t src = SoFUtil::extractLowest(bbPawns);
+        value+=evaluatePawn<C>(b,src,bbPawns,bbEnemyPawns,evaluationStage);
+    }
+    return value;
+}
+
+const int TEMPO_BONUS[TOTAL_STAGE / 2 + 1] = {15,15,10,10,10,5,5,5,5,0,0,0,0};
+// works well, but we need to check if there are better values.
+// we give a small tempo bonus to the side which is to move, because it often can do something
+// and we need to deal with this.
 
 template<Color C>
 inline static score_t getPositionalEvaluation(const SoFCore::Board &b, int32_t evaluationStage)
@@ -182,28 +368,16 @@ inline static bool lazyEval(const score_t alpha, const score_t beta, const score
     return cost + diff <= alpha || cost - diff >= beta;
 }
 
-inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq, [[maybe_unused]] const score_t alpha, [[maybe_unused]] const score_t beta) {
+inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq, [[maybe_unused]] const score_t alpha, [[maybe_unused]] const score_t beta, const int32_t stage) {
   //First we should check some positions, that has a chance of being winned, but in fact it is draw.
   if (drawNode<Color::White>(b, psq)) return 0;
   if (drawNode<Color::Black>(b, psq)) return 0;
   // Calculating game stage: this is a number from 0 to 256, denoting the stage of the game: 0 is
   // the start of the game
-  int32_t stage = TOTAL_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Pawn)]) * PAWN_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Knight)]) * KNIGHT_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Bishop)]) * BISHOP_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Rook)]) * ROOK_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Queen)]) * QUEEN_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Pawn)]) * PAWN_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Knight)]) * KNIGHT_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Bishop)]) * BISHOP_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Rook)]) * ROOK_STAGE;
-  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Queen)]) * QUEEN_STAGE;
-  stage = std::max(stage, 0);
   int32_t evaluationStage=stage;
-  stage = (stage * 256 + (TOTAL_STAGE / 2)) / TOTAL_STAGE;
+  int32_t realStage = (stage * 256 + (TOTAL_STAGE / 2)) / TOTAL_STAGE;
   // Calculating all dynamic values
-  score_t value = taperedEval(psq, stage);
+  score_t value = taperedEval(psq, realStage);
   //First lazy evaluation
   //if (lazyEval(alpha, beta, value, 500)) return value <= alpha ? alpha : beta;
   const score_t materialValue =
@@ -217,7 +391,27 @@ inline static score_t doEvaluate(const SoFCore::Board &b, const score_pair_t psq
 
 score_t evaluate(const SoFCore::Board &b, const score_pair_t psq, const score_t alpha, const score_t beta) {
   const Color side = b.side;
-  score_t value=doEvaluate(b, psq, (side == Color::White) ? alpha : -beta, (side == Color::White) ? beta : -alpha);
+  int32_t stage = TOTAL_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Pawn)]) * PAWN_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Knight)]) * KNIGHT_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Bishop)]) * BISHOP_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Rook)]) * ROOK_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Queen)]) * QUEEN_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Pawn)]) * PAWN_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Knight)]) * KNIGHT_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Bishop)]) * BISHOP_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Rook)]) * ROOK_STAGE;
+  stage -= SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Queen)]) * QUEEN_STAGE;
+  stage = std::max(stage, 0);
+  score_t value=doEvaluate(b, psq, (side == Color::White) ? alpha : -beta, (side == Color::White) ? beta : -alpha, stage);
+  if (side == Color::White)
+  {
+    value+=TEMPO_BONUS[stage / 2];
+  }
+  else
+  {
+    value-=TEMPO_BONUS[stage / 2];
+  }
   if (side == Color::Black)
   {
     value*=-1;
