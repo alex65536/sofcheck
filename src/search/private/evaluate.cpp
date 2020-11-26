@@ -96,7 +96,7 @@ inline static bool drawNode(const SoFCore::Board &b, const score_pair_t psq)
         //Note that KBB vs. KN or even KBB vs. KNN is not a draw.
         if (ourBishop == 2 && enemyBishop == 1) return true;
         //KR vs. KNB is draw
-        if (ourRook == 1 && ourBishop == 1 && enemyKnight == 1) return true;
+        if (ourRook == 1 && enemyBishop == 1 && enemyKnight == 1) return true;
         //KR vs. KNN is draw
         if (ourRook == 1 && enemyKnight == 2) return true;
         //KR vs. KBB is draw
@@ -145,7 +145,7 @@ inline static score_t getMaterialEvaluation(const SoFCore::Board &b, int32_t eva
     return value;
 }
 
-constexpr score_t BACKWARD_PAWN[TOTAL_STAGE/2+1]={0, -5, -10, -15, -20, -25, -25, -30, -30, -30, -30, -30, -30};
+constexpr score_t BACKWARD_PAWN[TOTAL_STAGE/2+1]={-10, -15, -20, -25, -25, -25, -25, -25, -25, -25, -25, -25, -25};
 // The pawn is called backward if it cannot be defensed by other pawns
 // and its stop square is controlled by an opponent's setnry.
 // Temporately it is zeroed, maybe later it will be deleted or fixed.
@@ -159,42 +159,42 @@ constexpr score_t ISOLATED_PAWN[TOTAL_STAGE/4 + 1][64]=
 {
 {
     0,0,0,0,0,0,0,0,
-    0,0,-10,-15,-15,-10,0,0,
-    0,-10,-15,-20,-20,-15,-10,0,
+    0,-5,-10,-15,-15,-10,-5,0,
+    -5,-10,-15,-20,-20,-15,-10,-5,
     -5,-15,-20,-25,-25,-20,-15,-5,
     -5,-15,-20,-25,-25,-20,-15,-5,
-    0,-10,-15,-20,-20,-15,-10,0,
-    0,0,-10,-15,-15,-10,0,0,
+    -5,-10,-15,-20,-20,-15,-10,-5,
+    0,-5,-10,-15,-15,-10,-5,0,
     0,0,0,0,0,0,0,0,
 },
 {
     0,0,0,0,0,0,0,0,
-    0,0,-10,-10,-10,-10,0,0,
-    0,-10,-10,-15,-15,-10,-10,0,
+    0,-5,-10,-15,-15,-10,-5,0,
+    -5,-10,-15,-20,-20,-15,-10,-5,
+    -5,-15,-20,-25,-25,-20,-15,-5,
+    -5,-15,-20,-25,-25,-20,-15,-5,
+    -5,-10,-15,-20,-20,-15,-10,-5,
+    0,-5,-10,-15,-15,-10,-5,0,
+    0,0,0,0,0,0,0,0,
+},
+{
+    0,0,0,0,0,0,0,0,
+    0,-5,-10,-10,-10,-10,-5,0,
+    -5,-10,-10,-15,-15,-10,-10,-5,
     -5,-10,-15,-20,-20,-15,-10,-5,
     -5,-10,-15,-20,-20,-15,-10,-5,
-    0,-5,-10,-15,-15,-10,-10,0,
-    0,0,-5, -10,-10,-5,0,0,
+    -5,-10,-10,-15,-15,-10,-10,-5,
+    0,-5,-5, -10,-10,-5,-5,0,
     0,0,0,0,0,0,0,0,
 },
 {
     0,0,0,0,0,0,0,0,
     0,0,0,-5,-5,0,0,0,
-    0,0,-5,-10,-10,-5,0,0,
-    0,-5,-10,-15,-15,-10,-5,0,
-    0,-5,-10,-15,-15,-10,-5,0,
-    0,0,-5,-10,-10,-5,0,0,
+    0,0,-5,-5,-5,-5,0,0,
+    0,-5,-5,-10,-10,-5,-5,0,
+    0,-5,-5,-10,-10,-5,-5,0,
+    0,0,-5,-5,-5,-5,0,0,
     0,0,0,-5,-5,0,0,0,
-    0,0,0,0,0,0,0,0,
-},
-{
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
-    0,0,0,0,0,0,0,0,
     0,0,0,0,0,0,0,0,
 }
 };
@@ -204,12 +204,12 @@ constexpr score_t ISOLATED_PAWN[TOTAL_STAGE/4 + 1][64]=
 
 static constexpr score_t PASS_PAWN[TOTAL_STAGE/2+1][8]=
 {
-{0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0},
-{0,10,5,5,5,5,0,0},
-{0,15,10,10,5,5,0,0},
+{0,10,10,5,5,0,0,0},
+{0,10,10,10,5,0,0,0},
+{0,10,10,10,10,5,0,0},
+{0,15,10,10,10,5,0,0},
+{0,15,10,10,10,5,0,0},
+{0,15,10,10,10,5,0,0},
 {0,15,15,15,10,5,0,0},
 {0,20,20,15,15,10,5,0},
 {0,25,25,20,20,10,5,0},
@@ -223,10 +223,17 @@ static constexpr score_t PASS_PAWN[TOTAL_STAGE/2+1][8]=
 // passed pawns evaluate more in endspiel, and when they are closer to the 8-th line.
 
 static constexpr score_t PASS_PAWN_DEF[TOTAL_STAGE/4+1][8]={
+{0,5,0,0,0,0,0,0},
 {0,10,5,0,0,0,0,0},
 {0,15,10,5,0,0,0,0},
-{0,15,15,10,5,0,0,0},
-{0,25,20,15,10,5,0,0}
+{0,20,15,10,5,0,0,0}
+};
+
+static constexpr score_t PAWN_DEF[TOTAL_STAGE/4+1][8]={
+{0,5,5,5,0,0,0,0},
+{0,5,5,5,5,0,0,0},
+{0,5,5,5,0,0,0,0},
+{0,5,5,0,0,0,0,0}
 };
 
 // also it is possible to give bonus for the connected pawns
@@ -249,6 +256,7 @@ inline static score_t evaluatePawn(const SoFCore::Board &b, const coord_t &src, 
                 if (WHITE_PASS_DEF[src]&&bbPawns) value+=PASS_PAWN_DEF[evaluationStage/4][src>>3];
             }
         }
+        if (WHITE_PASS_DEF[src]&&bbPawns) value+=PAWN_DEF[evaluationStage/4][src>>3];
         if (!(WHITE_BACKWARD_PAWN[src]&bbPawns))
         {
             if (WHITE_BACKWARD_PAWN_SENTRY[src]&bbEnemyPawns)
@@ -293,6 +301,7 @@ inline static score_t evaluatePawn(const SoFCore::Board &b, const coord_t &src, 
                 if (BLACK_PASS_DEF[src]&&bbPawns) value+=PASS_PAWN_DEF[evaluationStage/4][7-(src>>3)];
             }
         }
+        if (WHITE_PASS_DEF[src]&&bbPawns) value+=PAWN_DEF[evaluationStage/4][src>>3];
         if (!(BLACK_BACKWARD_PAWN[src]&bbPawns))
         {
             if (BLACK_BACKWARD_PAWN_SENTRY[src]&bbEnemyPawns)
