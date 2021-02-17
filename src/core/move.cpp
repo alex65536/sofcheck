@@ -81,7 +81,7 @@ bool Move::isWellFormed(Color c) const {
     default: {
       return false;
     }
-  };
+  }
   return true;
 }
 
