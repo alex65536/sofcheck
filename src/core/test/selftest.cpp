@@ -61,7 +61,7 @@ void runSelfTest(Board b) {
   b.asFen(fen);
   fen[4095] = '\0';
   if (std::strlen(fen) + 1 > BUFSZ_BOARD_FEN) {
-    panic("Buffer constant for FEN is too slow");
+    panic("Buffer constant for FEN is too small");
   }
   auto loadResult = Board::fromFen(fen);
   if (!loadResult.isOk()) {
