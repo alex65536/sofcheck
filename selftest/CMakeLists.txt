@@ -18,28 +18,28 @@ Run depthDump on bigger recursion depths (consumes more time for test).")
 
 set(RUN_SELF_TESTS ON CACHE BOOL "Run SoFCore::selfTest() while testing.")
 
-configure_file(selftest_config.h.in ${PROJECT_BINARY_DIR}/src/selftest_config.h)
-include_directories(${PROJECT_BINARY_DIR}/src)
+configure_file(selftest_config.h.in "${PROJECT_BINARY_DIR}/src/selftest_config.h")
+include_directories("${PROJECT_BINARY_DIR}/src")
 
 
 # Define a function to add ANY chess rules implementation for testing
 function(add_chess_impl impl_name)
-  string(TOUPPER ${impl_name} impl_name_upper)
+  string(TOUPPER "${impl_name}" impl_name_upper)
 
-  add_executable(test_${impl_name}
+  add_executable("test_${impl_name}"
       test.cpp
       ${ARGN}
   )
-  target_compile_definitions(test_${impl_name} PUBLIC INTF_${impl_name_upper})
+  target_compile_definitions("test_${impl_name}" PUBLIC "INTF_${impl_name_upper}")
 
   if(benchmark_FOUND)
-    add_executable(bench_${impl_name}
+    add_executable("bench_${impl_name}"
       bench.cpp
       ${ARGN}
     )
-    target_benchmark(bench_${impl_name})
-    target_include_directories(bench_${impl_name} PRIVATE ${PROJECT_SOURCE_DIR}/../bench)
-    target_compile_definitions(bench_${impl_name} PUBLIC INTF_${impl_name_upper})
+    target_benchmark("bench_${impl_name}")
+    target_include_directories("bench_${impl_name}" PRIVATE "${PROJECT_SOURCE_DIR}/../bench")
+    target_compile_definitions("bench_${impl_name}" PUBLIC "INTF_${impl_name_upper}")
   endif()
 endfunction()
 
@@ -67,11 +67,11 @@ if(UNIX)
 
   add_test(
     NAME self-test
-    COMMAND ${PROJECT_SOURCE_DIR}/run_self_tests.sh
-    ${PROJECT_BINARY_DIR}/test_dodecahedron
-    ${PROJECT_BINARY_DIR}/test_sofcheck
-    ${PROJECT_SOURCE_DIR}/boards.fen
-    ${PROJECT_BINARY_DIR}/report.log
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND "${PROJECT_SOURCE_DIR}/run_self_tests.sh"
+    "${PROJECT_BINARY_DIR}/test_dodecahedron"
+    "${PROJECT_BINARY_DIR}/test_sofcheck"
+    "${PROJECT_SOURCE_DIR}/boards.fen"
+    "${PROJECT_BINARY_DIR}/report.log"
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
   )
 endif()

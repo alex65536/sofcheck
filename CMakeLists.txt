@@ -4,7 +4,7 @@ project(SoFCheck)
 
 
 # Include helper modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
@@ -12,7 +12,7 @@ find_package(Threads REQUIRED)
 
 
 # Declare configuration options
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
   set(USE_BMI1 ON CACHE BOOL "Use BMI1 insruction set (x86_64 only)")
   set(USE_BMI2 OFF CACHE BOOL "Use BMI2 insruction set (x86_64 only)")
 endif()
@@ -23,7 +23,7 @@ set(USE_SEARCH_DIAGNOSTICS OFF CACHE BOOL
 
 
 # Detect system configuration
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
   set(CMAKE_REQUIRED_FLAGS -mbmi2)
   check_c_source_compiles("
       #include <immintrin.h>
@@ -40,8 +40,7 @@ if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
   unset(CMAKE_REQUIRED_FLAGS)
   if(USE_BMI2 AND NOT HAS_BMI2)
     message(WARNING
-      "The required headers for BMI2 were not found, so this option is disabled."
-    )
+      "The required headers for BMI2 were not found, so this option is disabled.")
     set(USE_BMI2 OFF)
   endif()
 endif()
@@ -52,7 +51,7 @@ check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
 
 # Apply compiler flags
-if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL x86_64)
+if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
   # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
   add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
   if(USE_BMI1)
@@ -68,8 +67,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 if(USE_NO_EXCEPTIONS)
   if(USE_BOOST_STACKTRACE)
     message(WARNING
-      "USE_NO_EXCEPTIONS conflicts with USE_BOOST_STACKTRACE. Disabling boost::stacktrace support."
-    )
+      "USE_NO_EXCEPTIONS conflicts with USE_BOOST_STACKTRACE. Disabling boost::stacktrace support.")
     set(USE_BOOST_STACKTRACE OFF)
   endif()
   add_compile_options(-fno-exceptions)
@@ -81,28 +79,28 @@ endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(${PROJECT_BINARY_DIR}/src)
+include_directories("${PROJECT_BINARY_DIR}/src")
 include_directories(src)
 
 
 # Generate files
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/core/private)
-file(MAKE_DIRECTORY ${PROJECT_BINARY_DIR}/src/search/private)
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/core/private")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/search/private")
 
-configure_file(src/config.h.in ${PROJECT_BINARY_DIR}/src/config.h)
+configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
-  COMMAND gen_near_attacks ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
+  OUTPUT "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
+  COMMAND gen_near_attacks "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
   DEPENDS gen_near_attacks
 )
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
-  COMMAND gen_magic_consts ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
+  OUTPUT "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
+  COMMAND gen_magic_consts "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
   DEPENDS gen_magic_consts
 )
 add_custom_command(
-  OUTPUT ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
-  COMMAND gen_piece_square_table ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
+  OUTPUT "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
+  COMMAND gen_piece_square_table "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
   DEPENDS gen_piece_square_table
 )
 
@@ -127,8 +125,8 @@ add_library(sof_core STATIC
   src/core/private/magic.cpp
   src/core/private/zobrist.cpp
   src/core/test/selftest.cpp
-  ${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h
-  ${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h
+  "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
+  "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
 )
 target_link_libraries(sof_core PUBLIC sof_util)
 
@@ -154,7 +152,7 @@ add_library(sof_search STATIC
   src/search/private/move_picker.cpp
   src/search/private/transposition_table.cpp
   src/search/private/util.cpp
-  ${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h
+  "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
 )
 target_link_libraries(sof_search
   PUBLIC sof_core sof_util sof_bot_api
@@ -221,28 +219,28 @@ if(UNIX)
   # TODO : add code to detect the presence of Python in the system
   add_test(
     NAME uci-client-1
-    COMMAND ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh
-    ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
-    ${PROJECT_BINARY_DIR}/test_uci_client
-    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in1.txt
-    ${PROJECT_BINARY_DIR}/test_uci_client_log1.txt
-    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out1.txt
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    COMMAND "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
+    "${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
+    "${PROJECT_BINARY_DIR}/test_uci_client"
+    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in1.txt"
+    "${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
+    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out1.txt"
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
   )
   add_test(
     NAME uci-client-2
-    COMMAND ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh
-    ${PROJECT_SOURCE_DIR}/tools/communicate_process.py
-    ${PROJECT_BINARY_DIR}/test_uci_client
-    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in2.txt
-    ${PROJECT_BINARY_DIR}/test_uci_client_log2.txt
-    ${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt
+    COMMAND "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
+    "${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
+    "${PROJECT_BINARY_DIR}/test_uci_client"
+    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in2.txt"
+    "${PROJECT_BINARY_DIR}/test_uci_client_log2.txt"
+    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt"
     WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
   )
   add_test(
     NAME smoke
-    COMMAND ${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py
-    ${PROJECT_BINARY_DIR}/sofcheck
+    COMMAND "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
+    "${PROJECT_BINARY_DIR}/sofcheck"
   )
 endif()
 
