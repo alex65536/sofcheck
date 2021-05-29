@@ -1,11 +1,11 @@
-#ifndef SOF_SEARCH_PRIVATE_EVALUATE_INCLUDED
-#define SOF_SEARCH_PRIVATE_EVALUATE_INCLUDED
+#ifndef SOF_EVAL_EVALUATE_INCLUDED
+#define SOF_EVAL_EVALUATE_INCLUDED
 
 #include "core/board.h"
 #include "core/move.h"
-#include "search/private/score.h"
+#include "eval/score.h"
 
-namespace SoFSearch::Private {
+namespace SoFEval {
 
 // Returns the position cost of `b`. `psq` must be strictly equal to `boardGetPsqScore(b)`.
 inline score_pair_t evaluate([[maybe_unused]] const SoFCore::Board &b, const score_pair_t psq) {
@@ -20,6 +20,6 @@ score_pair_t boardGetPsqScore(const SoFCore::Board &b);
 // `boardGetPsqScore(b)`.
 score_pair_t boardUpdatePsqScore(const SoFCore::Board &b, SoFCore::Move move, score_pair_t psq);
 
-}  // namespace SoFSearch::Private
+}  // namespace SoFEval
 
-#endif  // SOF_SEARCH_PRIVATE_EVALUATE_INCLUDED
+#endif  // SOF_EVAL_EVALUATE_INCLUDED

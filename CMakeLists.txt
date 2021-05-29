@@ -85,7 +85,7 @@ include_directories(src)
 
 # Generate files
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/core/private")
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/search/private")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/eval/private")
 
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 add_custom_command(
@@ -99,8 +99,8 @@ add_custom_command(
   DEPENDS gen_magic_consts
 )
 add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
-  COMMAND gen_piece_square_table "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
+  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/piece_square_table.h"
+  COMMAND gen_piece_square_table "${PROJECT_BINARY_DIR}/src/eval/private/piece_square_table.h"
   DEPENDS gen_piece_square_table
 )
 
@@ -143,20 +143,24 @@ add_library(sof_bot_api_clients STATIC
 )
 target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
+add_library(sof_eval STATIC
+  src/eval/evaluate.cpp
+  "${PROJECT_BINARY_DIR}/src/eval/private/piece_square_table.h"
+)
+target_link_libraries(sof_eval PUBLIC sof_core sof_util sof_bot_api)
+
 add_library(sof_search STATIC
   src/search/search.cpp
-  src/search/private/evaluate.cpp
   src/search/private/limits.cpp
   src/search/private/job.cpp
   src/search/private/job_runner.cpp
   src/search/private/move_picker.cpp
   src/search/private/transposition_table.cpp
   src/search/private/util.cpp
-  "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
 )
 target_link_libraries(sof_search
-  PUBLIC sof_core sof_util sof_bot_api
-  PRIVATE Threads::Threads atomic
+  PUBLIC sof_bot_api
+  PRIVATE Threads::Threads atomic sof_core sof_util sof_eval
 )
 
 add_executable(gen_near_attacks
@@ -206,9 +210,9 @@ target_link_libraries(test_uci_client sof_core sof_util sof_bot_api_clients)
 if(GTest_FOUND)
   include(GoogleTest)
 
-  add_executable(test_search_unit_test src/search/test/unit_test.cpp)
-  target_link_libraries(test_search_unit_test GTest::GTest GTest::Main)
-  gtest_add_tests(TARGET test_search_unit_test)
+  add_executable(test_eval_unit_test src/eval/test/unit_test.cpp)
+  target_link_libraries(test_eval_unit_test GTest::GTest GTest::Main)
+  gtest_add_tests(TARGET test_eval_unit_test)
 
   add_executable(test_util_unit_test src/util/test/unit_test.cpp)
   target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)

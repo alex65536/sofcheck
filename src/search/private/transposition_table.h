@@ -9,7 +9,7 @@
 #include "bot_api/types.h"
 #include "core/move.h"
 #include "core/types.h"
-#include "search/private/score.h"
+#include "eval/score.h"
 #include "util/no_copy_move.h"
 
 namespace SoFSearch::Private {
@@ -26,15 +26,15 @@ public:
       return result;
     }
 
-    inline constexpr score_t score() const { return score_; }
+    inline constexpr SoFEval::score_t score() const { return score_; }
     inline constexpr uint8_t depth() const { return move_.tag; }
     inline constexpr bool isValid() const { return flags_ & FLAG_IS_VALID; }
     inline constexpr SoFBotApi::PositionCostBound bound() const {
       return static_cast<SoFBotApi::PositionCostBound>(flags_ & 3);
     }
 
-    inline constexpr Data(const SoFCore::Move move, const score_t score, const uint8_t depth,
-                          const SoFBotApi::PositionCostBound bound)
+    inline constexpr Data(const SoFCore::Move move, const SoFEval::score_t score,
+                          const uint8_t depth, const SoFBotApi::PositionCostBound bound)
         : move_(move),
           score_(score),
           flags_(static_cast<uint8_t>(bound) | FLAG_IS_VALID),
@@ -68,12 +68,12 @@ public:
     // Tag to explicitly mark the private constructor
     struct PrivateTag {};
 
-    inline constexpr Data(PrivateTag, const SoFCore::Move move, const score_t score,
+    inline constexpr Data(PrivateTag, const SoFCore::Move move, const SoFEval::score_t score,
                           const uint8_t flags, const uint8_t epoch)
         : move_(move), score_(score), flags_(flags), epoch_(epoch) {}
 
     SoFCore::Move move_;
-    score_t score_;
+    SoFEval::score_t score_;
     uint8_t flags_;
     uint8_t epoch_;
 

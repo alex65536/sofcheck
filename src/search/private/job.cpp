@@ -7,10 +7,10 @@
 #include "bot_api/types.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
+#include "eval/evaluate.h"
+#include "eval/score.h"
 #include "search/private/diagnostics.h"
-#include "search/private/evaluate.h"
 #include "search/private/move_picker.h"
-#include "search/private/score.h"
 #include "search/private/util.h"
 #include "util/misc.h"
 #include "util/random.h"
@@ -22,6 +22,9 @@ using SoFCore::Board;
 using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
+using SoFEval::SCORE_INF;
+using SoFEval::score_pair_t;
+using SoFEval::score_t;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
@@ -60,7 +63,7 @@ public:
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
     const score_t score = search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF,
-                                                 boardGetPsqScore(board_), FLAGS_DEFAULT);
+                                                 SoFEval::boardGetPsqScore(board_), FLAGS_DEFAULT);
     DGN_ASSERT(isScoreValid(score));
     bestMove = stack_[0].bestMove;
     return score;
@@ -165,7 +168,7 @@ private:
 template <Searcher::NodeKind Kind>
 struct MovePickerFactory {
   template <typename... Args>
-  inline static MovePicker create([[maybe_unused]] const size_t jobId, Args &&... args) {
+  inline static MovePicker create([[maybe_unused]] const size_t jobId, Args &&...args) {
     return MovePicker(std::forward<Args>(args)...);
   }
 };
@@ -173,7 +176,7 @@ struct MovePickerFactory {
 template <>
 struct MovePickerFactory<Searcher::NodeKind::Root> {
   template <typename... Args>
-  inline static RootNodeMovePicker create(const size_t jobId, Args &&... args) {
+  inline static RootNodeMovePicker create(const size_t jobId, Args &&...args) {
     return RootNodeMovePicker(MovePicker(std::forward<Args>(args)...), jobId);
   }
 };
@@ -202,7 +205,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
     return 0;
   }
 
-  score_t score = evaluate(board_, psq);
+  score_t score = SoFEval::evaluate(board_, psq);
   if (board_.side == Color::Black) {
     score *= -1;
   }
@@ -220,7 +223,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
+    const score_pair_t newPsq = SoFEval::boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
     DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
@@ -278,7 +281,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       score = origBeta;
       bound = PositionCostBound::Lowerbound;
     }
-    score = adjustCheckmate(score, -static_cast<int16_t>(idepth));
+    score = SoFEval::adjustCheckmate(score, -static_cast<int16_t>(idepth));
     DGN_ASSERT(bound != PositionCostBound::Exact || isScoreValid(score));
     tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
   };
@@ -289,7 +292,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     results_.inc(JobStat::TtHits);
     hashMove = data.move();
     if (Node == NodeKind::Simple && data.depth() >= depth && board_.moveCounter < 90) {
-      const score_t score = adjustCheckmate(data.score(), idepth);
+      const score_t score = SoFEval::adjustCheckmate(data.score(), idepth);
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           frame.bestMove = hashMove;
@@ -323,7 +326,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
+    const score_pair_t newPsq = SoFEval::boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
     DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
@@ -365,7 +368,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
 
   // Detect checkmate and stalemate
   if (!hasMove) {
-    return isCheck(board_) ? scoreCheckmateLose(idepth) : 0;
+    return isCheck(board_) ? SoFEval::scoreCheckmateLose(idepth) : 0;
   }
 
   // End of search
@@ -422,8 +425,8 @@ void Job::run(const Position &position, const SearchLimits &limits) {
       DGN_ASSERT(bestMove != Move::null());
       results_.setBestMove(depth, bestMove);
       std::vector<Move> pv = unwindPv(board, bestMove, table_);
-      server_.sendResult(
-          {depth, pv.data(), pv.size(), scoreToPositionCost(score), PositionCostBound::Exact});
+      server_.sendResult({depth, pv.data(), pv.size(), SoFEval::scoreToPositionCost(score),
+                          PositionCostBound::Exact});
     }
   }
 

@@ -1,9 +1,9 @@
-#include "search/private/evaluate.h"
+#include "eval/evaluate.h"
 
-#include "search/private/piece_square_table.h"
+#include "eval/private/piece_square_table.h"
 #include "util/misc.h"
 
-namespace SoFSearch::Private {
+namespace SoFEval {
 
 using SoFCore::Board;
 using SoFCore::cell_t;
@@ -12,6 +12,10 @@ using SoFCore::coord_t;
 using SoFCore::Move;
 using SoFCore::MoveKind;
 using SoFCore::Piece;
+
+using SoFEval::Private::PIECE_SQUARE_TABLE;
+using SoFEval::Private::SCORE_CASTLING_KINGSIDE_UPD;
+using SoFEval::Private::SCORE_CASTLING_QUEENSIDE_UPD;
 
 score_pair_t boardGetPsqScore(const Board &b) {
   score_pair_t result = 0;
@@ -43,4 +47,4 @@ score_pair_t boardUpdatePsqScore(const Board &b, const Move move, score_pair_t p
   return psq;
 }
 
-}  // namespace SoFSearch::Private
+}  // namespace SoFEval

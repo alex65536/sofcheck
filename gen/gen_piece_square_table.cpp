@@ -4,10 +4,10 @@
 
 #include "common.h"
 #include "core/types.h"
-#include "search/private/score.h"
+#include "eval/score.h"
 
 using namespace SoFCore;
-using namespace SoFSearch::Private;
+using namespace SoFEval;
 
 static constexpr score_t PIECE_COSTS[6] = {100, 0, 350, 350, 525, 1000};
 
@@ -153,20 +153,20 @@ void printPieceSquareTables(std::ostream &out) {
 }
 
 void doGenerate(std::ostream &out) {
-  out << "#ifndef SOF_SEARCH_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
-  out << "#define SOF_SEARCH_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
+  out << "#ifndef SOF_EVAL_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
+  out << "#define SOF_EVAL_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
   out << "\n";
   out << "#include \"core/types.h\"\n";
-  out << "#include \"search/private/score.h\"\n";
+  out << "#include \"eval/score.h\"\n";
   out << "\n";
-  out << "namespace SoFSearch::Private {\n";
+  out << "namespace SoFEval::Private {\n";
   out << "\n";
 
   printPieceSquareTables(out);
   out << "\n";
 
-  out << "}  // namespace SoFSearch::Private\n";
+  out << "}  // namespace SoFEval::Private\n";
   out << "\n";
 
-  out << "#endif  // SOF_SEARCH_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
+  out << "#endif  // SOF_EVAL_PRIVATE_PIECE_SQUARE_TABLE_INCLUDED\n";
 }

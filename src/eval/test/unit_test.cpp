@@ -3,10 +3,10 @@
 #include <algorithm>
 #include <limits>
 
-#include "search/private/score.h"
+#include "eval/score.h"
 
 TEST(SoFSearch, ScorePair) {
-  using namespace SoFSearch::Private;
+  using namespace SoFEval;
 
   static constexpr score_t SCORE_MIN = std::numeric_limits<score_t>::min();
   static constexpr score_t SCORE_MAX = std::numeric_limits<score_t>::max();
