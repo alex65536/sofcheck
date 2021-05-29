@@ -23,8 +23,8 @@ using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using SoFEval::SCORE_INF;
-using SoFEval::score_pair_t;
 using SoFEval::score_t;
+using SoFEval::ScorePair;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
@@ -100,7 +100,7 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const score_pair_t psq, const flags_t flags) {
+                        const score_t beta, const ScorePair psq, const flags_t flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
@@ -113,10 +113,10 @@ private:
   }
 
   template <NodeKind Node>
-  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq,
+  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, ScorePair psq,
                    flags_t flags);
 
-  score_t quiescenseSearch(score_t alpha, score_t beta, score_pair_t psq);
+  score_t quiescenseSearch(score_t alpha, score_t beta, ScorePair psq);
 
   Board &board_;
   TranspositionTable &tt_;
@@ -200,7 +200,7 @@ private:
 };
 #endif
 
-score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
+score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const ScorePair psq) {
   if (isBoardDrawInsufficientMaterial(board_)) {
     return 0;
   }
@@ -223,7 +223,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const score_pair_t newPsq = SoFEval::boardUpdatePsqScore(board_, move, psq);
+    const ScorePair newPsq = SoFEval::boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
     DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {
@@ -249,7 +249,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
 
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const score_pair_t psq,
+                           const score_t beta, const ScorePair psq,
                            [[maybe_unused]] const flags_t flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
@@ -326,7 +326,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const score_pair_t newPsq = SoFEval::boardUpdatePsqScore(board_, move, psq);
+    const ScorePair newPsq = SoFEval::boardUpdatePsqScore(board_, move, psq);
     const MovePersistence persistence = moveMake(board_, move);
     DGN_ASSERT(newPsq == boardGetPsqScore(board_));
     if (!isMoveLegal(board_)) {

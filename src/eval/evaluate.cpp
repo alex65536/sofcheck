@@ -17,15 +17,15 @@ using SoFEval::Private::PIECE_SQUARE_TABLE;
 using SoFEval::Private::SCORE_CASTLING_KINGSIDE_UPD;
 using SoFEval::Private::SCORE_CASTLING_QUEENSIDE_UPD;
 
-score_pair_t boardGetPsqScore(const Board &b) {
-  score_pair_t result = 0;
+ScorePair boardGetPsqScore(const Board &b) {
+  auto result = ScorePair::from(0);
   for (coord_t i = 0; i < 64; ++i) {
     result += PIECE_SQUARE_TABLE[b.cells[i]][i];
   }
   return result;
 }
 
-score_pair_t boardUpdatePsqScore(const Board &b, const Move move, score_pair_t psq) {
+ScorePair boardUpdatePsqScore(const Board &b, const Move move, ScorePair psq) {
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
     return psq + SCORE_CASTLING_KINGSIDE_UPD[static_cast<size_t>(color)];

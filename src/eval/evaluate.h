@@ -8,17 +8,17 @@
 namespace SoFEval {
 
 // Returns the position cost of `b`. `psq` must be strictly equal to `boardGetPsqScore(b)`.
-inline score_pair_t evaluate([[maybe_unused]] const SoFCore::Board &b, const score_pair_t psq) {
-  return scorePairFirst(psq);
+inline score_t evaluate([[maybe_unused]] const SoFCore::Board &b, const ScorePair psq) {
+  return psq.first();
 }
 
 // Returns the position cost of `b` based on piece-square tables.
-score_pair_t boardGetPsqScore(const SoFCore::Board &b);
+ScorePair boardGetPsqScore(const SoFCore::Board &b);
 
 // Returns the position cost of the board which is obtained by applying move `move` to board `b`.
 // This position cost is based on piece-square tables. `psq` must be strictly equal to
 // `boardGetPsqScore(b)`.
-score_pair_t boardUpdatePsqScore(const SoFCore::Board &b, SoFCore::Move move, score_pair_t psq);
+ScorePair boardUpdatePsqScore(const SoFCore::Board &b, SoFCore::Move move, ScorePair psq);
 
 }  // namespace SoFEval
 

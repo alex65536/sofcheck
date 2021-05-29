@@ -16,20 +16,20 @@ TEST(SoFSearch, ScorePair) {
 
   for (score_t first : TEST_SCORES) {
     for (score_t second : TEST_SCORES) {
-      const score_pair_t pair = makeScorePair(first, second);
-      EXPECT_EQ(scorePairFirst(pair), first);
-      EXPECT_EQ(scorePairSecond(pair), second);
+      const auto pair = ScorePair::from(first, second);
+      EXPECT_EQ(pair.first(), first);
+      EXPECT_EQ(pair.second(), second);
       if (first != SCORE_MIN && second != SCORE_MIN) {
-        EXPECT_EQ(-scorePairFirst(pair), -first);
-        EXPECT_EQ(-scorePairSecond(pair), -second);
+        EXPECT_EQ((-pair).first(), -first);
+        EXPECT_EQ((-pair).second(), -second);
       }
       if (std::abs(first) <= 3 && std::abs(second) <= 3) {
-        EXPECT_EQ(2 * scorePairFirst(pair), 2 * first);
-        EXPECT_EQ(4 * scorePairFirst(pair), 4 * first);
-        EXPECT_EQ(41 * scorePairFirst(pair), 41 * first);
-        EXPECT_EQ(2 * scorePairSecond(pair), 2 * second);
-        EXPECT_EQ(4 * scorePairSecond(pair), 4 * second);
-        EXPECT_EQ(41 * scorePairSecond(pair), 41 * second);
+        EXPECT_EQ((2 * pair).first(), 2 * first);
+        EXPECT_EQ((4 * pair).first(), 4 * first);
+        EXPECT_EQ((41 * pair).first(), 41 * first);
+        EXPECT_EQ((2 * pair).second(), 2 * second);
+        EXPECT_EQ((4 * pair).second(), 4 * second);
+        EXPECT_EQ((41 * pair).second(), 41 * second);
       }
     }
   }
@@ -38,12 +38,12 @@ TEST(SoFSearch, ScorePair) {
     for (score_t first2 = -5; first2 <= 5; ++first2) {
       for (score_t second1 = -5; second1 <= 5; ++second1) {
         for (score_t second2 = -5; second2 <= 5; ++second2) {
-          const score_pair_t pair1 = makeScorePair(first1, second1);
-          const score_pair_t pair2 = makeScorePair(first2, second2);
-          EXPECT_EQ(scorePairFirst(pair1 + pair2), first1 + first2);
-          EXPECT_EQ(scorePairSecond(pair1 + pair2), second1 + second2);
-          EXPECT_EQ(scorePairFirst(pair1 - pair2), first1 - first2);
-          EXPECT_EQ(scorePairSecond(pair1 - pair2), second1 - second2);
+          const auto pair1 = ScorePair::from(first1, second1);
+          const auto pair2 = ScorePair::from(first2, second2);
+          EXPECT_EQ((pair1 + pair2).first(), first1 + first2);
+          EXPECT_EQ((pair1 + pair2).second(), second1 + second2);
+          EXPECT_EQ((pair1 - pair2).first(), first1 - first2);
+          EXPECT_EQ((pair1 - pair2).second(), second1 - second2);
         }
       }
     }

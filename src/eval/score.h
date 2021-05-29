@@ -82,66 +82,111 @@ inline constexpr SoFBotApi::PositionCost scoreToPositionCost(const score_t score
 }
 
 // Pair of score values. Used to update middlegame score and endgame score at the same time
-using score_pair_t = int32_t;
+class ScorePair {
+public:
+  ScorePair() = default;
 
-// Creates a score pair from two scores
-inline constexpr score_pair_t makeScorePair(const score_t first, const score_t second) {
-  return static_cast<score_pair_t>(second) * 0x10000 + static_cast<score_pair_t>(first);
-}
-
-// Creates a score pair from two equal scores
-inline constexpr score_pair_t makeScorePair(const score_t score) {
-  return makeScorePair(score, score);
-}
-
-// Extracts first item from the score pair
-inline constexpr score_t scorePairFirst(const score_pair_t pair) {
-  const uint16_t unsignedRes = static_cast<uint32_t>(pair) & 0xffffU;
-  return static_cast<score_t>(unsignedRes);
-}
-
-// Extracts second item from the score pair
-inline constexpr score_t scorePairSecond(const score_pair_t pair) {
-  uint16_t unsignedRes = static_cast<uint32_t>(pair) >> 16;
-  if (scorePairFirst(pair) < 0) {
-    ++unsignedRes;
+  // Creates a score pair from two scores
+  static constexpr ScorePair from(const score_t first, const score_t second) {
+    return ScorePair(static_cast<int32_t>(second) * 0x10000 + static_cast<int32_t>(first));
   }
-  return static_cast<score_t>(unsignedRes);
-}
+
+  // Creates a score pair from two equal scores
+  static constexpr ScorePair from(const score_t score) { return from(score, score); }
+
+  // Extracts first item from the score pair
+  constexpr score_t first() const {
+    const uint16_t unsignedRes = static_cast<uint32_t>(value_) & 0xffffU;
+    return static_cast<score_t>(unsignedRes);
+  }
+
+  // Extracts second item from the score pair
+  constexpr score_t second() const {
+    uint16_t unsignedRes = static_cast<uint32_t>(value_) >> 16;
+    if (first() < 0) {
+      ++unsignedRes;
+    }
+    return static_cast<score_t>(unsignedRes);
+  }
+
+  constexpr bool operator==(const ScorePair &other) const { return value_ == other.value_; }
+
+  constexpr bool operator!=(const ScorePair &other) const { return value_ != other.value_; }
+
+  constexpr ScorePair &operator+=(const ScorePair &other) {
+    value_ += other.value_;
+    return *this;
+  }
+
+  constexpr ScorePair &operator-=(const ScorePair &other) {
+    value_ -= other.value_;
+    return *this;
+  }
+
+  constexpr ScorePair &operator*=(const int32_t multiplier) {
+    value_ *= multiplier;
+    return *this;
+  }
+
+  constexpr ScorePair operator-() const { return ScorePair(-value_); }
+
+private:
+  explicit constexpr ScorePair(int32_t value) : value_(value) {}
+
+  int32_t value_;
+};
+
+inline constexpr ScorePair operator+(ScorePair a, const ScorePair &b) { return a += b; }
+inline constexpr ScorePair operator-(ScorePair a, const ScorePair &b) { return a -= b; }
+inline constexpr ScorePair operator*(ScorePair a, const int32_t b) { return a *= b; }
+inline constexpr ScorePair operator*(const int32_t a, ScorePair b) { return b *= a; }
 
 // Compile-time tests for score pairs
-static_assert(scorePairFirst(makeScorePair(1000, 8000)) == 1000);
-static_assert(scorePairFirst(makeScorePair(1000, -8000)) == 1000);
-static_assert(scorePairFirst(makeScorePair(-1000, 8000)) == -1000);
-static_assert(scorePairFirst(makeScorePair(-1000, -8000)) == -1000);
-static_assert(scorePairFirst(makeScorePair(-1000, 0)) == -1000);
-static_assert(scorePairFirst(makeScorePair(1000, 0)) == 1000);
-static_assert(scorePairFirst(makeScorePair(0, -1000)) == 0);
-static_assert(scorePairFirst(makeScorePair(0, 1000)) == 0);
-static_assert(scorePairFirst(makeScorePair(0, 0)) == 0);
+static_assert(ScorePair::from(1000, 8000).first() == 1000);
+static_assert(ScorePair::from(1000, -8000).first() == 1000);
+static_assert(ScorePair::from(-1000, 8000).first() == -1000);
+static_assert(ScorePair::from(-1000, -8000).first() == -1000);
+static_assert(ScorePair::from(-1000, 0).first() == -1000);
+static_assert(ScorePair::from(1000, 0).first() == 1000);
+static_assert(ScorePair::from(0, -1000).first() == 0);
+static_assert(ScorePair::from(0, 1000).first() == 0);
+static_assert(ScorePair::from(0, 0).first() == 0);
 
-static_assert(scorePairSecond(makeScorePair(1000, 8000)) == 8000);
-static_assert(scorePairSecond(makeScorePair(1000, -8000)) == -8000);
-static_assert(scorePairSecond(makeScorePair(-1000, 8000)) == 8000);
-static_assert(scorePairSecond(makeScorePair(-1000, -8000)) == -8000);
-static_assert(scorePairSecond(makeScorePair(-1000, 0)) == 0);
-static_assert(scorePairSecond(makeScorePair(1000, 0)) == 0);
-static_assert(scorePairSecond(makeScorePair(0, -1000)) == -1000);
-static_assert(scorePairSecond(makeScorePair(0, 1000)) == 1000);
-static_assert(scorePairSecond(makeScorePair(0, 0)) == 0);
+static_assert(ScorePair::from(1000, 8000).second() == 8000);
+static_assert(ScorePair::from(1000, -8000).second() == -8000);
+static_assert(ScorePair::from(-1000, 8000).second() == 8000);
+static_assert(ScorePair::from(-1000, -8000).second() == -8000);
+static_assert(ScorePair::from(-1000, 0).second() == 0);
+static_assert(ScorePair::from(1000, 0).second() == 0);
+static_assert(ScorePair::from(0, -1000).second() == -1000);
+static_assert(ScorePair::from(0, 1000).second() == 1000);
+static_assert(ScorePair::from(0, 0).second() == 0);
 
-static_assert(makeScorePair(-1, 5) + makeScorePair(3, -8) == makeScorePair(2, -3));
-static_assert(makeScorePair(-1, -5) + makeScorePair(-3, -8) == makeScorePair(-4, -13));
-static_assert(makeScorePair(1, -5) + makeScorePair(3, -8) == makeScorePair(4, -13));
-static_assert(makeScorePair(1, 5) + makeScorePair(-3, -8) == makeScorePair(-2, -3));
-static_assert(makeScorePair(1, -5) + makeScorePair(-3, 0) == makeScorePair(-2, -5));
-static_assert(makeScorePair(-1, -5) + makeScorePair(0, 6) == makeScorePair(-1, 1));
+static_assert(ScorePair::from(-1, 5) + ScorePair::from(3, -8) == ScorePair::from(2, -3));
+static_assert(ScorePair::from(-1, -5) + ScorePair::from(-3, -8) == ScorePair::from(-4, -13));
+static_assert(ScorePair::from(1, -5) + ScorePair::from(3, -8) == ScorePair::from(4, -13));
+static_assert(ScorePair::from(1, 5) + ScorePair::from(-3, -8) == ScorePair::from(-2, -3));
+static_assert(ScorePair::from(1, -5) + ScorePair::from(-3, 0) == ScorePair::from(-2, -5));
+static_assert(ScorePair::from(-1, -5) + ScorePair::from(0, 6) == ScorePair::from(-1, 1));
 
-static_assert(-makeScorePair(3, 4) == makeScorePair(-3, -4));
-static_assert(-makeScorePair(3, 4) == makeScorePair(-3, -4));
-static_assert(-makeScorePair(3, 0) == makeScorePair(-3, 0));
-static_assert(-makeScorePair(0, -3) == makeScorePair(0, 3));
-static_assert(-makeScorePair(0, 0) == makeScorePair(0, 0));
+static_assert(ScorePair::from(-1, 5) - ScorePair::from(-3, 8) == ScorePair::from(2, -3));
+static_assert(ScorePair::from(-1, -5) - ScorePair::from(3, 8) == ScorePair::from(-4, -13));
+static_assert(ScorePair::from(1, -5) - ScorePair::from(-3, 8) == ScorePair::from(4, -13));
+static_assert(ScorePair::from(1, 5) - ScorePair::from(3, 8) == ScorePair::from(-2, -3));
+static_assert(ScorePair::from(1, -5) - ScorePair::from(3, 0) == ScorePair::from(-2, -5));
+static_assert(ScorePair::from(-1, -5) - ScorePair::from(0, -6) == ScorePair::from(-1, 1));
+
+static_assert(-ScorePair::from(3, 4) == ScorePair::from(-3, -4));
+static_assert(-ScorePair::from(3, 4) == ScorePair::from(-3, -4));
+static_assert(-ScorePair::from(3, 0) == ScorePair::from(-3, 0));
+static_assert(-ScorePair::from(0, -3) == ScorePair::from(0, 3));
+static_assert(-ScorePair::from(0, 0) == ScorePair::from(0, 0));
+
+static_assert(ScorePair::from(3, 4) * 2 == ScorePair::from(6, 8));
+static_assert(ScorePair::from(3, 4) * 2 == ScorePair::from(6, 8));
+static_assert(ScorePair::from(3, 0) * 2 == ScorePair::from(6, 0));
+static_assert(ScorePair::from(0, -3) * 2 == ScorePair::from(0, -6));
+static_assert(ScorePair::from(0, 0) * 2 == ScorePair::from(0, 0));
 
 }  // namespace SoFEval
 

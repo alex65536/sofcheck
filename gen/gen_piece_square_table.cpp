@@ -91,7 +91,11 @@ static constexpr score_t PIECE_CELL_BONUS_TABLE[6][64] = {
         0,  0,  0,  0,  0,  0,  0,  0,   //
     }};
 
-void printSinglePieceTable(std::ostream &out, const std::vector<score_pair_t> &tab) {
+void printScorePair(std::ostream &out, const ScorePair pair) {
+  out << "ScorePair::from(" << pair.first() << ", " << pair.second() << ")";
+}
+
+void printSinglePieceTable(std::ostream &out, const std::vector<ScorePair> &tab) {
   out << "  {\n";
   for (subcoord_t x = 0; x < 8; ++x) {
     out << "    ";
@@ -99,7 +103,7 @@ void printSinglePieceTable(std::ostream &out, const std::vector<score_pair_t> &t
       if (y != 0) {
         out << ", ";
       }
-      out << tab[makeCoord(x, y)];
+      printScorePair(out, tab[makeCoord(x, y)]);
     }
     if (x != 7) {
       out << ",";
@@ -110,9 +114,9 @@ void printSinglePieceTable(std::ostream &out, const std::vector<score_pair_t> &t
 }
 
 void printPieceSquareTables(std::ostream &out) {
-  std::vector<score_pair_t> scores[16];
+  std::vector<ScorePair> scores[16];
   for (auto &scoreVec : scores) {
-    scoreVec.assign(64, makeScorePair(0));
+    scoreVec.assign(64, ScorePair::from(0));
   }
 
   // Generate piece-square tables
@@ -123,12 +127,12 @@ void printPieceSquareTables(std::ostream &out) {
       const score_t score = PIECE_COSTS[pieceIdx] + PIECE_CELL_BONUS_TABLE[pieceIdx][i];
       const score_t endScore =
           (piece == Piece::King) ? (PIECE_COSTS[pieceIdx] + KING_ENDGAME_BONUS_TABLE[i]) : score;
-      const score_pair_t scorePair = makeScorePair(score, endScore);
+      const auto scorePair = ScorePair::from(score, endScore);
       scores[makeCell(Color::White, piece)][i] = scorePair;
       scores[makeCell(Color::Black, piece)][coordFlipX(i)] = -scorePair;
     }
   }
-  out << "constexpr score_pair_t PIECE_SQUARE_TABLE[16][64] = {";
+  out << "constexpr ScorePair PIECE_SQUARE_TABLE[16][64] = {";
   for (size_t i = 0; i < 16; ++i) {
     printSinglePieceTable(out, scores[i]);
     if (i != 15) {
@@ -140,16 +144,22 @@ void printPieceSquareTables(std::ostream &out) {
   // Precalculate position cost changes after castling
   constexpr cell_t whiteKing = makeCell(Color::White, Piece::King);
   constexpr cell_t whiteRook = makeCell(Color::White, Piece::Rook);
-  const score_pair_t castlingKingsideUpdate =
+  const auto castlingKingsideUpdate =
       scores[whiteKing][makeCoord(7, 6)] - scores[whiteKing][makeCoord(7, 4)] +
       scores[whiteRook][makeCoord(7, 5)] - scores[whiteRook][makeCoord(7, 7)];
-  const score_pair_t castlingQueensideUpdate =
+  const auto castlingQueensideUpdate =
       scores[whiteKing][makeCoord(7, 2)] - scores[whiteKing][makeCoord(7, 4)] +
       scores[whiteRook][makeCoord(7, 3)] - scores[whiteRook][makeCoord(7, 0)];
-  out << "constexpr score_pair_t SCORE_CASTLING_KINGSIDE_UPD[2] = {" << castlingKingsideUpdate
-      << ", " << -castlingKingsideUpdate << "};\n";
-  out << "constexpr score_pair_t SCORE_CASTLING_QUEENSIDE_UPD[2] = {" << castlingQueensideUpdate
-      << ", " << -castlingQueensideUpdate << "};\n";
+  out << "constexpr ScorePair SCORE_CASTLING_KINGSIDE_UPD[2] = {";
+  printScorePair(out, castlingKingsideUpdate);
+  out << ", ";
+  printScorePair(out, -castlingKingsideUpdate);
+  out << "};\n";
+  out << "constexpr ScorePair SCORE_CASTLING_QUEENSIDE_UPD[2] = {";
+  printScorePair(out, castlingQueensideUpdate);
+  out << ", ";
+  printScorePair(out, -castlingQueensideUpdate);
+  out << "};\n";
 }
 
 void doGenerate(std::ostream &out) {
