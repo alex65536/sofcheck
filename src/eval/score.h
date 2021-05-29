@@ -4,6 +4,7 @@
 #include <cstdint>
 
 #include "bot_api/types.h"
+#include "eval/types.h"
 
 namespace SoFEval {
 
@@ -140,6 +141,14 @@ inline constexpr ScorePair operator+(ScorePair a, const ScorePair &b) { return a
 inline constexpr ScorePair operator-(ScorePair a, const ScorePair &b) { return a -= b; }
 inline constexpr ScorePair operator*(ScorePair a, const int32_t b) { return a *= b; }
 inline constexpr ScorePair operator*(const int32_t a, ScorePair b) { return b *= a; }
+
+template <>
+struct ScoreTraits<score_t> {
+  using Pair = ScorePair;
+
+  static constexpr score_t MIN = -SCORE_INF;
+  static constexpr score_t MAX = SCORE_INF;
+};
 
 // Compile-time tests for score pairs
 static_assert(ScorePair::from(1000, 8000).first() == 1000);
