@@ -15,5 +15,5 @@ int main(int argc, char **argv) {
     return 0;
   }
   std::cerr << "usage: " << argv[0] << " OUT_FILE" << std::endl;
-  return 0;
+  return 1;
 }
