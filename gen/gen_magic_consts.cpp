@@ -45,7 +45,7 @@ std::vector<bitboard_t> generateMagics() {
   std::vector<bitboard_t> result(64);
 
   for (coord_t i = 0; i < 64; ++i) {
-    bitboard_t magic;
+    bitboard_t magic = 0;
     do {
       magic = genSparseNumber(rnd);
     } while (!isValidMagic<M>(i, magic));

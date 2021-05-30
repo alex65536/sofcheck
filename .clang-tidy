@@ -18,6 +18,7 @@ llvm-namespace-comment, \
 -cert-err58-cpp, \
 -cppcoreguidelines-avoid-c-arrays, \
 -cppcoreguidelines-avoid-magic-numbers, \
+-cppcoreguidelines-avoid-non-const-global-variables, \
 -cppcoreguidelines-macro-usage, \
 -cppcoreguidelines-owning-memory, \
 -cppcoreguidelines-pro-bounds-*, \
@@ -27,10 +28,12 @@ llvm-namespace-comment, \
 -hicpp-avoid-c-arrays, \
 -hicpp-braces-around-statements, \
 -hicpp-member-init, \
+-hicpp-named-parameter, \
 -hicpp-no-array-decay, \
 -hicpp-signed-bitwise, \
 -hicpp-special-member-functions, \
 -modernize-use-nodiscard, \
+-misc-no-recursion, \
 -misc-non-private-member-variables-in-classes, \
 -readability-braces-around-statements, \
 -readability-implicit-bool-conversion, \
@@ -54,6 +57,7 @@ llvm-namespace-comment, \
 # - cppcoreguidelines-special-member-functions also has false-positives with Google Test
 # - hicpp-special-member-functions also has false-positives with Google Test
 # - cert-err58-cpp also has false-positives with Google Test
+# - cppcoreguidelines-avoid-non-const-global-variables conflicts with tests and benchmarks
 
 HeaderFilterRegex: '(bench|gen|src)/.+'
 
@@ -97,6 +101,6 @@ CheckOptions:
     - key: readability-identifier-naming.UnionCase
       value: CamelCase
     - key: readability-identifier-naming.ValueTemplateParameterCase
-      value: CamelCase    
+      value: CamelCase
     - key: readability-identifier-naming.VariableCase
       value: camelBack

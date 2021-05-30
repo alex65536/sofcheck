@@ -38,12 +38,10 @@ inline static bool isBadToken(const std::string &str) {
   while (pos < str.size() && str[pos] == '_') {
     ++pos;
   }
-  for (const char *badWord : {"name", "value", "val"}) {
-    if (std::equal(str.begin() + pos, str.end(), badWord, badWord + std::strlen(badWord))) {
-      return true;
-    }
-  }
-  return false;
+  static constexpr const char *BAD_WORDS[] = {"name", "value", "val"};
+  return std::any_of(std::begin(BAD_WORDS), std::end(BAD_WORDS), [&](const char *badWord) {
+    return std::equal(str.begin() + pos, str.end(), badWord, badWord + std::strlen(badWord));
+  });
 }
 
 inline static std::string uciNameEscape(const std::string &name) {

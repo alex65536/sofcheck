@@ -60,7 +60,7 @@ ApiResult OptionStorage::setEnum(const std::string &key, const size_t index) {
 }
 
 ApiResult OptionStorage::setEnum(const std::string &key, const std::string &value) {
-  auto option = getMutT<EnumOption>(key);
+  auto *option = getMutT<EnumOption>(key);
   if (!option) {
     return ApiResult::InvalidArgument;
   }
@@ -94,7 +94,7 @@ ApiResult OptionStorage::setString(const std::string &key, const std::string &va
 }
 
 ApiResult OptionStorage::triggerAction(const std::string &key) {
-  auto option = getMutT<ActionOption>(key);
+  auto *option = getMutT<ActionOption>(key);
   if (!option) {
     return ApiResult::InvalidArgument;
   }
@@ -171,7 +171,7 @@ bool isOptionNameValid(const std::string &s) {
     return false;
   }
   for (char c : s) {
-    const int charCode = c;
+    const int charCode = static_cast<unsigned char>(c);
     if (charCode < 32 || charCode > 126) {
       return false;
     }
