@@ -167,7 +167,7 @@ target_link_libraries(sof_eval PUBLIC sof_core sof_util sof_bot_api)
 add_library(sof_eval_feat STATIC
   src/eval/feat/feat.cpp
 )
-target_link_directories(sof_eval_feat
+target_link_libraries(sof_eval_feat
   PUBLIC sof_util
   PRIVATE jsoncpp_lib
 )
