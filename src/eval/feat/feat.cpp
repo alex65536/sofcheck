@@ -7,8 +7,8 @@
 
 namespace SoFEval::Feat {
 
-using SoFUtil::Err;
-using SoFUtil::Ok;
+using SoFUtil::Err;  // NOLINT: clang-tidy thinks it's unused by some reason
+using SoFUtil::Ok;   // NOLINT: clang-tidy thinks it's unused by some reasson
 
 LoadResult<SingleBundle> SingleBundle::load(const Name &name, const Json::Value &json) {
   if (!json.isInt()) {
