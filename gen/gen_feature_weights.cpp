@@ -11,6 +11,8 @@
 using namespace SoFCore;
 using namespace SoFEval::Feat;
 
+using SoFUtil::trimEolLeft;
+
 std::string formatName(const Name &name) {
   std::string result;
   for (const char ch : name.name) {
@@ -136,13 +138,6 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
   }
 }
 
-static const char *leftStrip(const char *src) {
-  while (*src != '\0' && *src <= ' ') {
-    ++src;
-  }
-  return src;
-}
-
 constexpr const char *CODE_PART_ONE = R"CODE(
 #ifndef SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
 #define SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
@@ -230,13 +225,13 @@ int doGenerate(std::ostream &out, const Json::Value &json) {
   }
   Features features = maybeFeatures.unwrap();
 
-  out << leftStrip(CODE_PART_ONE);
+  out << trimEolLeft(CODE_PART_ONE);
   out << "  static ";
   printIntArray(out, features.extract(), "WEIGHTS", "score_t", 2);
   out << "\n";
-  out << leftStrip(CODE_PART_TWO);
+  out << trimEolLeft(CODE_PART_TWO);
   fillWeights(out, features, 2);
-  out << leftStrip(CODE_PART_THREE);
+  out << trimEolLeft(CODE_PART_THREE);
 
   return 0;
 }

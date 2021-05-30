@@ -2,19 +2,13 @@
 
 #include <iomanip>
 
+#include "util/math.h"
+
+using SoFUtil::log10;
+
 void printBitboard(std::ostream &out, SoFCore::bitboard_t val) {
   out << "0x" << std::hex << std::setw(16) << std::setfill('0') << val << std::dec
       << std::setfill(' ');
-}
-
-static size_t log10(size_t val) {
-  size_t res = 0;
-  size_t pow = 1;
-  while (pow <= val) {
-    pow *= 10;
-    ++res;
-  }
-  return res - 1;
 }
 
 template <typename T, typename ItemPrinter>
