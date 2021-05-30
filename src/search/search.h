@@ -52,7 +52,6 @@ private:
   SoFBotApi::ApiResult setString(const std::string &key, const std::string &value) override;
   SoFBotApi::ApiResult triggerAction(const std::string &key) override;
 
-private:
   static SoFBotApi::OptionStorage makeOptions(Engine *engine);
 
   struct Impl;

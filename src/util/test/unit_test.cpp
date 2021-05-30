@@ -19,7 +19,7 @@ void checkParallel(const size_t left, const size_t right, const size_t jobs) {
   ASSERT_FALSE(segments.empty());
   ASSERT_EQ(segments[0].first, left);
   ASSERT_EQ(segments.back().second, right);
-  for (const auto [left, right] : segments) {
+  for (const auto &[left, right] : segments) {
     ASSERT_LT(left, right);
   }
   for (size_t i = 1; i < segments.size(); ++i) {

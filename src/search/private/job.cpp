@@ -165,7 +165,7 @@ private:
 template <Searcher::NodeKind Kind>
 struct MovePickerFactory {
   template <typename... Args>
-  inline static MovePicker create([[maybe_unused]] const size_t jobId, Args &&... args) {
+  inline static MovePicker create([[maybe_unused]] const size_t jobId, Args &&...args) {
     return MovePicker(std::forward<Args>(args)...);
   }
 };
@@ -173,7 +173,7 @@ struct MovePickerFactory {
 template <>
 struct MovePickerFactory<Searcher::NodeKind::Root> {
   template <typename... Args>
-  inline static RootNodeMovePicker create(const size_t jobId, Args &&... args) {
+  inline static RootNodeMovePicker create(const size_t jobId, Args &&...args) {
     return RootNodeMovePicker(MovePicker(std::forward<Args>(args)...), jobId);
   }
 };
