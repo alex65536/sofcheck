@@ -5,7 +5,7 @@
 
 #include "eval/score.h"
 
-TEST(SoFSearch, ScorePair) {
+TEST(SoFEval, ScorePair) {
   using namespace SoFEval;
 
   static constexpr score_t SCORE_MIN = std::numeric_limits<score_t>::min();
