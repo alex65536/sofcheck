@@ -5,6 +5,7 @@
 
 #include "bot_api/types.h"
 #include "eval/types.h"
+#include "util/operators.h"
 
 namespace SoFEval {
 
@@ -110,37 +111,13 @@ public:
     return static_cast<score_t>(unsignedRes);
   }
 
-  constexpr bool operator==(const ScorePair &other) const { return value_ == other.value_; }
-
-  constexpr bool operator!=(const ScorePair &other) const { return value_ != other.value_; }
-
-  constexpr ScorePair &operator+=(const ScorePair &other) {
-    value_ += other.value_;
-    return *this;
-  }
-
-  constexpr ScorePair &operator-=(const ScorePair &other) {
-    value_ -= other.value_;
-    return *this;
-  }
-
-  constexpr ScorePair &operator*=(const int32_t multiplier) {
-    value_ *= multiplier;
-    return *this;
-  }
-
-  constexpr ScorePair operator-() const { return ScorePair(-value_); }
+  SOF_PROPAGATE_VECTOR_OPS(ScorePair, int32_t, value_)
 
 private:
   explicit constexpr ScorePair(int32_t value) : value_(value) {}
 
   int32_t value_;
 };
-
-inline constexpr ScorePair operator+(ScorePair a, const ScorePair &b) { return a += b; }
-inline constexpr ScorePair operator-(ScorePair a, const ScorePair &b) { return a -= b; }
-inline constexpr ScorePair operator*(ScorePair a, const int32_t b) { return a *= b; }
-inline constexpr ScorePair operator*(const int32_t a, ScorePair b) { return b *= a; }
 
 template <>
 struct ScoreTraits<score_t> {

@@ -51,11 +51,13 @@ The following dependencies are optional:
 - Google Test (to run tests)
 - Google Benchmark (to run benchmarks)
 - Boost::Stacktrace (to display stack traces on crash)
+- Jsoncpp (to extract evaluation weights located in a JSON file. This one isn't compiled into
+the final executable and is used only for building and tuning the engine)
 
 To install them all on Debian/Ubuntu, use
 
 ~~~~~
-$ sudo apt install libgtest-dev libbenchmark-dev libboost-stacktrace-dev
+$ sudo apt install libgtest-dev libbenchmark-dev libboost-stacktrace-dev libjsoncpp-dev
 ~~~~~
 
 To build the engine, do the following:

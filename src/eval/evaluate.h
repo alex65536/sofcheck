@@ -5,7 +5,6 @@
 
 #include "core/board.h"
 #include "core/move.h"
-#include "eval/score.h"
 #include "eval/types.h"
 
 namespace SoFEval {
@@ -41,9 +40,7 @@ public:
   };
 
   // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`.
-  score_t evaluate([[maybe_unused]] const SoFCore::Board &b, const Tag tag) {
-    return tag.inner_.first();
-  }
+  S evaluate([[maybe_unused]] const SoFCore::Board &b, const Tag tag) { return tag.inner_.first(); }
 };
 
 }  // namespace SoFEval

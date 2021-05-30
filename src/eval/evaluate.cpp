@@ -1,6 +1,8 @@
 #include "eval/evaluate.h"
 
-#include "eval/private/piece_square_table.h"
+#include "eval/private/weights.h"
+#include "eval/coefs.h"
+#include "eval/score.h"
 #include "util/misc.h"
 
 namespace SoFEval {
@@ -13,15 +15,13 @@ using SoFCore::Move;
 using SoFCore::MoveKind;
 using SoFCore::Piece;
 
-using SoFEval::Private::PIECE_SQUARE_TABLE;
-using SoFEval::Private::SCORE_CASTLING_KINGSIDE_UPD;
-using SoFEval::Private::SCORE_CASTLING_QUEENSIDE_UPD;
-
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const SoFCore::Board &b) {
-  auto result = ScorePair::from(0);
+  using Weights = Private::Weights<S>;
+
+  auto result = Pair::from(S());
   for (coord_t i = 0; i < 64; ++i) {
-    result += PIECE_SQUARE_TABLE[b.cells[i]][i];
+    result += Weights::PSQ[b.cells[i]][i];
   }
   return Tag(result);
 }
@@ -29,30 +29,33 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const SoFCore::Board &b) {
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const SoFCore::Board &b,
                                                       const Move move) const {
+  using Weights = Private::Weights<S>;
+
   Pair psq = inner_;
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
-    return Tag(psq + SCORE_CASTLING_KINGSIDE_UPD[static_cast<size_t>(color)]);
+    return Tag(psq + Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)]);
   }
   if (move.kind == MoveKind::CastlingQueenside) {
-    return Tag(psq + SCORE_CASTLING_QUEENSIDE_UPD[static_cast<size_t>(color)]);
+    return Tag(psq + Weights::PSQ_QUEENSIDE_UPD[static_cast<size_t>(color)]);
   }
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
-  psq -= PIECE_SQUARE_TABLE[srcCell][move.src] + PIECE_SQUARE_TABLE[dstCell][move.dst];
+  psq -= Weights::PSQ[srcCell][move.src] + Weights::PSQ[dstCell][move.dst];
   if (isMoveKindPromote(move.kind)) {
     return Tag(psq +
-               PIECE_SQUARE_TABLE[makeCell(color, moveKindPromotePiece(move.kind))][move.dst]);
+               Weights::PSQ[makeCell(color, moveKindPromotePiece(move.kind))][move.dst]);
   }
-  psq += PIECE_SQUARE_TABLE[srcCell][move.dst];
+  psq += Weights::PSQ[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {
     const coord_t pawnPos = enpassantPawnPos(color, move.dst);
-    psq -= PIECE_SQUARE_TABLE[makeCell(invert(color), Piece::Pawn)][pawnPos];
+    psq -= Weights::PSQ[makeCell(invert(color), Piece::Pawn)][pawnPos];
   }
   return Tag(psq);
 }
 
 // Template instantiations for all score types
 template class Evaluator<score_t>;
+template class Evaluator<Coefs>;
 
 }  // namespace SoFEval
