@@ -28,8 +28,10 @@ using SoFEval::score_t;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
-DIAGNOSTIC(using SoFEval::isScoreCheckmate;)
-DIAGNOSTIC(using SoFEval::isScoreValid;)
+#ifdef USE_SEARCH_DIAGNOSTICS
+using SoFEval::isScoreCheckmate;
+using SoFEval::isScoreValid;
+#endif
 
 using Evaluator = SoFEval::Evaluator<score_t>;
 
