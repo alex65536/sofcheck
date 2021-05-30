@@ -35,25 +35,32 @@ Psq moldPsq(const PsqBundle &bundle) {
     result.data[i].assign(64, "Pair::from(empty())");
   }
 
+  // Precalculate the piece-square table itself. Note that we must be very careful not to use `+`
+  // and `-` operators, because this would dramatically increase the compilation time in combination
+  // with `Coefs`
   for (Piece piece :
        {Piece::Pawn, Piece::King, Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen}) {
-    for (coord_t i = 0; i < 64; ++i) {
-      const auto pieceIdx = static_cast<size_t>(piece);
-      const std::string pieceCost =
-          "number(" + std::to_string(bundle.pieceCosts().name().offset + pieceIdx) + ")";
-      const std::string cellCost =
-          "number(" + std::to_string(bundle.table(pieceIdx).name().offset + i) + ")";
-      std::string cost;
-      if (piece == Piece::King) {
-        const std::string kingCost =
-            "number(" + std::to_string(bundle.endKingTable().name().offset + i) + ")";
-        cost = "Pair::from(" + pieceCost + " + " + cellCost + ", " + pieceCost + " + " + kingCost +
-               ")";
-      } else {
-        cost = "Pair::from(" + pieceCost + " + " + cellCost + ")";
+    for (Color color : {Color::White, Color::Black}) {
+      for (coord_t i = 0; i < 64; ++i) {
+        auto num2 = [&](size_t first, size_t second) {
+          const std::string name = (color == Color::White) ? "number" : "negNumber";
+          return name + "(" + std::to_string(first) + ", " + std::to_string(second) + ")";
+        };
+
+        const auto pieceIdx = static_cast<size_t>(piece);
+        const size_t pieceFeat = bundle.pieceCosts().name().offset + pieceIdx;
+        const size_t cellFeat = bundle.table(pieceIdx).name().offset + i;
+        std::string cost;
+        if (piece == Piece::King) {
+          const size_t kingFeat = bundle.endKingTable().name().offset + i;
+          cost = "Pair::from(" + num2(pieceFeat, cellFeat) + ", " + num2(pieceFeat, kingFeat) + ")";
+        } else {
+          cost = "Pair::from(" + num2(pieceFeat, cellFeat) + ")";
+        }
+
+        const size_t pos = (color == Color::White) ? i : coordFlipX(i);
+        result.data[makeCell(color, piece)][pos] = cost;
       }
-      result.data[makeCell(Color::White, piece)][i] = cost;
-      result.data[makeCell(Color::Black, piece)][coordFlipX(i)] = "-" + cost;
     }
   }
 
@@ -156,14 +163,30 @@ int doGenerate(std::ostream &out, Json::Value json) {
   printIntArray(out, features.extract(), "WEIGHTS", "score_t", 2);
   out << "\n";
   out << "public:\n";
-  out << "  static constexpr score_t empty() { return 0; } \n";
-  out << "  static constexpr score_t number(size_t num) { return WEIGHTS[num]; } \n";
+  out << "  static constexpr score_t empty() { return 0; }\n";
+  out << "  static constexpr score_t number(size_t num) { return WEIGHTS[num]; }\n";
+  out << "  static constexpr score_t number(size_t n1, size_t n2) {\n";
+  out << "    return WEIGHTS[n1] + WEIGHTS[n2];\n";
+  out << "  }\n";
+  out << "\n";
+  out << "  static constexpr score_t negNumber(size_t num) { return -WEIGHTS[num]; }\n";
+  out << "  static constexpr score_t negNumber(size_t n1, size_t n2) {\n";
+  out << "    return -(WEIGHTS[n1] + WEIGHTS[n2]);\n";
+  out << "  }\n";
   out << "};\n";
   out << "\n";
   out << "template <>\n";
   out << "struct WeightTraits<Coefs> {\n";
   out << "  static constexpr Coefs empty() { return Coefs::zeroed(); }\n";
-  out << "  static constexpr Coefs number(size_t num) { return makeSingleCoef(num); }\n";
+  out << "  static constexpr Coefs number(size_t num) { return makeCoefs(1, num); }\n";
+  out << "  static constexpr Coefs number(size_t n1, size_t n2) {\n";
+  out << "    return makeCoefs(1, n1, n2);\n";
+  out << "  }\n";
+  out << "\n";
+  out << "  static constexpr Coefs negNumber(size_t num) { return makeCoefs(-1, num); }\n";
+  out << "  static constexpr Coefs negNumber(size_t n1, size_t n2) {\n";
+  out << "    return makeCoefs(-1, n1, n2);\n";
+  out << "  }\n";
   out << "};\n";
   out << "\n";
   out << "// Keeps weights for score type `T`\n";
@@ -172,6 +195,7 @@ int doGenerate(std::ostream &out, Json::Value json) {
   out << "private:\n";
   out << "  using WeightTraits<T>::empty;\n";
   out << "  using WeightTraits<T>::number;\n";
+  out << "  using WeightTraits<T>::negNumber;\n";
   out << "\n";
   out << "public:\n";
   out << "  using Pair = typename ScoreTraits<T>::Pair;\n";

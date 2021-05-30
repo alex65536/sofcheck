@@ -9,14 +9,25 @@
 
 namespace SoFEval {
 
+// Underlying integer type for `Coefs`
+using coef_t = int16_t;
+
 // Score type useful for tuning the feature weights. It doesn't keep the position cost, but keeps
 // the number of times each feature is used instead.
-using Coefs = SoFUtil::ValArray<int16_t, FEATURE_COUNT>;
+using Coefs = SoFUtil::ValArray<coef_t, FEATURE_COUNT>;
 
-// Create `Coefs` with a single ones at the position `pos`
-inline static constexpr Coefs makeSingleCoef(size_t pos) {
+// Create `Coefs` with a single value `val` at the position `pos`
+inline static constexpr Coefs makeCoefs(coef_t val, size_t pos) {
   auto result = Coefs::zeroed();
-  result[pos] = 1;
+  result[pos] = val;
+  return result;
+}
+
+// Create `Coefs` with a two ones at the position `pos1` and at position `pos2`
+inline static constexpr Coefs makeCoefs(coef_t val, size_t pos1, size_t pos2) {
+  auto result = Coefs::zeroed();
+  result[pos1] += val;
+  result[pos2] += val;
   return result;
 }
 
