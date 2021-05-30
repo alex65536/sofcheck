@@ -136,6 +136,91 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
   }
 }
 
+static const char *leftStrip(const char *src) {
+  while (*src != '\0' && *src <= ' ') {
+    ++src;
+  }
+  return src;
+}
+
+constexpr const char *CODE_PART_ONE = R"CODE(
+#ifndef SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
+#define SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
+
+#include "eval/coefs.h"
+#include "eval/score.h"
+#include "eval/types.h"
+
+namespace SoFEval::Private {
+
+// Base struct that helps to declare weights for score type `T`. You must specify `Item` type for
+// a simple item (e. g. a single coefficient) and `LargeItem` type for an item consisting of
+// multiple coefficients (e. g. castling) update in piece-square table. Note that these types are
+// not required to be equal to `T`, but they at least need to be implicitly convertible to `T`.
+template <typename T>
+struct WeightTraits {};
+
+template <>
+struct WeightTraits<score_t> {
+private:
+)CODE";
+
+constexpr const char *CODE_PART_TWO = R"CODE(
+public:
+  using Item = score_t;
+  using LargeItem = score_t;
+
+  static constexpr Item empty() { return 0; }
+  static constexpr Item number(size_t num) { return WEIGHTS[num]; }
+  static constexpr Item number(size_t n1, size_t n2) { return WEIGHTS[n1] + WEIGHTS[n2]; }
+
+  static constexpr Item negNumber(size_t num) { return -WEIGHTS[num]; }
+  static constexpr Item negNumber(size_t n1, size_t n2) { return -(WEIGHTS[n1] + WEIGHTS[n2]); }
+};
+
+template <>
+struct WeightTraits<Coefs> {
+  using Item = SmallCoefs<2>;
+  using LargeItem = SmallCoefs<8>;
+
+  static constexpr Item empty() { return Item(); }
+
+  static constexpr Item number(size_t num) { return Item().add(num, COEF_UNIT); }
+  static constexpr Item number(size_t n1, size_t n2) {
+    return Item().add(n1, COEF_UNIT).add(n2, COEF_UNIT);
+  }
+
+  static constexpr Item negNumber(size_t num) { return Item().add(num, -COEF_UNIT); }
+  static constexpr Item negNumber(size_t n1, size_t n2) {
+    return Item().add(n1, -COEF_UNIT).add(n2, -COEF_UNIT);
+  }
+};
+
+// Keeps weights for score type `T`
+template <typename T>
+struct Weights : private WeightTraits<T> {
+private:
+  using WeightTraits<T>::empty;
+  using WeightTraits<T>::number;
+  using WeightTraits<T>::negNumber;
+
+public:
+  using typename WeightTraits<T>::Item;
+  using typename WeightTraits<T>::LargeItem;
+  using Pair = typename ScoreTraits<Item>::Pair;
+  using LargePair = typename ScoreTraits<LargeItem>::Pair;
+
+  // Here come the weights declaration
+)CODE";
+
+constexpr const char *CODE_PART_THREE = R"CODE(
+};
+
+}  // namespace SoFEval::Private
+
+#endif  // SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
+)CODE";
+
 int doGenerate(std::ostream &out, const Json::Value &json) {
   LoadResult<Features> maybeFeatures = Features::load(json);
   if (maybeFeatures.isErr()) {
@@ -145,90 +230,13 @@ int doGenerate(std::ostream &out, const Json::Value &json) {
   }
   Features features = maybeFeatures.unwrap();
 
-  out << "#ifndef SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED\n";
-  out << "#define SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED\n";
-  out << "\n";
-  out << "#include \"eval/score.h\"\n";
-  out << "#include \"eval/coefs.h\"\n";
-  out << "#include \"eval/types.h\"\n";
-  out << "\n";
-  out << "namespace SoFEval::Private {\n";
-  out << "\n";
-  out << "// Base struct that helps to declare weights for score type `T`\n";
-  out << "// You must specify `Item` type for a simple item (e. g. a single coefficient) and\n";
-  out << "// `LargeItem` type for an item consisting of multiple coefficients (e. g. castling)\n";
-  out << "// update in piece-square table. Note that these types are not required to be equal\n";
-  out << "// to `T`, but they at least need to be implicitly convertible to `T`.\n";
-  out << "template <typename T>\n";
-  out << "struct WeightTraits {};\n";
-  out << "\n";
-  out << "template <>\n";
-  out << "struct WeightTraits<score_t> {\n";
-  out << "private:\n";
+  out << leftStrip(CODE_PART_ONE);
   out << "  static ";
   printIntArray(out, features.extract(), "WEIGHTS", "score_t", 2);
   out << "\n";
-  out << "public:\n";
-  out << "  using Item = score_t;\n";
-  out << "  using LargeItem = score_t;\n";
-  out << "\n";
-  out << "  static constexpr Item empty() { return 0; }\n";
-  out << "  static constexpr Item number(size_t num) { return WEIGHTS[num]; }\n";
-  out << "  static constexpr Item number(size_t n1, size_t n2) {\n";
-  out << "    return WEIGHTS[n1] + WEIGHTS[n2];\n";
-  out << "  }\n";
-  out << "\n";
-  out << "  static constexpr Item negNumber(size_t num) { return -WEIGHTS[num]; }\n";
-  out << "  static constexpr Item negNumber(size_t n1, size_t n2) {\n";
-  out << "    return -(WEIGHTS[n1] + WEIGHTS[n2]);\n";
-  out << "  }\n";
-  out << "};\n";
-  out << "\n";
-  out << "template <>\n";
-  out << "struct WeightTraits<Coefs> {\n";
-  out << "  using Item = SmallCoefs<2>;\n";
-  out << "  using LargeItem = SmallCoefs<8>;\n";
-  out << "\n";
-  out << "  static constexpr Item empty() { return Item(); }\n";
-  out << "\n";
-  out << "  static constexpr Item number(size_t num) {\n";
-  out << "    return Item().add(num, COEF_UNIT);\n";
-  out << "  }\n";
-  out << "\n";
-  out << "  static constexpr Item number(size_t n1, size_t n2) {\n";
-  out << "    return Item().add(n1, COEF_UNIT).add(n2, COEF_UNIT);\n";
-  out << "  }\n";
-  out << "\n";
-  out << "  static constexpr Item negNumber(size_t num) {\n";
-  out << "    return Item().add(num, -COEF_UNIT);\n";
-  out << "  }\n";
-  out << "\n";
-  out << "  static constexpr Item negNumber(size_t n1, size_t n2) {\n";
-  out << "    return Item().add(n1, -COEF_UNIT).add(n2, -COEF_UNIT);\n";
-  out << "  }\n";
-  out << "};\n";
-  out << "\n";
-  out << "// Keeps weights for score type `T`\n";
-  out << "template <typename T>\n";
-  out << "struct Weights : private WeightTraits<T> {\n";
-  out << "private:\n";
-  out << "  using WeightTraits<T>::empty;\n";
-  out << "  using WeightTraits<T>::number;\n";
-  out << "  using WeightTraits<T>::negNumber;\n";
-  out << "\n";
-  out << "public:\n";
-  out << "  using typename WeightTraits<T>::Item;\n";
-  out << "  using typename WeightTraits<T>::LargeItem;\n";
-  out << "  using Pair = typename ScoreTraits<Item>::Pair;\n";
-  out << "  using LargePair = typename ScoreTraits<LargeItem>::Pair;\n";
-  out << "\n";
-  out << "  // Here come the weights declaration\n";
+  out << leftStrip(CODE_PART_TWO);
   fillWeights(out, features, 2);
-  out << "};\n";
-  out << "\n";
-  out << "}  // namespace SoFEval::Private\n";
-  out << "\n";
-  out << "#endif  // SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED\n";
+  out << leftStrip(CODE_PART_THREE);
 
   return 0;
 }
