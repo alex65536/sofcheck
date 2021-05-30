@@ -52,7 +52,7 @@ std::string sanitizeEol(std::string str);
 
 // Removes leading characters satisfying the predicate from the string
 template <typename Pred>
-inline constexpr const char *trimLeft(const char *src, Pred pred) {
+inline constexpr const char *trimLeft(const char *str, Pred pred) {
   while (pred(*str)) {
     ++str;
   }
