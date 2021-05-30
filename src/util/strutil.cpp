@@ -3,14 +3,14 @@
 namespace SoFUtil {
 
 const char *scanTokenEnd(const char *str) {
-  while (*str != '\0' && *str != '\n' && *str != '\t' && *str != ' ') {
+  while (*str != '\0' && !isSpace(*str)) {
     ++str;
   }
   return str;
 }
 
 const char *scanTokenStart(const char *str) {
-  while (*str == '\n' || *str == '\t' || *str == ' ') {
+  while (isSpace(*str)) {
     ++str;
   }
   return str;
@@ -28,14 +28,13 @@ std::string sanitizeEol(std::string str) {
 std::string trim(const std::string &str) {
   size_t left = 0;
   size_t right = str.size();
-  while (left < str.size() && (str[left] == '\n' || str[left] == '\t' || str[left] == ' ')) {
+  while (left < str.size() && isSpace(str[left])) {
     ++left;
   }
   if (left == right) {
     return std::string();
   }
-  while (right != 0 &&
-         (str[right - 1] == '\n' || str[right - 1] == '\t' || str[right - 1] == ' ')) {
+  while (right != 0 && isSpace(str[right - 1])) {
     --right;
   }
   return str.substr(left, right - left);

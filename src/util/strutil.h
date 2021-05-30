@@ -25,6 +25,11 @@ inline constexpr char asciiToUpper(const char c) {
   return ('a' <= c && c <= 'z') ? static_cast<char>(c - 'a' + 'A') : c;
 }
 
+// Returns `true` if the character is considered space
+inline constexpr bool isSpace(const char ch) {
+  return ch == '\n' || ch == '\t' || ch == '\r' || ch == ' ';
+}
+
 // Wrapper for `std::from_chars`. Tries to interpret the entire string between `first` and `last` as
 // integer or floating point type `T`. Returns `true` and puts the result into `val` on success.
 // Otherwise `false` is returned and `val` remains untouched.
@@ -44,6 +49,23 @@ inline bool valueFromStr(const char *first, const char *last, T &val) {
 // make sure that it doesn't contain a newline, which can be potentially interpreted as a new UCI
 // command
 std::string sanitizeEol(std::string str);
+
+// Removes leading characters satisfying the predicate from the string
+template <typename Pred>
+inline constexpr const char *trimLeft(const char *src, Pred pred) {
+  while (pred(*str)) {
+    ++str;
+  }
+  return str;
+}
+
+// Removes leading spaces from the string
+inline constexpr const char *trimLeft(const char *str) { return trimLeft(str, isSpace); }
+
+// Removes leading line endings from the string
+inline constexpr const char *trimEolLeft(const char *str) {
+  return trimLeft(str, [](const char c) { return c == '\n' || c == '\r'; });
+}
 
 // Removes leading and trailing spaces from the string
 std::string trim(const std::string &str);
