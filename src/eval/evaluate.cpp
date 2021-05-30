@@ -1,7 +1,7 @@
 #include "eval/evaluate.h"
 
-#include "eval/private/weights.h"
 #include "eval/coefs.h"
+#include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/misc.h"
 
@@ -34,17 +34,19 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const SoFCore::Board &b,
   Pair psq = inner_;
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
-    return Tag(psq + Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)]);
+    psq += Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)];
+    return Tag(psq);
   }
   if (move.kind == MoveKind::CastlingQueenside) {
-    return Tag(psq + Weights::PSQ_QUEENSIDE_UPD[static_cast<size_t>(color)]);
+    psq += Weights::PSQ_QUEENSIDE_UPD[static_cast<size_t>(color)];
+    return Tag(psq);
   }
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
   psq -= Weights::PSQ[srcCell][move.src] + Weights::PSQ[dstCell][move.dst];
   if (isMoveKindPromote(move.kind)) {
-    return Tag(psq +
-               Weights::PSQ[makeCell(color, moveKindPromotePiece(move.kind))][move.dst]);
+    psq += Weights::PSQ[makeCell(color, moveKindPromotePiece(move.kind))][move.dst];
+    return Tag(psq);
   }
   psq += Weights::PSQ[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {

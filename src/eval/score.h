@@ -177,3 +177,4 @@ static_assert(ScorePair::from(0, 0) * 2 == ScorePair::from(0, 0));
 }  // namespace SoFEval
 
 #endif  // SOF_EVAL_SCORE_INCLUDED
+
