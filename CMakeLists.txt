@@ -245,7 +245,9 @@ if(GTest_FOUND)
   target_link_libraries(test_eval_unit_test GTest::GTest GTest::Main)
   gtest_add_tests(TARGET test_eval_unit_test)
 
-  add_executable(test_util_unit_test src/util/test/unit_test.cpp)
+  add_executable(test_util_unit_test
+    src/util/test/parallel.cpp
+  )
   target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)
   gtest_add_tests(TARGET test_util_unit_test)
 endif()
