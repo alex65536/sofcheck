@@ -23,12 +23,13 @@ using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using SoFEval::adjustCheckmate;
-using SoFEval::isScoreCheckmate;
-using SoFEval::isScoreValid;
 using SoFEval::SCORE_INF;
 using SoFEval::score_t;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
+
+DIAGNOSTIC(using SoFEval::isScoreCheckmate;)
+DIAGNOSTIC(using SoFEval::isScoreValid;)
 
 using Evaluator = SoFEval::Evaluator<score_t>;
 
