@@ -37,15 +37,10 @@ public:
   CoefsPair() = default;
 
   // Creates a score pair from two `Coefs`
-  static constexpr CoefsPair from(Coefs first, Coefs second) {
-    return CoefsPair({std::move(first), std::move(second)});
-  }
+  static constexpr CoefsPair from(Coefs first, Coefs second) { return CoefsPair({first, second}); }
 
   // Creates a score pair from two equal `Coefs`
-  static constexpr CoefsPair from(Coefs first) {
-    Coefs second = first;
-    return CoefsPair({std::move(first), std::move(second)});
-  }
+  static constexpr CoefsPair from(Coefs first) { return CoefsPair({first, first}); }
 
   // Extracts first item from the pair
   constexpr const Coefs &first() const { return value_[0]; }
@@ -56,8 +51,8 @@ public:
   SOF_PROPAGATE_VECTOR_OPS(CoefsPair, Coefs, value_)
 
 private:
-  explicit constexpr CoefsPair(std::array<Coefs, 2> value) : value_(std::move(value)) {}
-  explicit constexpr CoefsPair(SoFUtil::ValArray<Coefs, 2> value) : value_(std::move(value)) {}
+  explicit constexpr CoefsPair(std::array<Coefs, 2> value) : value_(value) {}
+  explicit constexpr CoefsPair(SoFUtil::ValArray<Coefs, 2> value) : value_(value) {}
 
   SoFUtil::ValArray<Coefs, 2> value_;
 };

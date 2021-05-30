@@ -6,17 +6,17 @@
 #include <optional>
 #include <utility>
 
-int doGenerate(std::ostream &out, Json::Value json);
+int doGenerate(std::ostream &out, const Json::Value &json);
 
 int doGenerate(std::ostream &out, std::istream &in) {
   Json::Value json;
   Json::CharReaderBuilder builder;
-  Json::String errs;
+  std::string errs;
   if (!Json::parseFromStream(builder, in, &json, &errs)) {
     std::cerr << "JSON parse error: " << errs << std::endl;
     return 1;
   }
-  return doGenerate(out, std::move(json));
+  return doGenerate(out, json);
 }
 
 int main(int argc, char **argv) {

@@ -6,7 +6,7 @@
 
 using namespace SoFEval::Feat;
 
-int doGenerate(std::ostream &out, Json::Value json) {
+int doGenerate(std::ostream &out, const Json::Value &json) {
   LoadResult<Features> maybeFeatures = Features::load(json);
   if (maybeFeatures.isErr()) {
     std::cerr << "Error extracting features: " << maybeFeatures.unwrapErr().description

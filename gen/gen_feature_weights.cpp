@@ -31,8 +31,8 @@ struct Psq {
 
 Psq moldPsq(const PsqBundle &bundle) {
   Psq result;
-  for (size_t i = 0; i < 16; ++i) {
-    result.data[i].assign(64, "Pair::from(empty())");
+  for (auto &vec : result.data) {
+    vec.assign(64, "Pair::from(empty())");
   }
 
   // Precalculate the piece-square table itself. Note that we must be very careful not to use `+`
@@ -58,7 +58,7 @@ Psq moldPsq(const PsqBundle &bundle) {
           cost = "Pair::from(" + num2(pieceFeat, cellFeat) + ")";
         }
 
-        const size_t pos = (color == Color::White) ? i : coordFlipX(i);
+        const coord_t pos = (color == Color::White) ? i : coordFlipX(i);
         result.data[makeCell(color, piece)][pos] = cost;
       }
     }
@@ -88,12 +88,12 @@ Psq moldPsq(const PsqBundle &bundle) {
 
 void fillWeights(std::ostream &out, const Features &features, size_t indent) {
   for (const auto &bundle : features.bundles()) {
-    if (auto b = bundle.asSingle()) {
+    if (const auto *b = bundle.asSingle()) {
       out << std::string(indent, ' ') << "static constexpr T " << formatName(b->name())
           << " = number(" << b->name().offset << ");" << std::endl;
       continue;
     }
-    if (auto b = bundle.asArray()) {
+    if (const auto *b = bundle.asArray()) {
       out << std::string(indent, ' ') << "static constexpr T " << formatName(b->name())
           << "[] = {\n";
       for (size_t idx = 0; idx < b->count(); ++idx) {
@@ -103,7 +103,7 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
       out << std::string(indent, ' ') << "};\n";
       continue;
     }
-    if (auto b = bundle.asPsq()) {
+    if (const auto *b = bundle.asPsq()) {
       auto psq = moldPsq(*b);
       out << std::string(indent, ' ') << "static constexpr Pair " << formatName(b->name())
           << "[16][64] = {\n";
@@ -134,7 +134,7 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
   }
 }
 
-int doGenerate(std::ostream &out, Json::Value json) {
+int doGenerate(std::ostream &out, const Json::Value &json) {
   LoadResult<Features> maybeFeatures = Features::load(json);
   if (maybeFeatures.isErr()) {
     std::cerr << "Error extracting features: " << maybeFeatures.unwrapErr().description

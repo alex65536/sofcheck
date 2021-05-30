@@ -1,6 +1,7 @@
 #ifndef SOF_EVAL_FEAT_FEAT_INCLUDED
 #define SOF_EVAL_FEAT_FEAT_INCLUDED
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <string>
@@ -39,7 +40,10 @@ public:
   void apply(const WeightVec &weights) { value_ = weights[name_.offset]; }
   void extract(WeightVec &weights) const { weights[name_.offset] = value_; }
   std::vector<Name> names() const { return {name_}; }
+
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   size_t count() const { return 1; }
+
   const Name &name() const { return name_; }
 
   SingleBundle() = default;
@@ -96,7 +100,7 @@ private:
 
   Name name_;
   ArrayBundle pieceCosts_;
-  ArrayBundle tables_[PIECE_COUNT];
+  std::array<ArrayBundle, PIECE_COUNT> tables_;
   ArrayBundle endKingTable_;
 };
 
@@ -158,7 +162,7 @@ public:
   std::vector<Name> names() const;
   size_t count() const { return count_; }
 
-  const std::vector<Bundle> bundles() const { return bundles_; }
+  const std::vector<Bundle> &bundles() const { return bundles_; }
 
   Features() = default;
 

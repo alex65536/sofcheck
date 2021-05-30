@@ -11,10 +11,10 @@ using SoFUtil::Err;
 using SoFUtil::Ok;
 
 LoadResult<SingleBundle> SingleBundle::load(const Name &name, const Json::Value &json) {
-  if (!json.is<weight_t>()) {
+  if (!json.isInt()) {
     return Err(LoadError{name.name + " must be int"});
   }
-  return Ok(SingleBundle(name, json.as<weight_t>()));
+  return Ok(SingleBundle(name, json.asInt()));
 }
 
 void SingleBundle::save(Json::Value &json) const { json = value_; }
@@ -26,10 +26,10 @@ LoadResult<ArrayBundle> ArrayBundle::load(const Name &name, const Json::Value &j
   std::vector<weight_t> weights(json.size());
   for (Json::ArrayIndex idx = 0; idx < json.size(); ++idx) {
     const Json::Value &item = json[idx];
-    if (!item.is<weight_t>()) {
+    if (!item.isInt()) {
       return Err(LoadError{name.name + "." + std::to_string(idx) + " must be int"});
     }
-    weights[idx] = item.as<weight_t>();
+    weights[idx] = item.asInt();
   }
   return Ok(ArrayBundle(name, std::move(weights)));
 }
@@ -117,16 +117,16 @@ void PsqBundle::save(Json::Value &json) const {
 
 void PsqBundle::apply(const WeightVec &weights) {
   pieceCosts_.apply(weights);
-  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    tables_[idx].apply(weights);
+  for (ArrayBundle &item : tables_) {
+    item.apply(weights);
   }
   endKingTable_.apply(weights);
 }
 
 void PsqBundle::extract(WeightVec &weights) const {
   pieceCosts_.extract(weights);
-  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    tables_[idx].extract(weights);
+  for (const ArrayBundle &item : tables_) {
+    item.extract(weights);
   }
   endKingTable_.extract(weights);
 }
@@ -140,8 +140,8 @@ std::vector<Name> PsqBundle::names() const {
   };
 
   append(pieceCosts_.names());
-  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    append(tables_[idx].names());
+  for (const ArrayBundle &item : tables_) {
+    append(item.names());
   }
   append(endKingTable_.names());
 
@@ -152,8 +152,8 @@ size_t PsqBundle::count() const {
   size_t result = 0;
 
   result += pieceCosts_.count();
-  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    result += tables_[idx].count();
+  for (const ArrayBundle &item : tables_) {
+    result += item.count();
   }
   result += endKingTable_.count();
 
@@ -198,7 +198,7 @@ LoadResult<Features> Features::load(const Json::Value &json) {
   std::vector<Bundle> bundles(members.size());
   size_t counter = 0;
   for (size_t idx = 0; idx < members.size(); ++idx) {
-    const Json::String &member = members[idx];
+    const std::string &member = members[idx];
     LoadResult<Bundle> res = Bundle::load(Name{counter, member}, json[member]);
     if (res.isErr()) {
       return Err(res.unwrapErr());
