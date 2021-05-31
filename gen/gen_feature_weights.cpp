@@ -130,84 +130,6 @@ void fillWeights(SourcePrinter &p, const Features &features) {
   }
 }
 
-constexpr const char *CODE_PART_ONE = R"CODE(
-#ifndef SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
-#define SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
-
-#include "eval/coefs.h"
-#include "eval/score.h"
-#include "eval/types.h"
-
-namespace SoFEval::Private {
-
-// Base struct that helps to declare weights for score type `T`. You must specify `Item` type for
-// a simple item (e. g. a single coefficient) and `LargeItem` type for an item consisting of
-// multiple coefficients (e. g. castling updates in piece-square table). Note that these types are
-// not required to be equal to `T`, but they at least need to be implicitly convertible to `T`.
-template <typename T>
-struct WeightTraits {};
-
-template <>
-struct WeightTraits<score_t> {
-private:
-)CODE";
-
-constexpr const char *CODE_PART_TWO = R"CODE(
-public:
-  using Item = score_t;
-  using LargeItem = score_t;
-
-  static constexpr Item empty() { return 0; }
-  static constexpr Item number(size_t num) { return WEIGHTS[num]; }
-  static constexpr Item number(size_t n1, size_t n2) { return WEIGHTS[n1] + WEIGHTS[n2]; }
-
-  static constexpr Item negNumber(size_t num) { return -WEIGHTS[num]; }
-  static constexpr Item negNumber(size_t n1, size_t n2) { return -(WEIGHTS[n1] + WEIGHTS[n2]); }
-};
-
-template <>
-struct WeightTraits<Coefs> {
-  using Item = SmallCoefs<2>;
-  using LargeItem = SmallCoefs<8>;
-
-  static constexpr Item empty() { return Item(); }
-
-  static constexpr Item number(size_t num) { return Item().add(num, COEF_UNIT); }
-  static constexpr Item number(size_t n1, size_t n2) {
-    return Item().add(n1, COEF_UNIT).add(n2, COEF_UNIT);
-  }
-
-  static constexpr Item negNumber(size_t num) { return Item().add(num, -COEF_UNIT); }
-  static constexpr Item negNumber(size_t n1, size_t n2) {
-    return Item().add(n1, -COEF_UNIT).add(n2, -COEF_UNIT);
-  }
-};
-
-// Keeps weights for score type `T`
-template <typename T>
-struct Weights : private WeightTraits<T> {
-private:
-  using WeightTraits<T>::empty;
-  using WeightTraits<T>::number;
-  using WeightTraits<T>::negNumber;
-
-public:
-  using typename WeightTraits<T>::Item;
-  using typename WeightTraits<T>::LargeItem;
-  using Pair = typename ScoreTraits<Item>::Pair;
-  using LargePair = typename ScoreTraits<LargeItem>::Pair;
-
-  // Here come the weights declaration
-)CODE";
-
-constexpr const char *CODE_PART_THREE = R"CODE(
-};
-
-}  // namespace SoFEval::Private
-
-#endif  // SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
-)CODE";
-
 int doGenerate(SourcePrinter &p, const Json::Value &json) {
   LoadResult<Features> maybeFeatures = Features::load(json);
   if (maybeFeatures.isErr()) {
@@ -217,16 +139,35 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
   }
   const Features features = maybeFeatures.unwrap();
 
-  p.stream() << trimEolLeft(CODE_PART_ONE);
-  p.indent(2);
-  p.array("WEIGHTS", "static score_t", features.extract());
-  p.outdent(2);
+  p.startHeaderGuard("SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED");
   p.skip();
-  p.stream() << trimEolLeft(CODE_PART_TWO);
+  p.line() << "#include \"eval/private/weight_traits.h\"";
+  p.skip();
+  p.line() << "namespace SoFEval::Private {";
+  p.skip();
+  p.line() << "// Keeps weights for score type `T`";
+  p.line() << "template <typename T>";
+  p.line() << "struct Weights : private WeightTraits<T> {";
+  p.line() << "private:";
+  p.line() << "  using WeightTraits<T>::empty;";
+  p.line() << "  using WeightTraits<T>::number;";
+  p.line() << "  using WeightTraits<T>::negNumber;";
+  p.skip();
+  p.line() << "public:";
+  p.line() << "  using typename WeightTraits<T>::Item;";
+  p.line() << "  using typename WeightTraits<T>::LargeItem;";
+  p.line() << "  using Pair = typename ScoreTraits<Item>::Pair;";
+  p.line() << "  using LargePair = typename ScoreTraits<LargeItem>::Pair;";
+  p.skip();
+  p.line() << "  // Here comes the weights declaration";
   p.indent(2);
   fillWeights(p, features);
   p.outdent(2);
-  p.stream() << trimEolLeft(CODE_PART_THREE);
+  p.line() << "};";
+  p.skip();
+  p.line() << "}  // namespace SoFEval::Private";
+  p.skip();
+  p.endHeaderGuard();
 
   return 0;
 }

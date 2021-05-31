@@ -109,6 +109,14 @@ add_custom_command(
   DEPENDS src/eval/features.json
 )
 add_custom_command(
+  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
+  COMMAND gen_feature_weight_values
+    "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
+    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
+  DEPENDS gen_feature_weight_values
+  DEPENDS src/eval/features.json
+)
+add_custom_command(
   OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
   COMMAND gen_feature_weights
     "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
@@ -160,6 +168,7 @@ add_library(sof_eval STATIC
   src/eval/evaluate.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
+  "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
 )
 target_link_libraries(sof_eval PUBLIC sof_core sof_util sof_bot_api)
 
@@ -190,6 +199,7 @@ add_executable(gen_near_attacks
   gen/gen_main.cpp
   gen/common.cpp
 )
+
 add_executable(gen_magic_consts
   gen/gen_magic_consts.cpp
   gen/gen_main.cpp
@@ -201,7 +211,14 @@ add_executable(gen_feature_count
   gen/gen_json_main.cpp
   gen/common.cpp
 )
-target_link_libraries(gen_feature_count sof_util sof_eval_feat jsoncpp_lib)
+target_link_libraries(gen_feature_count sof_eval_feat jsoncpp_lib)
+
+add_executable(gen_feature_weight_values
+  gen/gen_feature_weight_values.cpp
+  gen/gen_json_main.cpp
+  gen/common.cpp
+)
+target_link_libraries(gen_feature_weight_values sof_eval_feat jsoncpp_lib)
 
 add_executable(gen_feature_weights
   gen/gen_feature_weights.cpp
