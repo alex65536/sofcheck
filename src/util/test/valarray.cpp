@@ -42,13 +42,13 @@ TEST(SoFUtil, FixedValArray_Operators) {
 }
 
 template <typename T>
-inline static std::vector<T> ToVec(T a1, T a2, T a3, T a4, T a5, T a6) {
+inline static std::vector<T> toVec(T a1, T a2, T a3, T a4, T a5, T a6) {
   return std::vector<T>{std::move(a1), std::move(a2), std::move(a3),
                         std::move(a4), std::move(a5), std::move(a6)};
 }
 
 template <typename T>
-inline static std::vector<T> ToVec(T a1, T a2, T a3, T a4, T a5) {
+inline static std::vector<T> toVec(T a1, T a2, T a3, T a4, T a5) {
   return std::vector<T>{std::move(a1), std::move(a2), std::move(a3), std::move(a4), std::move(a5)};
 }
 
@@ -57,40 +57,40 @@ TEST(SoFUtil, SparseValArray_Base) {
   using SmallArr = SparseValArray<int, SoFUtil::SmallVector<SoFUtil::IndexValuePair<int>, 6>>;
 
   Arr arr(6);
-  EXPECT_EQ(arr.take(), ToVec(0, 0, 0, 0, 0, 0));
+  EXPECT_EQ(arr.take(), toVec(0, 0, 0, 0, 0, 0));
   EXPECT_EQ(arr.size(), 6);
   arr.add(3, 4).add(2, 5).add(3, -1);
-  EXPECT_EQ(arr.take(), ToVec(0, 0, 5, 3, 0, 0));
+  EXPECT_EQ(arr.take(), toVec(0, 0, 5, 3, 0, 0));
 
   arr = SmallArr(6).add(1, 2).add(0, 5).add(1, -3).add(2, 4).add(1, 42);
-  EXPECT_EQ(arr.take(), ToVec(5, 41, 4, 0, 0, 0));
+  EXPECT_EQ(arr.take(), toVec(5, 41, 4, 0, 0, 0));
 
   arr = SmallArr(5).add(1, 2).add(0, 5).add(1, -3).add(2, 4).add(1, 42);
-  EXPECT_EQ(arr.take(), ToVec(5, 41, 4, 0, 0));
+  EXPECT_EQ(arr.take(), toVec(5, 41, 4, 0, 0));
 
   Arr arr2 = SmallArr(6).add(1, 2).add(0, 5).add(1, -3).add(2, 4).add(1, 42).add(5, 3);
-  EXPECT_EQ(arr2.take(), ToVec(5, 41, 4, 0, 0, 3));
+  EXPECT_EQ(arr2.take(), toVec(5, 41, 4, 0, 0, 3));
 
   Arr arr3 = SmallArr(5).add(1, 2).add(0, 5).add(1, -3).add(2, 4).add(1, 42);
-  EXPECT_EQ(arr3.take(), ToVec(5, 41, 4, 0, 0));
+  EXPECT_EQ(arr3.take(), toVec(5, 41, 4, 0, 0));
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wall"
   arr = Arr(6).add(1, 2).add(0, 5).add(1, -3).add(2, 4).add(1, 42);
   arr = arr;  // NOLINT
-  EXPECT_EQ(arr.take(), ToVec(5, 41, 4, 0, 0, 0));
+  EXPECT_EQ(arr.take(), toVec(5, 41, 4, 0, 0, 0));
 #pragma GCC diagnostic pop
 }
 
 TEST(SoFUtil, SparseValArray_Compactify) {
   using Arr = SparseValArray<int>;
 
-  std::mt19937 rnd(42);
+  std::mt19937 rnd(42);  // NOLINT(cert-msc32-c): seed must be fixed here
   Arr arr(5);
   std::vector<int> v(5);
   for (size_t attempt = 0; attempt < 1'000; ++attempt) {
     const size_t pos = rnd() % 5;
-    const int val = rnd() % 10;
+    const int val = static_cast<int>(rnd() % 10);
     v[pos] += val;
     arr.add(pos, val);
   }
@@ -100,9 +100,9 @@ TEST(SoFUtil, SparseValArray_Compactify) {
   for (size_t idx = 0; idx < 12; ++idx) {
     arr2.add(4, 1);
   }
-  EXPECT_EQ(arr2.take(), ToVec(0, 0, 0, 0, 12, 0));
+  EXPECT_EQ(arr2.take(), toVec(0, 0, 0, 0, 12, 0));
   arr2.compactify();
-  EXPECT_EQ(arr2.take(), ToVec(0, 0, 0, 0, 12, 0));
+  EXPECT_EQ(arr2.take(), toVec(0, 0, 0, 0, 12, 0));
 }
 
 TEST(SoFUtil, SparseValArray_Equality) {
@@ -138,36 +138,36 @@ TEST(SoFUtil, SparseValArray_Operators) {
 
   {
     const auto arr = Arr(5).add(3, 4).add(2, -1).add(1, 2).add(3, 8);
-    EXPECT_EQ((+arr).take(), ToVec(0, 2, -1, 12, 0));
-    EXPECT_EQ((-arr).take(), ToVec(0, -2, 1, -12, 0));
+    EXPECT_EQ((+arr).take(), toVec(0, 2, -1, 12, 0));
+    EXPECT_EQ((-arr).take(), toVec(0, -2, 1, -12, 0));
   }
 
   {
     auto arr = Arr(5).add(3, 4).add(2, -1).add(1, 2).add(3, 8);
     arr += Arr(5).add(2, 8).add(1, -3).add(4, 5);
-    EXPECT_EQ(arr.take(), ToVec(0, -1, 7, 12, 5));
+    EXPECT_EQ(arr.take(), toVec(0, -1, 7, 12, 5));
     arr += SmallArr(5).add(3, 1).add(0, -2).add(4, -5).add(3, -2);
-    EXPECT_EQ(arr.take(), ToVec(-2, -1, 7, 11, 0));
+    EXPECT_EQ(arr.take(), toVec(-2, -1, 7, 11, 0));
   }
 
   {
     auto arr = Arr(5).add(3, 4).add(2, -1).add(1, 2).add(3, 8);
     arr -= Arr(5).add(2, 8).add(1, -3).add(4, 5);
-    EXPECT_EQ(arr.take(), ToVec(0, 5, -9, 12, -5));
+    EXPECT_EQ(arr.take(), toVec(0, 5, -9, 12, -5));
     arr -= SmallArr(5).add(3, 1).add(0, -2).add(4, -5).add(3, -2);
-    EXPECT_EQ(arr.take(), ToVec(2, 5, -9, 13, 0));
+    EXPECT_EQ(arr.take(), toVec(2, 5, -9, 13, 0));
   }
 
   {
     auto arr = Arr(5).add(3, 4).add(2, -1).add(1, 2).add(3, 8);
     arr *= 2;
-    EXPECT_EQ(arr.take(), ToVec(0, 4, -2, 24, 0));
+    EXPECT_EQ(arr.take(), toVec(0, 4, -2, 24, 0));
   }
 
   const auto first = Arr(5).add(3, 4).add(2, -1).add(1, 2).add(3, 8);
   const auto second = Arr(5).add(2, 8).add(1, -3).add(4, 5);
-  EXPECT_EQ((first + second).take(), ToVec(0, -1, 7, 12, 5));
-  EXPECT_EQ((first - second).take(), ToVec(0, 5, -9, 12, -5));
-  EXPECT_EQ((first * 2).take(), ToVec(0, 4, -2, 24, 0));
-  EXPECT_EQ((2 * first).take(), ToVec(0, 4, -2, 24, 0));
+  EXPECT_EQ((first + second).take(), toVec(0, -1, 7, 12, 5));
+  EXPECT_EQ((first - second).take(), toVec(0, 5, -9, 12, -5));
+  EXPECT_EQ((first * 2).take(), toVec(0, 4, -2, 24, 0));
+  EXPECT_EQ((2 * first).take(), toVec(0, 4, -2, 24, 0));
 }
