@@ -56,11 +56,11 @@ int doGenerate(SourcePrinter &p) {
   auto whitePawnAttacks = generateWhitePawnAttacks();
   auto blackPawnAttacks = generateBlackPawnAttacks();
 
-  p.startHeaderGuard("SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED");
+  p.headerGuard("SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED");
   p.skip();
-  p.line() << "#include \"core/types.h\"";
+  p.include("core/types.h");
   p.skip();
-  p.line() << "namespace SoFCore::Private {";
+  auto ns = p.inNamespace("SoFCore::Private");
   p.skip();
   p.bitboardArray("KING_ATTACKS", kingAttacks);
   p.skip();
@@ -70,9 +70,6 @@ int doGenerate(SourcePrinter &p) {
   p.skip();
   p.bitboardArray("BLACK_PAWN_ATTACKS", blackPawnAttacks);
   p.skip();
-  p.line() << "}  // namespace SoFCore::Private";
-  p.skip();
-  p.endHeaderGuard();
 
   return 0;
 }

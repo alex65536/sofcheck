@@ -14,17 +14,14 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
   }
   const Features features = maybeFeatures.unwrap();
 
-  p.startHeaderGuard("SOF_EVAL_PRIVATE_WEIGHT_VALUES_INCLUDED");
+  p.headerGuard("SOF_EVAL_PRIVATE_WEIGHT_VALUES_INCLUDED");
   p.skip();
-  p.line() << "#include \"eval/score.h\"";
+  p.include("eval/score.h");
   p.skip();
-  p.line() << "namespace SoFEval::Private {";
+  auto ns = p.inNamespace("SoFEval::Private");
   p.skip();
   p.array("WEIGHT_VALUES", "score_t", features.extract());
   p.skip();
-  p.line() << "}  // namespace SoFEval::Private";
-  p.skip();
-  p.endHeaderGuard();
 
   return 0;
 }

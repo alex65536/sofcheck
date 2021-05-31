@@ -33,8 +33,6 @@ public:
     bool printEoln_;
   };
 
-  friend class Line;
-
   void skip() { stream_ << "\n"; }
 
   Line line() { return Line(*this, true); }
@@ -57,12 +55,33 @@ public:
   void bitboardArray(const char *name, const std::vector<SoFCore::bitboard_t> &array);
   void coordArray(const char *name, const std::vector<SoFCore::coord_t> &array);
 
-  void startHeaderGuard(const char *name);
-  void endHeaderGuard();
+  void headerGuard(const std::string &name);
+
+  class NamespaceScope : public SoFUtil::NoCopyMove {
+  public:
+    ~NamespaceScope();
+
+  private:
+    friend class SourcePrinter;
+
+    NamespaceScope(SourcePrinter &printer, std::string name);
+
+    SourcePrinter &printer_;
+    std::string name_;
+  };
+
+  NamespaceScope inNamespace(const std::string &name) { return NamespaceScope(*this, name); }
+  void include(const char *header);
+  void sysInclude(const char *header);
+
+  ~SourcePrinter();
 
 private:
+  friend class Line;
+
   std::ostream &stream_;
   std::string headerGuardName_;
+  bool hasHeaderGuard_ = false;
   size_t indent_ = 0;
 };
 

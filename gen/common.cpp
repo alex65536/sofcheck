@@ -1,8 +1,10 @@
 #include "common.h"
 
 #include <iomanip>
+#include <utility>
 
 #include "util/math.h"
+#include "util/misc.h"
 
 using SoFUtil::log10;
 
@@ -39,13 +41,12 @@ void SourcePrinter::coordArray(const char *name, const std::vector<SoFCore::coor
   stream_ << ";\n";
 }
 
-void SourcePrinter::startHeaderGuard(const char *name) {
+void SourcePrinter::headerGuard(const std::string &name) {
   headerGuardName_ = name;
+  hasHeaderGuard_ = true;
   line() << "#ifndef " << name;
   line() << "#define " << name;
 }
-
-void SourcePrinter::endHeaderGuard() { line() << "#endif  // " << headerGuardName_; }
 
 SourcePrinter::Line::Line(SourcePrinter &printer, bool printEoln)
     : printer_(printer), printEoln_(printEoln) {
@@ -56,4 +57,21 @@ SourcePrinter::Line::~Line() {
   if (printEoln_) {
     printer_.stream() << "\n";
   }
+}
+
+void SourcePrinter::include(const char *header) { line() << "#include \"" << header << "\""; }
+
+void SourcePrinter::sysInclude(const char *header) { line() << "#include <" << header << ">"; }
+
+SourcePrinter::NamespaceScope::NamespaceScope(SourcePrinter &printer, std::string name)
+    : printer_(printer), name_(std::move(name)) {
+  printer_.line() << "namespace " << name_ << " {";
+}
+
+SourcePrinter::NamespaceScope::~NamespaceScope() { printer_.line() << "}  // namespace " << name_; }
+
+SourcePrinter::~SourcePrinter() {
+  SOF_ASSERT_MSG("No header guard was specified", hasHeaderGuard_);
+  skip();
+  line() << "#endif  // " << headerGuardName_;
 }

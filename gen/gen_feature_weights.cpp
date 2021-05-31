@@ -139,11 +139,11 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
   }
   const Features features = maybeFeatures.unwrap();
 
-  p.startHeaderGuard("SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED");
+  p.headerGuard("SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED");
   p.skip();
-  p.line() << "#include \"eval/private/weight_traits.h\"";
+  p.include("eval/private/weight_traits.h");
   p.skip();
-  p.line() << "namespace SoFEval::Private {";
+  auto ns = p.inNamespace("SoFEval::Private");
   p.skip();
   p.line() << "// Keeps weights for score type `T`";
   p.line() << "template <typename T>";
@@ -165,9 +165,6 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
   p.outdent(2);
   p.line() << "};";
   p.skip();
-  p.line() << "}  // namespace SoFEval::Private";
-  p.skip();
-  p.endHeaderGuard();
 
   return 0;
 }

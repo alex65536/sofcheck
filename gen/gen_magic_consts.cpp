@@ -64,11 +64,11 @@ std::vector<coord_t> generateShifts() {
 }
 
 int doGenerate(SourcePrinter &p) {
-  p.startHeaderGuard("SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED");
+  p.headerGuard("SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED");
   p.skip();
-  p.line() << "#include \"core/types.h\"";
+  p.include("core/types.h");
   p.skip();
-  p.line() << "namespace SoFCore::Private {";
+  auto ns = p.inNamespace("SoFCore::Private");
   p.skip();
   p.bitboardArray("ROOK_MAGICS", generateMagics<MagicType::Rook>());
   p.skip();
@@ -78,9 +78,6 @@ int doGenerate(SourcePrinter &p) {
   p.skip();
   p.coordArray("BISHOP_SHIFTS", generateShifts<MagicType::Bishop>());
   p.skip();
-  p.line() << "}  // namespace SoFCore::Private";
-  p.skip();
-  p.endHeaderGuard();
 
   return 0;
 }

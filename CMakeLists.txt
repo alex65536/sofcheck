@@ -199,26 +199,28 @@ add_executable(gen_near_attacks
   gen/gen_main.cpp
   gen/common.cpp
 )
+target_link_libraries(gen_near_attacks sof_util)
 
 add_executable(gen_magic_consts
   gen/gen_magic_consts.cpp
   gen/gen_main.cpp
   gen/common.cpp
 )
+target_link_libraries(gen_magic_consts sof_util)
 
 add_executable(gen_feature_count
   gen/gen_feature_count.cpp
   gen/gen_json_main.cpp
   gen/common.cpp
 )
-target_link_libraries(gen_feature_count sof_eval_feat jsoncpp_lib)
+target_link_libraries(gen_feature_count sof_util sof_eval_feat jsoncpp_lib)
 
 add_executable(gen_feature_weight_values
   gen/gen_feature_weight_values.cpp
   gen/gen_json_main.cpp
   gen/common.cpp
 )
-target_link_libraries(gen_feature_weight_values sof_eval_feat jsoncpp_lib)
+target_link_libraries(gen_feature_weight_values sof_util sof_eval_feat jsoncpp_lib)
 
 add_executable(gen_feature_weights
   gen/gen_feature_weights.cpp

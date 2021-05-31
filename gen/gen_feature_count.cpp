@@ -14,14 +14,13 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
   }
   const Features features = maybeFeatures.unwrap();
 
-  p.startHeaderGuard("SOF_EVAL_FEATURE_COUNT_INCLUDED");
+  p.headerGuard("SOF_EVAL_FEATURE_COUNT_INCLUDED");
   p.skip();
-  p.line() << "namespace SoFEval {";
+  auto ns = p.inNamespace("SoFEval");
+  p.skip();
   p.line() << "// Total number of features";
   p.line() << "constexpr size_t FEATURE_COUNT = " << features.count() << ";";
-  p.line() << "}  // namespace SoFEval";
   p.skip();
-  p.endHeaderGuard();
 
   return 0;
 }
