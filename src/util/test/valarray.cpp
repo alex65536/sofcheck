@@ -85,7 +85,7 @@ TEST(SoFUtil, SparseValArray_Base) {
 TEST(SoFUtil, SparseValArray_Compactify) {
   using Arr = SparseValArray<int>;
 
-  std::mt19937 rnd(42);  // NOLINT(cert-msc32-c): seed must be fixed here
+  std::mt19937 rnd(42);  // NOLINT(cert-msc32-c, cert-msc51-cpp): use fixed seed
   Arr arr(5);
   std::vector<int> v(5);
   for (size_t attempt = 0; attempt < 1'000; ++attempt) {
