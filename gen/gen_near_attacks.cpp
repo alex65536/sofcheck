@@ -1,5 +1,3 @@
-#include <iomanip>
-#include <iostream>
 #include <vector>
 
 #include "common.h"
@@ -52,31 +50,29 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
   return generateDirected(offX, offY, 2);
 }
 
-void doGenerate(std::ostream &out) {
-  out << "#ifndef SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED\n";
-  out << "#define SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED\n";
-  out << "\n";
-  out << "#include \"core/types.h\"\n";
-  out << "\n";
-  out << "namespace SoFCore::Private {\n";
-  out << "\n";
-
+int doGenerate(SourcePrinter &p) {
   auto knightAttacks = generateKnightAttacks();
   auto kingAttacks = generateKingAttacks();
   auto whitePawnAttacks = generateWhitePawnAttacks();
   auto blackPawnAttacks = generateBlackPawnAttacks();
 
-  printBitboardArray(out, kingAttacks, "KING_ATTACKS");
-  out << "\n";
-  printBitboardArray(out, knightAttacks, "KNIGHT_ATTACKS");
-  out << "\n";
-  printBitboardArray(out, whitePawnAttacks, "WHITE_PAWN_ATTACKS");
-  out << "\n";
-  printBitboardArray(out, blackPawnAttacks, "BLACK_PAWN_ATTACKS");
-  out << "\n";
+  p.startHeaderGuard("SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED");
+  p.skip();
+  p.line() << "#include \"core/types.h\"";
+  p.skip();
+  p.line() << "namespace SoFCore::Private {";
+  p.skip();
+  p.bitboardArray("KING_ATTACKS", kingAttacks);
+  p.skip();
+  p.bitboardArray("KNIGHT_ATTACKS", knightAttacks);
+  p.skip();
+  p.bitboardArray("WHITE_PAWN_ATTACKS", whitePawnAttacks);
+  p.skip();
+  p.bitboardArray("BLACK_PAWN_ATTACKS", blackPawnAttacks);
+  p.skip();
+  p.line() << "}  // namespace SoFCore::Private";
+  p.skip();
+  p.endHeaderGuard();
 
-  out << "}  // namespace SoFCore::Private\n";
-  out << "\n";
-
-  out << "#endif  // SOF_CORE_PRIVATE_NEAR_ATTACKS_INCLUDED\n";
+  return 0;
 }

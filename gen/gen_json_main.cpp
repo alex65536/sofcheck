@@ -5,9 +5,11 @@
 #include <iostream>
 #include <utility>
 
-int doGenerate(std::ostream &out, const Json::Value &json);
+#include "common.h"
 
-int doGenerate(std::ostream &out, std::istream &in) {
+int doGenerate(SourcePrinter &printer, const Json::Value &json);
+
+int doGenerate(SourcePrinter &printer, std::istream &in) {
   Json::Value json;
   Json::CharReaderBuilder builder;
   std::string errs;
@@ -15,13 +17,14 @@ int doGenerate(std::ostream &out, std::istream &in) {
     std::cerr << "JSON parse error: " << errs << std::endl;
     return 1;
   }
-  return doGenerate(out, json);
+  return doGenerate(printer, json);
 }
 
 int main(int argc, char **argv) {
   // TODO : improve argument parsing
   if (argc == 1) {
-    return doGenerate(std::cout, std::cin);
+    SourcePrinter printer(std::cout);
+    return doGenerate(printer, std::cin);
   }
   if (argc == 3) {
     std::ofstream outFile(argv[1]);
@@ -34,7 +37,8 @@ int main(int argc, char **argv) {
       std::cerr << "Unable to open " << argv[2] << std::endl;
       return 1;
     }
-    return doGenerate(outFile, inFile);
+    SourcePrinter printer(outFile);
+    return doGenerate(printer, inFile);
   }
   std::cerr << "Usage: " << argv[0] << " OUT_FILE IN_FILE" << std::endl;
   return 1;

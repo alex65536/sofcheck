@@ -11,38 +11,47 @@ void printBitboard(std::ostream &out, const SoFCore::bitboard_t val) {
       << std::setfill(' ');
 }
 
-template <typename T, typename ItemPrinter>
-static void printArrayCommon(std::ostream &out, const std::vector<T> &array, const size_t indent,
-                             ItemPrinter printer) {
-  out << "[" << std::dec << array.size() << "] = {\n";
-  const size_t idxLen = (array.size() <= 1) ? 1 : log10(array.size() - 1) + 1;
-  for (size_t i = 0; i < array.size(); ++i) {
-    out << std::string(indent + 4, ' ') << "/*" << std::setw(idxLen) << i << "*/ ";
-    printer(out, array[i]);
-    if (i + 1 != array.size()) {
-      out << ",";
+void SourcePrinter::arrayBody(size_t size, std::function<void(size_t)> printer) {
+  stream_ << "{\n";
+  indent(4);
+  const size_t idxLen = (size <= 1) ? 1 : log10(size - 1) + 1;
+  for (size_t i = 0; i < size; ++i) {
+    lineStart() << "/*" << std::setw(idxLen) << i << "*/ ";
+    printer(i);
+    if (i + 1 != size) {
+      stream_ << ",";
     }
-    out << "\n";
+    stream_ << "\n";
   }
-  out << std::string(indent, ' ') << "};\n";
+  outdent(4);
+  line() << "};";
 }
 
-void printCoordArray(std::ostream &out, const std::vector<SoFCore::coord_t> &array,
-                     const char *name, const size_t indent) {
-  out << "constexpr coord_t " << name;
-  printArrayCommon(out, array, indent,
-                   [](std::ostream &out, const SoFCore::coord_t x) { out << static_cast<int>(x); });
+void SourcePrinter::bitboardArray(const char *name, const std::vector<SoFCore::bitboard_t> &array) {
+  lineStart() << "constexpr bitboard_t " << name << "[" << array.size() << "] = ";
+  arrayBody(array.size(), [&](const size_t idx) { printBitboard(stream_, array[idx]); });
 }
 
-void printBitboardArray(std::ostream &out, const std::vector<SoFCore::bitboard_t> &array,
-                        const char *name, const size_t indent) {
-  out << "constexpr bitboard_t " << name;
-  printArrayCommon(out, array, indent,
-                   [](std::ostream &out, const SoFCore::bitboard_t bb) { printBitboard(out, bb); });
+void SourcePrinter::coordArray(const char *name, const std::vector<SoFCore::coord_t> &array) {
+  lineStart() << "constexpr coord_t " << name << "[" << array.size() << "] = ";
+  arrayBody(array.size(), [&](const size_t idx) { stream_ << static_cast<int>(array[idx]); });
 }
 
-void printIntArray(std::ostream &out, const std::vector<int32_t> &array, const char *name,
-                   const char *typeName, const size_t indent) {
-  out << "constexpr " << typeName << " " << name;
-  printArrayCommon(out, array, indent, [](std::ostream &out, const int32_t x) { out << x; });
+void SourcePrinter::startHeaderGuard(const char *name) {
+  headerGuardName_ = name;
+  line() << "#ifndef " << name;
+  line() << "#define " << name;
+}
+
+void SourcePrinter::endHeaderGuard() { line() << "#endif  // " << headerGuardName_; }
+
+SourcePrinter::Line::Line(SourcePrinter &printer, bool printEoln)
+    : printer_(printer), printEoln_(printEoln) {
+  printer.stream_ << std::setw(printer.indent_) << std::setfill(' ') << "";
+}
+
+SourcePrinter::Line::~Line() {
+  if (printEoln_) {
+    printer_.stream() << "\n";
+  }
 }

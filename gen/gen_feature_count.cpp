@@ -1,12 +1,11 @@
 #include <jsoncpp/json/json.h>
 
-#include <iostream>
-
+#include "common.h"
 #include "eval/feat/feat.h"
 
 using namespace SoFEval::Feat;
 
-int doGenerate(std::ostream &out, const Json::Value &json) {
+int doGenerate(SourcePrinter &p, const Json::Value &json) {
   LoadResult<Features> maybeFeatures = Features::load(json);
   if (maybeFeatures.isErr()) {
     std::cerr << "Error extracting features: " << maybeFeatures.unwrapErr().description
@@ -15,15 +14,14 @@ int doGenerate(std::ostream &out, const Json::Value &json) {
   }
   const Features features = maybeFeatures.unwrap();
 
-  out << "#ifndef SOF_EVAL_FEATURE_COUNT_INCLUDED\n";
-  out << "#define SOF_EVAL_FEATURE_COUNT_INCLUDED\n";
-  out << "\n";
-  out << "namespace SoFEval {\n";
-  out << "// Total number of features\n";
-  out << "constexpr size_t FEATURE_COUNT = " << features.count() << ";\n";
-  out << "}  // namespace SoFEval\n";
-  out << "\n";
-  out << "#endif  // SOF_EVAL_FEATURE_COUNT_INCLUDED\n";
+  p.startHeaderGuard("SOF_EVAL_FEATURE_COUNT_INCLUDED");
+  p.skip();
+  p.line() << "namespace SoFEval {";
+  p.line() << "// Total number of features";
+  p.line() << "constexpr size_t FEATURE_COUNT = " << features.count() << ";";
+  p.line() << "}  // namespace SoFEval";
+  p.skip();
+  p.endHeaderGuard();
 
   return 0;
 }

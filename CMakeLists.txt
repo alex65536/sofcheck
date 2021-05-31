@@ -199,6 +199,7 @@ add_executable(gen_magic_consts
 add_executable(gen_feature_count
   gen/gen_feature_count.cpp
   gen/gen_json_main.cpp
+  gen/common.cpp
 )
 target_link_libraries(gen_feature_count sof_util sof_eval_feat jsoncpp_lib)
 

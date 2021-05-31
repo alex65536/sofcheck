@@ -84,49 +84,50 @@ Psq psqFromBundle(const PsqBundle &bundle) {
   return result;
 }
 
-void fillWeights(std::ostream &out, const Features &features, size_t indent) {
+void fillWeights(SourcePrinter &p, const Features &features) {
   for (const auto &bundle : features.bundles()) {
     if (const auto *b = bundle.asSingle()) {
-      out << std::string(indent, ' ') << "static constexpr Item " << formatName(b->name())
-          << " = number(" << b->name().offset << ");\n";
+      p.line() << "static constexpr Item " << formatName(b->name()) << " = number("
+               << b->name().offset << ");";
       continue;
     }
 
     if (const auto *b = bundle.asArray()) {
-      // FIXME : use `printArrayCommon` here
-      out << std::string(indent, ' ') << "static constexpr Item " << formatName(b->name())
-          << "[] = {\n";
-      for (size_t idx = 0; idx < b->count(); ++idx) {
-        out << std::string(indent + 2, ' ') << "number(" << b->name().offset + idx << ")";
-        out << ((idx + 1 == b->count()) ? "\n" : ",\n");
-      }
-      out << std::string(indent, ' ') << "};\n";
+      p.lineStart() << "static constexpr Item " << formatName(b->name()) << "[" << b->count()
+                    << "] = ";
+      p.arrayBody(b->count(), [&](const size_t idx) {
+        p.stream() << "number(" << b->name().offset + idx << ")";
+      });
       continue;
     }
 
     if (const auto *b = bundle.asPsq()) {
       const auto psq = psqFromBundle(*b);
-      out << std::string(indent, ' ') << "static constexpr Pair " << formatName(b->name())
-          << "[16][64] = {\n";
+      p.line() << "static constexpr Pair " << formatName(b->name()) << "[16][64] = {";
+      // FIXME : use `printArrayCommon` for outer array
+      p.indent(4);
       for (size_t i = 0; i < 16; ++i) {
-        out << std::string(indent + 4, ' ') << "/*" << std::setw(2) << i << "*/ {\n";
+        p.line() << "/*" << std::setw(2) << i << "*/ {";
         // FIXME : use `printArrayCommon` here
+        p.indent(2);
         for (size_t j = 0; j < 64; ++j) {
-          out << std::string(indent + 6, ' ') << psq.data[i][j];
-          out << ((j + 1 == 64) ? "\n" : ",\n");
+          p.line() << psq.data[i][j] << ((j + 1 == 64) ? "" : ",");
         }
-        out << std::string(indent + 4, ' ') << "}";
-        out << ((i + 1 == 16) ? "\n" : ",\n");
+        p.outdent(2);
+        p.line() << "}" << ((i + 1 == 16) ? "" : ",");
       }
-      out << std::string(indent, ' ') << "};\n";
+      p.outdent(4);
+      p.line() << "};";
 
       auto outCastling = [&](const char *name, const std::string value[2]) {
-        out << std::string(indent, ' ') << "static constexpr LargePair " << formatName(b->name())
-            << "_" << name << "_UPD[2] = {\n";
+        p.line() << "static constexpr LargePair " << formatName(b->name()) << "_" << name
+                 << "_UPD[2] = {";
         static_assert(static_cast<int>(Color::White) == 0 && static_cast<int>(Color::Black) == 1);
-        out << std::string(indent + 4, ' ') << "/* White */ " << value[0] << ",\n";
-        out << std::string(indent + 4, ' ') << "/* Black */ " << value[1] << "\n";
-        out << std::string(indent, ' ') << "};\n";
+        p.indent(4);
+        p.line() << "/* White */ " << value[0] << ",";
+        p.line() << "/* Black */ " << value[1];
+        p.outdent(4);
+        p.line() << "};";
       };
 
       outCastling("KINGSIDE", psq.kingsideCastling);
@@ -216,7 +217,7 @@ constexpr const char *CODE_PART_THREE = R"CODE(
 #endif  // SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED
 )CODE";
 
-int doGenerate(std::ostream &out, const Json::Value &json) {
+int doGenerate(SourcePrinter &p, const Json::Value &json) {
   LoadResult<Features> maybeFeatures = Features::load(json);
   if (maybeFeatures.isErr()) {
     std::cerr << "Error extracting features: " << maybeFeatures.unwrapErr().description
@@ -225,13 +226,16 @@ int doGenerate(std::ostream &out, const Json::Value &json) {
   }
   const Features features = maybeFeatures.unwrap();
 
-  out << trimEolLeft(CODE_PART_ONE);
-  out << "  static ";
-  printIntArray(out, features.extract(), "WEIGHTS", "score_t", 2);
-  out << "\n";
-  out << trimEolLeft(CODE_PART_TWO);
-  fillWeights(out, features, 2);
-  out << trimEolLeft(CODE_PART_THREE);
+  p.stream() << trimEolLeft(CODE_PART_ONE);
+  p.indent(2);
+  p.array("WEIGHTS", "static score_t", features.extract());
+  p.outdent(2);
+  p.skip();
+  p.stream() << trimEolLeft(CODE_PART_TWO);
+  p.indent(2);
+  fillWeights(p, features);
+  p.outdent(2);
+  p.stream() << trimEolLeft(CODE_PART_THREE);
 
   return 0;
 }

@@ -1,4 +1,3 @@
-#include <iostream>
 #include <random>
 #include <vector>
 
@@ -64,26 +63,24 @@ std::vector<coord_t> generateShifts() {
   return shifts;
 }
 
-void doGenerate(std::ostream &out) {
-  out << "#ifndef SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED\n";
-  out << "#define SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED\n";
-  out << "\n";
-  out << "#include \"core/types.h\"\n";
-  out << "\n";
-  out << "namespace SoFCore::Private {\n";
-  out << "\n";
+int doGenerate(SourcePrinter &p) {
+  p.startHeaderGuard("SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED");
+  p.skip();
+  p.line() << "#include \"core/types.h\"";
+  p.skip();
+  p.line() << "namespace SoFCore::Private {";
+  p.skip();
+  p.bitboardArray("ROOK_MAGICS", generateMagics<MagicType::Rook>());
+  p.skip();
+  p.bitboardArray("BISHOP_MAGICS", generateMagics<MagicType::Bishop>());
+  p.skip();
+  p.coordArray("ROOK_SHIFTS", generateShifts<MagicType::Rook>());
+  p.skip();
+  p.coordArray("BISHOP_SHIFTS", generateShifts<MagicType::Bishop>());
+  p.skip();
+  p.line() << "}  // namespace SoFCore::Private";
+  p.skip();
+  p.endHeaderGuard();
 
-  printBitboardArray(out, generateMagics<MagicType::Rook>(), "ROOK_MAGICS");
-  out << "\n";
-  printBitboardArray(out, generateMagics<MagicType::Bishop>(), "BISHOP_MAGICS");
-  out << "\n";
-  printCoordArray(out, generateShifts<MagicType::Rook>(), "ROOK_SHIFTS");
-  out << "\n";
-  printCoordArray(out, generateShifts<MagicType::Bishop>(), "BISHOP_SHIFTS");
-  out << "\n";
-
-  out << "}  // namespace SoFCore::Private\n";
-  out << "\n";
-
-  out << "#endif  // SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED\n";
+  return 0;
 }
