@@ -129,7 +129,7 @@ Comments start from uppercase letters. Note that the dot in the end of the comme
 It's required to document all the methods in the public API, if it's not entirely clear from their
 signature what they do. There is no strict form of how this documentation must be written. Note
 that the following things must be taken into account when writing documentation:
-- behaviour in exceptional cases or invalid data: is it a spanic, error code or the behaviour is
+- behaviour in exceptional cases or invalid data: is it a panic, error code or the behaviour is
 undefined? By default, it's supposed that you will pass valid parameters into functions, but better
 be explicit
 - which parameter values considered valid for a function, and which ones considered invalid

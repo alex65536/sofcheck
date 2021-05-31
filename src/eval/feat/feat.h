@@ -127,13 +127,13 @@ public:
   }
 
   // Applies the weights from the vector `weights` into the bundle. The given vector must be large
-  // enough to contain all the required weights
+  // enough to contain all the required weights, otherwise the behavior is undefined
   void apply(const WeightVec &weights) {
     std::visit([&](auto &x) { x.apply(weights); }, inner_);
   }
 
   // Extracts the weights from the bundle into the vector `weights`. The given vector must be large
-  // enough to store all the required weights
+  // enough to store all the required weights, otherwise the behavior is undefined
   void extract(WeightVec &weights) const {
     std::visit([&](const auto &x) { x.extract(weights); }, inner_);
   }
@@ -188,7 +188,8 @@ public:
   // Stores the features in `json`
   void save(Json::Value &json) const;
 
-  // Applies the weights from the vector `weights`. Note that `weights.size() == count()` must hold
+  // Applies the weights from the vector `weights`. Note that `weights.size() == count()` must hold,
+  // otherwise the function will panic
   void apply(const WeightVec &weights);
 
   // Gathers the weights from the features into the vector
