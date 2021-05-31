@@ -85,47 +85,6 @@ include_directories("${PROJECT_BINARY_DIR}/src")
 include_directories(src)
 
 
-# Generate files
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/core/private")
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/eval/private")
-
-configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
-add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
-  COMMAND gen_near_attacks "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
-  DEPENDS gen_near_attacks
-)
-add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
-  COMMAND gen_magic_consts "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
-  DEPENDS gen_magic_consts
-)
-add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
-  COMMAND gen_feature_count
-    "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
-    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
-  DEPENDS gen_feature_count
-  DEPENDS src/eval/features.json
-)
-add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
-  COMMAND gen_feature_weight_values
-    "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
-    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
-  DEPENDS gen_feature_weight_values
-  DEPENDS src/eval/features.json
-)
-add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
-  COMMAND gen_feature_weights
-    "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
-    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
-  DEPENDS gen_feature_weights
-  DEPENDS src/eval/features.json
-)
-
-
 # Add targets to build
 add_library(sof_util STATIC
   src/util/logging.cpp
@@ -194,45 +153,52 @@ target_link_libraries(sof_search
   PRIVATE Threads::Threads atomic sof_core sof_util sof_eval
 )
 
-add_executable(gen_near_attacks
-  gen/gen_near_attacks.cpp
-  gen/gen_main.cpp
-  gen/common.cpp
-)
-target_link_libraries(gen_near_attacks sof_util)
-
-add_executable(gen_magic_consts
-  gen/gen_magic_consts.cpp
-  gen/gen_main.cpp
-  gen/common.cpp
-)
-target_link_libraries(gen_magic_consts sof_util)
-
-add_executable(gen_feature_count
-  gen/gen_feature_count.cpp
-  gen/gen_json_main.cpp
-  gen/common.cpp
-)
-target_link_libraries(gen_feature_count sof_util sof_eval_feat jsoncpp_lib)
-
-add_executable(gen_feature_weight_values
-  gen/gen_feature_weight_values.cpp
-  gen/gen_json_main.cpp
-  gen/common.cpp
-)
-target_link_libraries(gen_feature_weight_values sof_util sof_eval_feat jsoncpp_lib)
-
-add_executable(gen_feature_weights
-  gen/gen_feature_weights.cpp
-  gen/gen_json_main.cpp
-  gen/common.cpp
-)
-target_link_libraries(gen_feature_weights sof_util sof_eval_feat jsoncpp_lib)
-
 add_executable(sofcheck
   src/search/bin/main.cpp
 )
 target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
+
+
+# Generate files
+include(Generators)
+
+configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
+
+generate_file(
+  gen_near_attacks
+  gen/gen_near_attacks.cpp
+  src/core/private/near_attacks.h
+)
+
+generate_file(
+  gen_magic_consts
+  gen/gen_magic_consts.cpp
+  src/core/private/magic_consts.h
+)
+
+generate_file_json(
+  gen_feature_count
+  gen/gen_feature_count.cpp
+  src/eval/feature_count.h
+  src/eval/features.json
+)
+target_link_libraries(gen_feature_count sof_eval_feat)
+
+generate_file_json(
+  gen_feature_weight_values
+  gen/gen_feature_weight_values.cpp
+  src/eval/private/weight_values.h
+  src/eval/features.json
+)
+target_link_libraries(gen_feature_weight_values sof_eval_feat)
+
+generate_file_json(
+  gen_feature_weights
+  gen/gen_feature_weights.cpp
+  src/eval/private/weights.h
+  src/eval/features.json
+)
+target_link_libraries(gen_feature_weights sof_eval_feat)
 
 
 # Add benchmarks
