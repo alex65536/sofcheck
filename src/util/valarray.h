@@ -16,6 +16,7 @@ namespace SoFUtil {
 template <typename T, size_t Size>
 class FixedValArray {
 public:
+  // Creates `FixedValArray` uninitialized
   FixedValArray() = default;
 
   explicit constexpr FixedValArray(std::array<T, Size> data) : data_(std::move(data)) {}
@@ -46,7 +47,7 @@ public:
 
   constexpr FixedValArray &operator*=(const T &other) {
     for (size_t i = 0; i < Size; ++i) {
-      data_[i] -= other;
+      data_[i] *= other;
     }
     return *this;
   }
@@ -103,6 +104,7 @@ public:
     }
     storage_ = std::move(newStorage);
     size_ = other.size_;
+    return *this;
   }
 
   constexpr size_t size() const { return size_; }
