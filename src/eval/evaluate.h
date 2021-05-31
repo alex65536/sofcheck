@@ -23,11 +23,11 @@ public:
     // Returns the tag for the board `b`.
     static Tag from(const SoFCore::Board &b);
 
-    // Returns the tag which is obtained by applying move `move` to board `b`. Current tag must be
-    // strictly equal to `Tag::from(b)`.
+    // Returns the tag for the board which is obtained by applying move `move` to board `b`. Current
+    // tag must be strictly equal to `Tag::from(b)`, i. e. `isValid(b)` must hold
     Tag updated(const SoFCore::Board &b, SoFCore::Move move) const;
 
-    // Returns `true` if the tag is equal to `Tag::from(b)`
+    // Returns `true` if the tag is strictly equal to `Tag::from(b)`
     bool isValid(const SoFCore::Board &b) const { return inner_ == Tag::from(b).inner_; }
 
   private:
@@ -39,7 +39,8 @@ public:
     friend class Evaluator;
   };
 
-  // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`.
+  // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
+  // `isValid(b)` must hold
   S evaluate([[maybe_unused]] const SoFCore::Board &b, const Tag tag) { return tag.inner_.first(); }
 };
 

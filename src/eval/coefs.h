@@ -79,7 +79,7 @@ public:
 
   template <typename Storage1>
   constexpr BaseCoefsPair &operator=(const BaseCoefsPair<Storage1> &other) {
-    *this = BaseCoefsPair({other.first(), other.second()});
+    *this = BaseCoefsPair({Item(other.first()), Item(other.second())});
     return *this;
   }
 

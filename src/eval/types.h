@@ -4,7 +4,7 @@
 namespace SoFEval {
 
 // Base struct to define helper types and methods for your score type (e. g. define a type to
-// represent score pair). To do this, you must specialize this struct.
+// represent score pair). You must specialize this struct when you implement a score type.
 template <typename T>
 struct ScoreTraits {};
 

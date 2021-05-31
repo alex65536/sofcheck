@@ -1,5 +1,6 @@
 #include <jsoncpp/json/json.h>
 
+#include <iomanip>
 #include <iostream>
 
 #include "common.h"
@@ -14,14 +15,9 @@ using namespace SoFEval::Feat;
 using SoFUtil::trimEolLeft;
 
 std::string formatName(const Name &name) {
-  std::string result;
-  for (const char ch : name.name) {
-    if (ch == '.') {
-      result += '_';
-      continue;
-    }
-    result += SoFUtil::asciiToUpper(ch);
-  }
+  std::string result = name.name;
+  SoFUtil::asciiToUpper(result);
+  SoFUtil::replace(result, '.', '_');
   return result;
 }
 
@@ -31,20 +27,18 @@ struct Psq {
   std::string queensideCastling[2];
 };
 
-Psq moldPsq(const PsqBundle &bundle) {
+Psq psqFromBundle(const PsqBundle &bundle) {
   Psq result;
   for (auto &vec : result.data) {
     vec.assign(64, "Pair::from(empty())");
   }
 
-  // Precalculate the piece-square table itself. Note that we must be very careful not to use `+`
-  // and `-` operators, because this would dramatically increase the compilation time in combination
-  // with `Coefs`
+  // Precalculate the piece-square table itself
   for (Piece piece :
        {Piece::Pawn, Piece::King, Piece::Knight, Piece::Bishop, Piece::Rook, Piece::Queen}) {
     for (Color color : {Color::White, Color::Black}) {
       for (coord_t i = 0; i < 64; ++i) {
-        auto num2 = [&](size_t first, size_t second) {
+        auto num2 = [&color](size_t first, size_t second) {
           const std::string name = (color == Color::White) ? "number" : "negNumber";
           return name + "(" + std::to_string(first) + ", " + std::to_string(second) + ")";
         };
@@ -66,7 +60,7 @@ Psq moldPsq(const PsqBundle &bundle) {
     }
   }
 
-  auto large = [&](const std::string &str) { return "LargePair(" + str + ")"; };
+  auto large = [](const std::string &str) { return "LargePair(" + str + ")"; };
 
   // Precalculate position cost changes after castling
   const std::string whiteKing = std::to_string(makeCell(Color::White, Piece::King));
@@ -94,10 +88,12 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
   for (const auto &bundle : features.bundles()) {
     if (const auto *b = bundle.asSingle()) {
       out << std::string(indent, ' ') << "static constexpr Item " << formatName(b->name())
-          << " = number(" << b->name().offset << ");" << std::endl;
+          << " = number(" << b->name().offset << ");\n";
       continue;
     }
+
     if (const auto *b = bundle.asArray()) {
+      // FIXME : use `printArrayCommon` here
       out << std::string(indent, ' ') << "static constexpr Item " << formatName(b->name())
           << "[] = {\n";
       for (size_t idx = 0; idx < b->count(); ++idx) {
@@ -107,26 +103,29 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
       out << std::string(indent, ' ') << "};\n";
       continue;
     }
+
     if (const auto *b = bundle.asPsq()) {
-      auto psq = moldPsq(*b);
+      const auto psq = psqFromBundle(*b);
       out << std::string(indent, ' ') << "static constexpr Pair " << formatName(b->name())
           << "[16][64] = {\n";
       for (size_t i = 0; i < 16; ++i) {
-        out << std::string(indent + 2, ' ') << "{\n";
+        out << std::string(indent + 4, ' ') << "/*" << std::setw(2) << i << "*/ {\n";
+        // FIXME : use `printArrayCommon` here
         for (size_t j = 0; j < 64; ++j) {
-          out << std::string(indent + 4, ' ') << psq.data[i][j];
+          out << std::string(indent + 6, ' ') << psq.data[i][j];
           out << ((j + 1 == 64) ? "\n" : ",\n");
         }
-        out << std::string(indent + 2, ' ') << "}";
+        out << std::string(indent + 4, ' ') << "}";
         out << ((i + 1 == 16) ? "\n" : ",\n");
       }
       out << std::string(indent, ' ') << "};\n";
 
-      auto outCastling = [&](const char *name, std::string value[2]) {
+      auto outCastling = [&](const char *name, const std::string value[2]) {
         out << std::string(indent, ' ') << "static constexpr LargePair " << formatName(b->name())
             << "_" << name << "_UPD[2] = {\n";
-        out << std::string(indent + 2, ' ') << value[0] << ",\n";
-        out << std::string(indent + 2, ' ') << value[1] << "\n";
+        static_assert(static_cast<int>(Color::White) == 0 && static_cast<int>(Color::Black) == 1);
+        out << std::string(indent + 4, ' ') << "/* White */ " << value[0] << ",\n";
+        out << std::string(indent + 4, ' ') << "/* Black */ " << value[1] << "\n";
         out << std::string(indent, ' ') << "};\n";
       };
 
@@ -134,6 +133,7 @@ void fillWeights(std::ostream &out, const Features &features, size_t indent) {
       outCastling("QUEENSIDE", psq.queensideCastling);
       continue;
     }
+
     SoFUtil::panic("Unknown bundle type");
   }
 }
@@ -150,7 +150,7 @@ namespace SoFEval::Private {
 
 // Base struct that helps to declare weights for score type `T`. You must specify `Item` type for
 // a simple item (e. g. a single coefficient) and `LargeItem` type for an item consisting of
-// multiple coefficients (e. g. castling) update in piece-square table. Note that these types are
+// multiple coefficients (e. g. castling updates in piece-square table). Note that these types are
 // not required to be equal to `T`, but they at least need to be implicitly convertible to `T`.
 template <typename T>
 struct WeightTraits {};
@@ -223,7 +223,7 @@ int doGenerate(std::ostream &out, const Json::Value &json) {
               << std::endl;
     return 1;
   }
-  Features features = maybeFeatures.unwrap();
+  const Features features = maybeFeatures.unwrap();
 
   out << trimEolLeft(CODE_PART_ONE);
   out << "  static ";

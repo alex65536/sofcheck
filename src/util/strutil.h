@@ -70,6 +70,15 @@ inline constexpr const char *trimEolLeft(const char *str) {
 // Removes leading and trailing spaces from the string
 std::string trim(const std::string &str);
 
+// Converts the string `s` to lower case. `s` must be a string consisting of ASCII characters
+void asciiToLower(std::string &s);
+
+// Converts the string `s` to upper case. `s` must be a string consisting of ASCII characters
+void asciiToUpper(std::string &s);
+
+// Replaces all the entries of character `src` to the character `dst` in the string `s`
+void replace(std::string &s, char src, char dst);
+
 // Works like `strcpy`, but returns the address of null-terminating byte in `dst` (e.g. pointer to
 // the end of `dst` instead of the pointer to the beginning of `dst`)
 //

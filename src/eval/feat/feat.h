@@ -51,7 +51,7 @@ public:
   SingleBundle() = default;
 
 private:
-  SingleBundle(Name name, weight_t value) : name_(std::move(name)), value_(value) {}
+  SingleBundle(Name name, const weight_t value) : name_(std::move(name)), value_(value) {}
 
   Name name_;
   weight_t value_;
@@ -118,7 +118,7 @@ private:
 // A container for all the bundles described above
 class Bundle {
 public:
-  // Loads the bundle from `json` and assignes it the name `name`
+  // Loads the bundle from `json` and assigns it the name `name`
   static LoadResult<Bundle> load(const Name &name, const Json::Value &json);
 
   // Stores the bundle in `json`
@@ -158,8 +158,8 @@ public:
   type##Bundle *as##type() { return std::get_if<type##Bundle>(&inner_); } \
   const type##Bundle *as##type() const { return std::get_if<type##Bundle>(&inner_); }
 
-  // The following methods (`asSingle`, `asArray` and `asPsq`) allow to cast `Bundle` to
-  // corresponding subtypes
+  // The following methods (`asSingle`, `asArray` and `asPsq`) allow to cast `Bundle` to a
+  // corresponding subtype
   D_AS_BUNDLE(Single)
   D_AS_BUNDLE(Array)
   D_AS_BUNDLE(Psq)
@@ -179,16 +179,16 @@ private:
   std::variant<SingleBundle, ArrayBundle, PsqBundle> inner_;
 };
 
-// The contained for all the features
+// The container for all the features
 class Features {
 public:
-  // Loads the features from `json` and assignes it the name `name`
+  // Loads the features from `json`
   static LoadResult<Features> load(const Json::Value &json);
 
   // Stores the features in `json`
   void save(Json::Value &json) const;
 
-  // Applies the weights from the vector `weights`. Note that `weights.size() == count` must hold
+  // Applies the weights from the vector `weights`. Note that `weights.size() == count()` must hold
   void apply(const WeightVec &weights);
 
   // Gathers the weights from the features into the vector
@@ -203,12 +203,11 @@ public:
   // Returns the list of bundles which comprise this feature set
   const std::vector<Bundle> &bundles() const { return bundles_; }
 
-  // Default constuctor. Do not call any of the methods when the object is in default-constructed
-  // state
+  // Creates an empty feature set
   Features() = default;
 
 private:
-  Features(std::vector<Bundle> bundles, size_t count)
+  Features(std::vector<Bundle> bundles, const size_t count)
       : bundles_(std::move(bundles)), count_(count) {}
 
   std::vector<Bundle> bundles_;

@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -21,11 +22,11 @@ public:
 
   explicit constexpr FixedValArray(std::array<T, Size> data) : data_(std::move(data)) {}
 
-  // Returns the array filled with `T()`
+  // Returns the array filled with `T{}`
   static constexpr FixedValArray zeroed() { return FixedValArray(std::array<T, Size>{}); }
 
-  // Returns the size of the array;
-  constexpr size_t size() { return data_.size(); }
+  // Returns the size of the array
+  constexpr size_t size() const { return data_.size(); }
 
   constexpr T &operator[](const size_t idx) { return data_[idx]; }
 
@@ -77,9 +78,9 @@ struct IndexValuePair {
   T value;
 };
 
-// This class is also similar `std::valarray`, but is intended to be used with sparse data. The
-// values are kept as an array of key-value pairs and are just concatenated during the arithmetical
-// operations.
+// This class is also similar `std::valarray<T>`, but is intended to be used with sparse data. The
+// values are kept as an array of key-value pairs and the arrays are just concatenated during the
+// arithmetical operations like `+=` or `-=`. `Storage` is the underlying type to store the pairs
 template <typename T, typename Storage = std::vector<IndexValuePair<T>>>
 class SparseValArray {
 public:
@@ -87,6 +88,11 @@ public:
   friend class SparseValArray;
 
   explicit constexpr SparseValArray(size_t size) : size_(size) {}
+
+  constexpr SparseValArray(const SparseValArray &) = default;
+  constexpr SparseValArray(SparseValArray &&) noexcept = default;
+  constexpr SparseValArray &operator=(const SparseValArray &) = default;
+  constexpr SparseValArray &operator=(SparseValArray &&) noexcept = default;
 
   template <typename Storage1>
   // NOLINTNEXTLINE(hicpp-explicit-conversions)
@@ -98,11 +104,12 @@ public:
 
   template <typename Storage1>
   constexpr SparseValArray &operator=(const SparseValArray<T, Storage1> &other) {
-    Storage newStorage;
+    static_assert(!std::is_same_v<Storage, Storage1>,
+                  "This is conversion operator, not copy operator");
+    storage_.clear();
     for (const auto &iter : other.storage_) {
-      newStorage.push_back(iter);
+      storage_.push_back(iter);
     }
-    storage_ = std::move(newStorage);
     size_ = other.size_;
     return *this;
   }
@@ -125,7 +132,7 @@ public:
     return result;
   }
 
-  // Try to remove extra items from the array
+  // Tries to remove extra items from the array
   void compactify() {
     std::vector<T> vec = take();
     storage_.clear();
@@ -136,7 +143,7 @@ public:
     }
   }
 
-  // `size()` == `other.size()` must hold, otherwise the behaviour is undefined
+  // `size()` == `other.size()` must hold, otherwise the behavior is undefined
   template <typename Storage1>
   constexpr SparseValArray &operator+=(const SparseValArray<T, Storage1> &other) {
     for (const auto &it : other.storage_) {
@@ -146,7 +153,7 @@ public:
     return *this;
   }
 
-  // `size()` == `other.size()` must hold, otherwise the behaviour is undefined
+  // `size()` == `other.size()` must hold, otherwise the behavior is undefined
   template <typename Storage1>
   constexpr SparseValArray &operator-=(const SparseValArray<T, Storage1> &other) {
     return *this += -other;

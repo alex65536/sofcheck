@@ -13,7 +13,7 @@ int doGenerate(std::ostream &out, const Json::Value &json) {
               << std::endl;
     return 1;
   }
-  Features features = maybeFeatures.unwrap();
+  const Features features = maybeFeatures.unwrap();
 
   out << "#ifndef SOF_EVAL_FEATURE_COUNT_INCLUDED\n";
   out << "#define SOF_EVAL_FEATURE_COUNT_INCLUDED\n";

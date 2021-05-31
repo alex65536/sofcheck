@@ -8,7 +8,7 @@
 namespace SoFEval::Feat {
 
 using SoFUtil::Err;  // NOLINT: clang-tidy thinks it's unused by some reason
-using SoFUtil::Ok;   // NOLINT: clang-tidy thinks it's unused by some reasson
+using SoFUtil::Ok;   // NOLINT: clang-tidy thinks it's unused by some reason
 
 LoadResult<SingleBundle> SingleBundle::load(const Name &name, const Json::Value &json) {
   if (!json.isInt()) {
@@ -76,7 +76,7 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
     if (!json.isMember(subName)) {
       return Err(LoadError{name.name + "." + subName + " doesn\'t exist"});
     }
-    Name curName{name.offset + curOffset, name.name + "." + subName};
+    const Name curName{name.offset + curOffset, name.name + "." + subName};
     LoadResult<ArrayBundle> res = ArrayBundle::load(curName, json[subName]);
     if (res.isErr()) {
       return Err(res.unwrapErr());
@@ -177,7 +177,7 @@ LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
     D_TRY_LOAD(ArrayBundle);
   }
   if (json.isObject()) {
-    Json::Value type = json.get("type", Json::Value(""));
+    const Json::Value type = json.get("type", Json::Value(""));
     if (type == "psq") {
       D_TRY_LOAD(PsqBundle);
     }

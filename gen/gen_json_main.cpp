@@ -3,7 +3,6 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <optional>
 #include <utility>
 
 int doGenerate(std::ostream &out, const Json::Value &json);

@@ -71,7 +71,7 @@ inline constexpr score_t adjustCheckmate(const score_t score, int16_t delta) {
 }
 
 // Converts `score` into `SoFBotApi::PositionCost`. Note that the score must be valid here,
-// otherwise the behaviour is undefined
+// otherwise the behavior is undefined
 inline constexpr SoFBotApi::PositionCost scoreToPositionCost(const score_t score) {
   using SoFBotApi::PositionCost;
   if (score <= -SCORE_CHECKMATE_THRESHOLD) {
