@@ -165,19 +165,16 @@ include(Generators)
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 
 generate_file(
-  gen_core_near_attacks
   gen/core/near_attacks.cpp
   src/core/private/near_attacks.h
 )
 
 generate_file(
-  gen_core_magic_consts
   gen/core/magic_consts.cpp
   src/core/private/magic_consts.h
 )
 
 generate_file_json(
-  gen_eval_feature_count
   gen/eval/feature_count.cpp
   src/eval/feature_count.h
   src/eval/features.json
@@ -185,7 +182,6 @@ generate_file_json(
 target_link_libraries(gen_eval_feature_count sof_eval_feat)
 
 generate_file_json(
-  gen_eval_weight_values
   gen/eval/weight_values.cpp
   src/eval/private/weight_values.h
   src/eval/features.json
@@ -193,7 +189,6 @@ generate_file_json(
 target_link_libraries(gen_eval_weight_values sof_eval_feat)
 
 generate_file_json(
-  gen_eval_weights
   gen/eval/weights.cpp
   src/eval/private/weights.h
   src/eval/features.json
