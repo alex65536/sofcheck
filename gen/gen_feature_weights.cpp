@@ -98,26 +98,17 @@ void fillWeights(SourcePrinter &p, const Features &features) {
       p.arrayBody(b->count(), [&](const size_t idx) {
         p.stream() << "number(" << b->name().offset + idx << ")";
       });
+      p.stream() << ";\n";
       continue;
     }
 
     if (const auto *b = bundle.asPsq()) {
       const auto psq = psqFromBundle(*b);
-      p.line() << "static constexpr Pair " << formatName(b->name()) << "[16][64] = {";
-      // FIXME : use `printArrayCommon` for outer array
-      p.indent(4);
-      for (size_t i = 0; i < 16; ++i) {
-        p.line() << "/*" << std::setw(2) << i << "*/ {";
-        // FIXME : use `printArrayCommon` here
-        p.indent(2);
-        for (size_t j = 0; j < 64; ++j) {
-          p.line() << psq.data[i][j] << ((j + 1 == 64) ? "" : ",");
-        }
-        p.outdent(2);
-        p.line() << "}" << ((i + 1 == 16) ? "" : ",");
-      }
-      p.outdent(4);
-      p.line() << "};";
+      p.lineStart() << "static constexpr Pair " << formatName(b->name()) << "[16][64] = ";
+      p.arrayBody(16, [&](const size_t i) {
+        p.arrayBody(64, [&](const size_t j) { p.stream() << psq.data[i][j]; });
+      });
+      p.stream() << ";\n";
 
       auto outCastling = [&](const char *name, const std::string value[2]) {
         p.line() << "static constexpr LargePair " << formatName(b->name()) << "_" << name

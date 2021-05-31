@@ -51,6 +51,7 @@ public:
   void array(const char *name, const char *signature, const std::vector<T> &array) {
     lineStart() << "constexpr " << signature << " " << name << "[" << array.size() << "] = ";
     arrayBody(array.size(), [&](const size_t idx) { stream_ << array[idx]; });
+    stream_ << ";\n";
   }
 
   void bitboardArray(const char *name, const std::vector<SoFCore::bitboard_t> &array);

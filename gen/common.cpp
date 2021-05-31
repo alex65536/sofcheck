@@ -24,17 +24,19 @@ void SourcePrinter::arrayBody(size_t size, std::function<void(size_t)> printer) 
     stream_ << "\n";
   }
   outdent(4);
-  line() << "};";
+  lineStart() << "}";
 }
 
 void SourcePrinter::bitboardArray(const char *name, const std::vector<SoFCore::bitboard_t> &array) {
   lineStart() << "constexpr bitboard_t " << name << "[" << array.size() << "] = ";
   arrayBody(array.size(), [&](const size_t idx) { printBitboard(stream_, array[idx]); });
+  stream_ << ";\n";
 }
 
 void SourcePrinter::coordArray(const char *name, const std::vector<SoFCore::coord_t> &array) {
   lineStart() << "constexpr coord_t " << name << "[" << array.size() << "] = ";
   arrayBody(array.size(), [&](const size_t idx) { stream_ << static_cast<int>(array[idx]); });
+  stream_ << ";\n";
 }
 
 void SourcePrinter::startHeaderGuard(const char *name) {
