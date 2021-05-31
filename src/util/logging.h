@@ -73,7 +73,7 @@ private:
 
 // Convenience functions. The usage pattern looks like this:
 //
-// debug("My type") << "Debug info: " << info;
+// logDebug("My type") << "Debug info: " << info;
 //
 // You can add `using namespace SoFUtil::Logging;` into your code in order to use these functions
 namespace Logging {
