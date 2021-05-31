@@ -40,4 +40,22 @@ std::string trim(const std::string &str) {
   return str.substr(left, right - left);
 }
 
+void asciiToLower(std::string &s) {
+  for (char &ch : s) {
+    ch = asciiToLower(ch);
+  }
+}
+
+void asciiToUpper(std::string &s) {
+  for (char &ch : s) {
+    ch = asciiToUpper(ch);
+  }
+}
+
+void replace(std::string &s, const char src, const char dst) {
+  for (char &ch : s) {
+    ch = (ch == src) ? dst : ch;
+  }
+}
+
 }  // namespace SoFUtil

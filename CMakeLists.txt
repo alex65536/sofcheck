@@ -9,6 +9,7 @@ include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
 find_package(Threads REQUIRED)
+find_package(jsoncpp REQUIRED)
 
 
 # Declare configuration options
@@ -71,6 +72,7 @@ if(USE_NO_EXCEPTIONS)
     set(USE_BOOST_STACKTRACE OFF)
   endif()
   add_compile_options(-fno-exceptions)
+  add_compile_definitions(JSON_USE_EXCEPTION=0)
 endif()
 
 if(USE_SANITIZERS)
@@ -85,7 +87,7 @@ include_directories(src)
 
 # Generate files
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/core/private")
-file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/search/private")
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/eval/private")
 
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 add_custom_command(
@@ -99,9 +101,28 @@ add_custom_command(
   DEPENDS gen_magic_consts
 )
 add_custom_command(
-  OUTPUT "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
-  COMMAND gen_piece_square_table "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
-  DEPENDS gen_piece_square_table
+  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
+  COMMAND gen_feature_count
+    "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
+    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
+  DEPENDS gen_feature_count
+  DEPENDS src/eval/features.json
+)
+add_custom_command(
+  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
+  COMMAND gen_feature_weight_values
+    "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
+    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
+  DEPENDS gen_feature_weight_values
+  DEPENDS src/eval/features.json
+)
+add_custom_command(
+  OUTPUT "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
+  COMMAND gen_feature_weights
+    "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
+    "${PROJECT_SOURCE_DIR}/src/eval/features.json"
+  DEPENDS gen_feature_weights
+  DEPENDS src/eval/features.json
 )
 
 
@@ -143,20 +164,34 @@ add_library(sof_bot_api_clients STATIC
 )
 target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
+add_library(sof_eval STATIC
+  src/eval/evaluate.cpp
+  "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
+  "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
+  "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
+)
+target_link_libraries(sof_eval PUBLIC sof_core sof_util sof_bot_api)
+
+add_library(sof_eval_feat STATIC
+  src/eval/feat/feat.cpp
+)
+target_link_libraries(sof_eval_feat
+  PUBLIC sof_util
+  PRIVATE jsoncpp_lib
+)
+
 add_library(sof_search STATIC
   src/search/search.cpp
-  src/search/private/evaluate.cpp
   src/search/private/limits.cpp
   src/search/private/job.cpp
   src/search/private/job_runner.cpp
   src/search/private/move_picker.cpp
   src/search/private/transposition_table.cpp
   src/search/private/util.cpp
-  "${PROJECT_BINARY_DIR}/src/search/private/piece_square_table.h"
 )
 target_link_libraries(sof_search
-  PUBLIC sof_core sof_util sof_bot_api
-  PRIVATE Threads::Threads atomic
+  PUBLIC sof_bot_api
+  PRIVATE Threads::Threads atomic sof_core sof_util sof_eval
 )
 
 add_executable(gen_near_attacks
@@ -164,16 +199,33 @@ add_executable(gen_near_attacks
   gen/gen_main.cpp
   gen/common.cpp
 )
+
 add_executable(gen_magic_consts
   gen/gen_magic_consts.cpp
   gen/gen_main.cpp
   gen/common.cpp
 )
-add_executable(gen_piece_square_table
-  gen/gen_piece_square_table.cpp
-  gen/gen_main.cpp
+
+add_executable(gen_feature_count
+  gen/gen_feature_count.cpp
+  gen/gen_json_main.cpp
   gen/common.cpp
 )
+target_link_libraries(gen_feature_count sof_eval_feat jsoncpp_lib)
+
+add_executable(gen_feature_weight_values
+  gen/gen_feature_weight_values.cpp
+  gen/gen_json_main.cpp
+  gen/common.cpp
+)
+target_link_libraries(gen_feature_weight_values sof_eval_feat jsoncpp_lib)
+
+add_executable(gen_feature_weights
+  gen/gen_feature_weights.cpp
+  gen/gen_json_main.cpp
+  gen/common.cpp
+)
+target_link_libraries(gen_feature_weights sof_util sof_eval_feat jsoncpp_lib)
 
 add_executable(sofcheck
   src/search/bin/main.cpp
@@ -206,12 +258,15 @@ target_link_libraries(test_uci_client sof_core sof_util sof_bot_api_clients)
 if(GTest_FOUND)
   include(GoogleTest)
 
-  add_executable(test_search_unit_test src/search/test/unit_test.cpp)
-  target_link_libraries(test_search_unit_test GTest::GTest GTest::Main)
-  gtest_add_tests(TARGET test_search_unit_test)
+  add_executable(test_eval_unit_test
+    src/eval/test/score.cpp
+  )
+  target_link_libraries(test_eval_unit_test GTest::GTest GTest::Main)
+  gtest_add_tests(TARGET test_eval_unit_test)
 
   add_executable(test_util_unit_test
     src/util/test/parallel.cpp
+    src/util/test/valarray.cpp
   )
   target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)
   gtest_add_tests(TARGET test_util_unit_test)
@@ -237,7 +292,7 @@ if(UNIX)
     "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in2.txt"
     "${PROJECT_BINARY_DIR}/test_uci_client_log2.txt"
     "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt"
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
   )
   add_test(
     NAME smoke

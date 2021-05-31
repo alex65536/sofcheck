@@ -46,12 +46,12 @@ endfunction()
 
 # Add some implementations
 add_chess_impl(dodecahedron
-    dodecahedron/bitboard.cpp
-    dodecahedron/board.cpp
-    dodecahedron/cpputil.cpp
-    dodecahedron/movegen.cpp
-    dodecahedron/moves.cpp
-    dodecahedron/movestr.cpp
+  dodecahedron/bitboard.cpp
+  dodecahedron/board.cpp
+  dodecahedron/cpputil.cpp
+  dodecahedron/movegen.cpp
+  dodecahedron/moves.cpp
+  dodecahedron/movestr.cpp
 )
 
 add_chess_impl(sofcheck)

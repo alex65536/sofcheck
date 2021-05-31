@@ -10,6 +10,7 @@ addons:
       - clang-tidy-9
       - libbenchmark-dev
       - libboost-stacktrace-dev
+      - libjsoncpp-dev
       - cmake
 
 env:

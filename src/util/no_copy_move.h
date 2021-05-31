@@ -7,9 +7,9 @@ namespace SoFUtil {
 struct NoCopy {
   NoCopy() = default;
   NoCopy(const NoCopy &) = delete;
-  NoCopy(NoCopy &&) = default;
+  NoCopy(NoCopy &&) noexcept = default;
   NoCopy &operator=(const NoCopy &) = delete;
-  NoCopy &operator=(NoCopy &&) = default;
+  NoCopy &operator=(NoCopy &&) noexcept = default;
 };
 
 // Inherit from this class if you want to forbid copying and moving the object

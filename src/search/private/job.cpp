@@ -7,10 +7,10 @@
 #include "bot_api/types.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
+#include "eval/evaluate.h"
+#include "eval/score.h"
 #include "search/private/diagnostics.h"
-#include "search/private/evaluate.h"
 #include "search/private/move_picker.h"
-#include "search/private/score.h"
 #include "search/private/util.h"
 #include "util/misc.h"
 #include "util/random.h"
@@ -22,8 +22,18 @@ using SoFCore::Board;
 using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
+using SoFEval::adjustCheckmate;
+using SoFEval::SCORE_INF;
+using SoFEval::score_t;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
+
+#ifdef USE_SEARCH_DIAGNOSTICS
+using SoFEval::isScoreCheckmate;
+using SoFEval::isScoreValid;
+#endif
+
+using Evaluator = SoFEval::Evaluator<score_t>;
 
 void JobCommunicator::stop() {
   size_t tmp = 0;
@@ -60,7 +70,7 @@ public:
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
     const score_t score = search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF,
-                                                 boardGetPsqScore(board_), FLAGS_DEFAULT);
+                                                 Evaluator::Tag::from(board_), FLAGS_DEFAULT);
     DGN_ASSERT(isScoreValid(score));
     bestMove = stack_[0].bestMove;
     return score;
@@ -97,12 +107,12 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const score_pair_t psq, const flags_t flags) {
+                        const score_t beta, const Evaluator::Tag tag, const flags_t flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
     }
-    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, psq, flags);
+    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, tag, flags);
     DGN_ASSERT(score <= alpha || score >= beta ||
                isScoreValid(adjustCheckmate(score, -static_cast<int16_t>(idepth))));
     repetitions_.erase(board_.hash);
@@ -110,10 +120,10 @@ private:
   }
 
   template <NodeKind Node>
-  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, score_pair_t psq,
+  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, Evaluator::Tag tag,
                    flags_t flags);
 
-  score_t quiescenseSearch(score_t alpha, score_t beta, score_pair_t psq);
+  score_t quiescenseSearch(score_t alpha, score_t beta, Evaluator::Tag tag);
 
   Board &board_;
   TranspositionTable &tt_;
@@ -121,6 +131,7 @@ private:
   JobResults &results_;
   RepetitionTable &repetitions_;
   SearchLimits limits_;
+  Evaluator evaluator_;
   size_t jobId_;
 
   Frame stack_[MAX_DEPTH + 10];
@@ -197,12 +208,12 @@ private:
 };
 #endif
 
-score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const score_pair_t psq) {
+score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Evaluator::Tag tag) {
   if (isBoardDrawInsufficientMaterial(board_)) {
     return 0;
   }
 
-  score_t score = evaluate(board_, psq);
+  score_t score = evaluator_.evaluate(board_, tag);
   if (board_.side == Color::Black) {
     score *= -1;
   }
@@ -220,15 +231,15 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
+    const Evaluator::Tag newTag = tag.updated(board_, move);
     const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newPsq == boardGetPsqScore(board_));
+    DGN_ASSERT(newTag.isValid(board_));
     if (!isMoveLegal(board_)) {
       moveUnmake(board_, move, persistence);
       continue;
     }
     results_.inc(JobStat::Nodes);
-    const score_t score = -quiescenseSearch(-beta, -alpha, newPsq);
+    const score_t score = -quiescenseSearch(-beta, -alpha, newTag);
     DGN_ASSERT(isScoreValid(score));
     DGN_ASSERT(score <= alpha || score >= beta || !isScoreCheckmate(score));
     moveUnmake(board_, move, persistence);
@@ -246,7 +257,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const scor
 
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const score_pair_t psq,
+                           const score_t beta, const Evaluator::Tag tag,
                            [[maybe_unused]] const flags_t flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
@@ -265,7 +276,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
 
   // Run quiescence search in leaf node
   if (depth == 0) {
-    return quiescenseSearch(alpha, beta, psq);
+    return quiescenseSearch(alpha, beta, tag);
   }
 
   auto ttStore = [&](score_t score) {
@@ -323,16 +334,16 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const score_pair_t newPsq = boardUpdatePsqScore(board_, move, psq);
+    const Evaluator::Tag newTag = tag.updated(board_, move);
     const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newPsq == boardGetPsqScore(board_));
+    DGN_ASSERT(newTag.isValid(board_));
     if (!isMoveLegal(board_)) {
       moveUnmake(board_, move, persistence);
       continue;
     }
     results_.inc(JobStat::Nodes);
     const flags_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
-    if (hasMove && -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newPsq,
+    if (hasMove && -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag,
                                              newFlags) <= alpha) {
       moveUnmake(board_, move, persistence);
       if (mustStop()) {
@@ -342,7 +353,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
     hasMove = true;
     constexpr NodeKind newNode = (Node == NodeKind::Simple ? NodeKind::Simple : NodeKind::Pv);
-    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newPsq, newFlags);
+    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newTag, newFlags);
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
@@ -365,7 +376,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
 
   // Detect checkmate and stalemate
   if (!hasMove) {
-    return isCheck(board_) ? scoreCheckmateLose(idepth) : 0;
+    return isCheck(board_) ? SoFEval::scoreCheckmateLose(idepth) : 0;
   }
 
   // End of search
@@ -422,8 +433,8 @@ void Job::run(const Position &position, const SearchLimits &limits) {
       DGN_ASSERT(bestMove != Move::null());
       results_.setBestMove(depth, bestMove);
       std::vector<Move> pv = unwindPv(board, bestMove, table_);
-      server_.sendResult(
-          {depth, pv.data(), pv.size(), scoreToPositionCost(score), PositionCostBound::Exact});
+      server_.sendResult({depth, pv.data(), pv.size(), SoFEval::scoreToPositionCost(score),
+                          PositionCostBound::Exact});
     }
   }
 
