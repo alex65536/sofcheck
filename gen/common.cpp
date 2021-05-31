@@ -13,7 +13,7 @@ void printBitboard(std::ostream &out, const SoFCore::bitboard_t val) {
       << std::setfill(' ');
 }
 
-void SourcePrinter::arrayBody(size_t size, std::function<void(size_t)> printer) {
+void SourcePrinter::arrayBody(size_t size, const std::function<void(size_t)> &printer) {
   stream_ << "{\n";
   indent(4);
   const size_t idxLen = (size <= 1) ? 1 : log10(size - 1) + 1;

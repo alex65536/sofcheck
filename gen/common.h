@@ -43,7 +43,7 @@ public:
   void indent(const size_t amount) { indent_ += amount; }
   void outdent(const size_t amount) { indent_ -= amount; }
 
-  void arrayBody(size_t size, std::function<void(size_t)> printer);
+  void arrayBody(size_t size, const std::function<void(size_t)> &printer);
 
   template <typename T>
   void array(const char *name, const char *signature, const std::vector<T> &array) {

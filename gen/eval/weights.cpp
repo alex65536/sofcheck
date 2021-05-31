@@ -12,8 +12,6 @@
 using namespace SoFCore;
 using namespace SoFEval::Feat;
 
-using SoFUtil::trimEolLeft;
-
 std::string formatName(const Name &name) {
   std::string result = name.name;
   SoFUtil::asciiToUpper(result);
