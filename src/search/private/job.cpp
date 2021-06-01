@@ -57,6 +57,10 @@ class Searcher {
 public:
   enum class NodeKind { Root, Pv, Simple };
 
+  inline constexpr static bool isNodeKindPv(const NodeKind kind) {
+    return kind == NodeKind::Root || kind == NodeKind::Pv;
+  }
+
   inline Searcher(Job &job, Board &board, const SearchLimits &limits, RepetitionTable &repetitions)
       : board_(board),
         tt_(job.table_),
@@ -291,7 +295,8 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
     }
     score = adjustCheckmate(score, -static_cast<int16_t>(idepth));
     DGN_ASSERT(bound != PositionCostBound::Exact || isScoreValid(score));
-    tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
+    tt_.store(board_.hash,
+              TranspositionTable::Data(frame.bestMove, score, depth, bound, isNodeKindPv(Node)));
   };
 
   // Probe the transposition table
@@ -299,7 +304,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
     results_.inc(JobStat::TtHits);
     hashMove = data.move();
-    if (Node == NodeKind::Simple && data.depth() >= depth && board_.moveCounter < 90) {
+    if (Node != NodeKind::Root && data.depth() >= depth && board_.moveCounter < 90) {
       const score_t score = adjustCheckmate(data.score(), idepth);
       switch (data.bound()) {
         case PositionCostBound::Exact: {
