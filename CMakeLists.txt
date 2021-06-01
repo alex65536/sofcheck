@@ -158,6 +158,11 @@ add_executable(sofcheck
 )
 target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 
+add_executable(make_dataset
+  src/eval/feat/bin/make_dataset.cpp
+)
+target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat jsoncpp_lib)
+
 
 # Generate files
 include(Generators)
