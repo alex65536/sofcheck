@@ -1,6 +1,7 @@
 #ifndef SOF_EVAL_EVALUATE_INCLUDED
 #define SOF_EVAL_EVALUATE_INCLUDED
 
+#include <cstdint>
 #include <utility>
 
 #include "core/board.h"
@@ -28,12 +29,16 @@ public:
     Tag updated(const SoFCore::Board &b, SoFCore::Move move) const;
 
     // Returns `true` if the tag is strictly equal to `Tag::from(b)`
-    bool isValid(const SoFCore::Board &b) const { return inner_ == Tag::from(b).inner_; }
+    bool isValid(const SoFCore::Board &b) const {
+      const Tag other = Tag::from(b);
+      return inner_ == other.inner_ && stage_ == other.stage_;
+    }
 
   private:
-    explicit Tag(Pair inner) : inner_(std::move(inner)) {}
+    explicit Tag(Pair inner, const uint32_t stage) : inner_(std::move(inner)), stage_(stage) {}
 
     Pair inner_;
+    uint32_t stage_;
 
     template <typename>
     friend class Evaluator;
@@ -41,7 +46,7 @@ public:
 
   // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
   // `isValid(b)` must hold
-  S evaluate([[maybe_unused]] const SoFCore::Board &b, const Tag tag) { return tag.inner_.first(); }
+  S evaluate(const SoFCore::Board &b, const Tag tag);
 };
 
 }  // namespace SoFEval

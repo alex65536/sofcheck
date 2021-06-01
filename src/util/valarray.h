@@ -166,6 +166,13 @@ public:
     return *this;
   }
 
+  constexpr SparseValArray &operator>>=(const T &other) {
+    for (auto &it : storage_) {
+      it.value >>= other;
+    }
+    return *this;
+  }
+
   constexpr SparseValArray operator+() const { return *this; }
 
   constexpr SparseValArray operator-() const {
@@ -187,6 +194,7 @@ public:
   }
 
   SOF_VECTOR_OPS(SparseValArray, T)
+  SOF_FROM_ASSIGNMENT_CLASS_OP(SparseValArray, T, >>)
 
 private:
   constexpr void tryCompactify() {

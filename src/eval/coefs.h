@@ -51,6 +51,8 @@ public:
   std::vector<coef_t> take() const { return inner_.take(); }
 
   SOF_PROPAGATE_VECTOR_OPS(BaseCoefs, coef_t, inner_)
+  SOF_PROPAGATE_MUT_OP_EXT(BaseCoefs, inner_, >>=, coef_t)
+  SOF_FROM_ASSIGNMENT_CLASS_OP(BaseCoefs, coef_t, >>)
 
 private:
   using Inner = SoFUtil::SparseValArray<coef_t, Storage>;
