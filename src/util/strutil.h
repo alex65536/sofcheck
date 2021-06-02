@@ -5,6 +5,7 @@
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace SoFUtil {
 
@@ -18,6 +19,9 @@ const char *scanTokenStart(const char *str);
 
 // Returns `true` if `s` starts with `t`
 bool startsWith(const std::string_view &s, const std::string_view &t);
+
+// Splits zero-terminated string `str` into tokens
+std::vector<std::string_view> split(const char *str);
 
 // Converts the character `c` to lower case. `c` must be an ASCII character
 inline constexpr char asciiToLower(const char c) {
@@ -48,6 +52,12 @@ inline bool valueFromStr(const char *first, const char *last, T &val) {
   return true;
 }
 
+// Same as `valueFromStr` above, but works with `std::string_view` instead of two `const char *`'s
+template <typename T>
+inline bool valueFromStr(const std::string_view &str, T &val) {
+  return valueFromStr(str.data(), str.data() + str.size(), val);
+}
+
 // Replaces the small characters (with ASCII code <= 32) with spaces. The tab characters ('\t') are
 // left intact. The primary purpose of this function is to sanitize the string for UCI output, to
 // make sure that it doesn't contain a newline, which can be potentially interpreted as a new UCI
@@ -72,7 +82,7 @@ inline constexpr const char *trimEolLeft(const char *str) {
 }
 
 // Removes leading and trailing spaces from the string
-std::string trim(const std::string &str);
+std::string_view trim(const std::string_view &str);
 
 // Converts the string `s` to lower case. `s` must be a string consisting of ASCII characters
 void asciiToLower(std::string &s);
