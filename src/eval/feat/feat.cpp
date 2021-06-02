@@ -150,10 +150,11 @@ size_t PsqBundle::count() const {
 }
 
 LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
-#define D_TRY_LOAD(type)                                 \
-  {                                                      \
-    SOF_TRY_DECL(res, type::load(name, json));           \
-    return Ok(Bundle(VariantItemTag{}, std::move(res))); \
+#define D_TRY_LOAD(type)                               \
+  {                                                    \
+    return type::load(name, json).map([](type res) {   \
+      return Bundle(VariantItemTag{}, std::move(res)); \
+    });                                                \
   }
 
   if (json.isInt()) {

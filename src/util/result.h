@@ -36,11 +36,21 @@ public:
     panic("Attempt to unwrap() Result<T, E> without a value");
   }
 
+  // Transforms the `ok()` value using function `f`, otherwise propagates the error
+  template <typename F>
+  auto map(F f) && /**/ noexcept
+      -> Result<std::decay_t<decltype(f(std::move(std::declval<T>())))>, E> {
+    if (isOk()) {
+      return Ok(f(std::move(std::get<0>(variant_))));
+    }
+    return Err(std::move(std::get<1>(variant_)));
+  }
+
   // Consumes the Result, moving away `ok()` value from it. If it doesn't hold the specified value,
   // it gets the result from `f`
   template <typename F>
   inline constexpr T okOr(F f) && /**/ noexcept {
-    if (SOF_LIKELY(isOk())) {
+    if (isOk()) {
       return std::move(std::get<0>(variant_));
     }
     return f();
