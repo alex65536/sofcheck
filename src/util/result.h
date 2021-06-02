@@ -86,13 +86,11 @@ public:
     panic("Attempt to unwrap() Result<T, E> without an error");
   }
 
-  inline friend constexpr bool operator==(const std::variant<T, E> &r1,
-                                          const std::variant<T, E> &r2) {
+  inline friend constexpr bool operator==(const Result<T, E> &r1, const Result<T, E> &r2) {
     return r1.variant_ == r2.variant_;
   }
 
-  inline friend constexpr bool operator!=(const std::variant<T, E> &r1,
-                                          const std::variant<T, E> &r2) {
+  inline friend constexpr bool operator!=(const Result<T, E> &r1, const Result<T, E> &r2) {
     return r1.variant_ != r2.variant_;
   }
 
