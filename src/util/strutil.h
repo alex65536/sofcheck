@@ -8,11 +8,11 @@
 namespace SoFUtil {
 
 // Scans the string forward, starting from `str` and returns the first character which is considered
-// the end of the token (i.e. one of the characters `'\0'`, `'\t'`, `'\n'` and `' '`).
+// space
 const char *scanTokenEnd(const char *str);
 
-// Scans the string forward, starting from `str` and returns the first character which is not equal
-// to `'t'`, `'\n'` and `' '`.
+// Scans the string forward, starting from `str` and returns the first character which is not
+// considered space
 const char *scanTokenStart(const char *str);
 
 // Converts the character `c` to lower case. `c` must be an ASCII character

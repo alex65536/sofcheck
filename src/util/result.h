@@ -46,6 +46,16 @@ public:
     return Err(std::move(std::get<1>(variant_)));
   }
 
+  // Transforms the `err()` value using function `f`, otherwise propagates the result
+  template <typename F>
+  auto mapErr(F f) && /**/ noexcept
+      -> Result<T, std::decay_t<decltype(f(std::move(std::declval<E>())))>> {
+    if (isErr()) {
+      return Err(f(std::move(std::get<1>(variant_))));
+    }
+    return Ok(std::move(std::get<0>(variant_)));
+  }
+
   // Consumes the Result, moving away `ok()` value from it. If it doesn't hold the specified value,
   // it gets the result from `f`
   template <typename F>
