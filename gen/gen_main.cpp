@@ -3,6 +3,10 @@
 #include <iostream>
 
 #include "common.h"
+#include "util/fileutil.h"
+
+using SoFUtil::openWriteFile;
+using SoFUtil::panic;
 
 int doGenerate(SourcePrinter &printer);
 
@@ -12,11 +16,8 @@ int main(int argc, char **argv) {
     return doGenerate(printer);
   }
   if (argc == 2 && strcmp(argv[1], "-h") != 0 && strcmp(argv[1], "--help") != 0) {
-    std::ofstream file(argv[1]);
-    if (!file.is_open()) {
-      std::cerr << "Unable to open " << argv[1] << std::endl;
-      return 1;
-    }
+    auto badFile = [&](auto err) { return panic(std::move(err.description)); };
+    std::ofstream file = openWriteFile(argv[1]).okOrErr(badFile);
     SourcePrinter printer(file);
     return doGenerate(printer);
   }

@@ -6,6 +6,12 @@
 #include <utility>
 
 #include "common.h"
+#include "util/fileutil.h"
+#include "util/misc.h"
+
+using SoFUtil::openReadFile;
+using SoFUtil::openWriteFile;
+using SoFUtil::panic;
 
 int doGenerate(SourcePrinter &printer, const Json::Value &json);
 
@@ -27,16 +33,9 @@ int main(int argc, char **argv) {
     return doGenerate(printer, std::cin);
   }
   if (argc == 3) {
-    std::ofstream outFile(argv[1]);
-    std::ifstream inFile(argv[2]);
-    if (!outFile.is_open()) {
-      std::cerr << "Unable to open " << argv[1] << std::endl;
-      return 1;
-    }
-    if (!inFile.is_open()) {
-      std::cerr << "Unable to open " << argv[2] << std::endl;
-      return 1;
-    }
+    auto badFile = [&](auto err) { return panic(std::move(err.description)); };
+    std::ofstream outFile = openWriteFile(argv[1]).okOrErr(badFile);
+    std::ifstream inFile = openReadFile(argv[2]).okOrErr(badFile);
     SourcePrinter printer(outFile);
     return doGenerate(printer, inFile);
   }

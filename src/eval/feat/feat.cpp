@@ -77,11 +77,7 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
       return Err(LoadError{name.name + "." + subName + " doesn\'t exist"});
     }
     const Name curName{name.offset + curOffset, name.name + "." + subName};
-    LoadResult<ArrayBundle> res = ArrayBundle::load(curName, json[subName]);
-    if (res.isErr()) {
-      return Err(res.unwrapErr());
-    }
-    sub = res.unwrap();
+    SOF_TRY_ASSIGN(sub, ArrayBundle::load(curName, json[subName]));
     if (sub.count() != len) {
       return Err(
           LoadError{name.name + "." + subName + " must contain " + std::to_string(len) + " items"});
@@ -90,18 +86,11 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
     return Ok(std::monostate{});
   };
 
-#define D_DO_LOAD(varName, jsonName, len)                                                          \
-  if (LoadResult<std::monostate> result = doLoad(bundle.varName, jsonName, len); result.isErr()) { \
-    return Err(result.unwrapErr());                                                                \
-  }
-
-  D_DO_LOAD(pieceCosts_, "cost", PIECE_COUNT);
+  SOF_TRY_CONSUME(doLoad(bundle.pieceCosts_, "cost", PIECE_COUNT));
   for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    D_DO_LOAD(tables_[idx], PIECE_NAMES[idx], 64);
+    SOF_TRY_CONSUME(doLoad(bundle.tables_[idx], PIECE_NAMES[idx], 64));
   }
-  D_DO_LOAD(endKingTable_, "king_end", 64);
-
-#undef D_DO_LOAD
+  SOF_TRY_CONSUME(doLoad(bundle.endKingTable_, "king_end", 64));
 
   return Ok(std::move(bundle));
 }
@@ -163,11 +152,9 @@ size_t PsqBundle::count() const {
 LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
 #define D_TRY_LOAD(type)                               \
   {                                                    \
-    LoadResult<type> res = type::load(name, json);     \
-    if (res.isErr()) {                                 \
-      return Err(res.unwrapErr());                     \
-    }                                                  \
-    return Ok(Bundle(VariantItemTag{}, res.unwrap())); \
+    return type::load(name, json).map([](type res) {   \
+      return Bundle(VariantItemTag{}, std::move(res)); \
+    });                                                \
   }
 
   if (json.isInt()) {
@@ -199,11 +186,7 @@ LoadResult<Features> Features::load(const Json::Value &json) {
   size_t counter = 0;
   for (size_t idx = 0; idx < members.size(); ++idx) {
     const std::string &member = members[idx];
-    LoadResult<Bundle> res = Bundle::load(Name{counter, member}, json[member]);
-    if (res.isErr()) {
-      return Err(res.unwrapErr());
-    }
-    bundles[idx] = res.unwrap();
+    SOF_TRY_ASSIGN(bundles[idx], Bundle::load(Name{counter, member}, json[member]));
     counter += bundles[idx].count();
   }
 

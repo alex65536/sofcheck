@@ -11,12 +11,18 @@ target_link_libraries(sof_gen_common PUBLIC sof_util)
 add_library(sof_gen_main STATIC
   gen/gen_main.cpp
 )
-target_link_libraries(sof_gen_main PUBLIC sof_gen_common)
+target_link_libraries(sof_gen_main
+  PUBLIC sof_gen_common
+  PRIVATE sof_util
+)
 
 add_library(sof_gen_json_main STATIC
   gen/gen_json_main.cpp
 )
-target_link_libraries(sof_gen_json_main PUBLIC sof_gen_common jsoncpp_lib)
+target_link_libraries(sof_gen_json_main
+  PUBLIC sof_gen_common
+  PRIVATE jsoncpp_lib sof_util
+)
 
 
 # Creates the directory in which `file` will be located

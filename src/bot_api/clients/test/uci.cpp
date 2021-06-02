@@ -169,11 +169,10 @@ private:
 int main() {
   SoFCore::init();
 
-  auto connResult = Connection::clientSide<TestEngine, UciServerConnector>();
-  if (connResult.isErr()) {
-    panic(std::string("Connection failed: ") + SoFBotApi::apiResultToStr(connResult.unwrapErr()));
-  }
-  auto connection = connResult.unwrap();
+  auto connection =
+      Connection::clientSide<TestEngine, UciServerConnector>().okOrErr([](const auto err) {
+        panic(std::string("Connection failed: ") + SoFBotApi::apiResultToStr(err));
+      });
   PollResult result = connection.runPollLoop();
   if (result != PollResult::Ok) {
     panic(std::string("Poll failed: ") + SoFBotApi::pollResultToStr(result));
