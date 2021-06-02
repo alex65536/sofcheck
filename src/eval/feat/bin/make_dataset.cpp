@@ -80,9 +80,11 @@ public:
   explicit DatasetGenerator(Features features) : features_(std::move(features)) {}
 
   void addGame(const Game &game) {
-    for (const Board &b : game.boards) {
+    for (size_t idx = 0; idx < game.boards.size(); ++idx) {
+      const Board &b = game.boards[idx];
       std::vector<coef_t> coefs = evaluator_.evaluate(b, Evaluator::Tag::from(b)).take();
-      lines_.push_back({winnerToNumber(game.winner), game.id, std::move(coefs)});
+      lines_.push_back({winnerToNumber(game.winner), game.id, game.boards.size(),
+                        game.boards.size() - 1 - idx, std::move(coefs)});
     }
   }
 
@@ -97,12 +99,14 @@ private:
   struct Line {
     double winner;
     size_t gameId;
+    size_t boardsTotal;
+    size_t boardsLeft;
     std::vector<coef_t> coefs;
   };
 
   void writeHeader(std::ostream &out) {
     auto names = features_.names();
-    out << "winner,game_id";
+    out << "winner,game_id,board_total,board_left";
     for (const auto &name : names) {
       out << "," << name.name;
     }
@@ -110,7 +114,8 @@ private:
   }
 
   static void writeLine(std::ostream &out, const Line &line) {
-    out << std::fixed << std::setprecision(1) << line.winner << "," << line.gameId;
+    out << std::fixed << std::setprecision(1) << line.winner << "," << line.gameId << ","
+        << line.boardsTotal << "," << line.boardsLeft;
     for (const coef_t c : line.coefs) {
       out << "," << c;
     }
