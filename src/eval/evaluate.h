@@ -46,7 +46,7 @@ public:
 
   // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
   // `isValid(b)` must hold
-  S evaluate(const SoFCore::Board &b, const Tag tag);
+  S evaluate(const SoFCore::Board &b, Tag tag);
 };
 
 }  // namespace SoFEval
