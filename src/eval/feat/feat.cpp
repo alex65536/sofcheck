@@ -97,6 +97,7 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
 
 void PsqBundle::save(Json::Value &json) const {
   json = Json::Value(Json::objectValue);
+  json["type"] = "psq";
   pieceCosts_.save(json["cost"]);
   for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
     tables_[idx].save(json[PIECE_NAMES[idx]]);
