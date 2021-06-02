@@ -48,14 +48,13 @@ Features readFeatures(std::istream &in) {
 enum class Winner { White, Black, Draw };
 
 inline constexpr std::optional<Winner> winnerFromChar(const char ch) {
-  if (ch == 'W') {
-    return Winner::White;
-  }
-  if (ch == 'B') {
-    return Winner::Black;
-  }
-  if (ch == 'D') {
-    return Winner::Draw;
+  switch (ch) {
+    case 'W':
+      return Winner::White;
+    case 'B':
+      return Winner::Black;
+    case 'D':
+      return Winner::Draw;
   }
   return std::nullopt;
 }
@@ -144,7 +143,7 @@ private:
 class GameParser {
 public:
   struct Status {
-    enum class Kind { Error, EndOfFile };
+    enum class Kind { Error, EndOfStream };
     Kind kind;
     size_t line;
     std::string description;
@@ -153,7 +152,7 @@ public:
       return Status{Kind::Error, line, std::move(description)};
     }
 
-    static Status endOfFile() { return Status{Kind::EndOfFile, 0, ""}; }
+    static Status endOfStream() { return Status{Kind::EndOfStream, 0, ""}; }
   };
 
   explicit GameParser(std::istream &in) : in_(in) { readLine(); }
@@ -180,7 +179,7 @@ private:
   Result<Game, Status> readGameHeader() {
     auto ln = peekLine();
     if (!ln) {
-      return SoFUtil::Err(Status::endOfFile());
+      return SoFUtil::Err(Status::endOfStream());
     }
     const char *pos = SoFUtil::scanTokenStart(ln->c_str());
 
@@ -250,13 +249,13 @@ private:
       if (line.empty() || line[0] == '#') {
         continue;
       }
-      lastLine_ = line;
+      lastLine_ = std::make_optional(std::move(line));
       break;
     }
     return lastLine_;
   }
 
-  std::optional<std::string> peekLine() { return lastLine_; }
+  std::optional<std::string> peekLine() const { return lastLine_; }
 
   size_t line_ = 0;
   std::optional<std::string> lastLine_ = std::nullopt;
@@ -269,6 +268,7 @@ int run(std::istream &jsonIn, std::istream &in, std::ostream &out) {
 
   auto addGames = [&]() -> Result<std::monostate, GameParser::Status> {
     for (;;) {
+      // Load games one by one until we get an error or encounter the end of the stream
       SOF_TRY_DECL(game, parser.nextGame());
       gen.addGame(game);
     }
@@ -294,21 +294,21 @@ weights in the engine.
 Usage: make_dataset FEATURES [IN_FILE [OUT_FILE]]
 
   FEATURES  The JSON file that contains all the evaluation features
-  IN_FILE   The file with boards for which we want to create a dataset. The
-            format of this file is described below. If not specified, then the
-            boards are read from the standard input
-  OUT_FILE  Resulting CSV file with features, which can be used then for
-            parameter tuning. If not specified, then the boards are written to
-            the standard output
+  IN_FILE   The file with boards from which we want to extract coefficients.
+            The format of this file is described below. If this argument is
+            not provided, then the boards are read from the standard input
+  OUT_FILE  Resulting CSV file with coefficients, which can be used then for
+            parameter tuning. If this argument is not provided, then the
+            boards are written to the standard output
 
-The file with boards must contain one or more game sections. Each game section
-starts with line "game <winner> <id>", where <winner> is equal to B, W or D
-depending on the winning side, and <id> is equal to some unsigned integer
-called the game ID. Each of the following lines describes a single board and
-has the format "board <fen>", where <fen> is the board encoded as FEN. The
-boards arrive in the same order as they were played. It's also worth to
-mention that the blank lines and the lines starting with # are ignored in the
-file.
+The file with boards has the following format. It contains one or more game
+sections. Each game section starts with line "game <winner> <id>", where
+<winner> is equal to B, W or D depending on the winning side, and <id> is
+equal to some unsigned integer called the game ID. Each of the following lines
+describe a single board and has the format "board <fen>", where <fen> is the
+board encoded as FEN. The boards arrive in the same order as they were played.
+It's also worth to mention that the blank lines and the lines starting with
+"#" are ignored in the file.
 )DESC";
 
 void showUsage() { std::cerr << SoFUtil::trimEolLeft(DESCRIPTION) << std::flush; }
