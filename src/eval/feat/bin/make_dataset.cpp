@@ -181,52 +181,29 @@ private:
     if (!ln) {
       return SoFUtil::Err(Status::endOfStream());
     }
-    const char *pos = SoFUtil::scanTokenStart(ln->c_str());
-
-    // "game" word
-    if (*pos != '\0') {
-      const char *nxt = SoFUtil::scanTokenEnd(pos);
-      if (std::string(pos, nxt) != "game") {
-        return SoFUtil::Err(error("Invalid game header"));
-      }
-      pos = SoFUtil::scanTokenStart(nxt);
-    } else {
-      return SoFUtil::Err(error("Game header too short"));
+    const auto tokens = SoFUtil::split(ln->c_str());
+    if (tokens.size() != 3) {
+      return SoFUtil::Err(error("Game header must contain exactly three fields"));
     }
 
-    // Winner field
-    Winner winner = Winner::White;
-    if (*pos != '\0') {
-      const char *nxt = SoFUtil::scanTokenEnd(pos);
-      if (nxt != pos + 1) {
-        return SoFUtil::Err(error("Winner must be single character"));
-      }
-      if (auto maybeWinner = winnerFromChar(*pos); maybeWinner.has_value()) {
-        winner = *maybeWinner;
-      } else {
-        return SoFUtil::Err(error("Invalid winner character"));
-      }
-      pos = SoFUtil::scanTokenStart(nxt);
-    } else {
-      return SoFUtil::Err(error("Game header too short"));
+    if (tokens[0] != "game") {
+      return SoFUtil::Err(error("Invalid game header"));
     }
 
-    // Game ID
+    if (tokens[1].size() != 1) {
+      return SoFUtil::Err(error("Winner must be single character"));
+    }
+    std::optional<Winner> winner = winnerFromChar(tokens[1].front());
+    if (!winner) {
+      return SoFUtil::Err(error("Invalid winner character"));
+    }
+
     size_t id = 0;
-    if (*pos != '\0') {
-      const char *nxt = SoFUtil::scanTokenEnd(pos);
-      if (!SoFUtil::valueFromStr(pos, nxt, id)) {
-        return SoFUtil::Err(error("Invalid game ID"));
-      }
-      pos = SoFUtil::scanTokenStart(nxt);
-    } else {
-      return SoFUtil::Err(error("Game header too short"));
+    if (!SoFUtil::valueFromStr(tokens[2], id)) {
+      throw SoFUtil::Err(error("Invalid game ID"));
     }
 
-    if (*pos != '\0') {
-      return SoFUtil::Err(error("Extra data in the line"));
-    }
-    return SoFUtil::Ok(Game(winner, id));
+    return SoFUtil::Ok(Game(*winner, id));
   }
 
   std::optional<std::string> readLineRaw() {
@@ -245,7 +222,7 @@ private:
         lastLine_ = std::nullopt;
         break;
       }
-      std::string line = SoFUtil::trim(*maybeLine);
+      std::string line(SoFUtil::trim(*maybeLine));
       if (line.empty() || line[0] == '#') {
         continue;
       }
