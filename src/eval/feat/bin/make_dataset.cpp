@@ -11,6 +11,7 @@
 #include "eval/coefs.h"
 #include "eval/evaluate.h"
 #include "eval/feat/feat.h"
+#include "util/fileutil.h"
 #include "util/misc.h"
 #include "util/strutil.h"
 
@@ -18,7 +19,8 @@ using SoFCore::Board;
 using SoFEval::coef_t;
 using SoFEval::Coefs;
 using SoFEval::Feat::Features;
-using SoFEval::Feat::LoadResult;
+using SoFUtil::openReadFile;
+using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 
 // Reads features from the stream, panics when encounters an error
@@ -29,31 +31,9 @@ Features readFeatures(std::istream &in) {
   if (!Json::parseFromStream(builder, in, &json, &errs)) {
     panic("JSON parse error: " + errs);
   }
-  LoadResult<Features> maybeFeatures = Features::load(json);
-  if (maybeFeatures.isErr()) {
-    panic("Error extracting features: " + maybeFeatures.unwrapErr().description);
-  }
-  return maybeFeatures.unwrap();
+  return Features::load(json).okOrErr(
+      [](const auto err) { panic("Error extracting features: " + err.description); });
 }
-
-namespace Private {
-
-template <typename F>
-F openFile(const char *name) {
-  F file(name);
-  if (!file.is_open()) {
-    panic("Cannot open file \"" + std::string(name) + "\"");
-  }
-  return file;
-}
-
-}  // namespace Private
-
-// Opens a file, panics when encounters an error
-std::ifstream openInFile(const char *name) { return Private::openFile<std::ifstream>(name); }
-
-// Opens a file, panics when encounters an error
-std::ofstream openOutFile(const char *name) { return Private::openFile<std::ofstream>(name); }
 
 class DatasetGenerator {
 public:
@@ -151,10 +131,10 @@ int run(std::istream &jsonIn, std::istream &in, std::ostream &out) {
     auto result = Board::fromFen(s.c_str());
     if (result.isErr()) {
       std::cerr << "Line " << lineNum
-                << ": bad FEN: " << SoFCore::fenParseResultToStr(result.unwrapErr()) << "\n";
+                << ": bad FEN: " << SoFCore::fenParseResultToStr(std::move(result).unwrapErr()) << "\n";
       return 1;
     }
-    gen.addLine(winner, gameId, result.unwrap());
+    gen.addLine(winner, gameId, std::move(result).unwrap());
   }
 
   gen.write(out);
@@ -193,17 +173,18 @@ int main(int argc, char **argv) {
     showUsage();
     return 1;
   }
-  std::ifstream jsonIn = openInFile(argv[1]);
+  auto badFile = [&](auto err) { return panic(std::move(err.description)); };
+  std::ifstream jsonIn = openReadFile(argv[1]).okOrErr(badFile);
   std::ifstream fileIn;
   std::ofstream fileOut;
   std::istream *in = &std::cin;
   std::ostream *out = &std::cout;
   if (argc >= 3) {
-    fileIn = openInFile(argv[2]);
+    fileIn = openReadFile(argv[2]).okOrErr(badFile);
     in = &fileIn;
   }
   if (argc >= 4) {
-    fileOut = openOutFile(argv[3]);
+    fileOut = openWriteFile(argv[3]).okOrErr(badFile);
     out = &fileOut;
   }
   return run(jsonIn, *in, *out);
