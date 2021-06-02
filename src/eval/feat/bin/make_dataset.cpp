@@ -170,7 +170,7 @@ public:
   }
 
 private:
-  Status error(const std::string &description) { return Status::error(line_, description); }
+  Status error(const std::string &description) const { return Status::error(line_, description); }
 
   Result<Game, Status> readGameHeader() {
     auto ln = peekLine();
@@ -241,7 +241,7 @@ private:
         lastLine_ = std::nullopt;
         break;
       }
-      std::string line = SoFUtil::trim(std::move(*maybeLine));
+      std::string line = SoFUtil::trim(*maybeLine);
       if (line.empty() || line[0] == '#') {
         continue;
       }
