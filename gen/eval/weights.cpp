@@ -9,6 +9,7 @@
 
 using namespace SoFCore;
 using namespace SoFEval::Feat;
+using SoFUtil::panic;
 
 std::string formatName(const Name &name) {
   std::string result = name.name;
@@ -127,13 +128,8 @@ void fillWeights(SourcePrinter &p, const Features &features) {
 }
 
 int doGenerate(SourcePrinter &p, const Json::Value &json) {
-  LoadResult<Features> maybeFeatures = Features::load(json);
-  if (maybeFeatures.isErr()) {
-    std::cerr << "Error extracting features: " << maybeFeatures.unwrapErr().description
-              << std::endl;
-    return 1;
-  }
-  const Features features = maybeFeatures.unwrap();
+  const Features features = Features::load(json).okOrErr(
+      [](const auto err) { panic("Error extracting features: " + err.description); });
 
   p.headerGuard("SOF_EVAL_PRIVATE_WEIGHTS_INCLUDED");
   p.skip();

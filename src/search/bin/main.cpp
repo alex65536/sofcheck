@@ -33,13 +33,12 @@ int main() {
 
   std::cout << BANNER << std::endl;
 
-  auto connResult =
-      Connection::clientSide<SoFSearch::Engine, SoFBotApi::Clients::UciServerConnector>();
-  if (!connResult.isOk()) {
-    panic(std::string("Unable to initialize the engine: ") +
-          apiResultToStr(connResult.unwrapErr()));
-  }
-  Connection connection = connResult.unwrap();
+  Connection connection =
+      Connection::clientSide<SoFSearch::Engine, SoFBotApi::Clients::UciServerConnector>().okOrErr(
+          [](const auto err) {
+            panic(std::string("Unable to initialize the engine: ") +
+                  SoFBotApi::apiResultToStr(err));
+          });
   const PollResult res = connection.runPollLoop();
   if (res != PollResult::Ok) {
     panic(std::string("Fatal error while processing commands: ") + pollResultToStr(res));
