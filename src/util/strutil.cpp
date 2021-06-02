@@ -16,6 +16,10 @@ const char *scanTokenStart(const char *str) {
   return str;
 }
 
+bool startsWith(const std::string_view &s, const std::string_view &t) {
+  return s.size() >= t.size() && s.substr(0, t.size()) == t;
+}
+
 std::string sanitizeEol(std::string str) {
   for (char &c : str) {
     if (c < ' ' && c != '\t') {

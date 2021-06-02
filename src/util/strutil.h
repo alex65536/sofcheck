@@ -4,6 +4,7 @@
 #include <charconv>
 #include <cstring>
 #include <string>
+#include <string_view>
 
 namespace SoFUtil {
 
@@ -14,6 +15,9 @@ const char *scanTokenEnd(const char *str);
 // Scans the string forward, starting from `str` and returns the first character which is not
 // considered space
 const char *scanTokenStart(const char *str);
+
+// Returns `true` if `s` starts with `t`
+bool startsWith(const std::string_view &s, const std::string_view &t);
 
 // Converts the character `c` to lower case. `c` must be an ASCII character
 inline constexpr char asciiToLower(const char c) {
