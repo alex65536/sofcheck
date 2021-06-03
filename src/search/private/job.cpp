@@ -344,8 +344,9 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
     }
     results_.inc(JobStat::Nodes);
     const flags_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
-    if (hasMove && -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag,
-                                             newFlags) <= alpha) {
+    if (hasMove && beta != alpha + 1 &&
+        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag, newFlags) <=
+            alpha) {
       moveUnmake(board_, move, persistence);
       if (mustStop()) {
         return 0;
