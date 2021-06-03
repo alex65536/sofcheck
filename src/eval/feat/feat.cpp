@@ -3,6 +3,7 @@
 #include <json/json.h>
 
 #include <algorithm>
+#include <memory>
 #include <utility>
 
 namespace SoFEval::Feat {
