@@ -23,6 +23,7 @@ using SoFCore::Board;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using SoFEval::adjustCheckmate;
+using SoFEval::SCORE_CHECKMATE_THRESHOLD;
 using SoFEval::SCORE_INF;
 using SoFEval::score_t;
 using std::chrono::milliseconds;
@@ -323,6 +324,17 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
           break;
         }
       }
+    }
+  }
+
+  const bool isInCheck = isCheck(board_);
+
+  // Futility pruning
+  if (!isNodeKindPv(Node) && depth <= 2 && !isInCheck && alpha > -SCORE_CHECKMATE_THRESHOLD &&
+      beta < SCORE_CHECKMATE_THRESHOLD) {
+    const score_t threshold = beta + FUTILITY_THRESHOLD;
+    if (evaluator_.evalForCur(board_, tag) >= threshold) {
+      return beta;
     }
   }
 
