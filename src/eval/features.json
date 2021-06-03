@@ -73,5 +73,6 @@
             -8, -4, 0,  0,  0,  0,  -4, -8
         ]
     },
-    "two_bishops": 20
+    "two_bishops": 20,
+    "queen_near_to_king": 50
 }
