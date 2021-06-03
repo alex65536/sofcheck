@@ -6,6 +6,7 @@
 
 #include "core/board.h"
 #include "core/move.h"
+#include "core/types.h"
 #include "eval/types.h"
 
 namespace SoFEval {
@@ -45,8 +46,18 @@ public:
   };
 
   // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
-  // `isValid(b)` must hold
-  S evaluate(const SoFCore::Board &b, Tag tag);
+  // `isValid(b)` must hold. The `evalForWhite` variant returns positive score if the position is
+  // good for white, and negative score if the position is good for black. The `evaluateForCur`
+  // variant returns positive score if the position is good for the moving side
+  S evalForWhite(const SoFCore::Board &b, Tag tag);
+
+  S evalForCur(const SoFCore::Board &b, Tag tag) {
+    S result = evalForWhite(b, std::move(tag));
+    if (b.side == SoFCore::Color::Black) {
+      result *= -1;
+    }
+    return result;
+  }
 };
 
 }  // namespace SoFEval

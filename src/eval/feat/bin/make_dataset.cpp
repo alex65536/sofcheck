@@ -43,8 +43,10 @@ inline constexpr std::optional<Winner> winnerFromChar(const char ch) {
       return Winner::Black;
     case 'D':
       return Winner::Draw;
+    default:
+      return std::nullopt;
   }
-  return std::nullopt;
+  SOF_UNREACHABLE();
 }
 
 struct Game {
@@ -69,7 +71,7 @@ public:
   void addGame(const Game &game) {
     for (size_t idx = 0; idx < game.boards.size(); ++idx) {
       const Board &b = game.boards[idx];
-      std::vector<coef_t> coefs = evaluator_.evaluate(b, Evaluator::Tag::from(b)).take();
+      std::vector<coef_t> coefs = evaluator_.evalForWhite(b, Evaluator::Tag::from(b)).take();
       lines_.push_back({winnerToNumber(game.winner), game.id, game.boards.size(),
                         game.boards.size() - 1 - idx, std::move(coefs)});
     }
@@ -188,7 +190,7 @@ private:
 
     size_t id = 0;
     if (!SoFUtil::valueFromStr(tokens[2], id)) {
-      throw SoFUtil::Err(error("Invalid game ID"));
+      return SoFUtil::Err(error("Invalid game ID"));
     }
 
     return SoFUtil::Ok(Game(*winner, id));

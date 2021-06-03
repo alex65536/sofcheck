@@ -9,6 +9,7 @@
 #include "core/strutil.h"
 #include "eval/evaluate.h"
 #include "eval/score.h"
+#include "search/private/consts.h"
 #include "search/private/diagnostics.h"
 #include "search/private/move_picker.h"
 #include "search/private/util.h"
@@ -19,7 +20,6 @@ namespace SoFSearch::Private {
 
 using SoFBotApi::PositionCostBound;
 using SoFCore::Board;
-using SoFCore::Color;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using SoFEval::adjustCheckmate;
@@ -51,8 +51,6 @@ void JobCommunicator::stop() {
   stopEvent_.notify_all();
 }
 
-constexpr size_t MAX_DEPTH = 255;
-
 class Searcher {
 public:
   enum class NodeKind { Root, Pv, Simple };
@@ -73,8 +71,9 @@ public:
 
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
-    const score_t score = search<NodeKind::Root>(depth, 0, -SCORE_INF, SCORE_INF,
-                                                 Evaluator::Tag::from(board_), FLAGS_DEFAULT);
+    const score_t score =
+        search<NodeKind::Root>(static_cast<int32_t>(depth), 0, -SCORE_INF, SCORE_INF,
+                               Evaluator::Tag::from(board_), FLAGS_DEFAULT);
     DGN_ASSERT(isScoreValid(score));
     bestMove = stack_[0].bestMove;
     return score;
@@ -124,7 +123,7 @@ private:
   }
 
   template <NodeKind Node>
-  score_t doSearch(size_t depth, size_t idepth, score_t alpha, score_t beta, Evaluator::Tag tag,
+  score_t doSearch(int32_t depth, size_t idepth, score_t alpha, score_t beta, Evaluator::Tag tag,
                    flags_t flags);
 
   score_t quiescenseSearch(score_t alpha, score_t beta, Evaluator::Tag tag);
@@ -217,10 +216,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     return 0;
   }
 
-  score_t score = evaluator_.evaluate(board_, tag);
-  if (board_.side == Color::Black) {
-    score *= -1;
-  }
+  const score_t score = evaluator_.evalForCur(board_, tag);
   DGN_ASSERT(isScoreValid(score));
   DGN_ASSERT(score <= alpha || score >= beta || !isScoreCheckmate(score));
   alpha = std::max(alpha, score);
@@ -260,7 +256,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
 }
 
 template <Searcher::NodeKind Node>
-score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alpha,
+score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alpha,
                            const score_t beta, const Evaluator::Tag tag,
                            [[maybe_unused]] const flags_t flags) {
   const score_t origAlpha = alpha;
@@ -279,7 +275,7 @@ score_t Searcher::doSearch(const size_t depth, const size_t idepth, score_t alph
   }
 
   // Run quiescence search in leaf node
-  if (depth == 0) {
+  if (depth <= 0) {
     return quiescenseSearch(alpha, beta, tag);
   }
 

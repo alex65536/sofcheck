@@ -27,7 +27,7 @@ public:
     }
 
     inline constexpr SoFEval::score_t score() const { return score_; }
-    inline constexpr uint8_t depth() const { return move_.tag; }
+    inline constexpr int32_t depth() const { return static_cast<int32_t>(move_.tag); }
     inline constexpr bool isValid() const { return flags_ & FLAG_IS_VALID; }
     inline constexpr bool isPv() const { return flags_ & FLAG_IS_PV; }
     inline constexpr SoFBotApi::PositionCostBound bound() const {
