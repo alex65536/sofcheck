@@ -33,18 +33,6 @@ using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 using SoFUtil::Result;
 
-// Reads features from the stream, panics when encounters an error
-Features readFeatures(std::istream &in) {
-  Json::Value json;
-  Json::CharReaderBuilder builder;
-  std::string errs;
-  if (!Json::parseFromStream(builder, in, &json, &errs)) {
-    panic("JSON parse error: " + errs);
-  }
-  return Features::load(json).okOrErr(
-      [](const auto err) { panic("Error extracting features: " + err.description); });
-}
-
 enum class Winner { White, Black, Draw };
 
 inline constexpr std::optional<Winner> winnerFromChar(const char ch) {
@@ -240,7 +228,8 @@ private:
 };
 
 int run(std::istream &jsonIn, std::istream &in, std::ostream &out) {
-  DatasetGenerator gen(readFeatures(jsonIn));
+  DatasetGenerator gen(Features::load(jsonIn).okOrErr(
+      [](const auto err) { panic("Error extracting features: " + err.description); }));
   GameParser parser(in);
 
   auto addGames = [&]() -> Result<std::monostate, GameParser::Status> {

@@ -194,11 +194,31 @@ LoadResult<Features> Features::load(const Json::Value &json) {
   return Ok(Features(std::move(bundles), counter));
 }
 
+LoadResult<Features> Features::load(std::istream &in) {
+  Json::Value json;
+  Json::CharReaderBuilder builder;
+  std::string errs;
+  if (!Json::parseFromStream(builder, in, &json, &errs)) {
+    return Err(LoadError{"JSON parse error: " + errs});
+  }
+  return load(json);
+}
+
 void Features::save(Json::Value &json) const {
   json = Json::Value(Json::objectValue);
   for (const Bundle &bundle : bundles_) {
     bundle.save(json[bundle.name().name]);
   }
+}
+
+void Features::save(std::ostream &out) const {
+  Json::StreamWriterBuilder builder;
+  builder["enableYAMLCompatibility"] = true;
+  builder["indentation"] = "  ";
+  std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+  Json::Value json;
+  save(json);
+  writer->write(json, &out);
 }
 
 void Features::apply(const WeightVec &weights) {

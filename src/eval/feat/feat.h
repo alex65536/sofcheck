@@ -4,6 +4,8 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
+#include <istream>
+#include <ostream>
 #include <string>
 #include <utility>
 #include <variant>
@@ -185,8 +187,14 @@ public:
   // Loads the features from `json`
   static LoadResult<Features> load(const Json::Value &json);
 
+  // Load features from the stream `in`
+  static LoadResult<Features> load(std::istream &in);
+
   // Stores the features in `json`
   void save(Json::Value &json) const;
+
+  // Stores the features in the stream `out`
+  void save(std::ostream &out) const;
 
   // Applies the weights from the vector `weights`. Note that `weights.size() == count()` must hold,
   // otherwise the function will panic
