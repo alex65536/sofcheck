@@ -12,7 +12,6 @@
 using SoFEval::Feat::Features;
 using SoFEval::Feat::weight_t;
 using SoFUtil::openReadFile;
-using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 
 constexpr const char *DESCRIPTION = R"DESC(
