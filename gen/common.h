@@ -85,4 +85,6 @@ private:
   size_t indent_ = 0;
 };
 
+void printBitboard(std::ostream &out, const SoFCore::bitboard_t val);
+
 #endif  // SOF_GEN_COMMON_INCLUDED

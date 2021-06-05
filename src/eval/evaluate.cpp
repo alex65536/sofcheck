@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "eval/coefs.h"
+#include "eval/private/metric.h"
 #include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/bit.h"
@@ -96,20 +97,21 @@ template <Color C>
 S Evaluator<S>::evalByColor(const Board &b) {
   using Weights = Private::Weights<S>;
 
+  // Calculate pairs of bishops
   S result{};
   if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Bishop)]) >= 2) {
     result += Weights::TWO_BISHOPS;
   }
 
+  // Calculate queens near to opponent's king
   const coord_t king = SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]);
-  bitboard_t bbSrc = b.bbPieces[makeCell(C, Piece::Queen)];
-  while (bbSrc) {
-    const coord_t src = SoFUtil::extractLowest(bbSrc);
-    // TODO : calculate distance faster
-    const int distance = std::max(std::abs(SoFCore::coordX(src) - SoFCore::coordX(king)),
-                                  std::abs(SoFCore::coordY(src) - SoFCore::coordY(king)));
-    result += Weights::QUEEN_NEAR_TO_KING * QUEEN_DISTANCES[distance];
+  const size_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
+  coef_t nearCount = 0;
+  for (size_t i = 1; i < 8; ++i) {
+    nearCount +=
+        QUEEN_DISTANCES[i] * SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen);
   }
+  result += Weights::QUEEN_NEAR_TO_KING * nearCount;
 
   return result;
 }
