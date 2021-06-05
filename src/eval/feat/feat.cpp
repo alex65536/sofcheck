@@ -4,12 +4,56 @@
 
 #include <algorithm>
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 namespace SoFEval::Feat {
 
+using Private::BundleGroupImpl;
 using SoFUtil::Err;  // NOLINT: clang-tidy thinks it's unused by some reason
 using SoFUtil::Ok;   // NOLINT: clang-tidy thinks it's unused by some reason
+
+namespace Private {
+
+// Helper struct to implement operations for a group of bundles without writing too much boilerplate
+// code. All the methods in this struct just call `T::iterate()` to list all the sub-bundles of
+// `obj` and delegate operations to these sub-bundles
+struct BundleGroupImpl {
+  template <typename T>
+  static void save(const T &obj, Json::Value &json) {
+    T::iterate(obj, [&](const auto &bundle, const char *name) { bundle.save(json[name]); });
+  }
+
+  template <typename T>
+  static void apply(T &obj, const WeightVec &weights) {
+    T::iterate(obj, [&](auto &bundle, const char *) { bundle.apply(weights); });
+  }
+
+  template <typename T>
+  static void extract(const T &obj, WeightVec &weights) {
+    T::iterate(obj, [&](const auto &bundle, const char *) { bundle.extract(weights); });
+  }
+
+  template <typename T>
+  static size_t count(const T &obj) {
+    size_t result = 0;
+    T::iterate(obj, [&](const auto &bundle, const char *) { result += bundle.count(); });
+    return result;
+  }
+
+  template <typename T>
+  static std::vector<Name> names(const T &obj) {
+    std::vector<Name> result;
+    result.reserve(obj.count());
+    T::iterate(obj, [&](const auto &bundle, const char *) {
+      const auto names = bundle.names();
+      result.insert(result.end(), names.begin(), names.end());
+    });
+    return result;
+  }
+};
+
+}  // namespace Private
 
 LoadResult<SingleBundle> SingleBundle::load(const Name &name, const Json::Value &json) {
   if (!json.isInt()) {
@@ -63,6 +107,17 @@ std::vector<Name> ArrayBundle::names() const {
   return result;
 }
 
+template <typename ThisType, typename Callback>
+void PsqBundle::iterate(ThisType &obj, Callback callback) {
+  static_assert(std::is_same_v<PsqBundle, std::remove_cv_t<ThisType>>);
+
+  callback(obj.pieceCosts_, "cost");
+  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
+    callback(obj.tables_[idx], PIECE_NAMES[idx]);
+  }
+  callback(obj.endKingTable_, "king_end");
+}
+
 LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json) {
   if (!json.isObject() || json.get("type", Json::Value("")) != "psq") {
     return Err(LoadError{name.name + " must be object with type = psq"});
@@ -99,57 +154,13 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
 void PsqBundle::save(Json::Value &json) const {
   json = Json::Value(Json::objectValue);
   json["type"] = "psq";
-  pieceCosts_.save(json["cost"]);
-  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    tables_[idx].save(json[PIECE_NAMES[idx]]);
-  }
-  endKingTable_.save(json["king_end"]);
+  BundleGroupImpl::save(*this, json);
 }
 
-void PsqBundle::apply(const WeightVec &weights) {
-  pieceCosts_.apply(weights);
-  for (ArrayBundle &item : tables_) {
-    item.apply(weights);
-  }
-  endKingTable_.apply(weights);
-}
-
-void PsqBundle::extract(WeightVec &weights) const {
-  pieceCosts_.extract(weights);
-  for (const ArrayBundle &item : tables_) {
-    item.extract(weights);
-  }
-  endKingTable_.extract(weights);
-}
-
-std::vector<Name> PsqBundle::names() const {
-  std::vector<Name> result;
-  result.reserve(count());
-
-  auto append = [&](const std::vector<Name> &names) {
-    result.insert(result.end(), names.begin(), names.end());
-  };
-
-  append(pieceCosts_.names());
-  for (const ArrayBundle &item : tables_) {
-    append(item.names());
-  }
-  append(endKingTable_.names());
-
-  return result;
-}
-
-size_t PsqBundle::count() const {
-  size_t result = 0;
-
-  result += pieceCosts_.count();
-  for (const ArrayBundle &item : tables_) {
-    result += item.count();
-  }
-  result += endKingTable_.count();
-
-  return result;
-}
+void PsqBundle::apply(const WeightVec &weights) { BundleGroupImpl::apply(*this, weights); }
+void PsqBundle::extract(WeightVec &weights) const { BundleGroupImpl::extract(*this, weights); }
+std::vector<Name> PsqBundle::names() const { return BundleGroupImpl::names(*this); }
+size_t PsqBundle::count() const { return BundleGroupImpl::count(*this); }
 
 LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
 #define D_TRY_LOAD(type)                               \
@@ -174,6 +185,14 @@ LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
 
   return Err(LoadError{name.name + " has unknown type"});
 #undef D_TRY_LOAD
+}
+
+template <typename ThisType, typename Callback>
+void Features::iterate(ThisType &obj, Callback callback) {
+  static_assert(std::is_same_v<Features, std::remove_cv_t<ThisType>>);
+  for (auto &bundle : obj.bundles_) {
+    callback(bundle, bundle.name().name.c_str());
+  }
 }
 
 LoadResult<Features> Features::load(const Json::Value &json) {
@@ -207,9 +226,7 @@ LoadResult<Features> Features::load(std::istream &in) {
 
 void Features::save(Json::Value &json) const {
   json = Json::Value(Json::objectValue);
-  for (const Bundle &bundle : bundles_) {
-    bundle.save(json[bundle.name().name]);
-  }
+  BundleGroupImpl::save(*this, json);
 }
 
 void Features::save(std::ostream &out) const {
@@ -224,27 +241,17 @@ void Features::save(std::ostream &out) const {
 
 void Features::apply(const WeightVec &weights) {
   SOF_ASSERT(weights.size() == count());
-  for (Bundle &bundle : bundles_) {
-    bundle.apply(weights);
-  }
+  BundleGroupImpl::apply(*this, weights);
 }
 
 WeightVec Features::extract() const {
   WeightVec result(count());
-  for (const Bundle &bundle : bundles_) {
-    bundle.extract(result);
-  }
+  BundleGroupImpl::extract(*this, result);
   return result;
 }
 
 std::vector<Name> Features::names() const {
-  std::vector<Name> result;
-  result.reserve(count());
-
-  for (const Bundle &bundle : bundles_) {
-    std::vector<Name> cur = bundle.names();
-    result.insert(result.end(), cur.begin(), cur.end());
-  }
+  std::vector<Name> result = BundleGroupImpl::names(*this);
 
   // Ensure that the features arrive in the sequential order
   SOF_ASSERT(result.size() == count());

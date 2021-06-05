@@ -19,6 +19,10 @@ class Value;
 
 namespace SoFEval::Feat {
 
+namespace Private {
+struct BundleGroupImpl;
+}  // namespace Private
+
 using weight_t = int32_t;
 
 // Feature name. It includes the symbolic name and the position in the feature vector
@@ -108,6 +112,11 @@ private:
   static constexpr size_t PIECE_COUNT = 6;
   static constexpr const char *PIECE_NAMES[6] = {"pawn",   "king", "knight",
                                                  "bishop", "rook", "queen"};
+
+  template <typename ThisType, typename Callback>
+  static void iterate(ThisType &obj, Callback callback);
+
+  friend struct Private::BundleGroupImpl;
 
   explicit PsqBundle(Name name) : name_(std::move(name)) {}
 
@@ -218,6 +227,11 @@ public:
 private:
   Features(std::vector<Bundle> bundles, const size_t count)
       : bundles_(std::move(bundles)), count_(count) {}
+
+  template <typename ThisType, typename Callback>
+  static void iterate(ThisType &obj, Callback callback);
+
+  friend struct Private::BundleGroupImpl;
 
   std::vector<Bundle> bundles_;
   size_t count_;
