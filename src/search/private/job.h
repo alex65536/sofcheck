@@ -36,10 +36,10 @@ public:
   }
 
   // Returns `true` if the jobs must stop the search
-  inline bool isStopped() const { return stopped_.load(std::memory_order_relaxed); }
+  inline bool isStopped() const { return stopped_.load(std::memory_order_acquire); }
 
   // Returns the depth on which the jobs must search now
-  inline size_t depth() const { return depth_.load(std::memory_order_relaxed); }
+  inline size_t depth() const { return depth_.load(std::memory_order_acquire); }
 
   // Resets the job into its default state. This function must not be called when jobs are running.
   inline void reset() {
@@ -49,7 +49,9 @@ public:
 
   // Indicates that the job has finished to search on depth `depth`. Returns `true` if it was the
   // first job to finish search on this depth, otherwise returns false.
-  inline bool finishDepth(size_t depth) { return depth_.compare_exchange_strong(depth, depth + 1); }
+  inline bool finishDepth(size_t depth) {
+    return depth_.compare_exchange_strong(depth, depth + 1, std::memory_order_acq_rel);
+  }
 
 private:
   std::atomic<size_t> depth_ = 1;

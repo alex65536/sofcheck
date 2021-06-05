@@ -16,7 +16,6 @@
 #include "eval/coefs.h"
 #include "eval/evaluate.h"
 #include "eval/feat/feat.h"
-#include "util/bit.h"
 #include "util/fileutil.h"
 #include "util/logging.h"
 #include "util/misc.h"
@@ -87,19 +86,19 @@ public:
     // positions include boards after captures, checks and responses to checks. Evaluation doesn't
     // give a good estimate of the position cost on such boards, so don't include it to the dataset
     for (size_t idx = 0; idx < game.boards.size(); ++idx) {
+      // Ignore moves in the start of the game
       if (idx < 5) {
-        // We'll also ignore moves in the very start of the game
         isBoardGood[idx] = false;
-        continue;
       }
 
       // Captures
-      if (getMaterialEstimate(game.boards[idx - 1]) != getMaterialEstimate(game.boards[idx])) {
+      if (idx != 0 &&
+          getMaterialEstimate(game.boards[idx - 1]) != getMaterialEstimate(game.boards[idx])) {
         isBoardGood[idx] = false;
       }
 
       // Checks
-      if (isCheck(game.boards[idx - 1])) {
+      if (idx != 0 && isCheck(game.boards[idx - 1])) {
         isBoardGood[idx - 1] = false;
         isBoardGood[idx] = false;
       }

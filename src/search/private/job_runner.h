@@ -52,11 +52,11 @@ public:
 
   // Enables or disables debug mode. In debug mode the jobs may send extra information to server.
   inline void setDebugMode(const bool enable) {
-    debugMode_.store(enable, std::memory_order_relaxed);
+    debugMode_.store(enable, std::memory_order_release);
   }
 
   // Returns `true` if debug mode is enabled
-  inline bool isDebugMode() const { return debugMode_.load(std::memory_order_relaxed); }
+  inline bool isDebugMode() const { return debugMode_.load(std::memory_order_acquire); }
 
 private:
   // Main function of the thread which controls all the running jobs.

@@ -12,14 +12,13 @@
 using SoFEval::Feat::Features;
 using SoFEval::Feat::weight_t;
 using SoFUtil::openReadFile;
-using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 
 constexpr const char *DESCRIPTION = R"DESC(
 ShowWeights for SoFCheck
 
 This utility reads the weights from the JSON file with features and displays
-it as a list of space-separated integers on the standard output.
+them as a list of space-separated integers on the standard output.
 
 Usage: apply_weights FEATURES
 
@@ -39,7 +38,7 @@ int main(int argc, char **argv) {
   }
   auto badFile = [&](auto err) { return panic(std::move(err.description)); };
   std::ifstream inFile = openReadFile(argv[1]).okOrErr(badFile);
-  auto features = Features::load(inFile).okOrErr(
+  const auto features = Features::load(inFile).okOrErr(
       [](const auto err) { panic("Error extracting features: " + err.description); });
   std::vector<weight_t> weights = features.extract();
   for (size_t idx = 0; idx < weights.size(); ++idx) {
