@@ -49,17 +49,29 @@ public:
   // `isValid(b)` must hold. The `evalForWhite` variant returns positive score if the position is
   // good for white, and negative score if the position is good for black. The `evaluateForCur`
   // variant returns positive score if the position is good for the moving side
-  S evalForWhite(const SoFCore::Board &b, Tag tag);
+  S evalForWhite(const SoFCore::Board &b, const Tag &tag);
 
-  S evalForCur(const SoFCore::Board &b, Tag tag) {
-    S result = evalForWhite(b, std::move(tag));
-    if (b.side == SoFCore::Color::Black) {
-      result *= -1;
-    }
-    return result;
+  S evalForCur(const SoFCore::Board &b, const Tag &tag) {
+    return evalForWhite(b, tag) * colorCoef(b.side);
+  }
+
+  // Returns a rough estimate of the position cost of `b`, based only on piece-square tables. `tag`
+  // must be strictly equal to `Tag::from(b)`, i. e. `isValid(b)` must hold. To learn about the
+  // difference between `evalMaterialForWhite()` and `evalMaterialForCur()`, see the `evalFor...()`
+  // description
+  inline S evalMaterialForWhite(const SoFCore::Board &, const Tag &tag) {
+    return tag.inner_.first();
+  }
+
+  inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) {
+    return evalMaterialForWhite(b, tag) * colorCoef(b.side);
   }
 
 private:
+  inline static constexpr int32_t colorCoef(const SoFCore::Color c) {
+    return (c == SoFCore::Color::White) ? +1 : -1;
+  }
+
   // Helper function, evaluates only the features for pieces belonging to the color `C`
   template <SoFCore::Color C>
   S evalByColor(const SoFCore::Board &b);

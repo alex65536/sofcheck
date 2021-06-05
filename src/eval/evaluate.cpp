@@ -80,7 +80,7 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
 }
 
 template <typename S>
-S Evaluator<S>::evalForWhite(const Board &b, const Tag tag) {
+S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
   const uint32_t rawStage = ((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE;
   const uint32_t stage = std::min<uint32_t>(rawStage, 256);
 
