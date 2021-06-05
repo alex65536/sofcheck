@@ -1,5 +1,6 @@
 #include <json/json.h>
 
+#include <array>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
@@ -9,6 +10,8 @@
 #include <vector>
 
 #include "core/board.h"
+#include "core/init.h"
+#include "core/movegen.h"
 #include "core/strutil.h"
 #include "eval/coefs.h"
 #include "eval/evaluate.h"
@@ -69,7 +72,43 @@ public:
   explicit DatasetGenerator(Features features) : features_(std::move(features)) {}
 
   void addGame(const Game &game) {
+    std::vector<bool> isBoardGood(game.boards.size(), true);
+
+    auto getMaterialEstimate = [&](const Board &b) {
+      std::array<size_t, Board::BB_PIECES_SZ> counts{};
+      for (SoFCore::coord_t i = 0; i < 64; ++i) {
+        ++counts[b.cells[i]];
+      }
+      return counts;
+    };
+
+    // Find the positions where tactics play an important role in the evaluation result. Such
+    // positions include boards after captures, checks and responses to checks. Evaluation doesn't
+    // give a good estimate of the position cost on such boards, so don't include it to the dataset
     for (size_t idx = 0; idx < game.boards.size(); ++idx) {
+      // Ignore moves in the start of the game
+      if (idx < 5) {
+        isBoardGood[idx] = false;
+      }
+
+      // Captures
+      if (idx != 0 &&
+          getMaterialEstimate(game.boards[idx - 1]) != getMaterialEstimate(game.boards[idx])) {
+        isBoardGood[idx] = false;
+      }
+
+      // Checks
+      if (idx != 0 && isCheck(game.boards[idx - 1])) {
+        isBoardGood[idx - 1] = false;
+        isBoardGood[idx] = false;
+      }
+    }
+
+    // Evaluate good positions and add the coefficients from them into `lines_`
+    for (size_t idx = 0; idx < game.boards.size(); ++idx) {
+      if (!isBoardGood[idx]) {
+        continue;
+      }
       const Board &b = game.boards[idx];
       std::vector<coef_t> coefs = evaluator_.evalForWhite(b, Evaluator::Tag::from(b)).take();
       lines_.push_back({winnerToNumber(game.winner), game.id, game.boards.size(),
@@ -282,6 +321,8 @@ It's also worth to mention that the blank lines and the lines starting with
 void showUsage() { std::cerr << SoFUtil::trimEolLeft(DESCRIPTION) << std::flush; }
 
 int main(int argc, char **argv) {
+  SoFCore::init();
+
   if (argc == 2 && std::strcmp(argv[1], "-h") == 0) {
     showUsage();
     return 0;

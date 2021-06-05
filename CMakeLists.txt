@@ -167,7 +167,12 @@ target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat json
 add_executable(apply_weights
   src/eval/feat/bin/apply_weights.cpp
 )
-target_link_libraries(apply_weights sof_util sof_eval sof_eval_feat jsoncpp_lib)
+target_link_libraries(apply_weights sof_util sof_eval_feat jsoncpp_lib)
+
+add_executable(show_weights
+  src/eval/feat/bin/show_weights.cpp
+)
+target_link_libraries(show_weights sof_util sof_eval_feat jsoncpp_lib)
 
 
 # Generate files

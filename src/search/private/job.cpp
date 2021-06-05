@@ -38,7 +38,7 @@ using Evaluator = SoFEval::Evaluator<score_t>;
 
 void JobCommunicator::stop() {
   size_t tmp = 0;
-  if (!stopped_.compare_exchange_strong(tmp, 1, std::memory_order_seq_cst)) {
+  if (!stopped_.compare_exchange_strong(tmp, 1, std::memory_order_release)) {
     return;
   }
   // Lock and unlock `stopLock_` to ensure that we are not checking for `isStopped()` in
