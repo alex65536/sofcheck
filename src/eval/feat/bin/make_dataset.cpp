@@ -92,12 +92,13 @@ public:
       }
 
       // Captures
-      if (getMaterialEstimate(game.boards[idx - 1]) != getMaterialEstimate(game.boards[idx])) {
+      if (idx != 0 &&
+          getMaterialEstimate(game.boards[idx - 1]) != getMaterialEstimate(game.boards[idx])) {
         isBoardGood[idx] = false;
       }
 
       // Checks
-      if (isCheck(game.boards[idx - 1])) {
+      if (idx != 0 && isCheck(game.boards[idx - 1])) {
         isBoardGood[idx - 1] = false;
         isBoardGood[idx] = false;
       }
