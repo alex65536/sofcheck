@@ -66,10 +66,11 @@ public:
   inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) {
     return evalMaterialForWhite(b, tag) * colorCoef(b.side);
   }
+
+private:
   inline static constexpr int32_t colorCoef(const SoFCore::Color c) {
     return (c == SoFCore::Color::White) ? +1 : -1;
   }
-
 };
 
 }  // namespace SoFEval
