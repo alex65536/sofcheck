@@ -39,15 +39,6 @@
   When we get rid of the current architecture, we will need another approach to define what must
   be thread-safe.
 
-* Write framework to perform tuning of evaluation constants
-  Tuning constants to increase playing strength is always a good idea. We need a framework to
-  build versions of SoFCheck with different constants and compare these versions. The current
-  vision is to modify header files with constants (or create new ones and use them in a build),
-  then rebuild the engine with new constants as a shared library (not to UCI executable since we
-  don't want overhead from passing and parsing UCI messages). To compare the versions, we will
-  play many micro-matches between the versions (like BattleField does currently). To perform the
-  tuning, we can use some optimization methods, as Gradient descent.
-
 * Ensure that the transposition table doesn't change search results
   To do this, we need to perform a simple test. Get the score from the transposition table only
   when the depth is equal to our depth, not greater-or-equal. Then, compare the results with this
@@ -66,3 +57,9 @@
   we may consider vendoring the library into the repository itself instead of adding an external
   dependency to minimize number of such dependencies. Then, we need to fix all binaries (inspect
   `CMakeLists.txt` to find them and do not forget about generators)
+
+* Do not analyze the same node twice in multiple threads
+  To do this, we may put a flag `busy` into the hash table, which indicates that this position is
+  already being analysed. If we encounter a busy position during the search, we just skip it and
+  say that we'll analyse it in the end. Such trick may improve performance of the engine in the
+  multithreaded case. This idea is used in Texel chess engine, so we may also try it
