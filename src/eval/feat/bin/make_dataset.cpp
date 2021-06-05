@@ -76,8 +76,8 @@ public:
 
     auto getMaterialEstimate = [&](const Board &b) {
       std::array<size_t, Board::BB_PIECES_SZ> counts{};
-      for (SoFCore::coord_t i = 0; i < 64; ++i) {
-        ++counts[b.cells[i]];
+      for (const SoFCore::cell_t cell : b.cells) {
+        ++counts[cell];
       }
       return counts;
     };
