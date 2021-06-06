@@ -206,11 +206,11 @@ LoadResult<Features::ExtractedMemberNames> Features::extractMemberNames(const Js
       return Err(LoadError{"_order must be array"});
     }
     result.ordered.reserve(order.size());
-    for (Json::ArrayIndex idx = 0; idx < order.size(); ++idx) {
-      if (!order[idx].isString()) {
+    for (const Json::Value &item : order) {
+      if (!item.isString()) {
         return Err(LoadError{"_order items must be strings"});
       }
-      std::string feature = order[idx].asString();
+      std::string feature = item.asString();
       if (orderedFeatures.count(feature)) {
         return Err(LoadError{"Feature " + feature + " repeats in _order at least twice"});
       }
