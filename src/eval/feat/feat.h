@@ -85,7 +85,7 @@ public:
   const Name &name() const { return name_; }
 
   // Returns the weigths in the array
-  const std::vector<weight_t> values() const { return values_; }
+  const std::vector<weight_t> &values() const { return values_; }
 
   ArrayBundle() = default;
 

@@ -179,9 +179,9 @@ void PsqBundle::save(Json::Value &json) const {
 void PsqBundle::print(SourceFormatter &fmt) const {
   fmt.stream() << "{\n";
   fmt.indent(1);
-  fmt.line() << "\"type\": \"psq\",";
+  fmt.line() << R"TEXT("type": "psq",)TEXT";
 
-  fmt.lineStart() << "\"cost\": ";
+  fmt.lineStart() << R"TEXT("cost": )TEXT";
   pieceCosts_.print(fmt);
   fmt.stream() << ",\n";
 
@@ -274,7 +274,8 @@ LoadResult<Features> Features::load(const Json::Value &json) {
   for (Json::ArrayIndex idx = 0; idx < json.size(); ++idx) {
     const Json::Value &item = json[idx];
     if (!item.isObject() || item.size() != 1) {
-      return Err(LoadError{"Each item of feature JSON must have the form {\"key\": \"value\"}"});
+      return Err(
+          LoadError{R"TEXT(Each item of feature JSON must have the form {"key": "value"})TEXT"});
     }
     const std::string key = item.getMemberNames()[0];
     if (!added.insert(key).second) {
