@@ -35,23 +35,6 @@ public:
     bool printEoln_;
   };
 
-  // Helper RAII wrapper for indentation. When created, it increases indentation by the given amount
-  // and decreases it back on destruction
-  class IndentGuard : public SoFUtil::NoCopyMove {
-  public:
-    ~IndentGuard() { fmt_.outdent(amount_); }
-
-  private:
-    friend class SourceFormatter;
-
-    explicit IndentGuard(const size_t amount, SourceFormatter &fmt) : fmt_(fmt), amount_(amount) {
-      fmt_.indent(amount_);
-    }
-
-    SourceFormatter &fmt_;
-    size_t amount_;
-  };
-
   // Just prints an empty line
   void skip() { stream_ << "\n"; }
 
@@ -68,9 +51,7 @@ public:
   std::ostream &stream() { return stream_; }
 
   // These functions control the indentation. `indent()` increases the indentation by `amount`
-  // units, `outdent()` decreases the indentation by `amount` units, and `indented()` creates a
-  // guard that increases the indentation when created and decreases the indentation when destroyed
-  IndentGuard indented(const size_t amount) { return IndentGuard(amount, *this); }
+  // units, `outdent()` decreases the indentation by `amount` units
   void indent(const size_t amount) { indent_ += amount * indentStep_; }
   void outdent(const size_t amount) { indent_ -= amount * indentStep_; }
 
