@@ -2,13 +2,13 @@
 
 ## What is it?
 
-This is a small framework to test correctness of chess rules implementation. It is similar to
+This is a small framework to verify correctness of chess rules implementations. It is similar to
 [Perft][1], but has more functionality and allows SoFCheck to perform additional checks to ensure
 that everything is correct.
 
 The implementation of chess rules in SoFCheck is tested against [Dodecahedron][2], my earlier
 attempt to create a good chess engine. Since the rules in these engines were implemented
-independently and Dodecahedron was itself tested for correctness, the chance of error is very
+independently and Dodecahedron was tested for correctness itself, the chance of mistake is very
 small.
 
 ## Testing process
@@ -17,11 +17,11 @@ The self-test process looks as follows. For each tested rules implementation, an
 built. You can run this executable and pass a file with boards as an argument. The executable will
 print some diagnostic information on standard output. If two executables produce the same output,
 then the corresponding rules implementations are either correct or have the same bugs. Most
-probably both are correct, since we can assume that it's hard to catch the same bug on rules
+probably both are correct, since we can assume it's hard to catch the same bug on rules
 implementations written independently.
 
-The file with boards is located in this directory, names `boards.fen`. You can generate if yourself
-using `SelftestDataCreate` utility in [`sofcheck-engine tester` repo][3] if you want.
+The file with boards is located in this directory, named `boards.fen`. You can generate this file
+yourself using `SelftestDataCreate` utility in [`sofcheck-engine-tester`][3] repo if you want.
 
 ## Building
 
@@ -33,26 +33,30 @@ required for self-testing are still built, so you can run it manually (see secti
 ## Running manually
 
 Suppose your current working directory is the root of the repo, the build directory is `build` and
-you want to test `sofcheck` against `dodecahedron`. You may want to add other engines to test and
-run them instead (see [below](#adding-your-own-engine)).
+you want to test `sofcheck` against `dodecahedron`. You may want to add other implementations to
+test and run them instead (see [below](#adding-your-own-engine)).
 
 ~~~
-$ ( cd build && make -j )  # build the project
-$ build/test_sofcheck >/tmp/out1.txt  # run the test for sofcheck and save its output
-$ build/test_dodecahedron >/tmp/out2.txt  # run the test for dodecahedron and save its output
-$ diff /tmp/out1.txt /tmp/out2.txt >/tmp/dif.txt && echo OK  # compare two outputs
+$ # build the project
+$ ( cd build && make -j )
+$ # run test for sofcheck and save output to /tmp/out1.txt
+$ build/test_sofcheck selftest/boards.fen >/tmp/out1.txt
+$ # run test for dodecahedron and save output to /tmp/out2.txt
+$ build/test_dodecahedron selftest/boards.fen >/tmp/out2.txt
+$ # compare two outputs
+$ diff /tmp/out1.txt /tmp/out2.txt >/tmp/dif.txt && echo OK
 ~~~
 
-If the outputs are similar, you will see `OK` on the standard output after the last command. If
-not, the differences between the outputs will be written to `/tmp/dif.txt`. You can inspect this
-file to debug your implementation.
+If the outputs are similar, you will see `OK` on the standard output after the last command
+completes. If not, the differences between the outputs will be written to `/tmp/dif.txt`. You can
+inspect this file to debug your implementation.
 
 For Windows, the process is similar, but the commands may differ. I'm lazy to describe the process
 for Windows now.
 
 ## Adding your own engine
 
-If you want to test your own rules implementation, you can add it here and built self-tests for it.
+If you want to test your own rules implementation, you can add it here and build self-tests for it.
 
 Suppose your rules implementation is called `rules` and contains two source files `rules1.cpp` and
 `rules2.cpp`.
@@ -64,7 +68,7 @@ self-tests. You can see the example [here][4]. You need to implement the same fu
 the same types for your implementation.
 
 3. Add the following lines into `selftest/chess_intf.h` before `#ifndef INTF_USED`. Remember to
-change `rules` with your implementation name):
+change `rules` and `RULES` with your implementation name:
 
     ```cpp
     #ifdef INTF_RULES
@@ -87,15 +91,15 @@ implementation, replacing its name and the names of the source files:
     ```
 
 5. Rebuild the project. The build must complete successfully, and `test_rules` executable must
-appear
+appear.
 
-6. Run the self-test against any existing implementation, as described [above](#running-manually)
+6. Run the self-test against any existing implementation, as described [above](#running-manually).
 
 ## Benchmarks
 
-If you have Google Benchmark installed (and detected by CMake), then the benchmarks will be built
+If you have Google Benchmark installed (and detected by CMake), then benchmarks will be built
 alongside with self-tests. The benchmark executable is named `bench_<engine>` where `<engine>` is the
-name of rules implementation.
+name of rules implementation. You can just run it and see how fast your implementation is.
 
 [1]: https://www.chessprogramming.org/Perft
 [2]: https://github.com/alex65536/dodecahedron
