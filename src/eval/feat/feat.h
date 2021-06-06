@@ -225,16 +225,24 @@ public:
   Features() = default;
 
 private:
-  Features(std::vector<Bundle> bundles, const size_t count)
-      : bundles_(std::move(bundles)), count_(count) {}
+  Features(std::vector<Bundle> bundles, const size_t count, std::vector<std::string> order)
+      : bundles_(std::move(bundles)), count_(count), order_(std::move(order)) {}
 
   template <typename ThisType, typename Callback>
   static void iterate(ThisType &obj, Callback callback);
+
+  struct ExtractedMemberNames {
+    std::vector<std::string> ordered;
+    std::vector<std::string> all;
+  };
+
+  static LoadResult<ExtractedMemberNames> extractMemberNames(const Json::Value &json);
 
   friend struct Private::BundleGroupImpl;
 
   std::vector<Bundle> bundles_;
   size_t count_;
+  std::vector<std::string> order_;
 };
 
 }  // namespace SoFEval::Feat

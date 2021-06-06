@@ -1,4 +1,4 @@
-# SoF Check
+# SoFCheck
 
 [![Build Status](https://travis-ci.com/alex65536/sofcheck.svg?branch=master)](https://travis-ci.com/alex65536/sofcheck)
 
@@ -20,12 +20,12 @@
 
 ## About
 
-SoF Check is a chess engine. As many other chess engines, it uses magic bitboards to generate moves
+SoFCheck is a chess engine. As many other chess engines, it uses magic bitboards to generate moves
 and alpha-beta pruning to find out how to analyze positions. The main features of SoFCheck are:
 
 - Speed: the critical parts of the program are written to be as fast as possible
-- Multithreading: SoF Check uses lazy SMP to perform search in multiple threads simultaneously
-- Reusability: the parts of SoF Check can be used as a general-purpose chess library. Also, you can
+- Multithreading: SoFCheck uses lazy SMP to perform search in multiple threads simultaneously
+- Reusability: the parts of SoFCheck can be used as a general-purpose chess library. Also, you can
   relatively easy add new communication protocols to the engine or integrate it into your GUI. Now
   the engine supports only UCI, but the situation will change in the future.
 
@@ -33,7 +33,7 @@ To learn more, see [the project design](DESIGN.md).
 
 ## State of the project
 
-The project is in early alpha stage. So the engine doesn't play very strong now, and many useful
+The project is in alpha stage. So the engine doesn't play very strong now, and many useful
 heuristics are missing.
 
 ## Building from source
@@ -78,9 +78,11 @@ $ cmake -DCMAKE_BUILD_TYPE=Release -DUSE_BMI2=ON -DUSE_NO_EXCEPTIONS=ON ..
 $ make -j8
 ~~~~~
 
-For more flags, refer to [CMakeLists.txt](CMakeLists.txt) or use CMake GUI. Note that you should
-add `-DUSE_BMI2=ON` only if you have a relatively new Intel CPU which has BMI2 instruction set. Do
-not use this flag on AMD CPUs, since it will slow down the engine.
+For more flags, refer to [CMakeLists.txt](CMakeLists.txt) or use CMake GUI.
+
+Note on `-DUSE_BMI2=ON`: it should be used only on modern Intel CPUs and on AMD with Zen 3 (or
+later) microarchitecture. Older AMD CPUs have a very slow implementation of `PDEP` and `PEXT`
+instructions, so using this flag may slow down the engine greatly.
 
 ## Running tests
 
@@ -91,10 +93,10 @@ engine.
 
 **License**: GPL 3+.
 
-_SoF Check_ is free software: you can redistribute it and/or modify it under the terms of the
+_SoFCheck_ is free software: you can redistribute it and/or modify it under the terms of the
 [GNU General Public License](https://www.gnu.org/licenses/gpl.html) as published by the Free
 Software Foundation, either version 3 of the License, or (at your option) any later version.
 
-_SoF Check_ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+_SoFCheck_ is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
 even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 [GNU General Public License](https://www.gnu.org/licenses/gpl.html) for more details.

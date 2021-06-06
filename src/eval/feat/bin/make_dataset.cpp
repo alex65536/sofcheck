@@ -321,6 +321,7 @@ It's also worth to mention that the blank lines and the lines starting with
 void showUsage() { std::cerr << SoFUtil::trimEolLeft(DESCRIPTION) << std::flush; }
 
 int main(int argc, char **argv) {
+  std::ios_base::sync_with_stdio(false);
   SoFCore::init();
 
   if (argc == 2 && std::strcmp(argv[1], "-h") == 0) {
