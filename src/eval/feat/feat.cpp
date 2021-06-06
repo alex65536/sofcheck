@@ -3,15 +3,21 @@
 #include <json/json.h>
 
 #include <algorithm>
+#include <iomanip>
 #include <memory>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
+
+#include "util/formatter.h"
+#include "util/strutil.h"
 
 namespace SoFEval::Feat {
 
 using Private::BundleGroupImpl;
 using SoFUtil::Err;  // NOLINT: clang-tidy thinks it's unused by some reason
 using SoFUtil::Ok;   // NOLINT: clang-tidy thinks it's unused by some reason
+using SoFUtil::SourceFormatter;
 
 namespace Private {
 
@@ -64,6 +70,8 @@ LoadResult<SingleBundle> SingleBundle::load(const Name &name, const Json::Value 
 
 void SingleBundle::save(Json::Value &json) const { json = value_; }
 
+void SingleBundle::print(SourceFormatter &fmt) const { fmt.stream() << value_; }
+
 LoadResult<ArrayBundle> ArrayBundle::load(const Name &name, const Json::Value &json) {
   if (!json.isArray()) {
     return Err(LoadError{name.name + " must be array"});
@@ -85,6 +93,17 @@ void ArrayBundle::save(Json::Value &json) const {
   for (Json::ArrayIndex idx = 0; idx < json.size(); ++idx) {
     json[idx] = values_[idx];
   }
+}
+
+void ArrayBundle::print(SourceFormatter &fmt) const {
+  fmt.stream() << "[";
+  for (size_t idx = 0; idx < values_.size(); ++idx) {
+    if (idx != 0) {
+      fmt.stream() << ", ";
+    }
+    fmt.stream() << values_[idx];
+  }
+  fmt.stream() << "]";
 }
 
 void ArrayBundle::apply(const WeightVec &weights) {
@@ -157,6 +176,54 @@ void PsqBundle::save(Json::Value &json) const {
   BundleGroupImpl::save(*this, json);
 }
 
+void PsqBundle::print(SourceFormatter &fmt) const {
+  fmt.stream() << "{\n";
+  fmt.indent(1);
+  fmt.line() << R"TEXT("type": "psq",)TEXT";
+
+  fmt.lineStart() << R"TEXT("cost": )TEXT";
+  pieceCosts_.print(fmt);
+  fmt.stream() << ",\n";
+
+  auto printBoard = [&](const ArrayBundle &board, const char *name) {
+    const std::vector<weight_t> &values = board.values();
+    SOF_ASSERT(values.size() == 64);
+
+    size_t columnSizes[8] = {};
+    for (size_t idx = 0; idx < 64; ++idx) {
+      const size_t col = idx & 7;
+      columnSizes[col] = std::max(columnSizes[col], SoFUtil::intStrLen(values[idx]));
+    }
+
+    fmt.line() << "\"" << name << "\": [";
+    fmt.indent(1);
+    for (size_t x = 0; x < 8; ++x) {
+      auto line = fmt.line();
+      for (size_t y = 0; y < 8; ++y) {
+        line << std::setw(columnSizes[y]) << values[(x << 3) | y];
+        if (x != 7 || y != 7) {
+          line << ",";
+        }
+        if (y != 7) {
+          line << " ";
+        }
+      }
+    }
+    fmt.outdent(1);
+    fmt.lineStart() << "]";
+  };
+
+  for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
+    printBoard(tables_[idx], PIECE_NAMES[idx]);
+    fmt.stream() << ",\n";
+  }
+  printBoard(endKingTable_, "king_end");
+  fmt.stream() << "\n";
+
+  fmt.outdent(1);
+  fmt.lineStart() << "}";
+}
+
 void PsqBundle::apply(const WeightVec &weights) { BundleGroupImpl::apply(*this, weights); }
 void PsqBundle::extract(WeightVec &weights) const { BundleGroupImpl::extract(*this, weights); }
 std::vector<Name> PsqBundle::names() const { return BundleGroupImpl::names(*this); }
@@ -196,18 +263,25 @@ void Features::iterate(ThisType &obj, Callback callback) {
 }
 
 LoadResult<Features> Features::load(const Json::Value &json) {
-  if (!json.isObject()) {
-    return Err(LoadError{"Feature JSON must be object"});
+  if (!json.isArray()) {
+    return Err(LoadError{"Feature JSON must be array"});
   }
 
-  std::vector<std::string> members = json.getMemberNames();
-  std::sort(members.begin(), members.end());
-
-  std::vector<Bundle> bundles(members.size());
+  std::unordered_set<std::string> added;
+  std::vector<Bundle> bundles(json.size());
   size_t counter = 0;
-  for (size_t idx = 0; idx < members.size(); ++idx) {
-    const std::string &member = members[idx];
-    SOF_TRY_ASSIGN(bundles[idx], Bundle::load(Name{counter, member}, json[member]));
+
+  for (Json::ArrayIndex idx = 0; idx < json.size(); ++idx) {
+    const Json::Value &item = json[idx];
+    if (!item.isObject() || item.size() != 1) {
+      return Err(
+          LoadError{R"TEXT(Each item of feature JSON must have the form {"key": "value"})TEXT"});
+    }
+    const std::string key = item.getMemberNames()[0];
+    if (!added.insert(key).second) {
+      return Err(LoadError{"Bundle " + key + " is present at least twice"});
+    }
+    SOF_TRY_ASSIGN(bundles[idx], Bundle::load(Name{counter, key}, item[key]));
     counter += bundles[idx].count();
   }
 
@@ -225,18 +299,33 @@ LoadResult<Features> Features::load(std::istream &in) {
 }
 
 void Features::save(Json::Value &json) const {
-  json = Json::Value(Json::objectValue);
-  BundleGroupImpl::save(*this, json);
+  json = Json::Value(Json::arrayValue);
+  for (const auto &bundle : bundles_) {
+    Json::Value &item = json.append(Json::Value(Json::objectValue));
+    bundle.save(item[bundle.name().name]);
+  }
 }
 
-void Features::save(std::ostream &out) const {
-  Json::StreamWriterBuilder builder;
-  builder["enableYAMLCompatibility"] = true;
-  builder["indentation"] = "  ";
-  std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
-  Json::Value json;
-  save(json);
-  writer->write(json, &out);
+void Features::print(SoFUtil::SourceFormatter &fmt) const {
+  fmt.line() << "[";
+  fmt.indent(1);
+  for (size_t idx = 0; idx < bundles_.size(); ++idx) {
+    const auto &bundle = bundles_[idx];
+    fmt.lineStart() << "{\"" << bundle.name().name << "\": ";
+    bundle.print(fmt);
+    fmt.stream() << "}";
+    if (idx + 1 != bundles_.size()) {
+      fmt.stream() << ",";
+    }
+    fmt.stream() << "\n";
+  }
+  fmt.outdent(1);
+  fmt.line() << "]";
+}
+
+void Features::print(std::ostream &out) const {
+  SourceFormatter fmt(out, 4);
+  print(fmt);
 }
 
 void Features::apply(const WeightVec &weights) {

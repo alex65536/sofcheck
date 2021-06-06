@@ -55,6 +55,6 @@ int main(int argc, char **argv) {
   inFile.close();
   features.apply(readWeights(features));
   std::ofstream outFile = openWriteFile(argv[1]).okOrErr(badFile);
-  features.save(outFile);
+  features.print(outFile);
   return 0;
 }

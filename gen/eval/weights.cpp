@@ -111,10 +111,10 @@ void fillWeights(SourcePrinter &p, const Features &features) {
         p.line() << "static constexpr LargePair " << formatName(b->name()) << "_" << name
                  << "_UPD[2] = {";
         static_assert(static_cast<int>(Color::White) == 0 && static_cast<int>(Color::Black) == 1);
-        p.indent(4);
+        p.indent(2);
         p.line() << "/* White */ " << value[0] << ",";
         p.line() << "/* Black */ " << value[1];
-        p.outdent(4);
+        p.outdent(2);
         p.line() << "};";
       };
 
@@ -152,9 +152,9 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
   p.line() << "  using LargePair = typename ScoreTraits<LargeItem>::Pair;";
   p.skip();
   p.line() << "  // Here comes the weights declaration";
-  p.indent(2);
+  p.indent(1);
   fillWeights(p, features);
-  p.outdent(2);
+  p.outdent(1);
   p.line() << "};";
   p.skip();
 
