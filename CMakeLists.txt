@@ -248,7 +248,7 @@ if(GTest_FOUND)
     src/eval/feat/test/feat.cpp
   )
   target_link_libraries(test_eval_feat_unit_test
-    sof_eval_feat jsoncpp_lib GTest::GTest GTest::Main
+    sof_eval_feat sof_util jsoncpp_lib GTest::GTest GTest::Main
   )
   gtest_add_tests(TARGET test_eval_feat_unit_test)
 
