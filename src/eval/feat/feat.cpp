@@ -298,8 +298,12 @@ LoadResult<Features> Features::load(std::istream &in) {
 }
 
 void Features::save(Json::Value &json) const {
-  json = Json::Value(Json::objectValue);
-  BundleGroupImpl::save(*this, json);
+  json = Json::Value(Json::arrayValue);
+  for (const auto &bundle : bundles_) {
+    Json::Value item(Json::objectValue);
+    bundle.save(item[bundle.name().name]);
+    json.append(std::move(item));
+  }
 }
 
 void Features::print(SoFUtil::SourceFormatter &fmt) const {
