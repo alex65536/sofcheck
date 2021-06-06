@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 
 namespace SoFEval::Feat {
@@ -196,18 +197,24 @@ void Features::iterate(ThisType &obj, Callback callback) {
 }
 
 LoadResult<Features> Features::load(const Json::Value &json) {
-  if (!json.isObject()) {
-    return Err(LoadError{"Feature JSON must be object"});
+  if (!json.isArray()) {
+    return Err(LoadError{"Feature JSON must be array"});
   }
 
-  std::vector<std::string> members = json.getMemberNames();
-  std::sort(members.begin(), members.end());
-
-  std::vector<Bundle> bundles(members.size());
+  std::unordered_set<std::string> added;
+  std::vector<Bundle> bundles(json.size());
   size_t counter = 0;
-  for (size_t idx = 0; idx < members.size(); ++idx) {
-    const std::string &member = members[idx];
-    SOF_TRY_ASSIGN(bundles[idx], Bundle::load(Name{counter, member}, json[member]));
+
+  for (Json::ArrayIndex idx = 0; idx < json.size(); ++idx) {
+    const Json::Value &item = json[idx];
+    if (!item.isObject() || item.size() != 1) {
+      return Err(LoadError{"Each item of feature JSON must have the form {\"key\": \"value\"}"});
+    }
+    const std::string key = item.getMemberNames()[0];
+    if (!added.insert(key).second) {
+      return Err(LoadError{"Bundle " + key + " is present at least twice"});
+    }
+    SOF_TRY_ASSIGN(bundles[idx], Bundle::load(Name{counter, key}, item[key]));
     counter += bundles[idx].count();
   }
 
