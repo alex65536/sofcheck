@@ -132,7 +132,7 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
     if (!json.isMember(subName)) {
       return Err(LoadError{name.name + "." + subName + " doesn\'t exist"});
     }
-    const Name curName{name.offset + curOffset, name.name + "." + subName};
+    const Name curName{curOffset, name.name + "." + subName};
     SOF_TRY_ASSIGN(sub, ArrayBundle::load(curName, json[subName]));
     if (sub.count() != len) {
       return Err(
