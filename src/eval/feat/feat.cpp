@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <memory>
 #include <type_traits>
+#include <unordered_set>
 #include <utility>
 
 namespace SoFEval::Feat {
@@ -132,7 +133,7 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
     if (!json.isMember(subName)) {
       return Err(LoadError{name.name + "." + subName + " doesn\'t exist"});
     }
-    const Name curName{name.offset + curOffset, name.name + "." + subName};
+    const Name curName{curOffset, name.name + "." + subName};
     SOF_TRY_ASSIGN(sub, ArrayBundle::load(curName, json[subName]));
     if (sub.count() != len) {
       return Err(
@@ -195,23 +196,63 @@ void Features::iterate(ThisType &obj, Callback callback) {
   }
 }
 
+LoadResult<Features::ExtractedMemberNames> Features::extractMemberNames(const Json::Value &json) {
+  ExtractedMemberNames result;
+
+  std::unordered_set<std::string> orderedFeatures;
+  if (json.isMember("_order")) {
+    const Json::Value &order = json["_order"];
+    if (!order.isArray()) {
+      return Err(LoadError{"_order must be array"});
+    }
+    result.ordered.reserve(order.size());
+    for (Json::ArrayIndex idx = 0; idx < order.size(); ++idx) {
+      if (!order[idx].isString()) {
+        return Err(LoadError{"_order items must be strings"});
+      }
+      std::string feature = order[idx].asString();
+      if (orderedFeatures.count(feature)) {
+        return Err(LoadError{"Feature " + feature + " repeats in _order at least twice"});
+      }
+      if (feature.empty() || feature[0] == '_' || !json.isMember(feature)) {
+        return Err(LoadError{"Invalid feature " + feature});
+      }
+      orderedFeatures.insert(feature);
+      result.ordered.push_back(std::move(feature));
+    }
+    result.all = result.ordered;
+  }
+
+  std::vector<std::string> unorderedMembers = json.getMemberNames();
+  unorderedMembers.erase(std::remove_if(unorderedMembers.begin(), unorderedMembers.end(),
+                                        [&](const std::string &str) {
+                                          return str.empty() || str[0] == '_' ||
+                                                 orderedFeatures.count(str);
+                                        }),
+                         unorderedMembers.end());
+
+  std::sort(unorderedMembers.begin(), unorderedMembers.end());
+  result.all.insert(result.all.end(), unorderedMembers.begin(), unorderedMembers.end());
+
+  return Ok(std::move(result));
+}
+
 LoadResult<Features> Features::load(const Json::Value &json) {
   if (!json.isObject()) {
     return Err(LoadError{"Feature JSON must be object"});
   }
 
-  std::vector<std::string> members = json.getMemberNames();
-  std::sort(members.begin(), members.end());
+  SOF_TRY_DECL(members, extractMemberNames(json));
 
-  std::vector<Bundle> bundles(members.size());
+  std::vector<Bundle> bundles(members.all.size());
   size_t counter = 0;
-  for (size_t idx = 0; idx < members.size(); ++idx) {
-    const std::string &member = members[idx];
+  for (size_t idx = 0; idx < members.all.size(); ++idx) {
+    const std::string &member = members.all[idx];
     SOF_TRY_ASSIGN(bundles[idx], Bundle::load(Name{counter, member}, json[member]));
     counter += bundles[idx].count();
   }
 
-  return Ok(Features(std::move(bundles), counter));
+  return Ok(Features(std::move(bundles), counter, std::move(members.ordered)));
 }
 
 LoadResult<Features> Features::load(std::istream &in) {
@@ -226,6 +267,13 @@ LoadResult<Features> Features::load(std::istream &in) {
 
 void Features::save(Json::Value &json) const {
   json = Json::Value(Json::objectValue);
+
+  Json::Value jsonOrder(Json::arrayValue);
+  for (const std::string &str : order_) {
+    jsonOrder.append(Json::Value(str));
+  }
+  json["_order"] = std::move(jsonOrder);
+
   BundleGroupImpl::save(*this, json);
 }
 
