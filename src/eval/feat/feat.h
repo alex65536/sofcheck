@@ -145,8 +145,8 @@ public:
   // Loads the bundle from `json` and assigns it the name `name`
   static LoadResult<Bundle> load(const Name &name, const Json::Value &json);
 
-  // Prints the bundle to `fmt`. This would look better than printing `Json::Value` obtained by
-  // calling `save()`
+  // Prints the bundle to `fmt`. The result will be formatted better than just printing
+  // `Json::Value` obtained by calling `save()`
   void print(SoFUtil::SourceFormatter &fmt) const {
     std::visit([&](const auto &x) { x.print(fmt); }, inner_);
   }
@@ -221,8 +221,8 @@ public:
   // Stores the features in `json`
   void save(Json::Value &json) const;
 
-  // Prints the features to `fmt`. This would look better than printing `Json::Value` obtained by
-  // calling `save()`
+  // Prints the features to `fmt`. The result will be formatted better than just printing
+  // `Json::Value` obtained by calling `save()`
   void print(SoFUtil::SourceFormatter &fmt) const;
 
   // Prints the features to the stream `out`
