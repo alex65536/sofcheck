@@ -87,6 +87,7 @@ include_directories(src)
 
 # Add targets to build
 add_library(sof_util STATIC
+  src/util/formatter.cpp
   src/util/fileutil.cpp
   src/util/logging.cpp
   src/util/misc.cpp
