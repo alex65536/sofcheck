@@ -84,6 +84,7 @@ inline constexpr const char *trimEolLeft(const char *str) {
 
 // Removes leading and trailing spaces from the string
 std::string_view trim(const std::string_view &str);
+std::string trimmed(const std::string &str);
 
 // Converts the string `s` to lower case. `s` must be a string consisting of ASCII characters
 void asciiToLower(std::string &s);

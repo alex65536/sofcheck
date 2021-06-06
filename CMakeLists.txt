@@ -244,6 +244,14 @@ if(GTest_FOUND)
   target_link_libraries(test_eval_unit_test GTest::GTest GTest::Main)
   gtest_add_tests(TARGET test_eval_unit_test)
 
+  add_executable(test_eval_feat_unit_test
+    src/eval/feat/test/feat.cpp
+  )
+  target_link_libraries(test_eval_feat_unit_test
+    sof_eval_feat jsoncpp_lib GTest::GTest GTest::Main
+  )
+  gtest_add_tests(TARGET test_eval_feat_unit_test)
+
   add_executable(test_util_unit_test
     src/util/test/parallel.cpp
     src/util/test/valarray.cpp

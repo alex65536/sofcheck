@@ -59,6 +59,11 @@ std::string_view trim(const std::string_view &str) {
   return str.substr(left, right - left);
 }
 
+std::string trimmed(const std::string &str) {
+  std::string result(trim(str));
+  return result;
+}
+
 void asciiToLower(std::string &s) {
   for (char &ch : s) {
     ch = asciiToLower(ch);
