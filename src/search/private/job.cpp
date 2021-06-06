@@ -23,6 +23,7 @@ using SoFCore::Board;
 using SoFCore::Move;
 using SoFCore::MovePersistence;
 using SoFEval::adjustCheckmate;
+using SoFEval::SCORE_CHECKMATE_THRESHOLD;
 using SoFEval::SCORE_INF;
 using SoFEval::score_t;
 using std::chrono::milliseconds;
@@ -217,8 +218,12 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
   }
 
   const score_t score = evaluator_.evalForCur(board_, tag);
-  DGN_ASSERT(isScoreValid(score));
-  DGN_ASSERT(score <= alpha || score >= beta || !isScoreCheckmate(score));
+  DIAGNOSTIC({
+    if (alpha < score && score < beta) {
+      DGN_ASSERT(isScoreValid(score));
+      DGN_ASSERT(!isScoreCheckmate(score));
+    }
+  });
   alpha = std::max(alpha, score);
   if (alpha >= beta) {
     return beta;
@@ -240,8 +245,12 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     }
     results_.inc(JobStat::Nodes);
     const score_t score = -quiescenseSearch(-beta, -alpha, newTag);
-    DGN_ASSERT(isScoreValid(score));
-    DGN_ASSERT(score <= alpha || score >= beta || !isScoreCheckmate(score));
+    DIAGNOSTIC({
+      if (alpha < score && score < beta) {
+        DGN_ASSERT(isScoreValid(score));
+        DGN_ASSERT(!isScoreCheckmate(score));
+      }
+    });
     moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
@@ -276,6 +285,12 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
 
   // Run quiescence search in leaf node
   if (depth <= 0) {
+    if (alpha >= SCORE_CHECKMATE_THRESHOLD) {
+      return alpha;
+    }
+    if (beta <= -SCORE_CHECKMATE_THRESHOLD) {
+      return beta;
+    }
     return quiescenseSearch(alpha, beta, tag);
   }
 
