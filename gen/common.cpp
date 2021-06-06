@@ -3,10 +3,8 @@
 #include <iomanip>
 #include <utility>
 
-#include "util/math.h"
 #include "util/misc.h"
-
-using SoFUtil::log10;
+#include "util/strutil.h"
 
 void printBitboard(std::ostream &out, const SoFCore::bitboard_t val) {
   out << "0x" << std::hex << std::setw(16) << std::setfill('0') << val << std::dec
@@ -16,7 +14,7 @@ void printBitboard(std::ostream &out, const SoFCore::bitboard_t val) {
 void SourcePrinter::arrayBody(size_t size, const std::function<void(size_t)> &printer) {
   stream() << "{\n";
   indent(2);
-  const size_t idxLen = (size <= 1) ? 1 : log10(size - 1) + 1;
+  const size_t idxLen = (size == 0) ? 1 : SoFUtil::uintStrLen(size - 1);
   for (size_t i = 0; i < size; ++i) {
     lineStart() << "/*" << std::setw(idxLen) << i << "*/ ";
     printer(i);

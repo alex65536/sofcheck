@@ -1,5 +1,9 @@
 #include "util/strutil.h"
 
+#include <algorithm>
+
+#include "util/math.h"
+
 namespace SoFUtil {
 
 const char *scanTokenEnd(const char *str) {
@@ -72,5 +76,11 @@ void replace(std::string &s, const char src, const char dst) {
     ch = (ch == src) ? dst : ch;
   }
 }
+
+size_t intStrLen(const int64_t value) {
+  return uintStrLen(std::abs(value)) + ((value < 0) ? 1 : 0);
+}
+
+size_t uintStrLen(const uint64_t value) { return (value == 0) ? 1 : 1 + SoFUtil::log10(value); }
 
 }  // namespace SoFUtil
