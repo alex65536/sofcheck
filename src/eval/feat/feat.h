@@ -17,6 +17,10 @@ namespace Json {
 class Value;
 }  // namespace Json
 
+namespace SoFUtil {
+class SourceFormatter;
+}  // namespace SoFUtil
+
 namespace SoFEval::Feat {
 
 namespace Private {
@@ -47,12 +51,16 @@ class SingleBundle {
 public:
   static LoadResult<SingleBundle> load(const Name &name, const Json::Value &json);
   void save(Json::Value &json) const;
+  void print(SoFUtil::SourceFormatter &fmt) const;
   void apply(const WeightVec &weights) { value_ = weights[name_.offset]; }
   void extract(WeightVec &weights) const { weights[name_.offset] = value_; }
   std::vector<Name> names() const { return {name_}; }
   // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
   size_t count() const { return 1; }
   const Name &name() const { return name_; }
+
+  // Returns the stored weight
+  weight_t value() const { return value_; }
 
   SingleBundle() = default;
 
@@ -69,11 +77,15 @@ class ArrayBundle {
 public:
   static LoadResult<ArrayBundle> load(const Name &name, const Json::Value &json);
   void save(Json::Value &json) const;
+  void print(SoFUtil::SourceFormatter &fmt) const;
   void apply(const WeightVec &weights);
   void extract(WeightVec &weights) const;
   std::vector<Name> names() const;
   size_t count() const { return values_.size(); }
   const Name &name() const { return name_; }
+
+  // Returns the weigths in the array
+  const std::vector<weight_t> values() const { return values_; }
 
   ArrayBundle() = default;
 
@@ -91,6 +103,7 @@ class PsqBundle {
 public:
   static LoadResult<PsqBundle> load(const Name &name, const Json::Value &json);
   void save(Json::Value &json) const;
+  void print(SoFUtil::SourceFormatter &fmt) const;
   void apply(const WeightVec &weights);
   void extract(WeightVec &weights) const;
   std::vector<Name> names() const;
@@ -131,6 +144,12 @@ class Bundle {
 public:
   // Loads the bundle from `json` and assigns it the name `name`
   static LoadResult<Bundle> load(const Name &name, const Json::Value &json);
+
+  // Prints the bundle to `fmt`. This would look better than printing `Json::Value` obtained by
+  // calling `save()`
+  void print(SoFUtil::SourceFormatter &fmt) const {
+    std::visit([&](const auto &x) { x.print(fmt); }, inner_);
+  }
 
   // Stores the bundle in `json`
   void save(Json::Value &json) const {
@@ -202,8 +221,12 @@ public:
   // Stores the features in `json`
   void save(Json::Value &json) const;
 
-  // Stores the features in the stream `out`
-  void save(std::ostream &out) const;
+  // Prints the features to `fmt`. This would look better than printing `Json::Value` obtained by
+  // calling `save()`
+  void print(SoFUtil::SourceFormatter &fmt) const;
+
+  // Prints the features to the stream `out`
+  void print(std::ostream &out) const;
 
   // Applies the weights from the vector `weights`. Note that `weights.size() == count()` must hold,
   // otherwise the function will panic
