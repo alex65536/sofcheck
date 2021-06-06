@@ -16,7 +16,7 @@ Prints all the move chains while running depthDump test. (the output may be quit
 set(DEPTH_DUMP_LARGE ON CACHE BOOL "\
 Run depthDump on bigger recursion depths (consumes more time for test).")
 
-set(RUN_SELF_TESTS ON CACHE BOOL "Run SoFCore::selfTest() while testing.")
+set(RUN_SELF_TESTS ON CACHE BOOL "Run ChessIntf::selfTest() while testing.")
 
 configure_file(selftest_config.h.in "${PROJECT_BINARY_DIR}/src/selftest_config.h")
 include_directories("${PROJECT_BINARY_DIR}/src")

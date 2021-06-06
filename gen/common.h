@@ -1,55 +1,35 @@
 #ifndef SOF_GEN_COMMON_INCLUDED
 #define SOF_GEN_COMMON_INCLUDED
 
-#include <cstdint>
 #include <functional>
-#include <iostream>
+#include <ostream>
 #include <string>
 #include <vector>
 
 #include "core/types.h"
+#include "util/formatter.h"
 #include "util/no_copy_move.h"
 
 class SourcePrinter {
 public:
-  explicit SourcePrinter(std::ostream &stream) : stream_(stream) {}
+  explicit SourcePrinter(std::ostream &stream) : inner_(stream, 2) {}
 
-  class Line : public SoFUtil::NoCopyMove {
-  public:
-    ~Line();
+  using Line = SoFUtil::SourceFormatter::Line;
 
-    template <typename T>
-    Line &operator<<(const T &other) {
-      printer_.stream_ << other;
-      return *this;
-    }
-
-  private:
-    friend class SourcePrinter;
-
-    Line(SourcePrinter &printer, bool printEoln);
-
-    SourcePrinter &printer_;
-    bool printEoln_;
-  };
-
-  void skip() { stream_ << "\n"; }
-
-  Line line() { return Line(*this, true); }
-  Line lineStart() { return Line(*this, false); }
-
-  std::ostream &stream() { return stream_; }
-
-  void indent(const size_t amount) { indent_ += amount; }
-  void outdent(const size_t amount) { indent_ -= amount; }
+  void skip() { inner_.skip(); }
+  Line line() { return inner_.line(); }
+  Line lineStart() { return inner_.lineStart(); }
+  std::ostream &stream() { return inner_.stream(); }
+  void indent(const size_t amount) { inner_.indent(amount); }
+  void outdent(const size_t amount) { inner_.outdent(amount); }
 
   void arrayBody(size_t size, const std::function<void(size_t)> &printer);
 
   template <typename T>
   void array(const char *name, const char *signature, const std::vector<T> &array) {
     lineStart() << "constexpr " << signature << " " << name << "[" << array.size() << "] = ";
-    arrayBody(array.size(), [&](const size_t idx) { stream_ << array[idx]; });
-    stream_ << ";\n";
+    arrayBody(array.size(), [&](const size_t idx) { stream() << array[idx]; });
+    stream() << ";\n";
   }
 
   void bitboardArray(const char *name, const std::vector<SoFCore::bitboard_t> &array);
@@ -77,12 +57,9 @@ public:
   ~SourcePrinter();
 
 private:
-  friend class Line;
-
-  std::ostream &stream_;
+  SoFUtil::SourceFormatter inner_;
   std::string headerGuardName_;
   bool hasHeaderGuard_ = false;
-  size_t indent_ = 0;
 };
 
 void printBitboard(std::ostream &out, SoFCore::bitboard_t val);
