@@ -21,7 +21,7 @@ add_library(sof_gen_json_main STATIC
 )
 target_link_libraries(sof_gen_json_main
   PUBLIC sof_gen_common
-  PRIVATE jsoncpp_lib sof_util
+  PRIVATE ${JSONCPP_TARGET} sof_util
 )
 
 

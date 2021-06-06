@@ -8,8 +8,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
+include(JsonCpp)
 find_package(Threads REQUIRED)
-find_package(jsoncpp REQUIRED)
 
 
 # Declare configuration options
@@ -138,7 +138,7 @@ add_library(sof_eval_feat STATIC
 )
 target_link_libraries(sof_eval_feat
   PUBLIC sof_util
-  PRIVATE jsoncpp_lib
+  PRIVATE ${JSONCPP_TARGET}
 )
 
 add_library(sof_search STATIC
@@ -163,17 +163,17 @@ target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 add_executable(make_dataset
   src/eval/feat/bin/make_dataset.cpp
 )
-target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat jsoncpp_lib)
+target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat ${JSONCPP_TARGET})
 
 add_executable(apply_weights
   src/eval/feat/bin/apply_weights.cpp
 )
-target_link_libraries(apply_weights sof_util sof_eval_feat jsoncpp_lib)
+target_link_libraries(apply_weights sof_util sof_eval_feat ${JSONCPP_TARGET})
 
 add_executable(show_weights
   src/eval/feat/bin/show_weights.cpp
 )
-target_link_libraries(show_weights sof_util sof_eval_feat jsoncpp_lib)
+target_link_libraries(show_weights sof_util sof_eval_feat ${JSONCPP_TARGET})
 
 
 # Generate files
@@ -250,7 +250,7 @@ if(GTest_FOUND)
     src/eval/feat/test/feat.cpp
   )
   target_link_libraries(test_eval_feat_unit_test
-    sof_eval_feat sof_util jsoncpp_lib GTest::GTest GTest::Main
+    sof_eval_feat sof_util ${JSONCPP_TARGET} GTest::GTest GTest::Main
   )
   gtest_add_tests(TARGET test_eval_feat_unit_test)
 
