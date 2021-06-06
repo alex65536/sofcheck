@@ -178,8 +178,10 @@ target_link_libraries(show_weights sof_util sof_eval_feat jsoncpp_lib)
 
 # Generate files
 include(Generators)
+include(GitRevision)
 
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
+configure_file(src/version.h.in "${PROJECT_BINARY_DIR}/src/version.h" @ONLY)
 
 generate_file(
   gen/core/near_attacks.cpp

@@ -1,0 +1,8 @@
+#ifndef SOF_VERSION_INCLUDED
+#define SOF_VERSION_INCLUDED
+
+// Git commit ID from which the code was built
+#define SOFCHECK_GIT_REVISION "@SoFCheck_GIT_REVISION@"
+#define SOFCHECK_GIT_REVISION_SHORT "@SoFCheck_GIT_REVISION_SHORT@"
+
+#endif  // SOF_VERSION_INCLUDED
