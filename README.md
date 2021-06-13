@@ -48,11 +48,14 @@ C++17-compatible compiler. The engine is tested on the following compilers:
 Other compilers are not tested.
 
 The following dependencies are optional:
-- Google Test (to run tests)
-- Google Benchmark (to run benchmarks)
-- Boost::Stacktrace (to display stack traces on crash)
-- Jsoncpp (to extract evaluation weights located in a JSON file. This one isn't compiled into
-the final executable and is used only for building and tuning the engine)
+- [_Google Test_](https://github.com/google/googletest/): to run the unit tests
+- [_Google Benchmark_](https://github.com/google/benchmark): to run benchmarks
+- [`boost::Stacktrace`](https://www.boost.org/doc/libs/1_65_0/doc/html/stacktrace.html): to display
+stack traces when the application panics
+- [`jsoncpp`](https://github.com/open-source-parsers/jsoncpp): to extract evaluation weights
+located in a JSON file. This one isn't compiled into the final executable and is used only for
+building and tuning the engine. If you don't install jsoncpp, the version located in
+`third-party/jsoncpp` will be used
 
 To install them all on Debian/Ubuntu, use
 

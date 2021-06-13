@@ -6,8 +6,10 @@
 for a specific module
 - `selftest` contains a testing framework to check the correctness of the rules implementation
 - `src` contains various directories, each of them represents a module. See below on module
-structure.
+structure
   - `src/config.h.in` contains configuration flags for the entire project
+- `third-party` contains third-party libraries used in the project. Each library is contained in a
+separate folder
 - `tools` contains some useful scripts
 
 ## Module structure

@@ -14,10 +14,12 @@ addons:
       - cmake
 
 env:
-  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
-  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
-  - BMI2_CMD="-DUSE_BMI2=OFF" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
-  - BMI2_CMD="-DUSE_BMI2=ON" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=OFF" JSONCPP_CMD="-DUSE_BUILTIN_JSONCPP=OFF" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON"  JSONCPP_CMD="-DUSE_BUILTIN_JSONCPP=OFF" MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON"  JSONCPP_CMD="-DUSE_BUILTIN_JSONCPP=ON"  MATRIX_EVAL="export CC=gcc-8 && export CXX=g++-8"
+  - BMI2_CMD="-DUSE_BMI2=OFF" JSONCPP_CMD="-DUSE_BUILTIN_JSONCPP=OFF" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON"  JSONCPP_CMD="-DUSE_BUILTIN_JSONCPP=OFF" MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
+  - BMI2_CMD="-DUSE_BMI2=ON"  JSONCPP_CMD="-DUSE_BUILTIN_JSONCPP=ON"  MATRIX_EVAL="export CC=clang-8 && export CXX=clang++-8"
 
 before_install:
   - eval "${MATRIX_EVAL}"

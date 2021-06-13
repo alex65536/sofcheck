@@ -3,18 +3,42 @@
 
 include_guard(GLOBAL)
 
-find_package(jsoncpp REQUIRED)
 
+# Declare configuration options
+set(USE_BUILTIN_JSONCPP OFF CACHE BOOL "Use jsoncpp version located in third-party/")
+set(FORCE_EXTERNAL_JSONCPP OFF CACHE BOOL
+  "Do not try to use Jsoncpp located in third-party/, raise error instead")
+
+
+# Detect jsoncpp itself
 set(JSONCPP_TARGET "NOTFOUND")
 
-foreach(cur_target jsoncpp_static jsoncpp_lib)
-  if (TARGET "${cur_target}")
-    set(JSONCPP_TARGET "${cur_target}")
-    message(STATUS "Found jsoncpp target: ${cur_target}")
-    break()
-  endif()
-endforeach()
+if (NOT USE_BUILTIN_JSONCPP)
+  find_package(jsoncpp)
+
+  foreach(cur_target jsoncpp_static jsoncpp_lib)
+    if (TARGET "${cur_target}")
+      set(JSONCPP_TARGET "${cur_target}")
+      message(STATUS "Found jsoncpp target: ${JSONCPP_TARGET}")
+      break()
+    endif()
+  endforeach()
+endif()
 
 if("${JSONCPP_TARGET}" STREQUAL "NOTFOUND")
-  message(FATAL_ERROR "No suitable jsoncpp target was found")
+  if(FORCE_EXTERNAL_JSONCPP)
+    message(FATAL_ERROR "No suitable jsoncpp target was found")
+  endif()
+
+  if (NOT USE_BUILTIN_JSONCPP)
+    message(WARNING "No suitable jsoncpp target was found; using version from third-party/")
+  endif()
+
+  add_library(jsoncpp_builtin STATIC
+    third-party/jsoncpp/jsoncpp.cpp
+  )
+  target_include_directories(jsoncpp_builtin PUBLIC third-party/jsoncpp)
+
+  set(JSONCPP_TARGET jsoncpp_builtin)
+  message(STATUS "Found jsoncpp target: ${JSONCPP_TARGET}")
 endif()
