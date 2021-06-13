@@ -40,9 +40,9 @@ test and run them instead (see [below](#adding-your-own-engine)).
 $ # build the project
 $ ( cd build && make -j )
 $ # run test for sofcheck and save output to /tmp/out1.txt
-$ build/test_sofcheck selftest/boards.fen >/tmp/out1.txt
+$ build/selftest/test_sofcheck selftest/boards.fen >/tmp/out1.txt
 $ # run test for dodecahedron and save output to /tmp/out2.txt
-$ build/test_dodecahedron selftest/boards.fen >/tmp/out2.txt
+$ build/selftest/test_dodecahedron selftest/boards.fen >/tmp/out2.txt
 $ # compare two outputs
 $ diff /tmp/out1.txt /tmp/out2.txt >/tmp/dif.txt && echo OK
 ~~~
@@ -90,16 +90,17 @@ implementation, replacing its name and the names of the source files:
     )
     ```
 
-5. Rebuild the project. The build must complete successfully, and `test_rules` executable must
-appear.
+5. Rebuild the project. The build must complete successfully, and `selftest/test_rules` executable
+must appear.
 
 6. Run the self-test against any existing implementation, as described [above](#running-manually).
 
 ## Benchmarks
 
 If you have Google Benchmark installed (and detected by CMake), then benchmarks will be built
-alongside with self-tests. The benchmark executable is named `bench_<engine>` where `<engine>` is the
-name of rules implementation. You can just run it and see how fast your implementation is.
+alongside with self-tests. The benchmark executable is named `selftest/bench_<engine>` where
+`<engine>` is the name of rules implementation. You can just run it and see how fast your
+implementation is.
 
 [1]: https://www.chessprogramming.org/Perft
 [2]: https://github.com/alex65536/dodecahedron
