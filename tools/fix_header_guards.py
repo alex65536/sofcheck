@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,12 +38,29 @@ def strip_empty_lines(lines):
     return lines
 
 
+def is_prelude_line(ln):
+    ln = ln.strip()
+    if not ln:
+        return True
+    if ln == '// NO_HEADER_GUARD':
+        return False
+    return ln.startswith('//')
+
+
+def split_prelude(lines):
+    pos = 0
+    while pos < len(lines) and is_prelude_line(lines[pos]):
+        pos += 1
+    return lines[:pos], lines[pos:]
+
+
 def fix_header_guard(file_name):
     file_name = str(file_name)
     if not file_name.endswith('.h'):
         return
     lines = open(file_name, 'r').readlines()
     strip_empty_lines(lines)
+    prelude, lines = split_prelude(lines)
     if not lines:
         sys.stderr.write(f"WARNING: file {file_name} is empty!\n")
         lines = ['\n']
@@ -63,7 +80,7 @@ def fix_header_guard(file_name):
     lines[0] = f"#ifndef {header_guard}\n"
     lines[1] = f"#define {header_guard}\n"
     lines[-1] = f"#endif  // {header_guard}\n"
-    open(file_name, 'w').write(''.join(lines))
+    open(file_name, 'w').write(''.join(prelude + lines))
 
 
 for subdir in ['bench', 'gen', 'src']:

@@ -81,7 +81,9 @@ FILETYPE_MATCHES = {
 COPYRIGHT_HOLDER = 'Alexander Kernozhitsky and SoFCheck contributors'
 
 # Commit IDs to ignore while counting the years
-COMMITS_TO_IGNORE = set()
+COMMITS_TO_IGNORE = {
+    '72ee56278effccbfa1ce2e933d5d32406d5ef73b'
+}
 
 
 class CopyrightLine:
