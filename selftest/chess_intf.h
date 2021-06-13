@@ -1,5 +1,5 @@
-#ifndef CHESS_INTF_INCLUDED
-#define CHESS_INTF_INCLUDED
+#ifndef SELFTEST_CHESS_INTF_INCLUDED
+#define SELFTEST_CHESS_INTF_INCLUDED
 
 #ifdef INTF_DODECAHEDRON
 #ifdef INTF_USED
@@ -21,4 +21,4 @@
 #error No interface included!
 #endif
 
-#endif
+#endif  // SELFTEST_CHESS_INTF_INCLUDED

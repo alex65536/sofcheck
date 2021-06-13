@@ -1,5 +1,5 @@
-#ifndef UTIL_H_INCLUDED
-#define UTIL_H_INCLUDED
+#ifndef SELFTEST_UTIL_H_INCLUDED
+#define SELFTEST_UTIL_H_INCLUDED
 
 #include "chess_intf.h"
 
@@ -33,4 +33,4 @@ inline int getMoveHash(const Board &board, const Move &move) {
 
 }  // namespace ChessIntf
 
-#endif
+#endif  // SELFTEST_UTIL_H_INCLUDED
