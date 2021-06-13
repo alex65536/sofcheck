@@ -1,4 +1,21 @@
 #!/usr/bin/env python3
+# This file is part of SoFCheck
+#
+# Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+#
+# SoFCheck is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SoFCheck is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
+
 import argparse
 import subprocess
 import os
@@ -46,7 +63,7 @@ WHITELIST_REGEX = [re.compile('^' + pat + '$') for pat in WHITELIST]
 
 # The sources from these paths are additionally excluded
 BLACKLIST = [
-    'selftest/dodecahedron/.*',
+    'selftest/dodecahedron/(?!intf.h)',
     'tools/add_license_header.py'  # TODO remove
 ]
 BLACKLIST_REGEX = [re.compile('^' + pat + '$') for pat in BLACKLIST]
@@ -180,8 +197,8 @@ def is_prelude(line):
 
 
 def parse_years_from_git(file_name, first_commit):
-    git_log = git(['log', '--format=%H;%ad;%s', '^' + first_commit, 'HEAD',
-                   '--', file_name]).strip().split('\n')
+    git_log = git(['log', '--format=%H;%ad;%s', '--follow', '^' + first_commit,
+                   'HEAD', '--', file_name]).strip().split('\n')
     years = set()
     for line in git_log:
         commit_id, date, message = line.split(';', 2)
