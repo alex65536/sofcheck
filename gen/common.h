@@ -29,7 +29,7 @@
 
 class SourcePrinter {
 public:
-  explicit SourcePrinter(std::ostream &stream) : inner_(stream, 2) {}
+  explicit SourcePrinter(std::ostream &stream);
 
   using Line = SoFUtil::SourceFormatter::Line;
 

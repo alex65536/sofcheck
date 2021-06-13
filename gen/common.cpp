@@ -28,6 +28,11 @@ void printBitboard(std::ostream &out, const SoFCore::bitboard_t val) {
       << std::setfill(' ');
 }
 
+SourcePrinter::SourcePrinter(std::ostream &stream) : inner_(stream, 2) {
+  line() << "// This file is generated automatically, DO NOT EDIT!";
+  skip();
+}
+
 void SourcePrinter::arrayBody(size_t size, const std::function<void(size_t)> &printer) {
   stream() << "{\n";
   indent(2);
