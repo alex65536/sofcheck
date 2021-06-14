@@ -102,7 +102,7 @@ def configure(config, storage, args):
     storage['pkg'] = {}
     storage['cmd'] = {}
 
-    if compiler in {'msvc32', 'msvc64}':
+    if compiler in {'msvc32', 'msvc64'}:
         if config['os'] != 'windows':
             raise RuntimeError('MSVC is supported only on Windows!')
         if comp_version != '':
