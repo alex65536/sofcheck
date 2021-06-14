@@ -156,7 +156,8 @@ def configure(config, storage, args):
 def install_deps(config, storage, args):
     if config['os'] == 'windows':
         pexec(['choco', 'install', 'mingw', '--version=8.1.0'])
-        pexec(['choco', 'install', 'cmake'])
+        if shutil.which('cmake') is None:
+            pexec(['choco', 'install', 'cmake'])
     elif config['os'] == 'linux' or config['os'] == 'ubuntu':
         pexec(['sudo', 'apt', 'install', storage['pkg']['compiler'],
                storage['pkg']['clang-tidy'], 'cmake', 'libbenchmark-dev',
