@@ -45,7 +45,8 @@ inline bitboard_t rookAttackBitboard(bitboard_t occupied, cell_t pos) {
 #ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
 #else
-  const size_t idx = ((occupied & entry.mask) * ROOK_MAGICS[pos]) >> ROOK_SHIFTS[pos];
+  const auto idx =
+    static_cast<size_t>(((occupied & entry.mask) * ROOK_MAGICS[pos]) >> ROOK_SHIFTS[pos]);
 #endif
   return entry.lookup[idx] & entry.postMask;
 }
@@ -55,7 +56,8 @@ inline bitboard_t bishopAttackBitboard(bitboard_t occupied, cell_t pos) {
 #ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
 #else
-  const size_t idx = ((occupied & entry.mask) * BISHOP_MAGICS[pos]) >> BISHOP_SHIFTS[pos];
+  const auto idx =
+    static_cast<size_t>(((occupied & entry.mask) * BISHOP_MAGICS[pos]) >> BISHOP_SHIFTS[pos]);
 #endif
   return entry.lookup[idx] & entry.postMask;
 }

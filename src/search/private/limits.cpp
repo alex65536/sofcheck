@@ -17,6 +17,8 @@
 
 #include "search/private/limits.h"
 
+#include <algorithm>
+
 namespace SoFSearch::Private {
 
 using namespace std::chrono_literals;

@@ -52,13 +52,13 @@ public:
     }
 
     inline constexpr Data(const SoFCore::Move move, const SoFEval::score_t score,
-                          const uint8_t depth, const SoFBotApi::PositionCostBound bound,
+                          const int32_t depth, const SoFBotApi::PositionCostBound bound,
                           const bool isPv)
         : move_(move),
           score_(score),
           flags_(static_cast<uint8_t>(bound) | FLAG_IS_VALID | (isPv ? FLAG_IS_PV : 0)),
           epoch_(0) {
-      move_.tag = depth;
+      move_.tag = static_cast<uint8_t>(depth);
     }
 
     inline Data() noexcept = default;
@@ -156,9 +156,9 @@ private:
 
     inline void clear() { assignRelaxed(Data::zero(), 0); }
 
-    inline void assignRelaxed(const Data value, const SoFCore::board_hash_t key) {
-      this->value.store(value, std::memory_order_relaxed);
-      this->key.store(key, std::memory_order_relaxed);
+    inline void assignRelaxed(const Data newValue, const SoFCore::board_hash_t newKey) {
+      this->value.store(newValue, std::memory_order_relaxed);
+      this->key.store(newKey, std::memory_order_relaxed);
     }
 
     inline void assignRelaxed(const Entry &o) {

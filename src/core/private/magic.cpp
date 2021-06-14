@@ -105,7 +105,7 @@ static void initMagic() {
 #else
       constexpr auto *magics = (M == MagicType::Rook) ? ROOK_MAGICS : BISHOP_MAGICS;
       constexpr auto *shifts = (M == MagicType::Rook) ? ROOK_SHIFTS : BISHOP_SHIFTS;
-      const size_t pos = (occupied * magics[c]) >> shifts[c];
+      const auto pos = static_cast<size_t>((occupied * magics[c]) >> shifts[c]);
 #endif
       bitboard_t &res = lookup[offset + pos];
       for (size_t direction = 0; direction < 4; ++direction) {

@@ -51,7 +51,14 @@ endif()
 message(STATUS "Detected CPU architecture: ${CPU_ARCH}")
 
 if("${CPU_ARCH}" STREQUAL amd64)
-  set(CMAKE_REQUIRED_FLAGS -mbmi2)
+  if(MSVC)
+    set(BMI1_FLAG /arch:AVX)
+    set(BMI2_FLAG /arch:AVX2)
+  else()
+    set(BMI1_FLAG -mbmi)
+    set(BMI2_FLAG -mbmi2)
+  endif()
+  set(CMAKE_REQUIRED_FLAGS "${BMI2_FLAG}")
   check_c_source_compiles("
       #include <immintrin.h>
       #include <stdint.h>
@@ -65,34 +72,40 @@ if("${CPU_ARCH}" STREQUAL amd64)
     HAS_BMI2
   )
   unset(CMAKE_REQUIRED_FLAGS)
-  if(USE_BMI2 AND NOT HAS_BMI2)
-    message(WARNING
-      "The required headers for BMI2 were not found, so this option is disabled.")
-    set(USE_BMI2 OFF)
-  endif()
+else()
+  set(HAS_BMI2 OFF)
+endif()
+if(USE_BMI2 AND NOT HAS_BMI2)
+  message(WARNING
+    "The required headers for BMI2 were not found, so this option is disabled.")
+  set(USE_BMI2 OFF)
 endif()
 
-set(CMAKE_REQUIRED_FLAGS -latomic)
-check_cxx_source_compiles("
-    #include <atomic>
-    #include <cstdint>
+if(MSVC)
+  set(HAS_LIBATOMIC OFF)
+else()
+  set(CMAKE_REQUIRED_FLAGS -latomic)
+  check_cxx_source_compiles("
+      #include <atomic>
+      #include <cstdint>
 
-    struct My {
-      uint32_t inner;
-    };
+      struct My {
+        uint32_t inner;
+      };
 
-    std::atomic<My> x;
+      std::atomic<My> x;
 
-    int main() {
-      My y = x.load(std::memory_order_relaxed);
-      y.inner += 1;
-      x.store(y, std::memory_order_relaxed);
-      return 0;
-    }
-  "
-  HAS_LIBATOMIC
-)
-unset(CMAKE_REQUIRED_FLAGS)
+      int main() {
+        My y = x.load(std::memory_order_relaxed);
+        y.inner += 1;
+        x.store(y, std::memory_order_relaxed);
+        return 0;
+      }
+    "
+    HAS_LIBATOMIC
+  )
+  unset(CMAKE_REQUIRED_FLAGS)
+endif()
 
 include(BoostStacktrace)
 
@@ -101,13 +114,15 @@ check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
 # Apply compiler flags
 if("${CPU_ARCH}" STREQUAL amd64)
-  # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
-  add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
+  if(NOT MSVC)
+    # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
+    add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
+  endif()
   if(USE_BMI1)
-    add_compile_options(-mbmi)
+    add_compile_options("${BMI1_FLAG}")
   endif()
   if(USE_BMI2)
-    add_compile_options(-mbmi2)
+    add_compile_options("${BMI2_FLAG}")
   endif()
 else()
   if(USE_BMI1 OR USE_BMI2)
@@ -117,8 +132,17 @@ else()
   set(USE_BMI2 OFF)
 endif()
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+if(MSVC)
+  add_compile_options(/W4 /WX /wd4146 /wd4127)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS _ENABLE_ATOMIC_ALIGNMENT_FIX)
+else()
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
 
+if(MSVC AND USE_NO_EXCEPTIONS)
+  message(WARNING "USE_NO_EXCEPTIONS is not supported with MSVC; disabling it.")
+  set(USE_NO_EXCEPTIONS OFF)
+endif()
 if(USE_NO_EXCEPTIONS)
   if(USE_BOOST_STACKTRACE)
     message(WARNING
@@ -135,6 +159,10 @@ else()
   set(LIBATOMIC_TARGET)
 endif()
 
+if(MSVC AND USE_SANITIZERS)
+  message(WARNING "USE_SANITIZERS is not supported with MSVC; disabling it.")
+  set(USE_SANITIZERS OFF)
+endif()
 if(USE_SANITIZERS)
   add_compile_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
   add_link_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)

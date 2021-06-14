@@ -234,16 +234,18 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     return 0;
   }
 
-  const score_t score = evaluator_.evalForCur(board_, tag);
-  DIAGNOSTIC({
-    if (alpha < score && score < beta) {
-      DGN_ASSERT(isScoreValid(score));
-      DGN_ASSERT(!isScoreCheckmate(score));
+  {
+    const score_t score = evaluator_.evalForCur(board_, tag);
+    DIAGNOSTIC({
+      if (alpha < score && score < beta) {
+        DGN_ASSERT(isScoreValid(score));
+        DGN_ASSERT(!isScoreCheckmate(score));
+      }
+    });
+    alpha = std::max(alpha, score);
+    if (alpha >= beta) {
+      return beta;
     }
-  });
-  alpha = std::max(alpha, score);
-  if (alpha >= beta) {
-    return beta;
   }
 
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
@@ -333,7 +335,7 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
     results_.inc(JobStat::TtHits);
     hashMove = data.move();
     if (Node != NodeKind::Root && data.depth() >= depth && board_.moveCounter < 90) {
-      const score_t score = adjustCheckmate(data.score(), idepth);
+      const score_t score = adjustCheckmate(data.score(), static_cast<int16_t>(idepth));
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           frame.bestMove = hashMove;
@@ -410,7 +412,7 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
 
   // Detect checkmate and stalemate
   if (!hasMove) {
-    return isCheck(board_) ? SoFEval::scoreCheckmateLose(idepth) : 0;
+    return isCheck(board_) ? SoFEval::scoreCheckmateLose(static_cast<int16_t>(idepth)) : 0;
   }
 
   // End of search

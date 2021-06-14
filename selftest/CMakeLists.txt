@@ -71,6 +71,12 @@ add_chess_impl(dodecahedron
   dodecahedron/moves.cpp
   dodecahedron/movestr.cpp
 )
+if(MSVC)
+  target_compile_options(test_dodecahedron PRIVATE /W0)
+  if(benchmark_FOUND)
+    target_compile_options(bench_dodecahedron PRIVATE /W0)
+  endif()
+endif()
 
 add_chess_impl(sofcheck)
 target_link_libraries(test_sofcheck sof_core sof_util)

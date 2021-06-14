@@ -134,9 +134,15 @@ ApiResult Engine::setEnum(const std::string &, size_t) { return ApiResult::Ok; }
 
 ApiResult Engine::setInt(const std::string &key, const int64_t value) {
   if (key == "Hash") {
-    p_->runner->hashResize(value << 20);
+    if (value <= 0) {
+      return ApiResult::InvalidArgument;
+    }
+    p_->runner->hashResize(static_cast<size_t>(value) << 20);
   } else if (key == "Threads") {
-    p_->runner->setNumJobs(value);
+    if (value <= 0) {
+      return ApiResult::InvalidArgument;
+    }
+    p_->runner->setNumJobs(static_cast<size_t>(value));
   }
   return ApiResult::Ok;
 }

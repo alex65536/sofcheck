@@ -30,7 +30,7 @@ inline constexpr size_t log10(uint64_t val) {
     return 19;
   }
 
-  uint64_t res = 0;
+  size_t res = 0;
   uint64_t pow = 1;
   while (pow <= val) {
     pow *= 10;

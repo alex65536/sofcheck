@@ -547,12 +547,12 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
     value = SoFUtil::trim(value);
   } else if (type == OptionType::Enum) {
     // Parse value as tokens
-    string token;
-    while (tokens >> token) {
+    string enumToken;
+    while (tokens >> enumToken) {
       if (!value.empty()) {
         value += ' ';
       }
-      value += token;
+      value += enumToken;
     }
   } else if (type != OptionType::Action) {
     // Extract single token

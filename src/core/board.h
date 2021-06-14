@@ -109,7 +109,7 @@ struct Board {
   }
 
   inline constexpr coord_t kingPos(Color c) const {
-    return SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]);
+    return static_cast<coord_t>(SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]));
   }
 
   // Validates the board for correctness
