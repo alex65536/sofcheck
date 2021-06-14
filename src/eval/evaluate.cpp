@@ -123,7 +123,7 @@ S Evaluator<S>::evalByColor(const Board &b) {
   // Calculate queens near to opponent's king
   const auto king =
       static_cast<coord_t>(SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]));
-  const size_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
+  const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
   coef_t nearCount = 0;
   for (size_t i = 1; i < 8; ++i) {
     nearCount +=
