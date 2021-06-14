@@ -160,8 +160,8 @@ private:
     inline void clear() { assignRelaxed(Data::zero(), 0); }
 
     inline void assignRelaxed(const Data newValue, const SoFCore::board_hash_t newKey) {
-      this->value.store(newValue, std::memory_order_relaxed);
-      this->key.store(newKey, std::memory_order_relaxed);
+      value.store(newValue, std::memory_order_relaxed);
+      key.store(newKey, std::memory_order_relaxed);
     }
 
     inline void assignRelaxed(const Entry &o) {

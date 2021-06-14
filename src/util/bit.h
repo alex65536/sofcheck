@@ -18,7 +18,7 @@
 #ifndef SOF_UTIL_BIT_INCLUDED
 #define SOF_UTIL_BIT_INCLUDED
 
-// Switch between the implementation of intrinsics
+// Switch between various implementations of bit manipulation routines
 #if defined(_WIN64) && defined(_MSC_VER)
 #define SOF_BIT_MSVC64
 #elif defined(__GNUC__)
@@ -33,11 +33,8 @@
 
 #ifdef SOF_BIT_MSVC64
 #include <intrin.h>
-#include <cstdlib>
-#endif
 
-#ifdef SOF_BIT_UNKNOWN
-#include <bitset>
+#include <cstdlib>
 #endif
 
 #ifdef USE_BMI2
@@ -78,19 +75,19 @@ inline size_t getLowest(uint64_t x) {
 // See https://www.chessprogramming.org/BitScan#De_Bruijn_Multiplication for details. This
 // implementation is used as fallback
 inline size_t getLowest(uint64_t x) {
-    constexpr uint8_t INDEX[64] = {
-        0,  47, 1,  56, 48, 27, 2,  60, //
-        57, 49, 41, 37, 28, 16, 3,  61, //
-        54, 58, 35, 52, 50, 42, 21, 44, //
-        38, 32, 29, 23, 17, 11, 4,  62, //
-        46, 55, 26, 59, 40, 36, 15, 53, //
-        34, 51, 20, 43, 31, 22, 10, 45, //
-        25, 39, 14, 33, 19, 30, 9,  24, //
-        13, 18, 8,  12, 7,  6,  5,  63  //
-    };
+  constexpr uint8_t INDEX[64] = {
+      0,  47, 1,  56, 48, 27, 2,  60,  //
+      57, 49, 41, 37, 28, 16, 3,  61,  //
+      54, 58, 35, 52, 50, 42, 21, 44,  //
+      38, 32, 29, 23, 17, 11, 4,  62,  //
+      46, 55, 26, 59, 40, 36, 15, 53,  //
+      34, 51, 20, 43, 31, 22, 10, 45,  //
+      25, 39, 14, 33, 19, 30, 9,  24,  //
+      13, 18, 8,  12, 7,  6,  5,  63   //
+  };
 
-    const uint8_t result = INDEX[((x ^ (x-1)) * 0x03f79d71b4cb0a89ULL) >> 58];
-    return result;
+  const uint8_t result = INDEX[((x ^ (x - 1)) * 0x03f79d71b4cb0a89ULL) >> 58];
+  return result;
 }
 #endif
 

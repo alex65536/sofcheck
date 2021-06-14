@@ -52,13 +52,17 @@ message(STATUS "Detected CPU architecture: ${CPU_ARCH}")
 
 if("${CPU_ARCH}" STREQUAL amd64)
   if(MSVC)
-    set(BMI1_FLAG /arch:AVX)
-    set(BMI2_FLAG /arch:AVX2)
+    # MSVC doesn't have the flags for BMI1 and BMI2, but each CPU with these instruction sets has
+    # AVX and AVX2 respectively. We enable AVX in hope that it won't make anything worse (if you
+    # build code for CPUs with BMI, they will surely have AVX), but the compiler might generate
+    # better code with newer instruction sets.
+    set(BMI1_FLAGS /arch:AVX)
+    set(BMI2_FLAGS /arch:AVX2)
   else()
-    set(BMI1_FLAG -mbmi)
-    set(BMI2_FLAG -mbmi2)
+    set(BMI1_FLAGS -mbmi)
+    set(BMI2_FLAGS -mbmi2)
   endif()
-  set(CMAKE_REQUIRED_FLAGS "${BMI2_FLAG}")
+  set(CMAKE_REQUIRED_FLAGS ${BMI2_FLAGS})
   check_c_source_compiles("
       #include <immintrin.h>
       #include <stdint.h>
@@ -76,8 +80,7 @@ else()
   set(HAS_BMI2 OFF)
 endif()
 if(USE_BMI2 AND NOT HAS_BMI2)
-  message(WARNING
-    "The required headers for BMI2 were not found, so this option is disabled.")
+  message(WARNING "BMI2 intrinsics don't compile, so USE_BMI2 is disabled.")
   set(USE_BMI2 OFF)
 endif()
 
@@ -115,14 +118,14 @@ check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 # Apply compiler flags
 if("${CPU_ARCH}" STREQUAL amd64)
   if(NOT MSVC)
-    # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
+    # We assume that the CPU is modern enough (Core or newer) to support SSE4.2 and POPCNT
     add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
   endif()
   if(USE_BMI1)
-    add_compile_options("${BMI1_FLAG}")
+    add_compile_options(${BMI1_FLAGS})
   endif()
   if(USE_BMI2)
-    add_compile_options("${BMI2_FLAG}")
+    add_compile_options(${BMI2_FLAGS})
   endif()
 else()
   if(USE_BMI1 OR USE_BMI2)

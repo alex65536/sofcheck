@@ -18,6 +18,9 @@
 #ifndef SOF_UTIL_OPERATORS_INCLUDED
 #define SOF_UTIL_OPERATORS_INCLUDED
 
+// Common note: all the macros produce constexpr operators by default. If you need a non-constexpr
+// variant, use macros ending with `_NOCONST`
+
 // Declares a single comparison operator `op` for enumeration type `type` with underlying integral
 // type `base`
 #define SOF_ENUM_COMPARE_OP(type, base, op)                                    \

@@ -71,6 +71,7 @@ add_chess_impl(dodecahedron
   dodecahedron/moves.cpp
   dodecahedron/movestr.cpp
 )
+# Dodecahedron is too old and too hacky, so I don't plan to fix any warnings in it
 if(MSVC)
   target_compile_options(test_dodecahedron PRIVATE /W0)
   if(benchmark_FOUND)
