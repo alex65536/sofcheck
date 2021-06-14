@@ -142,7 +142,7 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for ([[maybe_unused]] auto _ : state) {
-    int d = state.range(0);
+    auto d = static_cast<int>(state.range(0));
     recurseSearch(board, d);
   }
 }
