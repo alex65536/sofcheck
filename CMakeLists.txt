@@ -25,6 +25,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 include(JsonCpp)
 find_package(Threads REQUIRED)
 
@@ -41,7 +42,13 @@ set(USE_SEARCH_DIAGNOSTICS OFF CACHE BOOL
 
 
 # Detect system configuration
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
+set(CPU_ARCH unknown)
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86_64|amd64|AMD64)$")
+  set(CPU_ARCH amd64)
+endif()
+message(STATUS "Detected CPU architecture: ${CPU_ARCH}")
+
+if("${CPU_ARCH}" STREQUAL amd64)
   set(CMAKE_REQUIRED_FLAGS -mbmi2)
   check_c_source_compiles("
       #include <immintrin.h>
@@ -63,13 +70,35 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
   endif()
 endif()
 
+set(CMAKE_REQUIRED_FLAGS -latomic)
+check_cxx_source_compiles("
+    #include <atomic>
+    #include <cstdint>
+
+    struct My {
+      uint32_t inner;
+    };
+
+    std::atomic<My> x;
+
+    int main() {
+      My y = x.load(std::memory_order_relaxed);
+      y.inner += 1;
+      x.store(y, std::memory_order_relaxed);
+      return 0;
+    }
+  "
+  HAS_LIBATOMIC
+)
+unset(CMAKE_REQUIRED_FLAGS)
+
 include(BoostStacktrace)
 
 check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
 
 # Apply compiler flags
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
+if("${CPU_ARCH}" STREQUAL amd64)
   # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
   add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
   if(USE_BMI1)
@@ -78,6 +107,12 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
   if(USE_BMI2)
     add_compile_options(-mbmi2)
   endif()
+else()
+  if(USE_BMI1 OR USE_BMI2)
+    message(WARNING "BMI1 and BMI2 are relevant only on amd64 architecture; disabling them.")
+  endif()
+  set(USE_BMI1 OFF)
+  set(USE_BMI2 OFF)
 endif()
 
 add_compile_options(-Wall -Wextra -Wpedantic -Werror)
@@ -92,8 +127,15 @@ if(USE_NO_EXCEPTIONS)
   add_compile_definitions(JSON_USE_EXCEPTION=0)
 endif()
 
+if(HAS_LIBATOMIC)
+  set(LIBATOMIC_TARGET atomic)
+else()
+  set(LIBATOMIC_TARGET)
+endif()
+
 if(USE_SANITIZERS)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address -fsanitize=leak -fsanitize=undefined")
+  add_compile_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
+  add_link_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -169,7 +211,7 @@ add_library(sof_search STATIC
 )
 target_link_libraries(sof_search
   PUBLIC sof_bot_api
-  PRIVATE Threads::Threads atomic sof_core sof_util sof_eval
+  PRIVATE Threads::Threads ${LIBATOMIC_TARGET} sof_core sof_util sof_eval
 )
 
 add_executable(sofcheck

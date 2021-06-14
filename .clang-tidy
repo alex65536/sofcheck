@@ -16,6 +16,7 @@ llvm-namespace-comment, \
 -modernize-use-trailing-return-type, \
 -modernize-avoid-c-arrays, \
 -cert-err58-cpp, \
+-clang-analyzer-security.insecureAPI.rand, \
 -cppcoreguidelines-avoid-c-arrays, \
 -cppcoreguidelines-avoid-magic-numbers, \
 -cppcoreguidelines-avoid-non-const-global-variables, \
@@ -58,6 +59,7 @@ llvm-namespace-comment, \
 # - hicpp-special-member-functions also has false-positives with Google Test
 # - cert-err58-cpp also has false-positives with Google Test
 # - cppcoreguidelines-avoid-non-const-global-variables conflicts with tests and benchmarks
+# - clang-analyzer-security.insecureAPI.rand yields false positives on macOS with SoFUtil::random()
 
 HeaderFilterRegex: '(bench|gen|src)/.+'
 

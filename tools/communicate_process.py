@@ -64,11 +64,11 @@ t_err = Thread(target=reader, args=(process.stderr, err_lines))
 t_err.daemon = True
 t_err.start()
 
-time.sleep(0.060)  # Wait slightly after initialization
+time.sleep(0.100)  # Wait slightly after initialization
 for line in sys.stdin:
     process.stdin.write(line)
     process.stdin.flush()
-    time.sleep(0.015)
+    time.sleep(0.050)
     sys.stdout.write(f"I {line}")
     print_queue(out_lines, "O")
     print_queue(err_lines, "E")

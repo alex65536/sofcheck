@@ -136,7 +136,7 @@ inline static bool hasRepetitions(std::vector<T> vec) {
   return false;
 }
 
-OptionBuilder &OptionBuilder::addEnum(const std::string &key, std::vector<std::string> items,
+OptionBuilder &OptionBuilder::addEnum(const std::string &key, const std::vector<std::string> &items,
                                       const size_t index) noexcept {
   if (index >= items.size()) {
     panic("Invalid EnumOption given for the key \"" + key + "\"");
@@ -151,7 +151,7 @@ OptionBuilder &OptionBuilder::addEnum(const std::string &key, std::vector<std::s
   if (hasRepetitions(items)) {
     panic("Some enumeration items repeat");
   }
-  auto ptrItems = std::make_shared<const std::vector<std::string>>(std::move(items));
+  auto ptrItems = std::make_shared<const std::vector<std::string>>(items);
   return addT(key, EnumOption{ptrItems, index});
 }
 

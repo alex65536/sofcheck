@@ -273,7 +273,7 @@ public:
   // valid option names.
 
   OptionBuilder &addBool(const std::string &key, bool value) noexcept;
-  OptionBuilder &addEnum(const std::string &key, std::vector<std::string> items,
+  OptionBuilder &addEnum(const std::string &key, const std::vector<std::string> &items,
                          size_t index) noexcept;
   OptionBuilder &addInt(const std::string &key, int64_t min, int64_t value, int64_t max) noexcept;
   OptionBuilder &addString(const std::string &key, std::string value) noexcept;
