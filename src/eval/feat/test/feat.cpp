@@ -147,9 +147,9 @@ TEST(SoFEval_Feat, Feat_Weights) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  EXPECT_EQ(features.count(), 465);
+  EXPECT_EQ(features.count(), 465U);
   WeightVec weights = features.extract();
-  ASSERT_EQ(weights.size(), 465);
+  ASSERT_EQ(weights.size(), 465U);
   EXPECT_EQ(weights[0], -41);
   EXPECT_EQ(weights[3], 55);
   EXPECT_EQ(weights[9], -142);
@@ -169,9 +169,9 @@ TEST(SoFEval_Feat, Feat_Names) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  EXPECT_EQ(features.count(), 465);
+  EXPECT_EQ(features.count(), 465U);
   const auto names = features.names();
-  ASSERT_EQ(names.size(), 465);
+  ASSERT_EQ(names.size(), 465U);
   EXPECT_EQ(names[0].name, "first");
   EXPECT_EQ(names[3].name, "second.2");
   EXPECT_EQ(names[10].name, "our_psq.cost.4");
@@ -185,26 +185,26 @@ TEST(SoFEval_Feat, Feat_Bundles) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  ASSERT_EQ(features.bundles().size(), 5);
+  ASSERT_EQ(features.bundles().size(), 5U);
 
   EXPECT_EQ(features.bundles()[0].name().name, "first");
-  EXPECT_EQ(features.bundles()[0].name().offset, 0);
+  EXPECT_EQ(features.bundles()[0].name().offset, 0U);
   EXPECT_NE(features.bundles()[0].asSingle(), nullptr);
 
   EXPECT_EQ(features.bundles()[1].name().name, "second");
-  EXPECT_EQ(features.bundles()[1].name().offset, 1);
+  EXPECT_EQ(features.bundles()[1].name().offset, 1U);
   EXPECT_NE(features.bundles()[1].asArray(), nullptr);
   EXPECT_EQ(features.bundles()[1].asSingle(), nullptr);
 
   EXPECT_EQ(features.bundles()[2].name().name, "our_psq");
-  EXPECT_EQ(features.bundles()[2].name().offset, 6);
+  EXPECT_EQ(features.bundles()[2].name().offset, 6U);
   EXPECT_NE(features.bundles()[2].asPsq(), nullptr);
 
   EXPECT_EQ(features.bundles()[3].name().name, "a");
-  EXPECT_EQ(features.bundles()[3].name().offset, 460);
+  EXPECT_EQ(features.bundles()[3].name().offset, 460U);
   EXPECT_NE(features.bundles()[3].asSingle(), nullptr);
 
   EXPECT_EQ(features.bundles()[4].name().name, "some_array");
-  EXPECT_EQ(features.bundles()[4].name().offset, 461);
+  EXPECT_EQ(features.bundles()[4].name().offset, 461U);
   EXPECT_NE(features.bundles()[4].asArray(), nullptr);
 }
