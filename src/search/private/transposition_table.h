@@ -69,6 +69,9 @@ public:
 
     // Serializes the structure as `uint64_t`. Should work efficiently for little-endian
     // architectures (as the compiler must just reinterpret the structure as `uint64_t`).
+    //
+    // It seems that such optimization doesn't work with MSVC, so the function may work relatively
+    // slow for this compiler.
     inline constexpr uint64_t asUint() const {
       const auto uintScore = static_cast<uint16_t>(score_);
       return static_cast<uint64_t>(move_.asUint()) | (static_cast<uint64_t>(uintScore) << 32) |

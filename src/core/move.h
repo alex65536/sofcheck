@@ -72,6 +72,9 @@ struct Move {
   // The compiler should optimize this and just reinterpet the structure as `uint32_t` for
   // little-endian architectures. The engine is not optimized for big-endian now, so there is no
   // fast implementation for such architectures at the moment.
+  //
+  // It seems that such optimization doesn't work with MSVC, so the function may work relatively
+  // slow for this compiler.
   inline constexpr uint32_t asUint() const {
     const auto uintKind = static_cast<uint8_t>(kind);
     const auto uintSrc = static_cast<uint8_t>(src);
