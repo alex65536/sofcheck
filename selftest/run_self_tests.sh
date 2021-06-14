@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +18,20 @@
 
 set -e
 
-if [ "$#" -lt 4 ]; then
-    echo "Usage: $0 TEST_EXECUTABLE_1 TEST_EXECUTABLE_2 BOARDS_FILE REPORT_FILE"
-    exit 1
-fi
+verify_env() {
+    local ENV_NAME="$1"
+    if [[ -z "${!ENV_NAME}" ]]; then
+        echo "${ENV_NAME}" is unset
+        exit 1
+    fi
+}
 
-"$1" "$3" >selftest_log1.txt &
-"$2" "$3" >selftest_log2.txt
+verify_env CMAKE_COMMAND
+verify_env TEST_EXECUTABLE_1
+verify_env TEST_EXECUTABLE_2
+verify_env BOARDS_FILE
+
+"${TEST_EXECUTABLE_1}" "${BOARDS_FILE}" >selftest_log1.txt &
+"${TEST_EXECUTABLE_2}" "${BOARDS_FILE}" >selftest_log2.txt
 wait
-diff selftest_log1.txt selftest_log2.txt >"$4"
+"${CMAKE_COMMAND}" -E compare_files selftest_log1.txt selftest_log2.txt

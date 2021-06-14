@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ inline static void initOffsets(size_t bases[]) {
         continue;
       }
       const size_t maxLen = std::max(getMagicMaskBitSize<M>(c1), getMagicMaskBitSize<M>(c2));
-      const size_t add = 1UL << maxLen;
+      const size_t add = static_cast<size_t>(1U) << maxLen;
       bases[c1] = count;
       bases[c2] = count;
       count += add;
@@ -60,7 +60,7 @@ inline static void initOffsets(size_t bases[]) {
       const size_t maxLen = std::max(
           std::max(getMagicMaskBitSize<M>(c + 0 * offs), getMagicMaskBitSize<M>(c + 1 * offs)),
           std::max(getMagicMaskBitSize<M>(c + 2 * offs), getMagicMaskBitSize<M>(c + 3 * offs)));
-      const size_t add = 1UL << maxLen;
+      const size_t add = static_cast<size_t>(1U) << maxLen;
       for (coord_t i = 0; i < 4; ++i) {
         bases[c + i * offs] = count;
       }
@@ -90,7 +90,7 @@ static void initMagic() {
   // Fill lookup table
   for (coord_t c = 0; c < 64; ++c) {
     const bitboard_t mask = magicEntries[c].mask;
-    const size_t submaskCnt = 1UL << SoFUtil::popcount(mask);
+    const size_t submaskCnt = static_cast<size_t>(1U) << SoFUtil::popcount(mask);
     const size_t offset = offsets[c];
     constexpr static const int8_t DX_BISHOP[4] = {-1, 1, -1, 1};
     constexpr static const int8_t DY_BISHOP[4] = {-1, -1, 1, 1};
@@ -105,7 +105,7 @@ static void initMagic() {
 #else
       constexpr auto *magics = (M == MagicType::Rook) ? ROOK_MAGICS : BISHOP_MAGICS;
       constexpr auto *shifts = (M == MagicType::Rook) ? ROOK_SHIFTS : BISHOP_SHIFTS;
-      const size_t pos = (occupied * magics[c]) >> shifts[c];
+      const auto pos = static_cast<size_t>((occupied * magics[c]) >> shifts[c]);
 #endif
       bitboard_t &res = lookup[offset + pos];
       for (size_t direction = 0; direction < 4; ++direction) {

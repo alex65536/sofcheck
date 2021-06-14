@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -142,7 +142,7 @@ inline void runRecurse(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for ([[maybe_unused]] auto _ : state) {
-    int d = state.range(0);
+    auto d = static_cast<int>(state.range(0));
     recurseSearch(board, d);
   }
 }

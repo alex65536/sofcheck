@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ inline void moveStr(const Board &, const Move &mv, char *str) { SoFCore::moveToS
 
 inline MoveList generateMoves(const Board &board) {
   MoveList moves;
-  moves.count = static_cast<size_t>(SoFCore::genAllMoves(board, moves.moves));
+  moves.count = static_cast<int>(SoFCore::genAllMoves(board, moves.moves));
   return moves;
 }
 

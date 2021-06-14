@@ -17,13 +17,14 @@
 
 cmake_minimum_required(VERSION 3.10)
 
-project(SoFCheck::SelfTest)
+project(SoFCheck_SelfTest)
 
 
 # Set compiler flags
 set(CMAKE_CXX_STANDARD 17)
 
 include(Benchmark)
+find_package(UnixCommands)
 
 
 # Add configuration options
@@ -70,6 +71,13 @@ add_chess_impl(dodecahedron
   dodecahedron/moves.cpp
   dodecahedron/movestr.cpp
 )
+# Dodecahedron is too old and too hacky, so I don't plan to fix any warnings in it
+if(MSVC)
+  target_compile_options(test_dodecahedron PRIVATE /W0)
+  if(benchmark_FOUND)
+    target_compile_options(bench_dodecahedron PRIVATE /W0)
+  endif()
+endif()
 
 add_chess_impl(sofcheck)
 target_link_libraries(test_sofcheck sof_core sof_util)
@@ -79,16 +87,15 @@ endif()
 
 enable_testing()
 
-if(UNIX)
-  # The self-test runner uses diff and shell script, so run only on UNIX-like
-
+if(BASH)
   add_test(
     NAME self-test
-    COMMAND "${PROJECT_SOURCE_DIR}/run_self_tests.sh"
-    "${PROJECT_BINARY_DIR}/test_dodecahedron"
-    "${PROJECT_BINARY_DIR}/test_sofcheck"
-    "${PROJECT_SOURCE_DIR}/boards.fen"
-    "${PROJECT_BINARY_DIR}/report.log"
+    COMMAND "${CMAKE_COMMAND}" -E env
+      "CMAKE_COMMAND=${CMAKE_COMMAND}"
+      "TEST_EXECUTABLE_1=$<TARGET_FILE:test_dodecahedron>"
+      "TEST_EXECUTABLE_2=$<TARGET_FILE:test_sofcheck>"
+      "BOARDS_FILE=${PROJECT_SOURCE_DIR}/boards.fen"
+    "${BASH}" "${PROJECT_SOURCE_DIR}/run_self_tests.sh"
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
   )
 endif()

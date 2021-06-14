@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -273,7 +273,7 @@ public:
   // valid option names.
 
   OptionBuilder &addBool(const std::string &key, bool value) noexcept;
-  OptionBuilder &addEnum(const std::string &key, std::vector<std::string> items,
+  OptionBuilder &addEnum(const std::string &key, const std::vector<std::string> &items,
                          size_t index) noexcept;
   OptionBuilder &addInt(const std::string &key, int64_t min, int64_t value, int64_t max) noexcept;
   OptionBuilder &addString(const std::string &key, std::string value) noexcept;

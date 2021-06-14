@@ -85,7 +85,7 @@ public:
   }
 
 private:
-  inline static constexpr int32_t colorCoef(const SoFCore::Color c) {
+  inline static constexpr int16_t colorCoef(const SoFCore::Color c) {
     return (c == SoFCore::Color::White) ? +1 : -1;
   }
 

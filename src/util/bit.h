@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,9 +18,24 @@
 #ifndef SOF_UTIL_BIT_INCLUDED
 #define SOF_UTIL_BIT_INCLUDED
 
+// Switch between various implementations of bit manipulation routines
+#if defined(_WIN64) && defined(_MSC_VER)
+#define SOF_BIT_MSVC64
+#elif defined(__GNUC__)
+#define SOF_BIT_GCC
+#else
+#define SOF_BIT_UNKNOWN
+#endif
+
 #include <cstdint>
 
 #include "config.h"
+
+#ifdef SOF_BIT_MSVC64
+#include <intrin.h>
+
+#include <cstdlib>
+#endif
 
 #ifdef USE_BMI2
 #include <immintrin.h>
@@ -29,24 +44,76 @@
 namespace SoFUtil {
 
 // Returns the number of ones in `x`
-inline constexpr size_t popcount(uint64_t x) { return __builtin_popcountll(x); }
+#if defined(SOF_BIT_GCC)
+inline size_t popcount(uint64_t x) { return __builtin_popcountll(x); }
+#elif defined(SOF_BIT_MSVC64)
+inline size_t popcount(uint64_t x) { return __popcnt64(x); }
+#else
+// See https://www.chessprogramming.org/Population_Count#SWAR-Popcount for more details. This
+// implementation is not ultra-fast, but can be used as fallback
+inline size_t popcount(uint64_t x) {
+  x -= (x >> 1) & 0x5555555555555555ULL;
+  x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
+  x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
+  return static_cast<size_t>((x * 0x0101010101010101ULL) >> 56);
+}
+#endif
 
 // Clears the lowest bit set to one in `x`
 inline constexpr uint64_t clearLowest(uint64_t x) { return x & (x - 1); }
 
 // Returns the position of the lowest bit set to one in `x`. If `x == 0`, the behavior is undefined
-inline constexpr size_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
+#if defined(SOF_BIT_GCC)
+inline size_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
+#elif defined(SOF_BIT_MSVC64)
+inline size_t getLowest(uint64_t x) {
+  unsigned long result;
+  _BitScanForward64(&result, x);
+  return static_cast<size_t>(result);
+}
+#else
+// See https://www.chessprogramming.org/BitScan#De_Bruijn_Multiplication for details. This
+// implementation is used as fallback
+inline size_t getLowest(uint64_t x) {
+  constexpr uint8_t INDEX[64] = {
+      0,  47, 1,  56, 48, 27, 2,  60,  //
+      57, 49, 41, 37, 28, 16, 3,  61,  //
+      54, 58, 35, 52, 50, 42, 21, 44,  //
+      38, 32, 29, 23, 17, 11, 4,  62,  //
+      46, 55, 26, 59, 40, 36, 15, 53,  //
+      34, 51, 20, 43, 31, 22, 10, 45,  //
+      25, 39, 14, 33, 19, 30, 9,  24,  //
+      13, 18, 8,  12, 7,  6,  5,  63   //
+  };
+
+  const uint8_t result = INDEX[((x ^ (x - 1)) * 0x03f79d71b4cb0a89ULL) >> 58];
+  return result;
+}
+#endif
 
 // Combines `getLowest` and `clearLowest` for convenience. It clears the lowest bit set to one in
 // `x` and returns the position of the cleared bit. If `x == 0`, the behavior is undefined
-inline constexpr size_t extractLowest(uint64_t &x) {
+inline size_t extractLowest(uint64_t &x) {
   const size_t res = getLowest(x);
   x = clearLowest(x);
   return res;
 }
 
 // Reverses the byte order in `x`
-inline constexpr uint64_t swapBytes(uint64_t x) { return __builtin_bswap64(x); }
+#if defined(SOF_BIT_GCC)
+inline uint64_t swapBytes(uint64_t x) { return __builtin_bswap64(x); }
+#elif defined(SOF_BIT_MSVC64)
+inline uint64_t swapBytes(uint64_t x) { return _byteswap_uint64(x); }
+#else
+// See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Vertical for details. This
+// implementation is used as fallback
+inline uint64_t swapBytes(uint64_t x) {
+  x = ((x >> 8) & 0x00ff00ff00ff00ffULL) | ((x & 0x00ff00ff00ff00ffULL) << 8);
+  x = ((x >> 16) & 0x0000ffff0000ffffULL) | ((x & 0x0000ffff0000ffffULL) << 16);
+  x = (x >> 32) | (x << 32);
+  return x;
+}
+#endif
 
 #ifdef USE_BMI2
 

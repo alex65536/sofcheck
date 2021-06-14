@@ -1,0 +1,138 @@
+name: build
+
+on: [push, pull_request]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        compiler: [gcc-8, clang-9]
+        bmi1: ['true']
+        bmi2: ['true', 'false']
+        builtin-jsoncpp: ['true', 'false']
+        cmake-generator: ['Unix Makefiles']
+
+        exclude:
+          - bmi2: 'true'
+            builtin-jsoncpp: 'false'
+
+        include:
+          - os: windows-latest
+            compiler: gcc
+            bmi1: 'true'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Unix Makefiles'
+          - os: windows-latest
+            compiler: gcc
+            bmi1: 'true'
+            bmi2: 'true'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Unix Makefiles'
+          - os: windows-latest
+            compiler: msvc32
+            bmi1: 'true'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019'
+          - os: windows-latest
+            compiler: msvc32
+            bmi1: 'true'
+            bmi2: 'true'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019'
+          - os: windows-latest
+            compiler: msvc64
+            bmi1: 'true'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019'
+          - os: windows-latest
+            compiler: msvc64
+            bmi1: 'true'
+            bmi2: 'true'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019'
+          - os: macos-latest
+            compiler: gcc-8
+            bmi1: 'false'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Unix Makefiles'
+          - os: macos-latest
+            compiler: clang-11
+            bmi1: 'false'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Unix Makefiles'
+
+    runs-on: ${{ matrix.os }}
+
+    env:
+      CONFIG_FILE: ${{ github.workspace }}/.ci-config.json
+      STORAGE_FILE: ${{ github.workspace }}/.ci-storage.json
+      BUILDER_CMD: python3 "${{ github.workspace }}/tools/ci_build.py" -c "$CONFIG_FILE" -s "$STORAGE_FILE"
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Generate config
+      shell: bash
+      run: |
+        OS="${{ matrix.os }}"
+        OS="${OS%%-*}"
+        (
+        cat <<EOF
+        {
+          "os": "$OS",
+          "compiler": "${{ matrix.compiler }}",
+          "bmi1": ${{ matrix.bmi1 }},
+          "bmi2": ${{ matrix.bmi2 }},
+          "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
+          "cmake-build-type": "Release",
+          "cmake-generator": "${{ matrix.cmake-generator }}"
+        }
+        EOF
+        ) >"${{ env.CONFIG_FILE }}"
+
+    - name: Dump config
+      shell: bash
+      run: cat "${{ env.CONFIG_FILE }}"
+
+    - name: Configure
+      shell: bash
+      working-directory: ${{ github.workspace }}
+      run: ${{ env.BUILDER_CMD }} configure
+
+    - name: Dump storage
+      shell: bash
+      run: cat "${{ env.STORAGE_FILE }}"
+
+    - name: Install dependencies
+      shell: bash
+      run: ${{ env.BUILDER_CMD }} install
+
+    - name: Build dependencies
+      shell: bash
+      run: ${{ env.BUILDER_CMD }} build-dep
+
+    - name: Build
+      shell: bash
+      run: ${{ env.BUILDER_CMD }} build
+
+    - name: Test
+      shell: bash
+      run: ${{ env.BUILDER_CMD }} test
+
+    - name: Build (with diagnostics)
+      shell: bash
+      run: ${{ env.BUILDER_CMD }} build -d
+
+    - name: Test (with diagnostics)
+      shell: bash
+      run: ${{ env.BUILDER_CMD }} test -d

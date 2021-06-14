@@ -106,7 +106,7 @@ LoadResult<ArrayBundle> ArrayBundle::load(const Name &name, const Json::Value &j
 
 void ArrayBundle::save(Json::Value &json) const {
   json = Json::Value(Json::arrayValue);
-  json.resize(values_.size());
+  json.resize(static_cast<Json::ArrayIndex>(values_.size()));
   for (Json::ArrayIndex idx = 0; idx < json.size(); ++idx) {
     json[idx] = values_[idx];
   }

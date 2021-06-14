@@ -25,8 +25,11 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 include(Benchmark)
 include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
+include(CheckCXXSourceCompiles)
 include(JsonCpp)
 find_package(Threads REQUIRED)
+find_package(PythonInterp 3.6)
+find_package(UnixCommands)
 
 
 # Declare configuration options
@@ -41,8 +44,25 @@ set(USE_SEARCH_DIAGNOSTICS OFF CACHE BOOL
 
 
 # Detect system configuration
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
-  set(CMAKE_REQUIRED_FLAGS -mbmi2)
+set(CPU_ARCH unknown)
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86_64|amd64|AMD64)$")
+  set(CPU_ARCH amd64)
+endif()
+message(STATUS "Detected CPU architecture: ${CPU_ARCH}")
+
+if("${CPU_ARCH}" STREQUAL amd64)
+  if(MSVC)
+    # MSVC doesn't have the flags for BMI1 and BMI2, but each CPU with these instruction sets has
+    # AVX and AVX2 respectively. We enable AVX in hope that it won't make anything worse (if you
+    # build code for CPUs with BMI, they will surely have AVX), but the compiler might generate
+    # better code with newer instruction sets.
+    set(BMI1_FLAGS /arch:AVX)
+    set(BMI2_FLAGS /arch:AVX2)
+  else()
+    set(BMI1_FLAGS -mbmi)
+    set(BMI2_FLAGS -mbmi2)
+  endif()
+  set(CMAKE_REQUIRED_FLAGS ${BMI2_FLAGS})
   check_c_source_compiles("
       #include <immintrin.h>
       #include <stdint.h>
@@ -56,11 +76,38 @@ if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
     HAS_BMI2
   )
   unset(CMAKE_REQUIRED_FLAGS)
-  if(USE_BMI2 AND NOT HAS_BMI2)
-    message(WARNING
-      "The required headers for BMI2 were not found, so this option is disabled.")
-    set(USE_BMI2 OFF)
-  endif()
+else()
+  set(HAS_BMI2 OFF)
+endif()
+if(USE_BMI2 AND NOT HAS_BMI2)
+  message(WARNING "BMI2 intrinsics don't compile, so USE_BMI2 is disabled.")
+  set(USE_BMI2 OFF)
+endif()
+
+if(MSVC)
+  set(HAS_LIBATOMIC OFF)
+else()
+  set(CMAKE_REQUIRED_FLAGS -latomic)
+  check_cxx_source_compiles("
+      #include <atomic>
+      #include <cstdint>
+
+      struct My {
+        uint32_t inner;
+      };
+
+      std::atomic<My> x;
+
+      int main() {
+        My y = x.load(std::memory_order_relaxed);
+        y.inner += 1;
+        x.store(y, std::memory_order_relaxed);
+        return 0;
+      }
+    "
+    HAS_LIBATOMIC
+  )
+  unset(CMAKE_REQUIRED_FLAGS)
 endif()
 
 include(BoostStacktrace)
@@ -69,19 +116,36 @@ check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
 
 # Apply compiler flags
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
-  # We assume that the CPU is modern enough (Core and newer) to support SSE4.2 and POPCNT
-  add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
+if("${CPU_ARCH}" STREQUAL amd64)
+  if(NOT MSVC)
+    # We assume that the CPU is modern enough (Core or newer) to support SSE4.2 and POPCNT
+    add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
+  endif()
   if(USE_BMI1)
-    add_compile_options(-mbmi)
+    add_compile_options(${BMI1_FLAGS})
   endif()
   if(USE_BMI2)
-    add_compile_options(-mbmi2)
+    add_compile_options(${BMI2_FLAGS})
   endif()
+else()
+  if(USE_BMI1 OR USE_BMI2)
+    message(WARNING "BMI1 and BMI2 are relevant only on amd64 architecture; disabling them.")
+  endif()
+  set(USE_BMI1 OFF)
+  set(USE_BMI2 OFF)
 endif()
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+if(MSVC)
+  add_compile_options(/W4 /WX /wd4146 /wd4127 /wd4068)
+  add_compile_definitions(_CRT_SECURE_NO_WARNINGS _ENABLE_ATOMIC_ALIGNMENT_FIX)
+else()
+  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+endif()
 
+if(MSVC AND USE_NO_EXCEPTIONS)
+  message(WARNING "USE_NO_EXCEPTIONS is not supported with MSVC; disabling it.")
+  set(USE_NO_EXCEPTIONS OFF)
+endif()
 if(USE_NO_EXCEPTIONS)
   if(USE_BOOST_STACKTRACE)
     message(WARNING
@@ -92,8 +156,19 @@ if(USE_NO_EXCEPTIONS)
   add_compile_definitions(JSON_USE_EXCEPTION=0)
 endif()
 
+if(HAS_LIBATOMIC)
+  set(LIBATOMIC_TARGET atomic)
+else()
+  set(LIBATOMIC_TARGET)
+endif()
+
+if(MSVC AND USE_SANITIZERS)
+  message(WARNING "USE_SANITIZERS is not supported with MSVC; disabling it.")
+  set(USE_SANITIZERS OFF)
+endif()
 if(USE_SANITIZERS)
-  set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-fsanitize=address -fsanitize=leak -fsanitize=undefined")
+  add_compile_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
+  add_link_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
 endif()
 
 set(CMAKE_CXX_STANDARD 17)
@@ -170,7 +245,7 @@ add_library(sof_search STATIC
 )
 target_link_libraries(sof_search
   PUBLIC sof_bot_api
-  PRIVATE Threads::Threads atomic sof_core sof_util sof_eval
+  PRIVATE Threads::Threads ${LIBATOMIC_TARGET} sof_core sof_util sof_eval
 )
 
 add_executable(sofcheck
@@ -285,32 +360,29 @@ if(GTest_FOUND)
   gtest_add_tests(TARGET test_util_unit_test)
 endif()
 
-if(UNIX)
-  # TODO : add code to detect the presence of Python in the system
-  add_test(
-    NAME uci-client-1
-    COMMAND "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
-    "${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
-    "${PROJECT_BINARY_DIR}/test_uci_client"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in1.txt"
-    "${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out1.txt"
-    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  )
-  add_test(
-    NAME uci-client-2
-    COMMAND "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
-    "${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
-    "${PROJECT_BINARY_DIR}/test_uci_client"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in2.txt"
-    "${PROJECT_BINARY_DIR}/test_uci_client_log2.txt"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt"
-    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  )
+if(BASH AND PYTHONINTERP_FOUND)
+  foreach(test_id 1 2)
+    add_test(
+      NAME uci-client-${test_id}
+      COMMAND "${CMAKE_COMMAND}" -E env
+        "CMAKE_COMMAND=${CMAKE_COMMAND}"
+        "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+        "COMMUNICATE_SCRIPT=${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
+        "TEST_EXECUTABLE=$<TARGET_FILE:test_uci_client>"
+        "IN_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in${test_id}.txt"
+        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
+        "ANS_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out${test_id}.txt"
+      "${BASH}" "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+    )
+  endforeach()
+endif()
+
+if(PYTHONINTERP_FOUND)
   add_test(
     NAME smoke
-    COMMAND "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
-    "${PROJECT_BINARY_DIR}/sofcheck"
+    COMMAND "${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
+      "$<TARGET_FILE:sofcheck>"
   )
 endif()
 

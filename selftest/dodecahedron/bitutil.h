@@ -1,7 +1,7 @@
 /*
  * This file is part of Dodecahedron
  *
- * Copyright (c) 2016, 2020 Alexander Kernozhitsky <sh200105@mail.ru>
+ * Copyright (c) 2016, 2020-2021 Alexander Kernozhitsky <sh200105@mail.ru>
  *
  * Dodecahedron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,15 +23,15 @@
     inline int popcount(int64_t b) { return __builtin_popcountll(b); }
     #define HAS_POPCOUNT
 #endif // __GNUG__
-#ifdef _MSC_VER
+#if defined(_WIN64) && defined(_MSC_VER) && _MSC_VER >= 1400
     #include <intrin.h>
     inline int popcount(int64_t b) { return __popcnt64(b); }
     #define HAS_POPCOUNT
-#endif // _MSC_VER
+#endif // defined(_WIN64) && defined(_MSC_VER) && _MSC_VER >= 1400
 #ifndef HAS_POPCOUNT
     #include <limits>
     #include <bitset>
-    inline int popcount(int64_t b) { return std::bitset<std::numeric_limits<BITBOARD>::digits>(b).count(); }
+    inline int popcount(int64_t b) { return std::bitset<std::numeric_limits<int64_t>::digits>(b).count(); }
     #define HAS_POPCOUNT
 #endif // HAS_POPCOUNT
 #ifndef HAS_POPCOUNT

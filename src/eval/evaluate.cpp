@@ -101,8 +101,8 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
   const uint32_t rawStage = ((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE;
   const uint32_t stage = std::min<uint32_t>(rawStage, 256);
 
-  S result = (tag.inner_.first() * stage + tag.inner_.second() * (256 - stage)) >> 8;
-
+  auto result =
+    static_cast<S>((tag.inner_.first() * stage + tag.inner_.second() * (256 - stage)) >> 8);
   result += evalByColor<Color::White>(b);
   result -= evalByColor<Color::Black>(b);
 

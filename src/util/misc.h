@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,6 +20,28 @@
 
 #include <string>
 
+// Provide implementation for the following macros in different compilers
+#ifdef _MSC_VER
+
+#define SOF_PRIVATE_LIKELY(x) !!(x)
+#define SOF_PRIVATE_UNLIKELY(x) !!(x)
+#define SOF_PRIVATE_UNREACHABLE() __assume(0)
+#define SOF_PRIVATE_ASSUME(x) __assume((x))
+
+#else
+
+#define SOF_PRIVATE_LIKELY(x) __builtin_expect(!!(x), 1)
+#define SOF_PRIVATE_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define SOF_PRIVATE_UNREACHABLE() __builtin_unreachable()
+#define SOF_PRIVATE_ASSUME(x)  \
+  {                            \
+    if (!(x)) {                \
+      __builtin_unreachable(); \
+    }                          \
+  }
+
+#endif
+
 // Macros to help branch prediction
 //
 // If it's more likely that the condition is true, use `SOF_LIKELY`. Example:
@@ -30,20 +52,15 @@
 //
 // The macro `SOF_UNLIKELY` is opposite to `SOF_LIKELY` and indicates that in most
 // cases the given condition is false.
-#define SOF_LIKELY(x) __builtin_expect(!!(x), 1)
-#define SOF_UNLIKELY(x) __builtin_expect(!!(x), 0)
+#define SOF_LIKELY(x) SOF_PRIVATE_LIKELY((x))
+#define SOF_UNLIKELY(x) SOF_PRIVATE_UNLIKELY((x))
 
 // Indicate that this part of code should never be reached. If the control flow reaches this
 // statement, then the behaviour is undefined
-#define SOF_UNREACHABLE() __builtin_unreachable()
+#define SOF_UNREACHABLE() SOF_PRIVATE_UNREACHABLE()
 
 // Assume that x is true
-#define SOF_ASSUME(x)          \
-  {                            \
-    if (!(x)) {                \
-      __builtin_unreachable(); \
-    }                          \
-  }
+#define SOF_ASSUME(x) SOF_PRIVATE_ASSUME((x))
 
 // Concatenates two strings in preprocessor, even if one of the strings expands as a macro
 #define SOF_PRIVATE_STRING_CONCAT(a, b) a##b

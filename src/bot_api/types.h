@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -103,7 +103,7 @@ public:
   // Returns the number of moves until checkmate in the format described above. If `type()` is not
   // equal to `Centipawns`, then the behaviour is undefined
   inline constexpr int16_t checkMate() const {
-    return (value_ < 0) ? (VALUE_MIN - value_) : (VALUE_MAX - value_ + 1);
+    return static_cast<uint16_t>((value_ < 0) ? (VALUE_MIN - value_) : (VALUE_MAX - value_ + 1));
   }
 
   // Comparison operators

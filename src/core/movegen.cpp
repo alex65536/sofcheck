@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
     bbPawns &= (P == PromoteGenPolicy::PromoteOnly) ? bbPromote : ~bbPromote;
   }
   while (bbPawns) {
-    const coord_t src = SoFUtil::extractLowest(bbPawns);
+    const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbPawns));
     const coord_t dst = src + Private::pawnMoveDelta(C);
     // We assume that pawns cannot stay on lines 0 and 7, so don't check that `dst` exists
     if (b.cells[dst] != EMPTY_CELL) {
@@ -115,7 +115,7 @@ inline static size_t genPawnCapture(const Board &b, Move *list) {
   size_t size = 0;
   bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
   while (bbPawns) {
-    const coord_t src = SoFUtil::extractLowest(bbPawns);
+    const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbPawns));
     const subcoord_t x = coordX(src);
     const subcoord_t y = coordY(src);
     // We assume that pawns cannot stay on lines 0 and 7, so don't check it
@@ -171,10 +171,10 @@ inline static size_t genKnightOrKing(const Board &b, Move *list) {
   constexpr auto *attacks = (P == Piece::Knight) ? Private::KNIGHT_ATTACKS : Private::KING_ATTACKS;
   bitboard_t bbSrc = b.bbPieces[makeCell(C, P)];
   while (bbSrc) {
-    const coord_t src = SoFUtil::extractLowest(bbSrc);
+    const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbSrc));
     bitboard_t bbDst = attacks[src] & bbAllowed;
     while (bbDst) {
-      const coord_t dst = SoFUtil::extractLowest(bbDst);
+      const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbDst));
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
     }
   }
@@ -197,12 +197,12 @@ inline static size_t genBishopOrRook(const Board &b, Move *list, bitboard_t bbSr
   size_t size = 0;
   const bitboard_t bbAllowed = getAllowedMask<C, GenSimple, GenCaptures>(b);
   while (bbSrc) {
-    const coord_t src = SoFUtil::extractLowest(bbSrc);
+    const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbSrc));
     bitboard_t bbDst = (P == Piece::Bishop) ? Private::bishopAttackBitboard(b.bbAll, src)
                                             : Private::rookAttackBitboard(b.bbAll, src);
     bbDst &= bbAllowed;
     while (bbDst) {
-      const coord_t dst = SoFUtil::extractLowest(bbDst);
+      const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbDst));
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
     }
   }
@@ -297,7 +297,7 @@ size_t genSimplePromotes(const Board &b, Move *list) {
 }
 
 template <Color C>
-inline static size_t isMoveValidImpl(const Board &b, const Move move) {
+inline static bool isMoveValidImpl(const Board &b, const Move move) {
   if (SOF_UNLIKELY(move.kind == MoveKind::Null)) {
     return false;
   }

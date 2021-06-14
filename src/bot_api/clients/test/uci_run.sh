@@ -1,7 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,21 @@
 
 set -e
 
-if [ "$#" -lt 5 ]; then
-    echo "Usage: $0 COMMUNICATE_SCRIPT TEST_EXECUTABLE IN_FILE OUT_FILE ANS_FILE"
-    exit 1
-fi
+verify_env() {
+    local ENV_NAME="$1"
+    if [[ -z "${!ENV_NAME}" ]]; then
+        echo "${ENV_NAME}" is unset
+        exit 1
+    fi
+}
 
-"$1" "$2" <"$3" >"$4"
-diff "$5" "$4"
+verify_env CMAKE_COMMAND
+verify_env PYTHON_EXECUTABLE
+verify_env COMMUNICATE_SCRIPT
+verify_env TEST_EXECUTABLE
+verify_env IN_FILE
+verify_env OUT_FILE
+verify_env ANS_FILE
+
+"${PYTHON_EXECUTABLE}" "${COMMUNICATE_SCRIPT}" "${TEST_EXECUTABLE}" <"${IN_FILE}" >"${OUT_FILE}"
+"${CMAKE_COMMAND}" -E compare_files "${ANS_FILE}" "${OUT_FILE}"

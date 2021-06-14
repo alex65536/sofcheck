@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -33,22 +33,20 @@ board_hash_t g_zobristPieceCastlingKingside[2];
 board_hash_t g_zobristPieceCastlingQueenside[2];
 
 void initZobrist() {
-  using SoFUtil::random;
-
   for (size_t j = 0; j < 64; ++j) {
     g_zobristPieces[0][j] = 0;
   }
   for (size_t i = 1; i < 16; ++i) {
     for (size_t j = 0; j < 64; ++j) {
-      g_zobristPieces[i][j] = random();
+      g_zobristPieces[i][j] = SoFUtil::random();
     }
   }
-  g_zobristMoveSide = random();
+  g_zobristMoveSide = SoFUtil::random();
   for (board_hash_t &hash : g_zobristCastling) {
-    hash = random();
+    hash = SoFUtil::random();
   }
   for (board_hash_t &hash : g_zobristEnpassant) {
-    hash = random();
+    hash = SoFUtil::random();
   }
   for (Color c : {Color::White, Color::Black}) {
     const auto idx = static_cast<size_t>(c);
