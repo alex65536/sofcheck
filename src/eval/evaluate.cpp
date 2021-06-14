@@ -102,7 +102,7 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
   const uint32_t stage = std::min<uint32_t>(rawStage, 256);
 
   auto result =
-    static_cast<S>((tag.inner_.first() * stage + tag.inner_.second() * (256 - stage)) >> 8);
+      static_cast<S>((tag.inner_.first() * stage + tag.inner_.second() * (256 - stage)) >> 8);
   result += evalByColor<Color::White>(b);
   result -= evalByColor<Color::Black>(b);
 
@@ -121,14 +121,16 @@ S Evaluator<S>::evalByColor(const Board &b) {
   }
 
   // Calculate queens near to opponent's king
-  const coord_t king = SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]);
+  const auto king =
+      static_cast<coord_t>(SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]));
   const size_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
   coef_t nearCount = 0;
   for (size_t i = 1; i < 8; ++i) {
     nearCount +=
-        QUEEN_DISTANCES[i] * SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen);
+        QUEEN_DISTANCES[i] *
+        static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen));
   }
-  result += Weights::QUEEN_NEAR_TO_KING * nearCount;
+  result += static_cast<S>(Weights::QUEEN_NEAR_TO_KING * nearCount);
 
   return result;
 }
