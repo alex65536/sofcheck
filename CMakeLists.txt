@@ -28,6 +28,8 @@ include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
 include(JsonCpp)
 find_package(Threads REQUIRED)
+find_package(PythonInterp 3.6)
+find_package(UnixCommands)
 
 
 # Declare configuration options
@@ -321,31 +323,28 @@ if(GTest_FOUND)
   gtest_add_tests(TARGET test_util_unit_test)
 endif()
 
-if(UNIX)
-  # TODO : add code to detect the presence of Python in the system
-  add_test(
-    NAME uci-client-1
-    COMMAND "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
-    "${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
-    "${PROJECT_BINARY_DIR}/test_uci_client"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in1.txt"
-    "${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out1.txt"
-    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  )
-  add_test(
-    NAME uci-client-2
-    COMMAND "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
-    "${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
-    "${PROJECT_BINARY_DIR}/test_uci_client"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in2.txt"
-    "${PROJECT_BINARY_DIR}/test_uci_client_log2.txt"
-    "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out2.txt"
-    WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
-  )
+if(BASH AND PYTHONINTERP_FOUND)
+  foreach(test_id 1 2)
+    add_test(
+      NAME uci-client-${test_id}
+      COMMAND "${CMAKE_COMMAND}" -E env
+        "CMAKE_COMMAND=${CMAKE_COMMAND}"
+        "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
+        "COMMUNICATE_SCRIPT=${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
+        "TEST_EXECUTABLE=${PROJECT_BINARY_DIR}/test_uci_client"
+        "IN_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in${test_id}.txt"
+        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
+        "ANS_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out${test_id}.txt"
+      "${BASH}" "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
+      WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+    )
+  endforeach()
+endif()
+
+if(PYTHONINTERP_FOUND)
   add_test(
     NAME smoke
-    COMMAND "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
+    COMMAND "${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
     "${PROJECT_BINARY_DIR}/sofcheck"
   )
 endif()
