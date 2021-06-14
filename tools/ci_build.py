@@ -96,7 +96,15 @@ def configure(config, storage, args):
     storage['pkg'] = {}
     storage['cmd'] = {}
 
-    if config['os'] == 'windows':
+    if compiler == 'msvc':
+        if config['os'] != 'windows':
+            raise RuntimeError('MSVC is supported only on Windows!')
+        if comp_version != '':
+            warnings.warn('Versioned compilers are not supported on Windows')
+        storage['cmd']['cc'] = 'cl.exe'
+        storage['cmd']['cxx'] = 'cl.exe'
+        storage['cmd']['clang_tidy'] = None
+    elif config['os'] == 'windows':
         if comp_version != '':
             warnings.warn('Versioned compilers are not supported on Windows')
         storage['cmd']['cc'] = cc_names[compiler]

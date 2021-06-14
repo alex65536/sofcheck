@@ -34,6 +34,30 @@ jobs:
             bmi2: 'true'
             builtin-jsoncpp: 'true'
             cmake-generator: 'Unix Makefiles'
+          - os: windows-latest
+            compiler: msvc
+            bmi1: 'true'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019'
+          - os: windows-latest
+            compiler: msvc
+            bmi1: 'true'
+            bmi2: 'true'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019'
+          - os: windows-latest
+            compiler: msvc
+            bmi1: 'true'
+            bmi2: 'false'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019 Win64'
+          - os: windows-latest
+            compiler: msvc
+            bmi1: 'true'
+            bmi2: 'true'
+            builtin-jsoncpp: 'true'
+            cmake-generator: 'Visual Studio 16 2019 Win64'
           - os: macos-latest
             compiler: gcc-8
             bmi1: 'false'
