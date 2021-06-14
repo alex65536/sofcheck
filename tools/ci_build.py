@@ -232,7 +232,7 @@ def test(config, storage, args):
     build_dir = 'build-dgn' if diagnostic else 'build'
     build_dir = os.path.join(storage['path']['src-dir'], build_dir)
 
-    ctest_args = ['ctest']
+    ctest_args = ['ctest', '--config', config['cmake-build-type']]
     if diagnostic:
         ctest_args += ['-R', '^smoke$']
     pexec(ctest_args, cwd=build_dir)

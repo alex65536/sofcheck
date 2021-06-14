@@ -359,7 +359,7 @@ if(BASH AND PYTHONINTERP_FOUND)
         "CMAKE_COMMAND=${CMAKE_COMMAND}"
         "PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE}"
         "COMMUNICATE_SCRIPT=${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
-        "TEST_EXECUTABLE=${PROJECT_BINARY_DIR}/test_uci_client"
+        "TEST_EXECUTABLE=$<TARGET_FILE:test_uci_client>"
         "IN_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in${test_id}.txt"
         "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
         "ANS_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out${test_id}.txt"
@@ -373,7 +373,7 @@ if(PYTHONINTERP_FOUND)
   add_test(
     NAME smoke
     COMMAND "${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
-    "${PROJECT_BINARY_DIR}/sofcheck"
+      "$<TARGET_FILE:sofcheck>"
   )
 endif()
 

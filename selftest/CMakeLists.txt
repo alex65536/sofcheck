@@ -91,8 +91,8 @@ if(BASH)
     NAME self-test
     COMMAND "${CMAKE_COMMAND}" -E env
       "CMAKE_COMMAND=${CMAKE_COMMAND}"
-      "TEST_EXECUTABLE_1=${PROJECT_BINARY_DIR}/test_dodecahedron"
-      "TEST_EXECUTABLE_2=${PROJECT_BINARY_DIR}/test_sofcheck"
+      "TEST_EXECUTABLE_1=$<TARGET_FILE:test_dodecahedron>"
+      "TEST_EXECUTABLE_2=$<TARGET_FILE:test_sofcheck>"
       "BOARDS_FILE=${PROJECT_SOURCE_DIR}/boards.fen"
     "${BASH}" "${PROJECT_SOURCE_DIR}/run_self_tests.sh"
     WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
