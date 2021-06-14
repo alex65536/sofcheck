@@ -49,6 +49,8 @@ def gen_cmake_command(config, storage, src_path):
     ]
     if 'cmake-generator' in config:
         result += ['-G', config['cmake-generator']]
+    if 'arch' in storage:
+        result += ['-A', storage['arch']]
     return result
 
 
@@ -74,6 +76,10 @@ def configure(config, storage, args):
         'gcc': 'gcc',
         'clang': 'llvm'
     }
+    msvc_arch = {
+        'msvc32': 'Win32',
+        'msvc64': 'x64'
+    }
 
     compiler = list(config['compiler'].split('-'))
     comp_version = '' if len(compiler) == 1 else compiler[1]
@@ -96,7 +102,7 @@ def configure(config, storage, args):
     storage['pkg'] = {}
     storage['cmd'] = {}
 
-    if compiler == 'msvc':
+    if compiler in {'msvc32', 'msvc64}':
         if config['os'] != 'windows':
             raise RuntimeError('MSVC is supported only on Windows!')
         if comp_version != '':
@@ -104,6 +110,7 @@ def configure(config, storage, args):
         storage['cmd']['cc'] = 'cl.exe'
         storage['cmd']['cxx'] = 'cl.exe'
         storage['cmd']['clang_tidy'] = None
+        storage['arch'] = msvc_arch[compiler]
     elif config['os'] == 'windows':
         if comp_version != '':
             warnings.warn('Versioned compilers are not supported on Windows')
