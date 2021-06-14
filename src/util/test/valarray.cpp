@@ -28,7 +28,7 @@ using SoFUtil::SparseValArray;
 
 TEST(SoFUtil, FixedValArray_Size) {
   auto arr = FixedValArray<int, 10>::zeroed();
-  ASSERT_EQ(arr.size(), 10);
+  ASSERT_EQ(arr.size(), 10U);
 }
 
 TEST(SoFUtil, FixedValArray_Values) {
@@ -75,7 +75,7 @@ TEST(SoFUtil, SparseValArray_Base) {
 
   Arr arr(6);
   EXPECT_EQ(arr.take(), toVec(0, 0, 0, 0, 0, 0));
-  EXPECT_EQ(arr.size(), 6);
+  EXPECT_EQ(arr.size(), 6U);
   arr.add(3, 4).add(2, 5).add(3, -1);
   EXPECT_EQ(arr.take(), toVec(0, 0, 5, 3, 0, 0));
 

@@ -175,7 +175,7 @@ def build_deps(config, storage, args):
         'googletest': {
             'repo': 'https://github.com/google/googletest/',
             'branch': 'release-1.10.0',
-            'flags': []
+            'flags': ['-Dgtest_force_shared_crt=ON']
         },
         'benchmark': {
             'repo': 'https://github.com/google/benchmark/',

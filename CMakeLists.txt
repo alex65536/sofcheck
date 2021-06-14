@@ -133,7 +133,7 @@ else()
 endif()
 
 if(MSVC)
-  add_compile_options(/W4 /WX /wd4146 /wd4127)
+  add_compile_options(/W4 /WX /wd4146 /wd4127 /wd4068)
   add_compile_definitions(_CRT_SECURE_NO_WARNINGS _ENABLE_ATOMIC_ALIGNMENT_FIX)
 else()
   add_compile_options(-Wall -Wextra -Wpedantic -Werror)
