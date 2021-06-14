@@ -133,7 +133,8 @@ private:
     if (!repetitions_.insert(board_.hash)) {
       return 0;
     }
-    const score_t score = doSearch<Node>(depth, idepth, alpha, beta, tag, flags);
+    const score_t score =
+        doSearch<Node>(static_cast<int32_t>(depth), idepth, alpha, beta, tag, flags);
     DGN_ASSERT(score <= alpha || score >= beta ||
                isScoreValid(adjustCheckmate(score, -static_cast<int16_t>(idepth))));
     repetitions_.erase(board_.hash);

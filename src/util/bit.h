@@ -48,13 +48,13 @@ namespace SoFUtil {
 
 // Returns the number of ones in `x`
 #if defined(SOF_BIT_GCC)
-inline constexpr size_t popcount(uint64_t x) { return __builtin_popcountll(x); }
+inline size_t popcount(uint64_t x) { return __builtin_popcountll(x); }
 #elif defined(SOF_BIT_MSVC64)
-inline constexpr size_t popcount(uint64_t x) { return __popcnt64(x); }
+inline size_t popcount(uint64_t x) { return __popcnt64(x); }
 #else
 // See https://www.chessprogramming.org/Population_Count#SWAR-Popcount for more details. This
 // implementation is not ultra-fast, but can be used as fallback
-inline constexpr size_t popcount(uint64_t x) {
+inline size_t popcount(uint64_t x) {
   x -= (x >> 1) & 0x5555555555555555ULL;
   x = (x & 0x3333333333333333ULL) + ((x >> 2) & 0x3333333333333333ULL);
   x = (x + (x >> 4)) & 0x0f0f0f0f0f0f0f0fULL;
@@ -67,9 +67,9 @@ inline constexpr uint64_t clearLowest(uint64_t x) { return x & (x - 1); }
 
 // Returns the position of the lowest bit set to one in `x`. If `x == 0`, the behavior is undefined
 #if defined(SOF_BIT_GCC)
-inline constexpr size_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
+inline size_t getLowest(uint64_t x) { return __builtin_ctzll(x); }
 #elif defined(SOF_BIT_MSVC64)
-inline constexpr size_t getLowest(uint64_t x) {
+inline size_t getLowest(uint64_t x) {
   unsigned long result;
   _BitScanForward64(&result, x);
   return static_cast<size_t>(result);
@@ -77,7 +77,7 @@ inline constexpr size_t getLowest(uint64_t x) {
 #else
 // See https://www.chessprogramming.org/BitScan#De_Bruijn_Multiplication for details. This
 // implementation is used as fallback
-inline constexpr size_t getLowest(uint64_t x) {
+inline size_t getLowest(uint64_t x) {
     constexpr uint8_t INDEX[64] = {
         0,  47, 1,  56, 48, 27, 2,  60, //
         57, 49, 41, 37, 28, 16, 3,  61, //
@@ -96,7 +96,7 @@ inline constexpr size_t getLowest(uint64_t x) {
 
 // Combines `getLowest` and `clearLowest` for convenience. It clears the lowest bit set to one in
 // `x` and returns the position of the cleared bit. If `x == 0`, the behavior is undefined
-inline constexpr size_t extractLowest(uint64_t &x) {
+inline size_t extractLowest(uint64_t &x) {
   const size_t res = getLowest(x);
   x = clearLowest(x);
   return res;
@@ -104,13 +104,13 @@ inline constexpr size_t extractLowest(uint64_t &x) {
 
 // Reverses the byte order in `x`
 #if defined(SOF_BIT_GCC)
-inline constexpr uint64_t swapBytes(uint64_t x) { return __builtin_bswap64(x); }
+inline uint64_t swapBytes(uint64_t x) { return __builtin_bswap64(x); }
 #elif defined(SOF_BIT_MSVC64)
-inline constexpr uint64_t swapBytes(uint64_t x) { return _byteswap_uint64(x); }
+inline uint64_t swapBytes(uint64_t x) { return _byteswap_uint64(x); }
 #else
 // See https://www.chessprogramming.org/Flipping_Mirroring_and_Rotating#Vertical for details. This
 // implementation is used as fallback
-inline constexpr uint64_t swapBytes(uint64_t x) {
+inline uint64_t swapBytes(uint64_t x) {
   x = ((x >> 8) & 0x00ff00ff00ff00ffULL) | ((x & 0x00ff00ff00ff00ffULL) << 8);
   x = ((x >> 16) & 0x0000ffff0000ffffULL) | ((x & 0x0000ffff0000ffffULL) << 16);
   x = (x >> 32) | (x << 32);

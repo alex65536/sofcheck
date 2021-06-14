@@ -108,7 +108,7 @@ struct Board {
     return c == Color::White ? bbWhite : bbBlack;
   }
 
-  inline constexpr coord_t kingPos(Color c) const {
+  inline coord_t kingPos(Color c) const {
     return static_cast<coord_t>(SoFUtil::getLowest(bbPieces[makeCell(c, Piece::King)]));
   }
 

@@ -29,7 +29,7 @@ template <MagicType M>
 bool isValidMagic(coord_t coord, bitboard_t magic) {
   const bitboard_t mask = Private::buildMagicMask<M>(coord);
   const auto shift = SoFUtil::popcount(mask);
-  const size_t submaskCnt = 1UL << shift;
+  const size_t submaskCnt = static_cast<size_t>(1U) << shift;
   std::vector<bool> used(submaskCnt);
   for (size_t submask = 0; submask < submaskCnt; ++submask) {
     const bitboard_t occupied = SoFUtil::depositBits(submask, mask);
