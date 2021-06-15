@@ -18,6 +18,8 @@
 #ifndef SOF_CORE_MOVE_INCLUDED
 #define SOF_CORE_MOVE_INCLUDED
 
+#include <cstdint>
+
 #include "core/types.h"
 
 namespace SoFCore {

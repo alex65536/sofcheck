@@ -19,12 +19,12 @@
 
 #include <algorithm>
 #include <limits>
+#include <utility>
 
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
 
-#include "util/bit.h"
 #include "util/parallel.h"
 
 namespace SoFSearch::Private {

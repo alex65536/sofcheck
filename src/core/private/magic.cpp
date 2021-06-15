@@ -18,6 +18,7 @@
 #include "core/private/magic.h"
 
 #include <algorithm>
+#include <cstdint>
 
 #include "core/private/magic_util.h"
 #include "util/bit.h"

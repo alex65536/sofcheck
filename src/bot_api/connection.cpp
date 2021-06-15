@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,7 +17,8 @@
 
 #include "bot_api/connection.h"
 
-#include <utility>
+#include "bot_api/client.h"
+#include "bot_api/server.h"
 
 namespace SoFBotApi {
 

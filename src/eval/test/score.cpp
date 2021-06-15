@@ -15,12 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "eval/score.h"
+
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstdlib>
 #include <limits>
-
-#include "eval/score.h"
 
 TEST(SoFEval, ScorePair) {
   using namespace SoFEval;

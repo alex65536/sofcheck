@@ -15,15 +15,17 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <json/json.h>
-
+#include <cstring>
 #include <fstream>
 #include <iostream>
+#include <string>
+#include <utility>
 #include <vector>
 
 #include "eval/feat/feat.h"
 #include "util/fileutil.h"
 #include "util/misc.h"
+#include "util/result.h"
 #include "util/strutil.h"
 
 using SoFEval::Feat::Features;

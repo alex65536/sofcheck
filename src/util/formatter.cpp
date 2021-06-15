@@ -18,7 +18,6 @@
 #include "util/formatter.h"
 
 #include <iomanip>
-#include <utility>
 
 namespace SoFUtil {
 

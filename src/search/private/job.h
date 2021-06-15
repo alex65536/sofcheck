@@ -21,17 +21,21 @@
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
+#include <cstddef>
 #include <cstdint>
 #include <mutex>
 
-#include "bot_api/server.h"
-#include "core/board.h"
 #include "core/move.h"
-#include "search/private/limits.h"
-#include "search/private/transposition_table.h"
-#include "search/private/types.h"
+
+namespace SoFBotApi {
+class Server;
+}  // namespace SoFBotApi
 
 namespace SoFSearch::Private {
+
+class TranspositionTable;
+struct Position;
+struct SearchLimits;
 
 // Shared data between jobs, which allows them to communicate with each other and with outer world
 class JobCommunicator {

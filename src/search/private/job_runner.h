@@ -19,16 +19,21 @@
 #define SOF_SEARCH_PRIVATE_JOB_RUNNER_INCLUDED
 
 #include <atomic>
+#include <cstddef>
 #include <mutex>
 #include <thread>
 
-#include "bot_api/server.h"
 #include "search/private/job.h"
-#include "search/private/limits.h"
 #include "search/private/transposition_table.h"
-#include "search/private/types.h"
+
+namespace SoFBotApi {
+class Server;
+}  // namespace SoFBotApi
 
 namespace SoFSearch::Private {
+
+struct Position;
+struct SearchLimits;
 
 // The class that runs multiple search jobs simultaneously and controls them.
 class JobRunner {

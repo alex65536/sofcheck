@@ -19,6 +19,7 @@
 #define SOF_UTIL_LOGGING_INCLUDED
 
 #include <sstream>
+#include <string>
 
 #include "util/operators.h"
 

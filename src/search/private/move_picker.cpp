@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,7 +18,11 @@
 #include "search/private/move_picker.h"
 
 #include <algorithm>
+#include <cstdint>
 
+#include "core/board.h"
+#include "core/types.h"
+#include "search/private/util.h"
 #include "util/misc.h"
 
 namespace SoFSearch::Private {

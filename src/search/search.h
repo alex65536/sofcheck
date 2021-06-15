@@ -19,8 +19,12 @@
 #define SOF_SEARCH_SEARCH_INCLUDED
 
 #include <chrono>
+#include <cstddef>
+#include <cstdint>
 #include <memory>
+#include <string>
 
+#include "bot_api/api_base.h"
 #include "bot_api/client.h"
 #include "bot_api/options.h"
 

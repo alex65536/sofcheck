@@ -19,16 +19,22 @@
 
 #include <algorithm>
 #include <chrono>
+#include <utility>
 #include <vector>
 
+#include "bot_api/server.h"
 #include "bot_api/types.h"
+#include "core/board.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
 #include "eval/evaluate.h"
 #include "eval/score.h"
 #include "search/private/consts.h"
 #include "search/private/diagnostics.h"
+#include "search/private/limits.h"
 #include "search/private/move_picker.h"
+#include "search/private/transposition_table.h"
+#include "search/private/types.h"
 #include "search/private/util.h"
 #include "util/misc.h"
 #include "util/random.h"

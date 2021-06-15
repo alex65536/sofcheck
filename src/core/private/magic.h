@@ -18,6 +18,8 @@
 #ifndef SOF_CORE_PRIVATE_MAGIC_INCLUDED
 #define SOF_CORE_PRIVATE_MAGIC_INCLUDED
 
+#include <cstddef>
+
 #include "config.h"
 #include "core/types.h"
 
@@ -46,7 +48,7 @@ inline bitboard_t rookAttackBitboard(bitboard_t occupied, cell_t pos) {
   const size_t idx = _pext_u64(occupied, entry.mask);
 #else
   const auto idx =
-    static_cast<size_t>(((occupied & entry.mask) * ROOK_MAGICS[pos]) >> ROOK_SHIFTS[pos]);
+      static_cast<size_t>(((occupied & entry.mask) * ROOK_MAGICS[pos]) >> ROOK_SHIFTS[pos]);
 #endif
   return entry.lookup[idx] & entry.postMask;
 }
@@ -57,7 +59,7 @@ inline bitboard_t bishopAttackBitboard(bitboard_t occupied, cell_t pos) {
   const size_t idx = _pext_u64(occupied, entry.mask);
 #else
   const auto idx =
-    static_cast<size_t>(((occupied & entry.mask) * BISHOP_MAGICS[pos]) >> BISHOP_SHIFTS[pos]);
+      static_cast<size_t>(((occupied & entry.mask) * BISHOP_MAGICS[pos]) >> BISHOP_SHIFTS[pos]);
 #endif
   return entry.lookup[idx] & entry.postMask;
 }

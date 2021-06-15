@@ -18,6 +18,8 @@
 #ifndef SELFTEST_UTIL_H_INCLUDED
 #define SELFTEST_UTIL_H_INCLUDED
 
+#include <cassert>
+
 #include "chess_intf.h"
 
 namespace ChessIntf {

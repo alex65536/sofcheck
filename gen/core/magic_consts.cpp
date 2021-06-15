@@ -15,11 +15,13 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <cstddef>
 #include <random>
 #include <vector>
 
 #include "common.h"
 #include "core/private/magic_util.h"
+#include "core/types.h"
 #include "util/bit.h"
 
 using namespace SoFCore;

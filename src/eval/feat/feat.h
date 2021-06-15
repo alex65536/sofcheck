@@ -21,8 +21,7 @@
 #include <array>
 #include <cstddef>
 #include <cstdint>
-#include <istream>
-#include <ostream>
+#include <iosfwd>
 #include <string>
 #include <utility>
 #include <variant>

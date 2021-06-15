@@ -19,6 +19,8 @@
 
 #include <algorithm>
 
+#include "core/board.h"
+
 namespace SoFSearch::Private {
 
 using namespace std::chrono_literals;

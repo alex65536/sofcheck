@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,12 +19,15 @@
 #define SOF_SEARCH_PRIVATE_MOVE_PICKER_INCLUDED
 
 #include <algorithm>
+#include <cstddef>
 
-#include "core/board.h"
 #include "core/move.h"
 #include "core/movegen.h"
-#include "search/private/util.h"
 #include "util/operators.h"
+
+namespace SoFCore {
+struct Board;
+}  // namespace SoFCore
 
 namespace SoFSearch::Private {
 
@@ -41,6 +44,9 @@ enum class MovePickerStage {
 };
 
 SOF_ENUM_COMPARE(MovePickerStage, int)
+
+class KillerLine;
+class HistoryTable;
 
 // Iterates over all the pseudo-legal moves in a given position. The moves arrive in an order which
 // is good for alpha-beta search.

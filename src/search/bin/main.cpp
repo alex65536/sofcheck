@@ -18,12 +18,15 @@
 #include <iostream>
 #include <string>
 
+#include "bot_api/api_base.h"
 #include "bot_api/clients/uci.h"
 #include "bot_api/connection.h"
+#include "bot_api/connector.h"
 #include "bot_api/strutil.h"
 #include "core/init.h"
 #include "search/search.h"
 #include "util/misc.h"
+#include "util/result.h"
 
 using SoFBotApi::Connection;
 using SoFBotApi::PollResult;

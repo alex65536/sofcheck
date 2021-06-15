@@ -18,6 +18,7 @@
 #ifndef SOF_GEN_COMMON_INCLUDED
 #define SOF_GEN_COMMON_INCLUDED
 
+#include <cstddef>
 #include <functional>
 #include <ostream>
 #include <string>
