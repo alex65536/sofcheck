@@ -20,6 +20,8 @@
 #include <cstdint>
 #include <cstring>
 
+#include "core/move.h"
+
 namespace SoFCore {
 
 std::string moveToStr(const Move move) {

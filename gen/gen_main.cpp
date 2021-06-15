@@ -22,6 +22,8 @@
 
 #include "common.h"
 #include "util/fileutil.h"
+#include "util/misc.h"
+#include "util/result.h"
 
 using SoFUtil::openWriteFile;
 using SoFUtil::panic;

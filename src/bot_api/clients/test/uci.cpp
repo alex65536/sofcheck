@@ -32,6 +32,7 @@
 #include "core/strutil.h"
 #include "util/misc.h"
 #include "util/no_copy_move.h"
+#include "util/result.h"
 
 using SoFBotApi::ApiResult;
 using SoFBotApi::Connection;

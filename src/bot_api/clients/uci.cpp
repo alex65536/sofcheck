@@ -32,6 +32,7 @@
 #include "bot_api/strutil.h"
 #include "bot_api/types.h"
 #include "core/board.h"
+#include "core/move.h"
 #include "core/move_parser.h"
 #include "core/movegen.h"
 #include "core/strutil.h"

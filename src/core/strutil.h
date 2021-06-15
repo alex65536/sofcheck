@@ -22,11 +22,12 @@
 #include <string>
 
 #include "core/board.h"
-#include "core/move.h"
 #include "core/types.h"
 #include "util/misc.h"
 
 namespace SoFCore {
+
+struct Move;
 
 inline constexpr char cellToChar(cell_t cell) {
   constexpr char transpos[] = ".PKNBRQ??pknbrq?";
