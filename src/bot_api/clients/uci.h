@@ -27,12 +27,15 @@
 #include "bot_api/api_base.h"
 #include "bot_api/connector.h"
 #include "bot_api/types.h"
-#include "core/move.h"
 #include "util/no_copy_move.h"
 
 namespace SoFBotApi {
 class Client;
 }  // namespace SoFBotApi
+
+namespace SoFCore {
+struct Move;
+}  // namespace SoFCore
 
 namespace SoFBotApi::Clients {
 

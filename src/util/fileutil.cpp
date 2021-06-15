@@ -17,6 +17,8 @@
 
 #include "util/fileutil.h"
 
+#include <utility>
+
 namespace SoFUtil {
 
 template <typename F>
