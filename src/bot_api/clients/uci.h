@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,15 +19,20 @@
 #define SOF_BOT_API_CLIENTS_UCI_INCLUDED
 
 #include <chrono>
-#include <istream>
+#include <cstddef>
+#include <cstdint>
+#include <iosfwd>
 #include <mutex>
-#include <ostream>
 
-#include "bot_api/client.h"
+#include "bot_api/api_base.h"
 #include "bot_api/connector.h"
-#include "bot_api/server.h"
+#include "bot_api/types.h"
 #include "core/move.h"
 #include "util/no_copy_move.h"
+
+namespace SoFBotApi {
+class Client;
+}  // namespace SoFBotApi
 
 namespace SoFBotApi::Clients {
 

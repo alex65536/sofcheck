@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 #ifndef SOF_SEARCH_PRIVATE_UTIL_INCLUDED
 #define SOF_SEARCH_PRIVATE_UTIL_INCLUDED
 
+#include <cstddef>
+#include <cstdint>
 #include <memory>
 
 #include "core/move.h"

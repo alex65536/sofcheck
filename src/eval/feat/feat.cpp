@@ -21,12 +21,15 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <istream>
 #include <memory>
+#include <ostream>
 #include <type_traits>
 #include <unordered_set>
 #include <utility>
 
 #include "util/formatter.h"
+#include "util/misc.h"
 #include "util/strutil.h"
 
 namespace SoFEval::Feat {

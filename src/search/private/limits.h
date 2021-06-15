@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,11 +19,15 @@
 #define SOF_SEARCH_PRIVATE_LIMITS_INCLUDED
 
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 
 #include "bot_api/types.h"
-#include "core/board.h"
+
+namespace SoFCore {
+struct Board;
+}  // namespace SoFCore
 
 namespace SoFSearch::Private {
 

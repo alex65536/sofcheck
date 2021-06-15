@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <cstddef>
+#include <cstdint>
 #include <vector>
 
 #include "common.h"

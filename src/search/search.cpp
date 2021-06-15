@@ -18,6 +18,7 @@
 #include "search/search.h"
 
 #include <optional>
+#include <vector>
 
 #include "core/board.h"
 #include "core/move.h"

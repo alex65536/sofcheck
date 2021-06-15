@@ -15,8 +15,10 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <iomanip>
+#include <cstddef>
 #include <iostream>
+#include <string>
+#include <vector>
 
 #include "common.h"
 #include "core/types.h"

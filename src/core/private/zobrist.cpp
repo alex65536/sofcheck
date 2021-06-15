@@ -17,6 +17,7 @@
 
 #include "core/private/zobrist.h"
 
+#include <cstddef>
 #include <initializer_list>
 
 #include "core/private/geometry.h"

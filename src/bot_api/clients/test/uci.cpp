@@ -19,13 +19,16 @@
 
 #include <iostream>
 #include <string>
-#include <utility>
+#include <vector>
 
 #include "bot_api/client.h"
 #include "bot_api/connection.h"
 #include "bot_api/options.h"
+#include "bot_api/server.h"
 #include "bot_api/strutil.h"
+#include "core/board.h"
 #include "core/init.h"
+#include "core/move.h"
 #include "core/strutil.h"
 #include "util/misc.h"
 #include "util/no_copy_move.h"

@@ -18,6 +18,7 @@
 #ifndef SOF_BOT_API_OPTIONS_INCLUDED
 #define SOF_BOT_API_OPTIONS_INCLUDED
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>

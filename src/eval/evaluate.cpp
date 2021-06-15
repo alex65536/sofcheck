@@ -18,6 +18,7 @@
 #include "eval/evaluate.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <utility>
 
 #include "eval/coefs.h"

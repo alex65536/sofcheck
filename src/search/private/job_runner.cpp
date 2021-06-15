@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,14 +18,17 @@
 #include "search/private/job_runner.h"
 
 #include <chrono>
+#include <cstdint>
 #include <deque>
 #include <string>
-#include <utility>
 #include <vector>
 
+#include "bot_api/server.h"
 #include "core/board.h"
 #include "core/move.h"
 #include "core/movegen.h"
+#include "search/private/limits.h"
+#include "search/private/types.h"
 #include "util/defer.h"
 #include "util/logging.h"
 #include "util/random.h"

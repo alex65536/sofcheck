@@ -20,8 +20,6 @@
 #include <gtest/gtest.h>
 #include <json/json.h>
 
-#include <sstream>
-
 #include "util/strutil.h"
 
 using SoFEval::Feat::Features;

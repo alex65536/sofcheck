@@ -23,11 +23,14 @@
 #include <utility>
 #include <vector>
 
+#include "core/board.h"
 #include "core/move.h"
 #include "core/move_parser.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
+#include "core/types.h"
 #include "util/misc.h"
+#include "util/result.h"
 
 namespace SoFCore::Test {
 

@@ -18,13 +18,15 @@
 #ifndef SOF_CORE_MOVE_PARSER_INCLUDED
 #define SOF_CORE_MOVE_PARSER_INCLUDED
 
+#include <cstdint>
 #include <cstring>
 
-#include "core/board.h"
 #include "core/move.h"
 #include "core/types.h"
 
 namespace SoFCore {
+
+struct Board;
 
 // The piece to promote the pawn. Set to `None` if the move is not a promotion.
 enum class PromotePiece : int8_t { None = 0, Knight = 1, Bishop = 2, Rook = 3, Queen = 4 };

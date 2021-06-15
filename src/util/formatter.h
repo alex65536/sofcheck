@@ -18,6 +18,7 @@
 #ifndef SOF_UTIL_FORMATTER_INCLUDED
 #define SOF_UTIL_FORMATTER_INCLUDED
 
+#include <cstddef>
 #include <ostream>
 
 #include "util/no_copy_move.h"

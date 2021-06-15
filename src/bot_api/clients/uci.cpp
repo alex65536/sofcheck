@@ -26,10 +26,12 @@
 #include <utility>
 #include <vector>
 
+#include "bot_api/client.h"
 #include "bot_api/clients/private/uci_option_escape.h"
 #include "bot_api/options.h"
 #include "bot_api/strutil.h"
 #include "bot_api/types.h"
+#include "core/board.h"
 #include "core/move_parser.h"
 #include "core/movegen.h"
 #include "core/strutil.h"

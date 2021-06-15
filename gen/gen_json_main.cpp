@@ -17,14 +17,15 @@
 
 #include <json/json.h>
 
-#include <cstring>
 #include <fstream>
 #include <iostream>
+#include <string>
 #include <utility>
 
 #include "common.h"
 #include "util/fileutil.h"
 #include "util/misc.h"
+#include "util/result.h"
 
 using SoFUtil::openReadFile;
 using SoFUtil::openWriteFile;

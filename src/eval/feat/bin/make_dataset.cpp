@@ -15,21 +15,21 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <json/json.h>
-
 #include <array>
 #include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <optional>
-#include <sstream>
+#include <utility>
+#include <variant>
 #include <vector>
 
 #include "core/board.h"
 #include "core/init.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
+#include "core/types.h"
 #include "eval/coefs.h"
 #include "eval/evaluate.h"
 #include "eval/feat/feat.h"

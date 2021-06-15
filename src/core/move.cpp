@@ -17,6 +17,7 @@
 
 #include "core/move.h"
 
+#include <cstddef>
 #include <cstdlib>
 
 #include "core/board.h"

@@ -18,9 +18,11 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cstddef>
 #include <limits>
 #include <mutex>
 #include <vector>
+#include <utility>
 
 #include "util/parallel.h"
 

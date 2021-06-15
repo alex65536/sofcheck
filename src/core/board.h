@@ -18,6 +18,8 @@
 #ifndef SOF_CORE_BOARD_INCLUDED
 #define SOF_CORE_BOARD_INCLUDED
 
+#include <cstddef>
+#include <cstdint>
 #include <string>
 
 #include "core/types.h"

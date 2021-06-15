@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,14 +19,16 @@
 #define SOF_BOT_API_CONNECTION_INCLUDED
 
 #include <memory>
+#include <utility>
 
 #include "bot_api/api_base.h"
-#include "bot_api/client.h"
 #include "bot_api/connector.h"
-#include "bot_api/server.h"
 #include "util/result.h"
 
 namespace SoFBotApi {
+
+class Client;
+class Server;
 
 // Class that holds the connection between the client and the server
 class Connection {
