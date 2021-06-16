@@ -20,9 +20,9 @@
 
 namespace SoFVersion {
 
-extern const char *GIT_REVISION;
-extern const char *GIT_REVISION_SHORT;
-extern const char *GIT_VERSION;
+extern const char *const GIT_REVISION;
+extern const char *const GIT_REVISION_SHORT;
+extern const char *const GIT_VERSION;
 
 }  // namespace SoFVersion
 

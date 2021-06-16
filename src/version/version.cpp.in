@@ -19,8 +19,8 @@
 
 namespace SoFVersion {
 
-const char *GIT_REVISION = "@GIT_REVISION@";
-const char *GIT_REVISION_SHORT = "@GIT_REVISION_SHORT@";
-const char *GIT_VERSION = "@GIT_VERSION_NAME@";
+const char *const GIT_REVISION = "@GIT_REVISION@";
+const char *const GIT_REVISION_SHORT = "@GIT_REVISION_SHORT@";
+const char *const GIT_VERSION = "@GIT_VERSION_NAME@";
 
 }  // namespace SoFVersion
