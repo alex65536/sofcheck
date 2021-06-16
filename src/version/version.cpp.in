@@ -15,11 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef SOF_VERSION_INCLUDED
-#define SOF_VERSION_INCLUDED
+#include "version/version.h"
 
-// Git commit ID from which the code was built
-#define SOFCHECK_GIT_REVISION "@SoFCheck_GIT_REVISION@"
-#define SOFCHECK_GIT_REVISION_SHORT "@SoFCheck_GIT_REVISION_SHORT@"
+namespace SoFVersion {
 
-#endif  // SOF_VERSION_INCLUDED
+const char *GIT_REVISION = "@GIT_REVISION@";
+const char *GIT_REVISION_SHORT = "@GIT_REVISION_SHORT@";
+const char *GIT_VERSION = "@GIT_VERSION_NAME@";
+
+}  // namespace SoFVersion
