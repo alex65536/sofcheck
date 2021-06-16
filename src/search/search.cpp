@@ -27,7 +27,7 @@
 #include "search/private/types.h"
 #include "util/logging.h"
 #include "util/misc.h"
-#include "version.h"
+#include "version/version.h"
 
 namespace SoFSearch {
 
@@ -82,7 +82,9 @@ SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
 ApiResult Engine::newGame() { return ApiResult::Ok; }
 
 const char *Engine::name() const {
-  return "SoFCheck alpha (git revision " SOFCHECK_GIT_REVISION_SHORT ")";
+  static const std::string ENGINE_NAME =
+      std::string("SoFCheck alpha (version ") + SoFVersion::GIT_VERSION + ")";
+  return ENGINE_NAME.c_str();
 }
 
 const char *Engine::author() const { return "Alexander Kernozhitsky"; }

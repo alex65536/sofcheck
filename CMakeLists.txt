@@ -30,6 +30,7 @@ include(JsonCpp)
 find_package(Threads REQUIRED)
 find_package(PythonInterp 3.6)
 find_package(UnixCommands)
+find_package(Git)
 
 
 # Declare configuration options
@@ -178,6 +179,10 @@ include_directories(src)
 
 
 # Add targets to build
+add_library(sof_version STATIC
+  "${PROJECT_BINARY_DIR}/src/version/version.cpp"
+)
+
 add_library(sof_util STATIC
   src/util/formatter.cpp
   src/util/fileutil.cpp
@@ -244,7 +249,7 @@ add_library(sof_search STATIC
 )
 target_link_libraries(sof_search
   PUBLIC sof_bot_api
-  PRIVATE Threads::Threads ${LIBATOMIC_TARGET} sof_core sof_util sof_eval
+  PRIVATE Threads::Threads ${LIBATOMIC_TARGET} sof_core sof_util sof_eval sof_version
 )
 
 add_executable(sofcheck
@@ -270,10 +275,29 @@ target_link_libraries(show_weights sof_util sof_eval_feat ${JSONCPP_TARGET})
 
 # Generate files
 include(Generators)
-include(GitRevision)
 
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
-configure_file(src/version.h.in "${PROJECT_BINARY_DIR}/src/version.h" @ONLY)
+
+file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/version")
+if(Git_FOUND)
+  set(GIT_HEAD_DEPS "${PROJECT_SOURCE_DIR}/.git/logs/HEAD")
+else()
+  set(GIT_HEAD_DEPS "")
+  set(GIT_EXECUTABLE "")
+endif()
+add_custom_command(
+  OUTPUT "${PROJECT_BINARY_DIR}/src/version/version.cpp"
+  COMMAND "${CMAKE_COMMAND}"
+    -DINPUT_FILE="${PROJECT_SOURCE_DIR}/src/version/version.cpp.in"
+    -DOUTPUT_FILE="${PROJECT_BINARY_DIR}/src/version/version.cpp"
+    -DGIT_EXECUTABLE="${GIT_EXECUTABLE}"
+    -P "${PROJECT_SOURCE_DIR}/cmake/scripts/GitRevisionConfig.cmake"
+  DEPENDS
+    "${PROJECT_SOURCE_DIR}/cmake/scripts/GitRevisionConfig.cmake"
+    "${PROJECT_SOURCE_DIR}/src/version/version.cpp.in"
+    ${GIT_HEAD_DEPS}
+  WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+)
 
 generate_file(
   gen/core/near_attacks.cpp
