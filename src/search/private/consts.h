@@ -24,6 +24,12 @@ namespace SoFSearch::Private {
 
 constexpr size_t MAX_DEPTH = 255;
 
+constexpr int32_t NULL_MOVE_MIN_DEPTH = 5;
+constexpr int32_t NULL_MOVE_DEPTH_DEC = 3;
+constexpr int32_t NULL_MOVE_REDUCTION_DEC = 4;
+
+static_assert(NULL_MOVE_MIN_DEPTH > NULL_MOVE_REDUCTION_DEC);
+
 constexpr SoFEval::score_t FUTILITY_THRESHOLD = 50;
 
 }  // namespace SoFSearch::Private

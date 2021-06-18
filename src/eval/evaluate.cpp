@@ -69,6 +69,9 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
   using Weights = Private::Weights<S>;
 
   auto result = *this;
+  if (move.kind == MoveKind::Null) {
+    return result;
+  }
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
     result.inner_ += Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)];

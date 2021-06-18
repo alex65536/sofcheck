@@ -113,10 +113,15 @@ private:
   using flags_t = uint64_t;
 
   // Search flags
-  static constexpr flags_t FLAG_CAPTURE = 1;
+  static constexpr flags_t FLAG_CAPTURE = 1 << 0;
+  static constexpr flags_t FLAG_HAS_NULL_MOVE = 1 << 1;
+  static constexpr flags_t FLAG_REDUCED_NULL_MOVE = 1 << 2;
 
   // Predefined search flag sets
   static constexpr flags_t FLAGS_DEFAULT = 0;
+
+  // Search flags that are not reset when going to the next depth
+  static constexpr flags_t FLAGS_INHERIT = FLAG_HAS_NULL_MOVE | FLAG_REDUCED_NULL_MOVE;
 
   inline bool mustStop() const {
     if (comm_.isStopped()) {
@@ -291,9 +296,8 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
 }
 
 template <Searcher::NodeKind Node>
-score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const Evaluator::Tag tag,
-                           [[maybe_unused]] const flags_t flags) {
+score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, const score_t beta,
+                           const Evaluator::Tag tag, flags_t flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
@@ -368,13 +372,38 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
   }
 
   const bool isInCheck = isCheck(board_);
+  const bool isMateBounds =
+      alpha <= -SCORE_CHECKMATE_THRESHOLD || beta >= SCORE_CHECKMATE_THRESHOLD;
 
   // Futility pruning
-  if (!isNodeKindPv(Node) && depth <= 2 && !isInCheck && alpha > -SCORE_CHECKMATE_THRESHOLD &&
-      beta < SCORE_CHECKMATE_THRESHOLD) {
+  if (!isNodeKindPv(Node) && depth <= 2 && !isInCheck && !isMateBounds) {
     const score_t threshold = beta + FUTILITY_THRESHOLD;
     if (evaluator_.evalForCur(board_, tag) >= threshold) {
       return beta;
+    }
+  }
+
+  // Null move heuristics
+  static constexpr flags_t FLAGS_NULL_MOVE_DISABLE =
+      FLAG_HAS_NULL_MOVE | FLAG_REDUCED_NULL_MOVE | FLAG_CAPTURE;
+  const bool canNullMove = !isNodeKindPv(Node) && depth >= NULL_MOVE_MIN_DEPTH && !isInCheck &&
+                           !isMateBounds && !(flags & FLAGS_NULL_MOVE_DISABLE);
+  if (canNullMove) {
+    const auto move = Move::null();
+    const Evaluator::Tag newTag = tag.updated(board_, move);
+    const MovePersistence persistence = moveMake(board_, move);
+    DGN_ASSERT(newTag.isValid(board_));
+    DGN_ASSERT(isMoveLegal(board_));
+    results_.inc(JobStat::Nodes);
+    const flags_t newFlags = (flags & FLAGS_INHERIT) | FLAG_HAS_NULL_MOVE;
+    const score_t score = -search<NodeKind::Simple>(depth - NULL_MOVE_DEPTH_DEC, idepth + 1, -beta,
+                                                    -beta + 1, newTag, newFlags);
+    moveUnmake(board_, move, persistence);
+    if (score >= beta) {
+      // Null move reduction
+      depth -= NULL_MOVE_REDUCTION_DEC;
+      flags |= FLAG_REDUCED_NULL_MOVE;
+      DGN_ASSERT(depth > 0);
     }
   }
 
@@ -387,6 +416,7 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
+    const bool isCapture = isMoveCapture(board_, move);
     const Evaluator::Tag newTag = tag.updated(board_, move);
     const MovePersistence persistence = moveMake(board_, move);
     DGN_ASSERT(newTag.isValid(board_));
@@ -395,7 +425,7 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
       continue;
     }
     results_.inc(JobStat::Nodes);
-    const flags_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
+    const flags_t newFlags = (flags & FLAGS_INHERIT) | (isCapture ? FLAG_CAPTURE : 0);
     if (hasMove && beta != alpha + 1 &&
         -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag, newFlags) <=
             alpha) {

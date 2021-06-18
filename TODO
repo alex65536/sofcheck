@@ -46,10 +46,6 @@
   test must be performed only one time, as it will be unable to perform it in the future, when many
   other heuristics will appear.
 
-* Use flags in SoFCheck
-  `Searcher::doSearch()` contains `flags` parameter, which is unused now. We need to utilize it and
-  remove corresponding `[[maybe_unused]]` attributes.
-
 * Add library to parse arguments in binaries
   Currently, argument parsing in all binaries is done by manually inspecting `argc` and `argv`,
   which may be bug-prone and lead to boilerplate code. We need either to use either a known library
