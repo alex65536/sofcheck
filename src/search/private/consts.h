@@ -23,6 +23,7 @@
 namespace SoFSearch::Private {
 
 constexpr size_t MAX_DEPTH = 255;
+constexpr size_t MAX_STACK_DEPTH = MAX_DEPTH + 10;
 
 constexpr int32_t NULL_MOVE_MIN_DEPTH = 5;
 constexpr int32_t NULL_MOVE_DEPTH_DEC = 3;

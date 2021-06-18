@@ -167,7 +167,7 @@ private:
   Evaluator evaluator_;
   size_t jobId_;
 
-  Frame stack_[MAX_DEPTH + 10];
+  Frame stack_[MAX_STACK_DEPTH];
   HistoryTable history_;
   size_t depth_ = 0;
   mutable size_t counter_ = 0;
@@ -313,8 +313,11 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
   }
 
-  // Run quiescence search in leaf node
-  if (depth <= 0) {
+  // Run quiescence search. We do this in two cases: either the depth is less than zero, meaning
+  // that it's the leaf node, or that we will overflow the `stack_` array if we continue the
+  // recursion. The second case is pretty unlikely, but is necessary to improve the engine
+  // robustness
+  if (depth <= 0 || idepth + 1 == MAX_STACK_DEPTH) {
     if (alpha >= SCORE_CHECKMATE_THRESHOLD) {
       return alpha;
     }
