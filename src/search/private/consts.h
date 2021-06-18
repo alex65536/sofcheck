@@ -22,16 +22,32 @@
 
 namespace SoFSearch::Private {
 
+// Maximum allowed depth
 constexpr size_t MAX_DEPTH = 255;
+// Size of the search stack, i. e. maximum allowed value of `idepth`, minus one
 constexpr size_t MAX_STACK_DEPTH = MAX_DEPTH + 10;
 
-constexpr int32_t NULL_MOVE_MIN_DEPTH = 5;
-constexpr int32_t NULL_MOVE_DEPTH_DEC = 3;
-constexpr int32_t NULL_MOVE_REDUCTION_DEC = 4;
+// Constants for tuning null move heuristics
+namespace NullMove {
+// Minimum depth on which we can activate null move pruning
+constexpr int32_t MIN_DEPTH = 5;
+// Depth decrement when performing null move search, i. e. `R + 1` in chessprogramming.org
+// terminology
+constexpr int32_t DEPTH_DEC = 3;
+// Depth decrement when null-move reduction is applied
+constexpr int32_t REDUCTION_DEC = 4;
 
-static_assert(NULL_MOVE_MIN_DEPTH > NULL_MOVE_REDUCTION_DEC);
+// Verify that we cannot reach `depth <= 0` after the reduction
+static_assert(MIN_DEPTH > REDUCTION_DEC);
+}  // namespace NullMove
 
-constexpr SoFEval::score_t FUTILITY_THRESHOLD = 50;
+// Constants for tuning futility pruning
+namespace Futility {
+// Maximum depth to activate futility pruning
+constexpr int32_t MAX_DEPTH = 2;
+// Futility margin (currenly, half a pawn)
+constexpr SoFEval::score_t MARGIN = 50;
+}  // namespace Futility
 
 }  // namespace SoFSearch::Private
 

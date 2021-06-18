@@ -391,15 +391,15 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       alpha <= -SCORE_CHECKMATE_THRESHOLD || beta >= SCORE_CHECKMATE_THRESHOLD;
 
   // Futility pruning
-  if (!isNodeKindPv(Node) && depth <= 2 && !isInCheck && !isMateBounds) {
-    const score_t threshold = beta + FUTILITY_THRESHOLD;
+  if (!isNodeKindPv(Node) && depth <= Futility::MAX_DEPTH && !isInCheck && !isMateBounds) {
+    const score_t threshold = beta + Futility::MARGIN;
     if (evaluator_.evalForCur(board_, tag) >= threshold) {
       return beta;
     }
   }
 
   // Null move heuristics
-  const bool canNullMove = !isNodeKindPv(Node) && depth >= NULL_MOVE_MIN_DEPTH && !isInCheck &&
+  const bool canNullMove = !isNodeKindPv(Node) && depth >= NullMove::MIN_DEPTH && !isInCheck &&
                            !isMateBounds && (flags & Flags::NullMoveDisable) != Flags::None;
   if (canNullMove) {
     const auto move = Move::null();
@@ -409,12 +409,12 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     DGN_ASSERT(isMoveLegal(board_));
     results_.inc(JobStat::Nodes);
     const Flags newFlags = (flags & Flags::Inherit) | Flags::IsNullMove;
-    const score_t score = -search<NodeKind::Simple>(depth - NULL_MOVE_DEPTH_DEC, idepth + 1, -beta,
+    const score_t score = -search<NodeKind::Simple>(depth - NullMove::DEPTH_DEC, idepth + 1, -beta,
                                                     -beta + 1, newTag, newFlags);
     moveUnmake(board_, move, persistence);
     if (score >= beta) {
       // Null move reduction
-      depth -= NULL_MOVE_REDUCTION_DEC;
+      depth -= NullMove::REDUCTION_DEC;
       flags |= Flags::NullMoveReduction;
       DGN_ASSERT(depth > 0);
     }
