@@ -401,7 +401,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   // Null move heuristics. Currently, it's implemented as null move reduction, as this variant is
   // less prone to zugzwang and not significantly slower than just pruning the branch
   const bool canNullMove = !isNodeKindPv(Node) && depth >= NullMove::MIN_DEPTH && !isInCheck &&
-                           !isMateBounds && (flags & Flags::NullMoveDisable) != Flags::None;
+                           !isMateBounds && (flags & Flags::NullMoveDisable) == Flags::None;
   if (canNullMove) {
     const auto move = Move::null();
     const Evaluator::Tag newTag = tag.updated(board_, move);
