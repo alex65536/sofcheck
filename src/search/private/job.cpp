@@ -398,7 +398,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
   }
 
-  // Null move heuristics
+  // Null move heuristics. Currently, it's implemented as null move reduction, as this variant is
+  // less prone to zugzwang and not significantly slower than just pruning the branch
   const bool canNullMove = !isNodeKindPv(Node) && depth >= NullMove::MIN_DEPTH && !isInCheck &&
                            !isMateBounds && (flags & Flags::NullMoveDisable) != Flags::None;
   if (canNullMove) {
@@ -413,7 +414,6 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
                                                     -beta + 1, newTag, newFlags);
     moveUnmake(board_, move, persistence);
     if (score >= beta) {
-      // Null move reduction
       depth -= NullMove::REDUCTION_DEC;
       flags |= Flags::NullMoveReduction;
       DGN_ASSERT(depth > 0);
