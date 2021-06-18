@@ -37,6 +37,7 @@
 #include "search/private/types.h"
 #include "search/private/util.h"
 #include "util/misc.h"
+#include "util/operators.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -79,9 +80,27 @@ class Searcher {
 public:
   enum class NodeKind { Root, Pv, Simple };
 
-  inline constexpr static bool isNodeKindPv(const NodeKind kind) {
-    return kind == NodeKind::Root || kind == NodeKind::Pv;
-  }
+  // Search flags
+  enum class Flags : uint64_t {
+    None = 0,
+    // The last move was capture
+    IsCapture = 1,
+    // We are inside the null move search
+    IsNullMove = 2,
+    // Null move reduction was applied in this branch
+    NullMoveReduction = 4,
+
+    // Below there are predefined flag sets
+
+    // All flags are set
+    All = 7,
+    // Flags set by default
+    Default = 0,
+    // Flags not to be reset when doing a recursive call
+    Inherit = IsNullMove | NullMoveReduction,
+    // Each of these flags disables null move heuristics
+    NullMoveDisable = IsNullMove | NullMoveReduction | IsCapture
+  };
 
   inline Searcher(Job &job, Board &board, const SearchLimits &limits, RepetitionTable &repetitions)
       : board_(board),
@@ -97,7 +116,7 @@ public:
     depth_ = depth;
     const score_t score =
         search<NodeKind::Root>(static_cast<int32_t>(depth), 0, -SCORE_INF, SCORE_INF,
-                               Evaluator::Tag::from(board_), FLAGS_DEFAULT);
+                               Evaluator::Tag::from(board_), Flags::Default);
     DGN_ASSERT(isScoreValid(score));
     bestMove = stack_[0].bestMove;
     return score;
@@ -109,19 +128,9 @@ private:
     Move bestMove = Move::null();
   };
 
-  // Search flags type
-  using flags_t = uint64_t;
-
-  // Search flags
-  static constexpr flags_t FLAG_CAPTURE = 1 << 0;
-  static constexpr flags_t FLAG_HAS_NULL_MOVE = 1 << 1;
-  static constexpr flags_t FLAG_REDUCED_NULL_MOVE = 1 << 2;
-
-  // Predefined search flag sets
-  static constexpr flags_t FLAGS_DEFAULT = 0;
-
-  // Search flags that are not reset when going to the next depth
-  static constexpr flags_t FLAGS_INHERIT = FLAG_HAS_NULL_MOVE | FLAG_REDUCED_NULL_MOVE;
+  inline constexpr static bool isNodeKindPv(const NodeKind kind) {
+    return kind == NodeKind::Root || kind == NodeKind::Pv;
+  }
 
   inline bool mustStop() const {
     if (comm_.isStopped()) {
@@ -139,7 +148,7 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const Evaluator::Tag tag, const flags_t flags) {
+                        const score_t beta, const Evaluator::Tag tag, const Flags flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
@@ -154,7 +163,7 @@ private:
 
   template <NodeKind Node>
   score_t doSearch(int32_t depth, size_t idepth, score_t alpha, score_t beta, Evaluator::Tag tag,
-                   flags_t flags);
+                   Flags flags);
 
   score_t quiescenseSearch(score_t alpha, score_t beta, Evaluator::Tag tag);
 
@@ -173,6 +182,9 @@ private:
   mutable size_t counter_ = 0;
   steady_clock::time_point startTime_;
 };
+
+SOF_ENUM_BITWISE(Searcher::Flags, uint64_t)
+SOF_ENUM_EQUAL(Searcher::Flags, uint64_t)
 
 class RootNodeMovePicker {
 public:
@@ -297,7 +309,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
 
 template <Searcher::NodeKind Node>
 score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, const score_t beta,
-                           const Evaluator::Tag tag, flags_t flags) {
+                           const Evaluator::Tag tag, Flags flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
@@ -387,10 +399,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   }
 
   // Null move heuristics
-  static constexpr flags_t FLAGS_NULL_MOVE_DISABLE =
-      FLAG_HAS_NULL_MOVE | FLAG_REDUCED_NULL_MOVE | FLAG_CAPTURE;
   const bool canNullMove = !isNodeKindPv(Node) && depth >= NULL_MOVE_MIN_DEPTH && !isInCheck &&
-                           !isMateBounds && !(flags & FLAGS_NULL_MOVE_DISABLE);
+                           !isMateBounds && (flags & Flags::NullMoveDisable) != Flags::None;
   if (canNullMove) {
     const auto move = Move::null();
     const Evaluator::Tag newTag = tag.updated(board_, move);
@@ -398,14 +408,14 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     DGN_ASSERT(newTag.isValid(board_));
     DGN_ASSERT(isMoveLegal(board_));
     results_.inc(JobStat::Nodes);
-    const flags_t newFlags = (flags & FLAGS_INHERIT) | FLAG_HAS_NULL_MOVE;
+    const Flags newFlags = (flags & Flags::Inherit) | Flags::IsNullMove;
     const score_t score = -search<NodeKind::Simple>(depth - NULL_MOVE_DEPTH_DEC, idepth + 1, -beta,
                                                     -beta + 1, newTag, newFlags);
     moveUnmake(board_, move, persistence);
     if (score >= beta) {
       // Null move reduction
       depth -= NULL_MOVE_REDUCTION_DEC;
-      flags |= FLAG_REDUCED_NULL_MOVE;
+      flags |= Flags::NullMoveReduction;
       DGN_ASSERT(depth > 0);
     }
   }
@@ -428,7 +438,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       continue;
     }
     results_.inc(JobStat::Nodes);
-    const flags_t newFlags = (flags & FLAGS_INHERIT) | (isCapture ? FLAG_CAPTURE : 0);
+    const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::IsCapture : Flags::None);
     if (hasMove && beta != alpha + 1 &&
         -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag, newFlags) <=
             alpha) {
