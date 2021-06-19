@@ -258,18 +258,16 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     return 0;
   }
 
-  {
-    const score_t score = evaluator_.evalForCur(board_, tag);
-    DIAGNOSTIC({
-      if (alpha < score && score < beta) {
-        DGN_ASSERT(isScoreValid(score));
-        DGN_ASSERT(!isScoreCheckmate(score));
-      }
-    });
-    alpha = std::max(alpha, score);
-    if (alpha >= beta) {
-      return beta;
+  const score_t evalScore = evaluator_.evalForCur(board_, tag);
+  DIAGNOSTIC({
+    if (alpha < evalScore && evalScore < beta) {
+      DGN_ASSERT(isScoreValid(evalScore));
+      DGN_ASSERT(!isScoreCheckmate(evalScore));
     }
+  });
+  alpha = std::max(alpha, evalScore);
+  if (alpha >= beta) {
+    return beta;
   }
 
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
