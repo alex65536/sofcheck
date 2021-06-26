@@ -57,7 +57,7 @@ constexpr int32_t MIN_DEPTH = 3;
 constexpr int32_t REDUCE_DEPTH = 1;
 // Number of moves with relatively good history which won't be reduced
 constexpr int32_t MOVES_NO_REDUCE = 2;
-}  // namespace LateMoveReduction
+}  // namespace LateMove
 
 }  // namespace SoFSearch::Private
 
