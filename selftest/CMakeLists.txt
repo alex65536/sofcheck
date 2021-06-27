@@ -75,7 +75,7 @@ add_chess_impl(dodecahedron
 if(MSVC)
   set(DODECAHEDRON_COMPILE_OPTIONS /W0)
 else()
-  set(DODECAHEDRON_COMPILE_OPTIONS -Wno-old-style-cast)
+  set(DODECAHEDRON_COMPILE_OPTIONS -Wno-old-style-cast -Wno-zero-as-null-pointer-constant)
 endif()
 target_compile_options(test_dodecahedron PRIVATE ${DODECAHEDRON_COMPILE_OPTIONS})
 if(benchmark_FOUND)
