@@ -100,7 +100,7 @@ void replace(std::string &s, const char src, const char dst) {
 }
 
 size_t intStrLen(const int64_t value) {
-  return uintStrLen(std::abs(value)) + ((value < 0) ? 1 : 0);
+  return uintStrLen(static_cast<uint64_t>(std::abs(value))) + ((value < 0) ? 1 : 0);
 }
 
 size_t uintStrLen(const uint64_t value) { return (value == 0) ? 1 : 1 + SoFUtil::log10(value); }

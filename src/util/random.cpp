@@ -24,7 +24,7 @@
 namespace SoFUtil {
 
 static uint64_t makeRandomSeed() {
-  return std::chrono::steady_clock::now().time_since_epoch().count() +
+  return static_cast<uint64_t>(std::chrono::steady_clock::now().time_since_epoch().count()) +
          static_cast<uint64_t>(std::hash<std::thread::id>()(std::this_thread::get_id()));
 }
 
