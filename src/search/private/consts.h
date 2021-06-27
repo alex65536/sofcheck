@@ -49,6 +49,16 @@ constexpr int32_t MAX_DEPTH = 2;
 constexpr SoFEval::score_t MARGIN = 50;
 }  // namespace Futility
 
+// Constants for tuning late move reduction
+namespace LateMove {
+// Minimum depth to activate
+constexpr int32_t MIN_DEPTH = 3;
+// Depth reduction amount
+constexpr int32_t REDUCE_DEPTH = 1;
+// Number of moves with relatively good history which won't be reduced
+constexpr int32_t MOVES_NO_REDUCE = 2;
+}  // namespace LateMove
+
 }  // namespace SoFSearch::Private
 
 #endif  // SOF_SEARCH_PRIVATE_CONSTS_INCLUDED

@@ -89,15 +89,17 @@ public:
     IsNullMove = 2,
     // Null move reduction was applied in this branch
     NullMoveReduction = 4,
+    // Late move reduction was applied in this branch
+    LateMoveReduction = 8,
 
     // Below there are predefined flag sets
 
     // All flags are set
-    All = 7,
+    All = 15,
     // Flags set by default
     Default = 0,
     // Flags not to be reset when doing a recursive call
-    Inherit = IsNullMove | NullMoveReduction,
+    Inherit = IsNullMove | NullMoveReduction | LateMoveReduction,
     // Each of these flags disables null move heuristics
     NullMoveDisable = IsNullMove | NullMoveReduction | IsCapture
   };
@@ -421,6 +423,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   // Iterate over the moves in the sorted order
   auto picker = MovePickerFactory<Node>::create(jobId_, board_, hashMove, frame.killers, history_);
   bool hasMove = false;
+  size_t numHistoryMoves = 0;
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
@@ -435,8 +438,37 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       moveUnmake(board_, move, persistence);
       continue;
     }
+    if constexpr (Node != NodeKind::Root) {
+      if (picker.stage() == MovePickerStage::History) {
+        ++numHistoryMoves;
+      }
+    }
     results_.inc(JobStat::Nodes);
     const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::IsCapture : Flags::None);
+
+    // Late move reduction (LMR)
+    if constexpr (Node != NodeKind::Root) {
+      const bool lmrEnabled =
+          hasMove && !isNodeKindPv(Node) && !isCheck(board_) && depth >= LateMove::MIN_DEPTH &&
+          picker.stage() == MovePickerStage::History && numHistoryMoves > LateMove::MOVES_NO_REDUCE;
+      if (lmrEnabled) {
+        const score_t score =
+            -search<NodeKind::Simple>(depth - 1 - LateMove::REDUCE_DEPTH, idepth + 1, -alpha - 1,
+                                      -alpha, newTag, newFlags | Flags::LateMoveReduction);
+        if (score <= alpha) {
+          moveUnmake(board_, move, persistence);
+          if (mustStop()) {
+            return 0;
+          }
+          continue;
+        }
+        if (mustStop()) {
+          moveUnmake(board_, move, persistence);
+          return 0;
+        }
+      }
+    }
+
     if (hasMove && beta != alpha + 1 &&
         -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag, newFlags) <=
             alpha) {
