@@ -194,10 +194,12 @@ private:
     if (!repetitions_.insert(board_.hash)) {
       return 0;
     }
+    DIAGNOSTIC(const SoFCore::board_hash_t savedHash = board_.hash);
     const score_t score =
         doSearch<Node>(static_cast<int32_t>(depth), idepth, alpha, beta, tag, flags);
     DGN_ASSERT(score <= alpha || score >= beta ||
                isScoreValid(adjustCheckmate(score, -static_cast<int16_t>(idepth))));
+    DGN_ASSERT(board_.hash == savedHash);
     repetitions_.erase(board_.hash);
     return score;
   }
