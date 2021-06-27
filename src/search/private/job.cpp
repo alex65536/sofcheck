@@ -82,11 +82,11 @@ class MoveMakeGuard : public SoFUtil::NoCopyMove {
 public:
   // Makes a move `move` on board `board`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
   // `tag.isValid(board)` must hold
-  MoveMakeGuard(Board &board, Move move, const Evaluator::Tag &tag)
+  MoveMakeGuard(Board &board, const Move move, const Evaluator::Tag &tag)
       : board_(board),
         tag_(tag.updated(board, move)),
         persistence_(moveMake(board, move)),
-        move_(std::move(move)),
+        move_(move),
         active_(true) {
     DGN_ASSERT(tag_.isValid(board_));
   }
