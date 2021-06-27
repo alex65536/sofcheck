@@ -37,6 +37,7 @@
 #include "search/private/types.h"
 #include "search/private/util.h"
 #include "util/misc.h"
+#include "util/no_copy_move.h"
 #include "util/operators.h"
 #include "util/random.h"
 
@@ -75,6 +76,44 @@ void JobCommunicator::stop() {
   stopLock_.unlock();
   stopEvent_.notify_all();
 }
+
+// RAII wrapper that unmakes the move on destruction
+class MoveMakeGuard : public SoFUtil::NoCopyMove {
+public:
+  // Makes a move `move` on board `board`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
+  // `tag.isValid(board)` must hold
+  MoveMakeGuard(Board &board, Move move, const Evaluator::Tag &tag)
+      : board_(board),
+        tag_(tag.updated(board, move)),
+        persistence_(moveMake(board, move)),
+        move_(std::move(move)),
+        active_(true) {
+    DGN_ASSERT(tag_.isValid(board_));
+  }
+
+  // Unmakes the move, releasing the guard
+  void release() {
+    if (active_) {
+      active_ = false;
+      moveUnmake(board_, move_, persistence_);
+    }
+  }
+
+  // Returns the tag equal to `Tag::from(board_)` at the time the guard was created
+  Evaluator::Tag tag() const {
+    DGN_ASSERT(active_);
+    return tag_;
+  }
+
+  ~MoveMakeGuard() { release(); }
+
+private:
+  Board &board_;
+  Evaluator::Tag tag_;
+  MovePersistence persistence_;
+  Move move_;
+  bool active_;
+};
 
 class Searcher {
 public:
@@ -279,25 +318,22 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const Evaluator::Tag newTag = tag.updated(board_, move);
-    const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newTag.isValid(board_));
+    MoveMakeGuard guard(board_, move, tag);
     if (!isMoveLegal(board_)) {
-      moveUnmake(board_, move, persistence);
       continue;
     }
     results_.inc(JobStat::Nodes);
-    const score_t score = -quiescenseSearch(-beta, -alpha, newTag);
+    const score_t score = -quiescenseSearch(-beta, -alpha, guard.tag());
     DIAGNOSTIC({
       if (alpha < score && score < beta) {
         DGN_ASSERT(isScoreValid(score));
         DGN_ASSERT(!isScoreCheckmate(score));
       }
     });
-    moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
     }
+    guard.release();
     alpha = std::max(alpha, score);
     if (alpha >= beta) {
       return beta;
@@ -403,16 +439,16 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   const bool canNullMove = !isNodeKindPv(Node) && depth >= NullMove::MIN_DEPTH && !isInCheck &&
                            !isMateBounds && (flags & Flags::NullMoveDisable) == Flags::None;
   if (canNullMove) {
-    const auto move = Move::null();
-    const Evaluator::Tag newTag = tag.updated(board_, move);
-    const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newTag.isValid(board_));
+    MoveMakeGuard guard(board_, Move::null(), tag);
     DGN_ASSERT(isMoveLegal(board_));
     results_.inc(JobStat::Nodes);
     const Flags newFlags = (flags & Flags::Inherit) | Flags::IsNullMove;
     const score_t score = -search<NodeKind::Simple>(depth - NullMove::DEPTH_DEC, idepth + 1, -beta,
-                                                    -beta + 1, newTag, newFlags);
-    moveUnmake(board_, move, persistence);
+                                                    -beta + 1, guard.tag(), newFlags);
+    if (mustStop()) {
+      return 0;
+    }
+    guard.release();
     if (score >= beta) {
       depth -= NullMove::REDUCTION_DEC;
       flags |= Flags::NullMoveReduction;
@@ -431,11 +467,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
     DIAGNOSTIC(dgnMoves.add(move);)
     const bool isCapture = isMoveCapture(board_, move);
-    const Evaluator::Tag newTag = tag.updated(board_, move);
-    const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newTag.isValid(board_));
+    MoveMakeGuard guard(board_, move, tag);
     if (!isMoveLegal(board_)) {
-      moveUnmake(board_, move, persistence);
       continue;
     }
     if constexpr (Node != NodeKind::Root) {
@@ -454,37 +487,34 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       if (lmrEnabled) {
         const score_t score =
             -search<NodeKind::Simple>(depth - 1 - LateMove::REDUCE_DEPTH, idepth + 1, -alpha - 1,
-                                      -alpha, newTag, newFlags | Flags::LateMoveReduction);
-        if (score <= alpha) {
-          moveUnmake(board_, move, persistence);
-          if (mustStop()) {
-            return 0;
-          }
-          continue;
-        }
+                                      -alpha, guard.tag(), newFlags | Flags::LateMoveReduction);
         if (mustStop()) {
-          moveUnmake(board_, move, persistence);
           return 0;
+        }
+        if (score <= alpha) {
+          continue;
         }
       }
     }
 
-    if (hasMove && beta != alpha + 1 &&
-        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag, newFlags) <=
-            alpha) {
-      moveUnmake(board_, move, persistence);
+    if (hasMove && beta != alpha + 1) {
+      const score_t score = -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha,
+                                                      guard.tag(), newFlags);
       if (mustStop()) {
         return 0;
       }
-      continue;
+      if (score <= alpha) {
+        continue;
+      }
     }
     hasMove = true;
     constexpr NodeKind newNode = (Node == NodeKind::Simple ? NodeKind::Simple : NodeKind::Pv);
-    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newTag, newFlags);
-    moveUnmake(board_, move, persistence);
+    const score_t score =
+        -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, guard.tag(), newFlags);
     if (mustStop()) {
       return 0;
     }
+    guard.release();
     if (score > alpha) {
       alpha = score;
       frame.bestMove = move;
