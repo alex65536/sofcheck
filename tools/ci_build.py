@@ -29,6 +29,7 @@ import sys
 def pexec(cmd, **kwargs):
     cmd_str = ' '.join([shlex.quote(x) for x in cmd])
     sys.stdout.write('$ ' + cmd_str + '\n')
+    sys.stdout.flush()
     subprocess.check_call(cmd, **kwargs)
 
 
