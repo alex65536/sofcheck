@@ -446,7 +446,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     results_.inc(JobStat::Nodes);
     const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::IsCapture : Flags::None);
 
-    // Late move reduction (a.k.a LMR)
+    // Late move reduction (LMR)
     if constexpr (Node != NodeKind::Root) {
       const bool lmrEnabled =
           hasMove && !isNodeKindPv(Node) && !isCheck(board_) && depth >= LateMove::MIN_DEPTH &&
