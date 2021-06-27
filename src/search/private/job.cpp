@@ -100,10 +100,8 @@ public:
     Default = 0,
     // Flags not to be reset when doing a recursive call
     Inherit = IsNullMove | NullMoveReduction | LateMoveReduction,
-    // Flags that indicate depth reduction
-    Reduction = NullMoveReduction | LateMoveReduction,
     // Each of these flags disables null move heuristics
-    NullMoveDisable = IsNullMove | Reduction | IsCapture
+    NullMoveDisable = IsNullMove | NullMoveReduction | IsCapture
   };
 
   inline Searcher(Job &job, Board &board, const SearchLimits &limits, RepetitionTable &repetitions)
@@ -451,9 +449,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     // Late move reduction (a.k.a LMR)
     if constexpr (Node != NodeKind::Root) {
       const bool lmrEnabled =
-          hasMove && !isCheck(board_) && (flags & Flags::Reduction) == Flags::None &&
-          depth >= LateMove::MIN_DEPTH && picker.stage() == MovePickerStage::History &&
-          numHistoryMoves > LateMove::MOVES_NO_REDUCE;
+          hasMove && !isNodeKindPv(Node) && !isCheck(board_) && depth >= LateMove::MIN_DEPTH &&
+          picker.stage() == MovePickerStage::History && numHistoryMoves > LateMove::MOVES_NO_REDUCE;
       if (lmrEnabled) {
         const score_t score =
             -search<NodeKind::Simple>(depth - 1 - LateMove::REDUCE_DEPTH, idepth + 1, -alpha - 1,
@@ -464,6 +461,10 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
             return 0;
           }
           continue;
+        }
+        if (mustStop()) {
+          moveUnmake(board_, move, persistence);
+          return 0;
         }
       }
     }
