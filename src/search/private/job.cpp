@@ -454,7 +454,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       if (lmrEnabled) {
         const score_t score =
             -search<NodeKind::Simple>(depth - 1 - LateMove::REDUCE_DEPTH, idepth + 1, -alpha - 1,
-                                      -alpha, newTag, newFlags & Flags::LateMoveReduction);
+                                      -alpha, newTag, newFlags | Flags::LateMoveReduction);
         if (score <= alpha) {
           moveUnmake(board_, move, persistence);
           if (mustStop()) {
