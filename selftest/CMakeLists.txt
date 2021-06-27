@@ -73,10 +73,13 @@ add_chess_impl(dodecahedron
 )
 # Dodecahedron is too old and too hacky, so I don't plan to fix any warnings in it
 if(MSVC)
-  target_compile_options(test_dodecahedron PRIVATE /W0)
-  if(benchmark_FOUND)
-    target_compile_options(bench_dodecahedron PRIVATE /W0)
-  endif()
+  set(DODECAHEDRON_COMPILE_OPTIONS /W0)
+else()
+  set(DODECAHEDRON_COMPILE_OPTIONS -Wno-old-style-cast)
+endif()
+target_compile_options(test_dodecahedron PRIVATE ${DODECAHEDRON_COMPILE_OPTIONS})
+if(benchmark_FOUND)
+  target_compile_options(bench_dodecahedron PRIVATE ${DODECAHEDRON_COMPILE_OPTIONS})
 endif()
 
 add_chess_impl(sofcheck)

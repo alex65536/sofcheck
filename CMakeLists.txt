@@ -140,7 +140,19 @@ if(MSVC)
   add_compile_options(/W4 /WX /wd4146 /wd4127 /wd4068)
   add_compile_definitions(_CRT_SECURE_NO_WARNINGS _ENABLE_ATOMIC_ALIGNMENT_FIX)
 else()
-  add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+  # It's better to use as many warnings as possible. The flags are mostly taken from the following
+  # post: https://habr.com/ru/post/490850. Not that some warnings are not added, as they either not
+  # relevant to the project, or are not supported by Clang (and `clang-tidy` as well). Ah, and we
+  # don't use `-Wconversion` and `-Wsign-conversion`, since they would break much code and add much
+  # pain to development (i. e. `static_cast`'ing any signed integer before using it as index for
+  # the vector)
+  add_compile_options(
+    -Wall -Wextra -Wpedantic
+    -Wnon-virtual-dtor -Woverloaded-virtual
+    -Wold-style-cast -Wcast-qual -Wsign-promo
+    -Wzero-as-null-pointer-constant -Wextra-semi
+    -Werror
+  )
 endif()
 
 if(MSVC AND USE_NO_EXCEPTIONS)

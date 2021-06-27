@@ -20,6 +20,7 @@
 
 #include "bot_api/client.h"
 #include "bot_api/server.h"
+#include "util/no_copy_move.h"
 
 namespace SoFBotApi {
 
@@ -38,7 +39,7 @@ enum class PollResult {
 };
 
 // Abstract class that is used to connect to client or server. It can wait until it gets some data
-class Connector {
+class Connector : public SoFUtil::VirtualNoCopy {
 public:
   // Blocks current thread until the connector gets some data. This method is not thread-safe.
   virtual PollResult poll() = 0;
