@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,9 +20,11 @@
 
 namespace SoFCore {
 
-// Initialization routine, must be called once before other methods in `SoFCore` are used.
+// Initialization routine. It must be called at least once from the main thread before any other
+// method in `SoFCore` is used. If this method is called after other methods in `SoFCore` are used,
+// then the behavior is undefined
 //
-// It is disregarded to use this function during static initialization.
+// It is disregarded to use this function during static initialization
 void init();
 
 }  // namespace SoFCore

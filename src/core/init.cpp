@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,19 +17,14 @@
 
 #include "core/init.h"
 
-#include <mutex>
-
 #include "core/private/magic.h"
 #include "core/private/zobrist.h"
 
 namespace SoFCore {
 
 void init() {
-  static std::once_flag flag;
-  std::call_once(flag, []() {
-    Private::initMagic();
-    Private::initZobrist();
-  });
+  Private::initMagic();
+  Private::initZobrist();
 }
 
 }  // namespace SoFCore
