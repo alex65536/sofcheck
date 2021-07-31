@@ -17,7 +17,7 @@
 
 #include "core/init.h"
 
-#include <atomic>
+#include <mutex>
 
 #include "core/private/magic.h"
 #include "core/private/zobrist.h"
@@ -25,12 +25,11 @@
 namespace SoFCore {
 
 void init() {
-  static std::atomic_flag initialized;
-  if (initialized.test_and_set()) {
-    return;
-  }
-  Private::initMagic();
-  Private::initZobrist();
+  static std::once_flag flag;
+  std::call_once(flag, []() {
+    Private::initMagic();
+    Private::initZobrist();
+  });
 }
 
 }  // namespace SoFCore

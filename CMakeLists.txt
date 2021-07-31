@@ -219,7 +219,10 @@ add_library(sof_core STATIC
   "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
   "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
 )
-target_link_libraries(sof_core PUBLIC sof_util)
+target_link_libraries(sof_core
+  PUBLIC sof_util
+  PRIVATE Threads::Threads
+)
 
 add_library(sof_bot_api STATIC
   src/bot_api/connection.cpp
