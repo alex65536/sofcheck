@@ -90,6 +90,19 @@ implementation, replacing its name and the names of the source files:
     )
     ```
 
+    You may also want to disable some compiler warnings for your implementation, as the compiler
+    flags used to build SoFCheck are very strict. To do this, you need to add the following lines
+    to `selftest/CMakeLists.txt` (again, replace `rules` and `RULES` with your implementation
+    name):
+
+    ```cmake
+    set(RULES_COMPILE_OPTIONS -Wno-error -Wno-sign-compare -Wno-old-style-cast)
+    target_compile_options(test_rules PRIVATE ${RULES_COMPILE_OPTIONS})
+    if(benchmark_FOUND)
+      target_compile_options(bench_rules PRIVATE ${RULES_COMPILE_OPTIONS})
+    endif()
+    ```
+
 5. Rebuild the project. The build must complete successfully, and `selftest/test_rules` executable
 must appear.
 
