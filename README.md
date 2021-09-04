@@ -97,6 +97,14 @@ instructions, so using this flag may slow down the engine greatly.
 SoFCheck uses CTest. So, you can just invoke `ctest` in `build/` directory after you built the
 engine.
 
+## Thanks to
+
+- [Chess Programming Wiki](https://www.chessprogramming.org/Main_Page), for many useful articles
+  and descriptions of various useful heuristics.
+- Andrey Brenkman, author of [Ifrit](http://alphagameset.xyz/ifrit/ifrit_chess_engine.html) chess
+  engine, for well-commented source code of Ifrit. While looking at these sources, some ideas on
+  how to use the heuristics in search became clearer to me.
+
 ## License
 
 **License**: GPL 3+.
