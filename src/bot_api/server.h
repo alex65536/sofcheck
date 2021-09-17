@@ -24,6 +24,7 @@
 #include "bot_api/types.h"
 #include "core/move.h"
 #include "util/misc.h"
+#include "util/no_copy_move.h"
 
 namespace SoFBotApi {
 
@@ -47,7 +48,7 @@ class Client;
 // thread safe.
 // - if you implement a server connector, then the API calls must be thread safe. The server you are
 // connected to is not thread-safe.
-class Server {
+class Server : public virtual SoFUtil::VirtualNoCopy {
 public:
   // Returns server name (or empty string if the name is unknown)
   virtual const char *name() const { return ""; }
@@ -86,8 +87,6 @@ public:
   // connection is finished
   virtual ApiResult reportError(const char *message) = 0;
   ApiResult reportError(const std::string &message) { return reportError(message.c_str()); }
-
-  virtual ~Server() = default;
 
   friend class Connection;
 
