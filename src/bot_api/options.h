@@ -65,7 +65,7 @@ using MaybeEnumOption = std::optional<EnumOption>;
 using MaybeActionOption = std::optional<ActionOption>;
 
 // The observer for `OptionStorage` class. It receives the updates of the options.
-class OptionObserver : public SoFUtil::VirtualNoCopy {
+class OptionObserver : public virtual SoFUtil::VirtualNoCopy {
 public:
   virtual ApiResult setBool(const std::string &key, bool value) = 0;
   virtual ApiResult setInt(const std::string &key, int64_t value) = 0;
@@ -75,7 +75,7 @@ public:
 };
 
 // Interface of the option holder. The option types are the same as used by UCI.
-class Options : public SoFUtil::VirtualNoCopy {
+class Options : public virtual SoFUtil::VirtualNoCopy {
 public:
   // Returns true if the option `key` is present
   inline bool has(const std::string &key) const { return type(key) != OptionType::None; }

@@ -25,6 +25,7 @@
 #include "bot_api/types.h"
 #include "core/board.h"
 #include "core/move.h"
+#include "util/no_copy_move.h"
 
 namespace SoFBotApi {
 
@@ -49,7 +50,7 @@ class Options;
 // - if you implement a client connector, then the API calls must be thread safe. This rule also
 // applies to option storage (use `SyncOptionStorage` to store the options). The server you are
 // connected to is not thread-safe.
-class Client {
+class Client : public virtual SoFUtil::VirtualNoCopy {
 public:
   // Returns engine name
   virtual const char *name() const = 0;
@@ -113,8 +114,6 @@ public:
   // connection is finished
   virtual ApiResult reportError(const char *message) = 0;
   ApiResult reportError(const std::string &message) { return reportError(message.c_str()); }
-
-  virtual ~Client() = default;
 
   friend class Connection;
 
