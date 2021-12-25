@@ -27,6 +27,7 @@ include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
 include(JsonCpp)
+include(CxxOpts)
 find_package(Threads REQUIRED)
 find_package(PythonInterp 3.6)
 find_package(UnixCommands)
@@ -167,6 +168,7 @@ if(USE_NO_EXCEPTIONS)
   endif()
   add_compile_options(-fno-exceptions)
   add_compile_definitions(JSON_USE_EXCEPTION=0)
+  add_compile_definitions(CXXOPTS_NO_EXCEPTIONS)
 endif()
 
 if(HAS_LIBATOMIC)
@@ -183,6 +185,9 @@ if(USE_SANITIZERS)
   add_compile_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
   add_link_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
 endif()
+
+# Makes compilation of `cxxopts` much faster
+add_compile_definitions(CXXOPTS_NO_REGEX)
 
 set(CMAKE_CXX_STANDARD 17)
 
