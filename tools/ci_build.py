@@ -100,6 +100,9 @@ def configure(config, storage, args):
     storage['build-libs'] = {}
     storage['build-libs']['benchmark'] = config['os'] in {'windows', 'macos'}
     storage['build-libs']['googletest'] = True
+    storage['build-libs']['cxxopts'] = not config['builtin-cxxopts']
+    storage['build-libs']['jsoncpp'] = \
+        not config['builtin-jsoncpp'] and config['os'] in {'windows'}
 
     storage['pkg'] = {}
     storage['cmd'] = {}
@@ -182,6 +185,16 @@ def build_deps(config, storage, args):
             'repo': 'https://github.com/google/benchmark/',
             'branch': 'v1.5.5',
             'flags': ['-DBENCHMARK_ENABLE_TESTING=OFF']
+        },
+        'cxxopts': {
+            'repo': 'https://github.com/jarro2783/cxxopts',
+            'branch': 'v3.0.0',
+            'flags': []
+        },
+        'jsoncpp': {
+            'repo': 'https://github.com/open-source-parsers/jsoncpp',
+            'branch': 'v1.9.5',
+            'flags': []
         }
     }
 
@@ -212,7 +225,8 @@ def build(config, storage, args):
         '-DUSE_NO_EXCEPTIONS=ON',
         '-DUSE_BMI1=' + bool_to_onoff(config['bmi1']),
         '-DUSE_BMI2=' + bool_to_onoff(config['bmi2']),
-        '-DUSE_BUILTIN_JSONCPP=' + bool_to_onoff(config['builtin-jsoncpp'])
+        '-DUSE_BUILTIN_JSONCPP=' + bool_to_onoff(config['builtin-jsoncpp']),
+        '-DUSE_BUILTIN_CXXOPTS=' + bool_to_onoff(config['builtin-cxxopts']),
     ]
     if diagnostic:
         cmake_args += ['-DUSE_SEARCH_DIAGNOSTICS=ON']
