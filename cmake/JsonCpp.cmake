@@ -24,7 +24,7 @@ include_guard(GLOBAL)
 # Declare configuration options
 set(USE_BUILTIN_JSONCPP OFF CACHE BOOL "Use jsoncpp version located in third-party/")
 set(FORCE_EXTERNAL_JSONCPP OFF CACHE BOOL
-  "Do not try to use Jsoncpp located in third-party/, raise error instead")
+  "Do not try to use jsoncpp located in third-party/, raise error instead")
 
 
 # Detect jsoncpp itself
