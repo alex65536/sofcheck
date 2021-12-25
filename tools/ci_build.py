@@ -193,7 +193,7 @@ def build_deps(config, storage, args):
         },
         'jsoncpp': {
             'repo': 'https://github.com/open-source-parsers/jsoncpp',
-            'branch': 'v1.9.5',
+            'branch': '1.9.5',
             'flags': []
         }
     }
