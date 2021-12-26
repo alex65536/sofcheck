@@ -35,6 +35,10 @@ std::vector<std::vector<bitboard_t>> generateKingMetricRings() {
   return result;
 }
 
+GeneratorInfo getGeneratorInfo() {
+  return GeneratorInfo{"Generate rings with the given distance for king"};
+}
+
 int doGenerate(SourcePrinter &p) {
   auto kingRings = generateKingMetricRings();
 
