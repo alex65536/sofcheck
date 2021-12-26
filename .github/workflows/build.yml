@@ -83,7 +83,7 @@ jobs:
         {
           "os": "$OS",
           "compiler": "${{ matrix.compiler }}",
-          "bmi1": "$BMI1",
+          "bmi1": $BMI1,
           "bmi2": ${{ matrix.bmi2 }},
           "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
           "builtin-cxxopts": ${{ matrix.builtin-cxxopts }},
