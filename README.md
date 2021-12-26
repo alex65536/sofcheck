@@ -61,12 +61,18 @@ stack traces when the application panics
 located in a JSON file. This one isn't compiled into the final executable and is used only for
 building and tuning the engine. If you don't install jsoncpp, the version located in
 `third-party/jsoncpp` will be used
+- [`cxxopts`](https://github.com/jarro2783/cxxopts): to parse command line parameters in source
+code generators and other development utilities. If you don't install cxxopts, the version located
+in `third-party/cxxopts` will be used
 
 To install them all on Debian/Ubuntu, use
 
 ~~~~~
 $ sudo apt install libgtest-dev libbenchmark-dev libboost-stacktrace-dev libjsoncpp-dev
 ~~~~~
+
+You may also install `libcxxopts-dev` (version `3.0.0` or later is required), but it's present in
+quite new distro releases (Ubuntu 22.04+ and Debian 12+)
 
 To build the engine, do the following:
 

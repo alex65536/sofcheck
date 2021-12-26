@@ -69,6 +69,8 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
   return generateDirected(offX, offY, 2);
 }
 
+GeneratorInfo getGeneratorInfo() { return GeneratorInfo{"Generate tables for near attacks"}; }
+
 int doGenerate(SourcePrinter &p) {
   auto knightAttacks = generateKnightAttacks();
   auto kingAttacks = generateKingAttacks();

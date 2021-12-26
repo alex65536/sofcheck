@@ -22,6 +22,10 @@
 using namespace SoFEval::Feat;
 using SoFUtil::panic;
 
+GeneratorInfo getGeneratorInfo() {
+  return GeneratorInfo{"Parse weights of evaluation features from JSON"};
+}
+
 int doGenerate(SourcePrinter &p, const Json::Value &json) {
   const Features features = Features::load(json).okOrErr(
       [](const auto err) { panic("Error extracting features: " + err.description); });

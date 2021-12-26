@@ -82,6 +82,8 @@ std::vector<coord_t> generateShifts() {
   return shifts;
 }
 
+GeneratorInfo getGeneratorInfo() { return GeneratorInfo{"Generate constants for magic bitboards"}; }
+
 int doGenerate(SourcePrinter &p) {
   p.headerGuard("SOF_CORE_PRIVATE_MAGIC_CONSTANTS_INCLUDED");
   p.skip();

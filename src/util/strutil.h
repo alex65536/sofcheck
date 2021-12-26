@@ -117,6 +117,10 @@ void replace(std::string &s, char src, char dst);
 size_t intStrLen(int64_t value);
 size_t uintStrLen(uint64_t value);
 
+// Wraps the source string `s` into multiple lines. The string is split by words to ensure that the
+// length of each line doesn't exceed `width`. Returns the vector of lines after splitting
+std::vector<std::string_view> wordWrap(const std::string_view &s, size_t width);
+
 // Works like `strcpy`, but returns the address of null-terminating byte in `dst` (e.g. pointer to
 // the end of `dst` instead of the pointer to the beginning of `dst`)
 //

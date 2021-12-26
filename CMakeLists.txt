@@ -27,6 +27,7 @@ include(CheckCXXSymbolExists)
 include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
 include(JsonCpp)
+include(CxxOpts)
 find_package(Threads REQUIRED)
 find_package(PythonInterp 3.6)
 find_package(UnixCommands)
@@ -167,6 +168,7 @@ if(USE_NO_EXCEPTIONS)
   endif()
   add_compile_options(-fno-exceptions)
   add_compile_definitions(JSON_USE_EXCEPTION=0)
+  add_compile_definitions(CXXOPTS_NO_EXCEPTIONS)
 endif()
 
 if(HAS_LIBATOMIC)
@@ -184,6 +186,9 @@ if(USE_SANITIZERS)
   add_link_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
 endif()
 
+# Makes compilation of `cxxopts` much faster
+add_compile_definitions(CXXOPTS_NO_REGEX)
+
 set(CMAKE_CXX_STANDARD 17)
 
 include_directories("${PROJECT_BINARY_DIR}/src")
@@ -200,11 +205,15 @@ add_library(sof_util STATIC
   src/util/fileutil.cpp
   src/util/logging.cpp
   src/util/misc.cpp
+  src/util/optparse.cpp
   src/util/parallel.cpp
   src/util/strutil.cpp
   src/util/random.cpp
 )
-target_link_libraries(sof_util PRIVATE Threads::Threads ${BOOST_STACKTRACE_TARGET})
+target_link_libraries(sof_util
+  PUBLIC ${CXXOPTS_TARGET}
+  PRIVATE Threads::Threads ${BOOST_STACKTRACE_TARGET}
+)
 
 add_library(sof_core STATIC
   src/core/board.cpp
@@ -384,6 +393,7 @@ if(GTest_FOUND)
 
   add_executable(test_util_unit_test
     src/util/test/parallel.cpp
+    src/util/test/strutil.cpp
     src/util/test/valarray.cpp
   )
   target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)
