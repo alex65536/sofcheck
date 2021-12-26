@@ -10,114 +10,42 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        compiler: [gcc-8, clang-9]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        compiler: [gcc-8, clang-9, clang-11, gcc, msvc32, msvc64]
         bmi1: ['true']
         bmi2: ['true', 'false']
         builtin-jsoncpp: ['true', 'false']
         builtin-cxxopts: ['true', 'false']
-        cmake-generator: ['Unix Makefiles']
+
+        include:
+          - compiler: gcc-8
+            cmake-generator: 'Unix Makefiles'
+          - compiler: clang-9
+            cmake-generator: 'Unix Makefiles'
+          - compiler: clang-11
+            cmake-generator: 'Unix Makefiles'
+          - compiler: gcc
+            cmake-generator: 'Unix Makefiles'
+          - compiler: msvc32
+            cmake-generator: 'Visual Studio 16 2019'
+          - compiler: msvc64
+            cmake-generator: 'Visual Studio 16 2019'
 
         exclude:
+          - os: macos-latest
+            bmi2: 'true'
           - bmi2: 'true'
             builtin-jsoncpp: 'false'
           - builtin-jsoncpp: 'false'
             builtin-cxxopts: 'true'
           - builtin-jsoncpp: 'true'
             builtin-cxxopts: 'false'
-
-        include:
           - os: windows-latest
-            compiler: gcc
-            bmi1: 'true'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Unix Makefiles'
-          - os: windows-latest
-            compiler: gcc
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Unix Makefiles'
-          - os: windows-latest
-            compiler: gcc
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'false'
-            builtin-cxxopts: 'false'
-            cmake-generator: 'Unix Makefiles'
-          - os: windows-latest
-            compiler: msvc32
-            bmi1: 'true'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc32
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc32
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'false'
-            builtin-cxxopts: 'false'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc64
-            bmi1: 'true'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc64
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc64
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'false'
-            builtin-cxxopts: 'false'
-            cmake-generator: 'Visual Studio 16 2019'
+            compiler: [gcc-8, clang-9, clang-11]
+          - os: ubuntu-latest
+            compiler: [clang-11, gcc, msvc32, msvc64]
           - os: macos-latest
-            compiler: gcc-8
-            bmi1: 'false'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Unix Makefiles'
-          - os: macos-latest
-            compiler: gcc-8
-            bmi1: 'false'
-            bmi2: 'false'
-            builtin-jsoncpp: 'false'
-            builtin-cxxopts: 'false'
-            cmake-generator: 'Unix Makefiles'
-          - os: macos-latest
-            compiler: clang-11
-            bmi1: 'false'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'true'
-            cmake-generator: 'Unix Makefiles'
-          - os: macos-latest
-            compiler: clang-11
-            bmi1: 'false'
-            bmi2: 'false'
-            builtin-jsoncpp: 'false'
-            builtin-cxxopts: 'false'
-            cmake-generator: 'Unix Makefiles'
+            compiler: [gcc-8, clang-9, gcc, msvc32, msvc64]
 
     runs-on: ${{ matrix.os }}
 
