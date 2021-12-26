@@ -16,8 +16,8 @@ static std::string getProgramName(const std::string &argv0) {
   return argv0;
 }
 
-OptParser::OptParser(int argc, const char *const *argv, const std::string &description)
-    : inner_(getProgramName(argv[0])), description_(description), argc_(argc), argv_(argv) {
+OptParser::OptParser(int argc, const char *const *argv, std::string description)
+    : inner_(getProgramName(argv[0])), description_(std::move(description)), argc_(argc), argv_(argv) {
   inner_.set_width(width_);
   inner_.add_options()("h,help", "Show help message");
 }
@@ -26,7 +26,7 @@ void OptParser::setLongDescription(const std::string &longDescription) {
   longDescription_ = longDescription;
 }
 
-cxxopts::OptionAdder OptParser::addOptions(const std::string group) {
+cxxopts::OptionAdder OptParser::addOptions(const std::string &group) {
   return inner_.add_options(group);
 }
 

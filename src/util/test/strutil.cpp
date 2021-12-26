@@ -121,17 +121,17 @@ TEST(SoFUtil, WordWrap_EmptyLines) {
   const auto result3 = SoFUtil::wordWrap(src3, 100);
   const auto result4 = SoFUtil::wordWrap(src4, 100);
 
-  ASSERT_EQ(result1.size(), 1);
+  ASSERT_EQ(result1.size(), 1U);
   EXPECT_TRUE(result1[0].empty());
 
-  ASSERT_EQ(result2.size(), 1);
+  ASSERT_EQ(result2.size(), 1U);
   EXPECT_TRUE(result2[0].empty());
 
-  ASSERT_EQ(result3.size(), 3);
+  ASSERT_EQ(result3.size(), 3U);
   EXPECT_TRUE(result3[0].empty());
   EXPECT_TRUE(result3[1].empty());
   EXPECT_TRUE(result3[2].empty());
 
-  ASSERT_EQ(result4.size(), 1);
+  ASSERT_EQ(result4.size(), 1U);
   EXPECT_TRUE(result4[0].empty());
 }

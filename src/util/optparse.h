@@ -12,13 +12,13 @@ namespace SoFUtil {
 // use long descriptions with word-wrapping in help messages
 class OptParser {
 public:
-  OptParser(int argc, const char *const *argv, const std::string &description);
+  OptParser(int argc, const char *const *argv, std::string description);
 
   // Sets the long description. It is printed in the end of the help message
   void setLongDescription(const std::string &longDescription);
 
   // Adds options to the option parser. Works in the same way as `cxxopts::Options`
-  cxxopts::OptionAdder addOptions(const std::string group = "");
+  cxxopts::OptionAdder addOptions(const std::string &group = "");
 
   // Sets the output width
   void setWidth(size_t width);
@@ -36,7 +36,7 @@ public:
 private:
   cxxopts::Options inner_;
   std::string description_;
-  std::string longDescription_ = "";
+  std::string longDescription_;
   int argc_;
   const char *const *argv_;
   size_t width_ = 78;
