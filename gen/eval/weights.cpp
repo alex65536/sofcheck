@@ -146,6 +146,10 @@ void fillWeights(SourcePrinter &p, const Features &features) {
   }
 }
 
+GeneratorInfo getGeneratorInfo() {
+  return GeneratorInfo{"Parse information about evaluation features from JSON"};
+}
+
 int doGenerate(SourcePrinter &p, const Json::Value &json) {
   const Features features = Features::load(json).okOrErr(
       [](const auto err) { panic("Error extracting features: " + err.description); });

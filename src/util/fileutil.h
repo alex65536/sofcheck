@@ -32,10 +32,12 @@ struct FileError {
 // Opens `std::ifstream` for reading. This is basically a wrapper over the constructor, but returns
 // error in `Result` when opening failed
 Result<std::ifstream, FileError> openReadFile(const char *path);
+Result<std::ifstream, FileError> openReadFile(const std::string &path);
 
 // Opens `std::ofstream` for writing. This is basically a wrapper over the constructor, but returns
 // error in `Result` when opening failed
 Result<std::ofstream, FileError> openWriteFile(const char *path);
+Result<std::ofstream, FileError> openWriteFile(const std::string &path);
 
 }  // namespace SoFUtil
 

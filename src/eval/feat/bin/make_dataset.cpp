@@ -36,6 +36,7 @@
 #include "util/fileutil.h"
 #include "util/logging.h"
 #include "util/misc.h"
+#include "util/optparse.h"
 #include "util/result.h"
 #include "util/strutil.h"
 
@@ -309,59 +310,52 @@ int run(std::istream &jsonIn, std::istream &in, std::ostream &out) {
   return 0;
 }
 
-constexpr const char *DESCRIPTION = R"DESC(
-MakeDataset for SoFCheck
+// TODO: move file format description somewhere else
+constexpr const char *DESCRIPTION =
+    "This utility extracts coefficients from specified FEN boards to tune the weights in the "
+    "engine.\n\nThe file with boards has the following format. It contains one or more game "
+    "sections. Each game section starts with line \"game <winner> <id>\", where <winner> is equal "
+    "to B, W or D depending on the winning side, and <id> is equal to some unsigned integer called "
+    "the game ID. Each of the following lines describe a single board and has the format \"board "
+    "<fen>\", where <fen> is the board encoded as FEN. The boards arrive in the same order as they "
+    "were played. It\'s also worth to mention that the blank lines and the lines starting with "
+    "\"#\" are ignored in the file.";
 
-This utility extracts coefficients from specified FEN boards to tune the
-weights in the engine.
-
-Usage: make_dataset FEATURES [IN_FILE [OUT_FILE]]
-
-  FEATURES  The JSON file that contains all the evaluation features
-  IN_FILE   The file with boards from which we want to extract coefficients.
-            The format of this file is described below. If this argument is
-            not provided, then the boards are read from the standard input
-  OUT_FILE  Resulting CSV file with coefficients, which can be used then for
-            parameter tuning. If this argument is not provided, then the
-            boards are written to the standard output
-
-The file with boards has the following format. It contains one or more game
-sections. Each game section starts with line "game <winner> <id>", where
-<winner> is equal to B, W or D depending on the winning side, and <id> is
-equal to some unsigned integer called the game ID. Each of the following lines
-describe a single board and has the format "board <fen>", where <fen> is the
-board encoded as FEN. The boards arrive in the same order as they were played.
-It's also worth to mention that the blank lines and the lines starting with
-"#" are ignored in the file.
-)DESC";
-
-void showUsage() { std::cerr << SoFUtil::trimEolLeft(DESCRIPTION) << std::flush; }
+constexpr const char *FEATURES_DESCRIPTION =
+    "The JSON file that contains all the evaluation features";
+constexpr const char *INPUT_DESCRIPTION =
+    "The file with boards from which we want to extract coefficients, in the format described "
+    "above. If not provided, use standard input";
+constexpr const char *OUTPUT_DESCRIPTION =
+    "Resulting CSV file with coefficients, which can be used then for parameter tuning. If not "
+    "provided, use standard output";
 
 int main(int argc, char **argv) {
   std::ios_base::sync_with_stdio(false);
   SoFCore::init();
 
-  if (argc == 2 && std::strcmp(argv[1], "-h") == 0) {
-    showUsage();
-    return 0;
-  }
-  if (argc < 2 || argc > 4) {
-    showUsage();
-    return 1;
-  }
+  SoFUtil::OptParser parser(argc, argv, "MakeDataset for SoFCheck");
+  parser.setLongDescription(DESCRIPTION);
+  parser.addOptions()                                                      //
+      ("f,features", FEATURES_DESCRIPTION, cxxopts::value<std::string>())  //
+      ("i,input", INPUT_DESCRIPTION, cxxopts::value<std::string>())        //
+      ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>());
+  auto options = parser.parse();
+
   auto badFile = [&](auto err) { return panic(std::move(err.description)); };
-  std::ifstream jsonIn = openReadFile(argv[1]).okOrErr(badFile);
+  std::ifstream jsonIn = openReadFile(options["features"].as<std::string>()).okOrErr(badFile);
   std::ifstream fileIn;
   std::ofstream fileOut;
   std::istream *in = &std::cin;
   std::ostream *out = &std::cout;
-  if (argc >= 3) {
-    fileIn = openReadFile(argv[2]).okOrErr(badFile);
+  if (options.count("input")) {
+    fileIn = openReadFile(options["input"].as<std::string>()).okOrErr(badFile);
     in = &fileIn;
   }
-  if (argc >= 4) {
-    fileOut = openWriteFile(argv[3]).okOrErr(badFile);
+  if (options.count("output")) {
+    fileOut = openWriteFile(options["output"].as<std::string>()).okOrErr(badFile);
     out = &fileOut;
   }
+
   return run(jsonIn, *in, *out);
 }

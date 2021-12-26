@@ -10,66 +10,53 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
-        compiler: [gcc-8, clang-9]
+        suite: [win-gcc, win-msvc32, win-msvc64, linux-gcc, linux-clang, macos-gcc, macos-clang]
         bmi1: ['true']
         bmi2: ['true', 'false']
         builtin-jsoncpp: ['true', 'false']
-        cmake-generator: ['Unix Makefiles']
+        builtin-cxxopts: ['true', 'false']
 
         exclude:
+          - suite: macos-clang
+            bmi2: 'true'
+          - suite: macos-gcc
+            bmi2: 'true'
           - bmi2: 'true'
             builtin-jsoncpp: 'false'
+          - builtin-jsoncpp: 'false'
+            builtin-cxxopts: 'true'
+          - builtin-jsoncpp: 'true'
+            builtin-cxxopts: 'false'
 
         include:
-          - os: windows-latest
-            compiler: gcc
-            bmi1: 'true'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            cmake-generator: 'Unix Makefiles'
-          - os: windows-latest
-            compiler: gcc
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'true'
-            cmake-generator: 'Unix Makefiles'
-          - os: windows-latest
-            compiler: msvc32
-            bmi1: 'true'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc32
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc64
-            bmi1: 'true'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: windows-latest
-            compiler: msvc64
-            bmi1: 'true'
-            bmi2: 'true'
-            builtin-jsoncpp: 'true'
-            cmake-generator: 'Visual Studio 16 2019'
-          - os: macos-latest
+          - suite: linux-gcc
+            os: ubuntu-latest
             compiler: gcc-8
-            bmi1: 'false'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
             cmake-generator: 'Unix Makefiles'
-          - os: macos-latest
+          - suite: linux-clang
+            os: ubuntu-latest
+            compiler: clang-9
+            cmake-generator: 'Unix Makefiles'
+          - suite: macos-gcc
+            os: macos-latest
+            compiler: gcc-8
+            cmake-generator: 'Unix Makefiles'
+          - suite: macos-clang
+            os: macos-latest
             compiler: clang-11
-            bmi1: 'false'
-            bmi2: 'false'
-            builtin-jsoncpp: 'true'
             cmake-generator: 'Unix Makefiles'
+          - suite: win-gcc
+            os: windows-latest
+            compiler: gcc
+            cmake-generator: 'Unix Makefiles'
+          - suite: win-msvc32
+            os: windows-latest
+            compiler: msvc32
+            cmake-generator: 'Visual Studio 16 2019'
+          - suite: win-msvc64
+            os: windows-latest
+            compiler: msvc64
+            cmake-generator: 'Visual Studio 16 2019'
 
     runs-on: ${{ matrix.os }}
 
@@ -86,14 +73,20 @@ jobs:
       run: |
         OS="${{ matrix.os }}"
         OS="${OS%%-*}"
+        BMI1="${{ matrix.bmi1 }}"
+        if [[ "$OS" == "macos" ]]; then
+          # Force disable BMI1 on macOS, otherwise we get SIGILL in CI
+          BMI1="false"
+        fi
         (
         cat <<EOF
         {
           "os": "$OS",
           "compiler": "${{ matrix.compiler }}",
-          "bmi1": ${{ matrix.bmi1 }},
+          "bmi1": $BMI1,
           "bmi2": ${{ matrix.bmi2 }},
           "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
+          "builtin-cxxopts": ${{ matrix.builtin-cxxopts }},
           "cmake-build-type": "Release",
           "cmake-generator": "${{ matrix.cmake-generator }}"
         }

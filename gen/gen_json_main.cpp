@@ -25,12 +25,14 @@
 #include "common.h"
 #include "util/fileutil.h"
 #include "util/misc.h"
+#include "util/optparse.h"
 #include "util/result.h"
 
 using SoFUtil::openReadFile;
 using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 
+GeneratorInfo getGeneratorInfo();
 int doGenerate(SourcePrinter &printer, const Json::Value &json);
 
 int doGenerate(SourcePrinter &printer, std::istream &in) {
@@ -45,18 +47,28 @@ int doGenerate(SourcePrinter &printer, std::istream &in) {
 }
 
 int main(int argc, char **argv) {
-  // TODO : improve argument parsing
-  if (argc == 1) {
-    SourcePrinter printer(std::cout);
-    return doGenerate(printer, std::cin);
+  auto genInfo = getGeneratorInfo();
+
+  SoFUtil::OptParser parser(argc, argv, genInfo.description);
+  parser.addOptions()                                                                    //
+      ("i,input", "Input file (stdin if not specified)", cxxopts::value<std::string>())  //
+      ("o,output", "Output file (stdout if not specified)", cxxopts::value<std::string>());
+  auto options = parser.parse();
+
+  auto badFile = [&](auto err) { return panic(std::move(err.description)); };
+  std::ifstream fileIn;
+  std::ofstream fileOut;
+  std::istream *in = &std::cin;
+  std::ostream *out = &std::cout;
+  if (options.count("input")) {
+    fileIn = openReadFile(options["input"].as<std::string>()).okOrErr(badFile);
+    in = &fileIn;
   }
-  if (argc == 3) {
-    auto badFile = [&](auto err) { return panic(std::move(err.description)); };
-    std::ofstream outFile = openWriteFile(argv[1]).okOrErr(badFile);
-    std::ifstream inFile = openReadFile(argv[2]).okOrErr(badFile);
-    SourcePrinter printer(outFile);
-    return doGenerate(printer, inFile);
+  if (options.count("output")) {
+    fileOut = openWriteFile(options["output"].as<std::string>()).okOrErr(badFile);
+    out = &fileOut;
   }
-  std::cerr << "Usage: " << argv[0] << " OUT_FILE IN_FILE" << std::endl;
-  return 1;
+
+  SourcePrinter printer(*out);
+  return doGenerate(printer, *in);
 }

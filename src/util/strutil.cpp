@@ -105,4 +105,102 @@ size_t intStrLen(const int64_t value) {
 
 size_t uintStrLen(const uint64_t value) { return (value == 0) ? 1 : 1 + SoFUtil::log10(value); }
 
+std::vector<std::string_view> wordWrap(const std::string_view &s, const size_t width) {
+  std::vector<std::string_view> result;
+
+  if (s.empty()) {
+    result.push_back(s);
+    return result;
+  }
+
+  auto processLine = [&result, &width](std::string_view line) {
+    // Trim right
+    size_t rightSpacePos = line.size();
+    while (rightSpacePos != 0 && line[rightSpacePos - 1] == ' ') {
+      --rightSpacePos;
+    }
+    line = line.substr(0, rightSpacePos);
+    if (line.empty()) {
+      result.push_back(line);
+      return;
+    }
+
+    // Trim left
+    size_t leftSpacePos = 0;
+    while (leftSpacePos < line.size() && line[leftSpacePos] == ' ') {
+      ++leftSpacePos;
+    }
+
+    // We try to keep the spaces in the start of the line. However, if their amount exceeds the line
+    // width, we remove them all
+    size_t lineStartPos = (leftSpacePos >= width) ? leftSpacePos : 0;
+    size_t lineEndPos = lineStartPos;
+    bool isFirstWord = true;
+
+    while (lineStartPos < line.size()) {
+      // Seek the next word to add to the current line. First, scan the spaces that separate this
+      // word from the previous one
+      size_t wordStartPos = lineEndPos;
+      while (wordStartPos < line.size() && line[wordStartPos] == ' ') {
+        ++wordStartPos;
+      }
+      if (wordStartPos == line.size() || wordStartPos - lineStartPos >= width) {
+        // This is either the end of the string, or we will overflow when adding spaces to the
+        // current line. In both cases, it's OK to finish the current line and just drop the spaces.
+        // (Note that in the first case there must be no spaces to drop here, as we removed trailing
+        // spaces earlier)
+        result.push_back(line.substr(lineStartPos, lineEndPos - lineStartPos));
+        lineStartPos = wordStartPos;
+        lineEndPos = wordStartPos;
+        isFirstWord = true;
+        continue;
+      }
+
+      // Then, find the end of the word which we want to add
+      size_t wordEndPos = wordStartPos;
+      while (wordEndPos < line.size() && wordEndPos - lineStartPos <= width &&
+             line[wordEndPos] != ' ') {
+        ++wordEndPos;
+      }
+      if (wordEndPos - lineStartPos > width) {
+        // The word is too long, we need to break the line without including this word. Still, if
+        // there's no more words in the line, we must include it. In this case we just add the first
+        // `width` letters of this word to the line and don't respect wrapping by spaces
+        if (isFirstWord) {
+          // The only word in the line
+          result.push_back(line.substr(lineStartPos, width));
+          lineStartPos += width;
+          lineEndPos = lineStartPos;
+          isFirstWord = true;
+          continue;
+        }
+        result.push_back(line.substr(lineStartPos, lineEndPos - lineStartPos));
+        lineStartPos = wordStartPos;
+        lineEndPos = wordStartPos;
+        isFirstWord = true;
+        continue;
+      }
+
+      // The word can be safely added
+      lineEndPos = wordEndPos;
+      isFirstWord = false;
+    }
+  };
+
+  // First, we split the input string by line endings. Then we call `processLine`, which will split
+  // the source line into multiple lines, so they will not be larger than `width`
+  for (size_t right = 0; right < s.size();) {
+    const size_t left = right;
+    while (right < s.size() && s[right] != '\n') {
+      ++right;
+    }
+    processLine(s.substr(left, right - left));
+    if (right < s.size()) {
+      ++right;
+    }
+  }
+
+  return result;
+}
+
 }  // namespace SoFUtil

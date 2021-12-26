@@ -49,18 +49,6 @@
   test must be performed only one time, as it will be unable to perform it in the future, when many
   other heuristics will appear.
 
-* Add library to parse arguments in binaries
-  Currently, argument parsing in all binaries is done by manually inspecting `argc` and `argv`,
-  which may be bug-prone and lead to boilerplate code. We need either to use either a known library
-  to parse arguments, or to invent one ourselves. If we choose to use an existing solution,
-  we may consider vendoring the library into the repository itself instead of adding an external
-  dependency to minimize number of such dependencies. Then, we need to fix all binaries: inspect
-  `CMakeLists.txt` to find them. Do not forget about generators. After taking a quick look on
-  existing argument parsing libraries, I think that `cxxopts` is the most suitable. It compiles
-  well with `-fno-exceptions` flag and is mature enough to be accepted into Debian. The API looks
-  simple, according to the examples. Note that this is not a final decision, so other variants can
-  be considered.
-
 * Do not analyze the same node twice in multiple threads
   To do this, we may put a flag `busy` into the hash table, which indicates that this position is
   already being analysed. If we encounter a busy position during the search, we just skip it and
