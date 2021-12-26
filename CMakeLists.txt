@@ -205,11 +205,15 @@ add_library(sof_util STATIC
   src/util/fileutil.cpp
   src/util/logging.cpp
   src/util/misc.cpp
+  src/util/optparse.cpp
   src/util/parallel.cpp
   src/util/strutil.cpp
   src/util/random.cpp
 )
-target_link_libraries(sof_util PRIVATE Threads::Threads ${BOOST_STACKTRACE_TARGET})
+target_link_libraries(sof_util
+  PUBLIC ${CXXOPTS_TARGET}
+  PRIVATE Threads::Threads ${BOOST_STACKTRACE_TARGET}
+)
 
 add_library(sof_core STATIC
   src/core/board.cpp
