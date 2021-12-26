@@ -135,6 +135,7 @@ std::vector<std::string_view> wordWrap(const std::string_view &s, const size_t w
     // width, we remove them all
     size_t lineStartPos = (leftSpacePos >= width) ? leftSpacePos : 0;
     size_t lineEndPos = lineStartPos;
+    bool isFirstWord = true;
 
     while (lineStartPos < line.size()) {
       // Seek the next word to add to the current line. First, scan the spaces that separate this
@@ -144,39 +145,45 @@ std::vector<std::string_view> wordWrap(const std::string_view &s, const size_t w
         ++wordStartPos;
       }
       if (wordStartPos == line.size() || wordStartPos - lineStartPos >= width) {
-        // If we add these spaces to the current line, we will overflow. So, drop the spaces and
-        // start the next line
+        // This is either the end of the string, or we will overflow when adding spaces to the
+        // current line. In both cases, it's OK to finish the current line and just drop the spaces.
+        // (Note that in the first case there must be no spaces to drop here, as we removed trailing
+        // spaces earlier)
         result.push_back(line.substr(lineStartPos, lineEndPos - lineStartPos));
         lineStartPos = wordStartPos;
         lineEndPos = wordStartPos;
+        isFirstWord = true;
         continue;
       }
 
-      // Then, find the end of the word
+      // Then, find the end of the word which we want to add
       size_t wordEndPos = wordStartPos;
       while (wordEndPos < line.size() && wordEndPos - lineStartPos <= width &&
              line[wordEndPos] != ' ') {
         ++wordEndPos;
       }
       if (wordEndPos - lineStartPos > width) {
-        // The word is too long, we need to break lines without including this word. Still, if it's
-        // the only word in the line, we must include it. In this case we just add the first `width`
-        // letters of this word to the line and don't respect wrapping by spaces
-        if (lineStartPos == lineEndPos) {
+        // The word is too long, we need to break the line without including this word. Still, if
+        // there's no more words in the line, we must include it. In this case we just add the first
+        // `width` letters of this word to the line and don't respect wrapping by spaces
+        if (isFirstWord) {
           // The only word in the line
           result.push_back(line.substr(lineStartPos, width));
           lineStartPos += width;
           lineEndPos = lineStartPos;
+          isFirstWord = true;
           continue;
         }
         result.push_back(line.substr(lineStartPos, lineEndPos - lineStartPos));
         lineStartPos = wordStartPos;
         lineEndPos = wordStartPos;
+        isFirstWord = true;
         continue;
       }
 
       // The word can be safely added
       lineEndPos = wordEndPos;
+      isFirstWord = false;
     }
   };
 
