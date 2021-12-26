@@ -15,8 +15,8 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef SOF_VERSION_INCLUDED
-#define SOF_VERSION_INCLUDED
+#ifndef SOF_VERSION_VERSION_INCLUDED
+#define SOF_VERSION_VERSION_INCLUDED
 
 namespace SoFVersion {
 
@@ -26,4 +26,4 @@ extern const char *const GIT_VERSION;
 
 }  // namespace SoFVersion
 
-#endif  // SOF_VERSION_INCLUDED
+#endif  // SOF_VERSION_VERSION_INCLUDED
