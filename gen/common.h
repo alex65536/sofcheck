@@ -29,7 +29,6 @@
 #include "util/no_copy_move.h"
 
 struct GeneratorInfo {
-  std::string name;
   std::string description;
 };
 

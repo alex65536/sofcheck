@@ -23,7 +23,7 @@ using namespace SoFEval::Feat;
 using SoFUtil::panic;
 
 GeneratorInfo getGeneratorInfo() {
-  return GeneratorInfo{"eval_weight_values", "Parse weights of evaluation features from JSON"};
+  return GeneratorInfo{"Parse weights of evaluation features from JSON"};
 }
 
 int doGenerate(SourcePrinter &p, const Json::Value &json) {

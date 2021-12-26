@@ -83,7 +83,7 @@ std::vector<coord_t> generateShifts() {
 }
 
 GeneratorInfo getGeneratorInfo() {
-  return GeneratorInfo{"core_magic_consts", "Generate constants for magic bitboards"};
+  return GeneratorInfo{"Generate constants for magic bitboards"};
 }
 
 int doGenerate(SourcePrinter &p) {

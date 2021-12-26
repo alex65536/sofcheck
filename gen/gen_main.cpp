@@ -15,7 +15,6 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
 #include <utility>
@@ -23,6 +22,7 @@
 #include "common.h"
 #include "util/fileutil.h"
 #include "util/misc.h"
+#include "util/optparse.h"
 #include "util/result.h"
 
 using SoFUtil::openWriteFile;
@@ -34,15 +34,10 @@ int doGenerate(SourcePrinter &printer);
 int main(int argc, char **argv) {
   auto genInfo = getGeneratorInfo();
 
-  cxxopts::Options optionParser("gen_" + genInfo.name, genInfo.description);
-  optionParser.add_options()           //
-      ("h,help", "Show help message")  //
+  SoFUtil::OptParser parser(argc, argv, genInfo.description);
+  parser.addOptions()  //
       ("o,output", "Output file (stdout if not specified)", cxxopts::value<std::string>());
-  auto options = optionParser.parse(argc, argv);
-  if (options.count("help")) {
-    std::cout << optionParser.help() << std::endl;
-    return 0;
-  }
+  auto options = parser.parse();
 
   if (!options.count("output")) {
     SourcePrinter printer(std::cout);

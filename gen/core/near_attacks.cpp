@@ -70,7 +70,7 @@ std::vector<bitboard_t> generateBlackPawnAttacks() {
 }
 
 GeneratorInfo getGeneratorInfo() {
-  return GeneratorInfo{"core_near_attacks", "Generate tables for near attacks"};
+  return GeneratorInfo{"Generate tables for near attacks"};
 }
 
 int doGenerate(SourcePrinter &p) {

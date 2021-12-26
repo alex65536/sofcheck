@@ -147,7 +147,7 @@ void fillWeights(SourcePrinter &p, const Features &features) {
 }
 
 GeneratorInfo getGeneratorInfo() {
-  return GeneratorInfo{"eval_weights", "Parse information about evaluation features from JSON"};
+  return GeneratorInfo{"Parse information about evaluation features from JSON"};
 }
 
 int doGenerate(SourcePrinter &p, const Json::Value &json) {

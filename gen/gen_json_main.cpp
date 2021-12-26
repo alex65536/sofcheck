@@ -17,7 +17,6 @@
 
 #include <json/json.h>
 
-#include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -27,6 +26,7 @@
 #include "common.h"
 #include "util/fileutil.h"
 #include "util/misc.h"
+#include "util/optparse.h"
 #include "util/result.h"
 
 using SoFUtil::openReadFile;
@@ -50,16 +50,11 @@ int doGenerate(SourcePrinter &printer, std::istream &in) {
 int main(int argc, char **argv) {
   auto genInfo = getGeneratorInfo();
 
-  cxxopts::Options optionParser("gen_" + genInfo.name, genInfo.description);
-  optionParser.add_options()                                                             //
-      ("h,help", "Show help message")                                                    //
+  SoFUtil::OptParser parser(argc, argv, genInfo.description);
+  parser.addOptions()                                                                    //
       ("i,input", "Input file (stdin if not specified)", cxxopts::value<std::string>())  //
       ("o,output", "Output file (stdout if not specified)", cxxopts::value<std::string>());
-  auto options = optionParser.parse(argc, argv);
-  if (options.count("help")) {
-    std::cout << optionParser.help() << std::endl;
-    return 0;
-  }
+  auto options = parser.parse();
 
   auto badFile = [&](auto err) { return panic(std::move(err.description)); };
   std::ifstream fileIn;

@@ -17,7 +17,6 @@
 
 #include <array>
 #include <cstring>
-#include <cxxopts.hpp>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -37,6 +36,7 @@
 #include "util/fileutil.h"
 #include "util/logging.h"
 #include "util/misc.h"
+#include "util/optparse.h"
 #include "util/result.h"
 #include "util/strutil.h"
 
@@ -312,14 +312,14 @@ int run(std::istream &jsonIn, std::istream &in, std::ostream &out) {
 
 // TODO: move file format description somewhere else
 constexpr const char *DESCRIPTION =
-    "MakeDataset for SoFCheck\n\nThis utility extracts coefficients from specified FEN boards to "
-    "tune the weights in the engine.\n\nThe file with boards has the following format. It contains "
-    "one or more game sections. Each game section starts with line \"game <winner> <id>\", where "
-    "<winner> is equal to B, W or D depending on the winning side, and <id> is equal to some "
-    "unsigned integer called the game ID. Each of the following lines describe a single board and "
-    "has the format \"board <fen>\", where <fen> is the board encoded as FEN. The boards arrive in "
-    "the same order as they were played. It\'s also worth to mention that the blank lines and the "
-    "lines starting with \"#\" are ignored in the file.";
+    "This utility extracts coefficients from specified FEN boards to tune the weights in the "
+    "engine.\n\nThe file with boards has the following format. It contains one or more game "
+    "sections. Each game section starts with line \"game <winner> <id>\", where <winner> is equal "
+    "to B, W or D depending on the winning side, and <id> is equal to some unsigned integer called "
+    "the game ID. Each of the following lines describe a single board and has the format \"board "
+    "<fen>\", where <fen> is the board encoded as FEN. The boards arrive in the same order as they "
+    "were played. It\'s also worth to mention that the blank lines and the lines starting with "
+    "\"#\" are ignored in the file.";
 
 constexpr const char *FEATURES_DESCRIPTION =
     "The JSON file that contains all the evaluation features";
@@ -334,17 +334,13 @@ int main(int argc, char **argv) {
   std::ios_base::sync_with_stdio(false);
   SoFCore::init();
 
-  cxxopts::Options optionParser("make_dataset", DESCRIPTION);
-  optionParser.add_options()                                               //
-      ("h,help", "Show help message")                                      //
+  SoFUtil::OptParser parser(argc, argv, "MakeDataset for SoFCheck");
+  parser.setLongDescription(DESCRIPTION);
+  parser.addOptions()                                                      //
       ("f,features", FEATURES_DESCRIPTION, cxxopts::value<std::string>())  //
       ("i,input", INPUT_DESCRIPTION, cxxopts::value<std::string>())        //
       ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>());
-  auto options = optionParser.parse(argc, argv);
-  if (options.count("help")) {
-    std::cout << optionParser.help() << std::endl;
-    return 0;
-  }
+  auto options = parser.parse();
 
   auto badFile = [&](auto err) { return panic(std::move(err.description)); };
   std::ifstream jsonIn = openReadFile(options["features"].as<std::string>()).okOrErr(badFile);
