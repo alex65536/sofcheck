@@ -43,7 +43,7 @@ jobs:
             cmake-generator: 'Visual Studio 16 2019'
 
         exclude:
-          - os: macos-latest
+          - suite: macos-clang
             bmi2: 'true'
           - bmi2: 'true'
             builtin-jsoncpp: 'false'
