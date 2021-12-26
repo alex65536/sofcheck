@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        suite: [win-gcc, win-msvc32, win-msvc64, linux-gcc, linux-clang, macos-clang]
+        suite: [win-gcc, win-msvc32, win-msvc64, linux-gcc, linux-clang, macos-gcc, macos-clang]
         bmi1: ['true']
         bmi2: ['true', 'false']
         builtin-jsoncpp: ['true', 'false']
@@ -24,6 +24,10 @@ jobs:
           - suite: linux-clang
             os: ubuntu-latest
             compiler: clang-9
+            cmake-generator: 'Unix Makefiles'
+          - suite: macos-gcc
+            os: macos-latest
+            compiler: gcc-8
             cmake-generator: 'Unix Makefiles'
           - suite: macos-clang
             os: macos-latest
@@ -44,6 +48,8 @@ jobs:
 
         exclude:
           - suite: macos-clang
+            bmi2: 'true'
+          - suite: macos-gcc
             bmi2: 'true'
           - bmi2: 'true'
             builtin-jsoncpp: 'false'
