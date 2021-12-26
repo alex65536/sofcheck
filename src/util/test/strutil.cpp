@@ -92,7 +92,7 @@ TEST(SoFUtil, WordWrap_6) {
 }
 
 TEST(SoFUtil, WordWrap_InfiniteWidth) {
-  constexpr size_t INFINITE_WIDTH = static_cast<size_t>(-1);
+  static constexpr size_t INFINITE_WIDTH = static_cast<size_t>(-1);
 
   const std::string src1 =
       "  This is some text.  \nAs the width is infinite, it will be only splitted by newlines.\n";
@@ -112,7 +112,7 @@ TEST(SoFUtil, WordWrap_InfiniteWidth) {
 }
 
 TEST(SoFUtil, WordWrap_EmptyLines) {
-  const std::string src1 = "";
+  const std::string src1 = "";  // NOLINT(readability-redundant-string-init)
   const std::string src2 = "    ";
   const std::string src3 = "    \n\n   \n";
   const std::string src4 = "\n";
