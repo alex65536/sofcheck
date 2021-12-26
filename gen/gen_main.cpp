@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <cstring>
+#include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
 #include <utility>
@@ -28,19 +28,28 @@
 using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 
+GeneratorInfo getGeneratorInfo();
 int doGenerate(SourcePrinter &printer);
 
 int main(int argc, char **argv) {
-  if (argc == 1) {
+  auto genInfo = getGeneratorInfo();
+
+  cxxopts::Options optionParser("gen_" + genInfo.name, genInfo.description);
+  optionParser.add_options()           //
+      ("h,help", "Show help message")  //
+      ("o,output", "Output file (stdout if not specified)", cxxopts::value<std::string>());
+  auto options = optionParser.parse(argc, argv);
+  if (options.count("help")) {
+    std::cout << optionParser.help() << std::endl;
+    return 0;
+  }
+
+  if (!options.count("output")) {
     SourcePrinter printer(std::cout);
     return doGenerate(printer);
   }
-  if (argc == 2 && strcmp(argv[1], "-h") != 0 && strcmp(argv[1], "--help") != 0) {
-    auto badFile = [&](auto err) { return panic(std::move(err.description)); };
-    std::ofstream file = openWriteFile(argv[1]).okOrErr(badFile);
-    SourcePrinter printer(file);
-    return doGenerate(printer);
-  }
-  std::cerr << "Usage: " << argv[0] << " OUT_FILE" << std::endl;
-  return 1;
+  auto badFile = [&](auto err) { return panic(std::move(err.description)); };
+  std::ofstream file = openWriteFile(options["output"].as<std::string>()).okOrErr(badFile);
+  SourcePrinter printer(file);
+  return doGenerate(printer);
 }

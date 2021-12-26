@@ -34,8 +34,16 @@ Result<std::ifstream, FileError> openReadFile(const char *path) {
   return openFileCommon<std::ifstream>(path);
 }
 
+Result<std::ifstream, FileError> openReadFile(const std::string &path) {
+  return openReadFile(path.c_str());
+}
+
 Result<std::ofstream, FileError> openWriteFile(const char *path) {
   return openFileCommon<std::ofstream>(path);
+}
+
+Result<std::ofstream, FileError> openWriteFile(const std::string &path) {
+  return openWriteFile(path.c_str());
 }
 
 }  // namespace SoFUtil

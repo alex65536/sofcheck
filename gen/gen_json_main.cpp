@@ -17,8 +17,10 @@
 
 #include <json/json.h>
 
+#include <cxxopts.hpp>
 #include <fstream>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <utility>
 
@@ -31,6 +33,7 @@ using SoFUtil::openReadFile;
 using SoFUtil::openWriteFile;
 using SoFUtil::panic;
 
+GeneratorInfo getGeneratorInfo();
 int doGenerate(SourcePrinter &printer, const Json::Value &json);
 
 int doGenerate(SourcePrinter &printer, std::istream &in) {
@@ -45,18 +48,33 @@ int doGenerate(SourcePrinter &printer, std::istream &in) {
 }
 
 int main(int argc, char **argv) {
-  // TODO : improve argument parsing
-  if (argc == 1) {
-    SourcePrinter printer(std::cout);
-    return doGenerate(printer, std::cin);
+  auto genInfo = getGeneratorInfo();
+
+  cxxopts::Options optionParser("gen_" + genInfo.name, genInfo.description);
+  optionParser.add_options()                                                             //
+      ("h,help", "Show help message")                                                    //
+      ("i,input", "Input file (stdin if not specified)", cxxopts::value<std::string>())  //
+      ("o,output", "Output file (stdout if not specified)", cxxopts::value<std::string>());
+  auto options = optionParser.parse(argc, argv);
+  if (options.count("help")) {
+    std::cout << optionParser.help() << std::endl;
+    return 0;
   }
-  if (argc == 3) {
-    auto badFile = [&](auto err) { return panic(std::move(err.description)); };
-    std::ofstream outFile = openWriteFile(argv[1]).okOrErr(badFile);
-    std::ifstream inFile = openReadFile(argv[2]).okOrErr(badFile);
-    SourcePrinter printer(outFile);
-    return doGenerate(printer, inFile);
+
+  auto badFile = [&](auto err) { return panic(std::move(err.description)); };
+  std::ifstream fileIn;
+  std::ofstream fileOut;
+  std::istream *in = &std::cin;
+  std::ostream *out = &std::cout;
+  if (options.count("input")) {
+    fileIn = openReadFile(options["input"].as<std::string>()).okOrErr(badFile);
+    in = &fileIn;
   }
-  std::cerr << "Usage: " << argv[0] << " OUT_FILE IN_FILE" << std::endl;
-  return 1;
+  if (options.count("output")) {
+    fileOut = openWriteFile(options["output"].as<std::string>()).okOrErr(badFile);
+    out = &fileOut;
+  }
+
+  SourcePrinter printer(*out);
+  return doGenerate(printer, *in);
 }
