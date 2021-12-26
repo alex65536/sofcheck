@@ -389,6 +389,7 @@ if(GTest_FOUND)
 
   add_executable(test_util_unit_test
     src/util/test/parallel.cpp
+    src/util/test/strutil.cpp
     src/util/test/valarray.cpp
   )
   target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)
