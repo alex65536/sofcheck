@@ -71,8 +71,8 @@ To install them all on Debian/Ubuntu, use
 $ sudo apt install libgtest-dev libbenchmark-dev libboost-stacktrace-dev libjsoncpp-dev
 ~~~~~
 
-You may also install `libcxxopts-dev`, but it's present in quite new distro releases (Ubuntu 22.04+
-and Debian 12+)
+You may also install `libcxxopts-dev` (version `3.0.0` or later is required), but it's present in
+quite new distro releases (Ubuntu 22.04+ and Debian 12+)
 
 To build the engine, do the following:
 
