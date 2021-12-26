@@ -73,12 +73,17 @@ jobs:
       run: |
         OS="${{ matrix.os }}"
         OS="${OS%%-*}"
+        BMI1="${{ matrix.bmi1 }}"
+        if [[ "$OS" == "macos" ]]; then
+          # Force disable BMI1 on macOS, otherwise we get SIGILL in CI
+          BMI1="false"
+        fi
         (
         cat <<EOF
         {
           "os": "$OS",
           "compiler": "${{ matrix.compiler }}",
-          "bmi1": ${{ matrix.bmi1 }},
+          "bmi1": "$BMI1",
           "bmi2": ${{ matrix.bmi2 }},
           "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
           "builtin-cxxopts": ${{ matrix.builtin-cxxopts }},
