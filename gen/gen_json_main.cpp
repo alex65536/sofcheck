@@ -41,6 +41,7 @@ int doGenerate(SourcePrinter &printer, std::istream &in) {
   std::string errs;
   if (!Json::parseFromStream(builder, in, &json, &errs)) {
     std::cerr << "JSON parse error: " << errs << std::endl;
+    printer.skipHeaderGuard();  // Prevent unnecessary panics with "no header guard" here
     return 1;
   }
   return doGenerate(printer, json);

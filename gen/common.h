@@ -58,6 +58,7 @@ public:
   void coordArray(const char *name, const std::vector<SoFCore::coord_t> &array);
 
   void headerGuard(const std::string &name);
+  void skipHeaderGuard();
 
   class NamespaceScope : public SoFUtil::NoCopyMove {
   public:
@@ -82,6 +83,7 @@ private:
   SoFUtil::SourceFormatter inner_;
   std::string headerGuardName_;
   bool hasHeaderGuard_ = false;
+  bool skipHeaderGuard_ = false;
 };
 
 #endif  // SOF_GEN_COMMON_INCLUDED

@@ -68,6 +68,8 @@ void SourcePrinter::headerGuard(const std::string &name) {
   line() << "#define " << name;
 }
 
+void SourcePrinter::skipHeaderGuard() { skipHeaderGuard_ = true; }
+
 void SourcePrinter::include(const char *header) { line() << "#include \"" << header << "\""; }
 
 void SourcePrinter::sysInclude(const char *header) { line() << "#include <" << header << ">"; }
@@ -80,7 +82,9 @@ SourcePrinter::NamespaceScope::NamespaceScope(SourcePrinter &printer, std::strin
 SourcePrinter::NamespaceScope::~NamespaceScope() { printer_.line() << "}  // namespace " << name_; }
 
 SourcePrinter::~SourcePrinter() {
-  SOF_ASSERT_MSG("No header guard was specified", hasHeaderGuard_);
-  skip();
-  line() << "#endif  // " << headerGuardName_;
+  if (!skipHeaderGuard_) {
+    SOF_ASSERT_MSG("No header guard was specified", hasHeaderGuard_);
+    skip();
+    line() << "#endif  // " << headerGuardName_;
+  }
 }
