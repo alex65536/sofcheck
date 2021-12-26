@@ -16,6 +16,18 @@ jobs:
         builtin-jsoncpp: ['true', 'false']
         builtin-cxxopts: ['true', 'false']
 
+        exclude:
+          - suite: macos-clang
+            bmi2: 'true'
+          - suite: macos-gcc
+            bmi2: 'true'
+          - bmi2: 'true'
+            builtin-jsoncpp: 'false'
+          - builtin-jsoncpp: 'false'
+            builtin-cxxopts: 'true'
+          - builtin-jsoncpp: 'true'
+            builtin-cxxopts: 'false'
+
         include:
           - suite: linux-gcc
             os: ubuntu-latest
@@ -45,18 +57,6 @@ jobs:
             os: windows-latest
             compiler: msvc64
             cmake-generator: 'Visual Studio 16 2019'
-
-        exclude:
-          - suite: macos-clang
-            bmi2: 'true'
-          - suite: macos-gcc
-            bmi2: 'true'
-          - bmi2: 'true'
-            builtin-jsoncpp: 'false'
-          - builtin-jsoncpp: 'false'
-            builtin-cxxopts: 'true'
-          - builtin-jsoncpp: 'true'
-            builtin-cxxopts: 'false'
 
     runs-on: ${{ matrix.os }}
 
