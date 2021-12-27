@@ -269,7 +269,7 @@ p_build.add_argument('-d', '--diagnostic',
                      action='store_true', help='build in diagnostic mode')
 p_test = subparsers.add_parser('test', help='test project')
 p_test.add_argument('-d', '--diagnostic',
-                     action='store_true', help='build in diagnostic mode')
+                    action='store_true', help='build in diagnostic mode')
 
 args = parser.parse_args()
 
