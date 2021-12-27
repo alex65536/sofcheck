@@ -246,6 +246,7 @@ target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 add_library(sof_eval STATIC
   src/eval/evaluate.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
+  "${PROJECT_BINARY_DIR}/src/eval/private/metric.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
 )
@@ -336,6 +337,11 @@ generate_file_json(
   src/eval/features.json
 )
 target_link_libraries(gen_eval_feature_count sof_eval_feat)
+
+generate_file(
+  gen/eval/metric.cpp
+  src/eval/private/metric.h
+)
 
 generate_file_json(
   gen/eval/weight_values.cpp

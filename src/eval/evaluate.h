@@ -88,6 +88,10 @@ private:
   inline static constexpr int16_t colorCoef(const SoFCore::Color c) {
     return (c == SoFCore::Color::White) ? +1 : -1;
   }
+
+  // Helper function, evaluates only the features for pieces belonging to the color `C`
+  template <SoFCore::Color C>
+  S evalByColor(const SoFCore::Board &b);
 };
 
 }  // namespace SoFEval

@@ -49,10 +49,6 @@
   test must be performed only one time, as it will be unable to perform it in the future, when many
   other heuristics will appear.
 
-* Use flags in SoFCheck
-  `Searcher::doSearch()` contains `flags` parameter, which is unused now. We need to utilize it and
-  remove corresponding `[[maybe_unused]]` attributes.
-
 * Do not analyze the same node twice in multiple threads
   To do this, we may put a flag `busy` into the hash table, which indicates that this position is
   already being analysed. If we encounter a busy position during the search, we just skip it and

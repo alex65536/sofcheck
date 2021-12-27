@@ -86,4 +86,6 @@ private:
   bool skipHeaderGuard_ = false;
 };
 
+void printBitboard(std::ostream &out, SoFCore::bitboard_t val);
+
 #endif  // SOF_GEN_COMMON_INCLUDED

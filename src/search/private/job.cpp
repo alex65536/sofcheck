@@ -37,6 +37,8 @@
 #include "search/private/types.h"
 #include "search/private/util.h"
 #include "util/misc.h"
+#include "util/no_copy_move.h"
+#include "util/operators.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -75,13 +77,71 @@ void JobCommunicator::stop() {
   stopEvent_.notify_all();
 }
 
+// RAII wrapper that unmakes the move on destruction
+class MoveMakeGuard : public SoFUtil::NoCopyMove {
+public:
+  // Makes a move `move` on board `board`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
+  // `tag.isValid(board)` must hold
+  MoveMakeGuard(Board &board, const Move move, const Evaluator::Tag &tag)
+      : board_(board),
+        tag_(tag.updated(board, move)),
+        persistence_(moveMake(board, move)),
+        move_(move),
+        active_(true) {
+    DGN_ASSERT(tag_.isValid(board_));
+  }
+
+  // Unmakes the move, releasing the guard
+  void release() {
+    if (active_) {
+      active_ = false;
+      moveUnmake(board_, move_, persistence_);
+    }
+  }
+
+  // Returns the tag equal to `Tag::from(board_)` at the time the guard was created
+  Evaluator::Tag tag() const {
+    DGN_ASSERT(active_);
+    return tag_;
+  }
+
+  ~MoveMakeGuard() { release(); }
+
+private:
+  Board &board_;
+  Evaluator::Tag tag_;
+  MovePersistence persistence_;
+  Move move_;
+  bool active_;
+};
+
 class Searcher {
 public:
   enum class NodeKind { Root, Pv, Simple };
 
-  inline constexpr static bool isNodeKindPv(const NodeKind kind) {
-    return kind == NodeKind::Root || kind == NodeKind::Pv;
-  }
+  // Search flags
+  enum class Flags : uint64_t {
+    None = 0,
+    // The last move was capture
+    Capture = 1,
+    // We are inside the null move search
+    NullMove = 2,
+    // Null move reduction was applied in this branch
+    NullMoveReduction = 4,
+    // Late move reduction was applied in this branch
+    LateMoveReduction = 8,
+
+    // Below there are predefined flag sets
+
+    // All flags are set
+    All = 15,
+    // Flags set by default
+    Default = 0,
+    // Flags that are preserved when doing a recursive call
+    Inherit = NullMove | NullMoveReduction | LateMoveReduction,
+    // Each of these flags disables null move heuristics
+    NullMoveDisable = NullMove | NullMoveReduction | Capture
+  };
 
   inline Searcher(Job &job, Board &board, const SearchLimits &limits, RepetitionTable &repetitions)
       : board_(board),
@@ -97,7 +157,7 @@ public:
     depth_ = depth;
     const score_t score =
         search<NodeKind::Root>(static_cast<int32_t>(depth), 0, -SCORE_INF, SCORE_INF,
-                               Evaluator::Tag::from(board_), FLAGS_DEFAULT);
+                               Evaluator::Tag::from(board_), Flags::Default);
     DGN_ASSERT(isScoreValid(score));
     bestMove = stack_[0].bestMove;
     return score;
@@ -109,14 +169,9 @@ private:
     Move bestMove = Move::null();
   };
 
-  // Search flags type
-  using flags_t = uint64_t;
-
-  // Search flags
-  static constexpr flags_t FLAG_CAPTURE = 1;
-
-  // Predefined search flag sets
-  static constexpr flags_t FLAGS_DEFAULT = 0;
+  inline constexpr static bool isNodeKindPv(const NodeKind kind) {
+    return kind == NodeKind::Root || kind == NodeKind::Pv;
+  }
 
   inline bool mustStop() const {
     if (comm_.isStopped()) {
@@ -134,22 +189,24 @@ private:
 
   template <NodeKind Node>
   inline score_t search(const size_t depth, const size_t idepth, const score_t alpha,
-                        const score_t beta, const Evaluator::Tag tag, const flags_t flags) {
+                        const score_t beta, const Evaluator::Tag tag, const Flags flags) {
     tt_.prefetch(board_.hash);
     if (!repetitions_.insert(board_.hash)) {
       return 0;
     }
+    DIAGNOSTIC(const SoFCore::board_hash_t savedHash = board_.hash);
     const score_t score =
         doSearch<Node>(static_cast<int32_t>(depth), idepth, alpha, beta, tag, flags);
     DGN_ASSERT(score <= alpha || score >= beta ||
                isScoreValid(adjustCheckmate(score, -static_cast<int16_t>(idepth))));
+    DGN_ASSERT(board_.hash == savedHash);
     repetitions_.erase(board_.hash);
     return score;
   }
 
   template <NodeKind Node>
   score_t doSearch(int32_t depth, size_t idepth, score_t alpha, score_t beta, Evaluator::Tag tag,
-                   flags_t flags);
+                   Flags flags);
 
   score_t quiescenseSearch(score_t alpha, score_t beta, Evaluator::Tag tag);
 
@@ -162,12 +219,15 @@ private:
   Evaluator evaluator_;
   size_t jobId_;
 
-  Frame stack_[MAX_DEPTH + 10];
+  Frame stack_[MAX_STACK_DEPTH];
   HistoryTable history_;
   size_t depth_ = 0;
   mutable size_t counter_ = 0;
   steady_clock::time_point startTime_;
 };
+
+SOF_ENUM_BITWISE(Searcher::Flags, uint64_t)
+SOF_ENUM_EQUAL(Searcher::Flags, uint64_t)
 
 class RootNodeMovePicker {
 public:
@@ -241,18 +301,16 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     return 0;
   }
 
-  {
-    const score_t score = evaluator_.evalForCur(board_, tag);
-    DIAGNOSTIC({
-      if (alpha < score && score < beta) {
-        DGN_ASSERT(isScoreValid(score));
-        DGN_ASSERT(!isScoreCheckmate(score));
-      }
-    });
-    alpha = std::max(alpha, score);
-    if (alpha >= beta) {
-      return beta;
+  const score_t evalScore = evaluator_.evalForCur(board_, tag);
+  DIAGNOSTIC({
+    if (alpha < evalScore && evalScore < beta) {
+      DGN_ASSERT(isScoreValid(evalScore));
+      DGN_ASSERT(!isScoreCheckmate(evalScore));
     }
+  });
+  alpha = std::max(alpha, evalScore);
+  if (alpha >= beta) {
+    return beta;
   }
 
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
@@ -262,25 +320,22 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const Evaluator::Tag newTag = tag.updated(board_, move);
-    const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newTag.isValid(board_));
+    MoveMakeGuard guard(board_, move, tag);
     if (!isMoveLegal(board_)) {
-      moveUnmake(board_, move, persistence);
       continue;
     }
     results_.inc(JobStat::Nodes);
-    const score_t score = -quiescenseSearch(-beta, -alpha, newTag);
+    const score_t score = -quiescenseSearch(-beta, -alpha, guard.tag());
     DIAGNOSTIC({
       if (alpha < score && score < beta) {
         DGN_ASSERT(isScoreValid(score));
         DGN_ASSERT(!isScoreCheckmate(score));
       }
     });
-    moveUnmake(board_, move, persistence);
     if (mustStop()) {
       return 0;
     }
+    guard.release();
     alpha = std::max(alpha, score);
     if (alpha >= beta) {
       return beta;
@@ -291,9 +346,8 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
 }
 
 template <Searcher::NodeKind Node>
-score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alpha,
-                           const score_t beta, const Evaluator::Tag tag,
-                           [[maybe_unused]] const flags_t flags) {
+score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, const score_t beta,
+                           const Evaluator::Tag tag, Flags flags) {
   const score_t origAlpha = alpha;
   const score_t origBeta = beta;
   Frame &frame = stack_[idepth];
@@ -309,8 +363,11 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
     }
   }
 
-  // Run quiescence search in leaf node
-  if (depth <= 0) {
+  // Run quiescence search. We do this in two cases: either the depth is less than zero, meaning
+  // that it's the leaf node, or that we will overflow the `stack_` array if we continue the
+  // recursion. The second case is pretty unlikely, but is necessary to improve the engine
+  // robustness
+  if (depth <= 0 || idepth + 1 == MAX_STACK_DEPTH) {
     if (alpha >= SCORE_CHECKMATE_THRESHOLD) {
       return alpha;
     }
@@ -367,40 +424,99 @@ score_t Searcher::doSearch(const int32_t depth, const size_t idepth, score_t alp
     }
   }
 
+  const bool isInCheck = isCheck(board_);
+  const bool isMateBounds =
+      alpha <= -SCORE_CHECKMATE_THRESHOLD || beta >= SCORE_CHECKMATE_THRESHOLD;
+
+  // Futility pruning
+  if (!isNodeKindPv(Node) && depth <= Futility::MAX_DEPTH && !isInCheck && !isMateBounds) {
+    const score_t threshold = beta + Futility::MARGIN;
+    if (evaluator_.evalForCur(board_, tag) >= threshold) {
+      return beta;
+    }
+  }
+
+  // Null move heuristics. Currently, it's implemented as null move reduction, as this variant is
+  // less prone to zugzwang and not significantly slower than just pruning the branch
+  const bool canNullMove = !isNodeKindPv(Node) && depth >= NullMove::MIN_DEPTH && !isInCheck &&
+                           !isMateBounds && (flags & Flags::NullMoveDisable) == Flags::None;
+  if (canNullMove) {
+    MoveMakeGuard guard(board_, Move::null(), tag);
+    DGN_ASSERT(isMoveLegal(board_));
+    results_.inc(JobStat::Nodes);
+    const Flags newFlags = (flags & Flags::Inherit) | Flags::NullMove;
+    const score_t score = -search<NodeKind::Simple>(depth - NullMove::DEPTH_DEC, idepth + 1, -beta,
+                                                    -beta + 1, guard.tag(), newFlags);
+    if (mustStop()) {
+      return 0;
+    }
+    guard.release();
+    if (score >= beta) {
+      depth -= NullMove::REDUCTION_DEC;
+      flags |= Flags::NullMoveReduction;
+      DGN_ASSERT(depth > 0);
+    }
+  }
+
   // Iterate over the moves in the sorted order
   auto picker = MovePickerFactory<Node>::create(jobId_, board_, hashMove, frame.killers, history_);
   bool hasMove = false;
+  size_t numHistoryMoves = 0;
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const Evaluator::Tag newTag = tag.updated(board_, move);
-    const MovePersistence persistence = moveMake(board_, move);
-    DGN_ASSERT(newTag.isValid(board_));
+    const bool isCapture = isMoveCapture(board_, move);
+    MoveMakeGuard guard(board_, move, tag);
     if (!isMoveLegal(board_)) {
-      moveUnmake(board_, move, persistence);
       continue;
     }
+    if constexpr (Node != NodeKind::Root) {
+      if (picker.stage() == MovePickerStage::History) {
+        ++numHistoryMoves;
+      }
+    }
     results_.inc(JobStat::Nodes);
-    const flags_t newFlags = isMoveCapture(board_, move) ? FLAG_CAPTURE : 0;
-    if (hasMove && beta != alpha + 1 &&
-        -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, newTag, newFlags) <=
-            alpha) {
-      moveUnmake(board_, move, persistence);
+    const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::Capture : Flags::None);
+
+    // Late move reduction (LMR)
+    if constexpr (Node != NodeKind::Root) {
+      const bool lmrEnabled = hasMove && !isNodeKindPv(Node) && depth >= LateMove::MIN_DEPTH &&
+                              picker.stage() == MovePickerStage::History &&
+                              numHistoryMoves > LateMove::MOVES_NO_REDUCE && !isCheck(board_);
+      if (lmrEnabled) {
+        const score_t score =
+            -search<NodeKind::Simple>(depth - 1 - LateMove::REDUCE_DEPTH, idepth + 1, -alpha - 1,
+                                      -alpha, guard.tag(), newFlags | Flags::LateMoveReduction);
+        if (mustStop()) {
+          return 0;
+        }
+        if (score <= alpha) {
+          continue;
+        }
+      }
+    }
+
+    if (hasMove && beta != alpha + 1) {
+      const score_t score = -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha,
+                                                      guard.tag(), newFlags);
       if (mustStop()) {
         return 0;
       }
-      continue;
+      if (score <= alpha) {
+        continue;
+      }
     }
     hasMove = true;
     constexpr NodeKind newNode = (Node == NodeKind::Simple ? NodeKind::Simple : NodeKind::Pv);
-    const score_t score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, newTag, newFlags);
-    moveUnmake(board_, move, persistence);
+    const score_t score =
+        -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, guard.tag(), newFlags);
     if (mustStop()) {
       return 0;
     }
+    guard.release();
     if (score > alpha) {
       alpha = score;
       frame.bestMove = move;

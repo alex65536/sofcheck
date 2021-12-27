@@ -22,12 +22,14 @@
 #include <utility>
 
 #include "eval/coefs.h"
+#include "eval/private/metric.h"
 #include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/bit.h"
 
 namespace SoFEval {
 
+using SoFCore::bitboard_t;
 using SoFCore::Board;
 using SoFCore::cell_t;
 using SoFCore::Color;
@@ -47,6 +49,8 @@ constexpr uint32_t STAGES[15] = {
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE, 0,
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE};
 
+constexpr coef_t QUEEN_DISTANCES[8] = {0, 3, 2, 1, 0, 0, 0, 0};
+
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
   using Weights = Private::Weights<S>;
@@ -65,6 +69,9 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
   using Weights = Private::Weights<S>;
 
   auto result = *this;
+  if (move.kind == MoveKind::Null) {
+    return result;
+  }
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
     result.inner_ += Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)];
@@ -95,20 +102,39 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
 
 template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
-  using Weights = Private::Weights<S>;
-
   const uint32_t rawStage = ((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE;
   const uint32_t stage = std::min<uint32_t>(rawStage, 256);
 
   auto result =
       static_cast<S>((tag.inner_.first() * stage + tag.inner_.second() * (256 - stage)) >> 8);
-  // TODO : do not write the same code for white and black twice
-  if (SoFUtil::popcount(b.bbPieces[makeCell(Color::White, Piece::Bishop)]) >= 2) {
+  result += evalByColor<Color::White>(b);
+  result -= evalByColor<Color::Black>(b);
+
+  return result;
+}
+
+template <typename S>
+template <Color C>
+S Evaluator<S>::evalByColor(const Board &b) {
+  using Weights = Private::Weights<S>;
+
+  // Calculate pairs of bishops
+  S result{};
+  if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Bishop)]) >= 2) {
     result += Weights::TWO_BISHOPS;
   }
-  if (SoFUtil::popcount(b.bbPieces[makeCell(Color::Black, Piece::Bishop)]) >= 2) {
-    result -= Weights::TWO_BISHOPS;
+
+  // Calculate queens near to the opponent's king
+  const auto king =
+      static_cast<coord_t>(SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]));
+  const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
+  coef_t nearCount = 0;
+  for (size_t i = 1; i < 8; ++i) {
+    nearCount +=
+        QUEEN_DISTANCES[i] *
+        static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen));
   }
+  result += static_cast<S>(Weights::QUEEN_NEAR_TO_KING * nearCount);
 
   return result;
 }
