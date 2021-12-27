@@ -24,7 +24,7 @@ namespace SoFSearch::Private {
 
 // Maximum allowed depth
 constexpr size_t MAX_DEPTH = 255;
-// Size of the search stack, i. e. maximum allowed value of `idepth`, minus one
+// Size of the search stack, i. e. maximum allowed value of `idepth` minus one
 constexpr size_t MAX_STACK_DEPTH = MAX_DEPTH + 10;
 
 // Constants for tuning null move heuristics
@@ -37,8 +37,7 @@ constexpr int32_t DEPTH_DEC = 3;
 // Depth decrement when null-move reduction is applied
 constexpr int32_t REDUCTION_DEC = 4;
 
-// Verify that we cannot reach `depth <= 0` after the reduction
-static_assert(MIN_DEPTH > REDUCTION_DEC);
+static_assert(MIN_DEPTH > REDUCTION_DEC, "We must not reach depth <= 0 after reduction");
 }  // namespace NullMove
 
 // Constants for tuning futility pruning

@@ -123,9 +123,9 @@ public:
   enum class Flags : uint64_t {
     None = 0,
     // The last move was capture
-    IsCapture = 1,
+    Capture = 1,
     // We are inside the null move search
-    IsNullMove = 2,
+    NullMove = 2,
     // Null move reduction was applied in this branch
     NullMoveReduction = 4,
     // Late move reduction was applied in this branch
@@ -137,10 +137,10 @@ public:
     All = 15,
     // Flags set by default
     Default = 0,
-    // Flags not to be reset when doing a recursive call
-    Inherit = IsNullMove | NullMoveReduction | LateMoveReduction,
+    // Flags that are preserved when doing a recursive call
+    Inherit = NullMove | NullMoveReduction | LateMoveReduction,
     // Each of these flags disables null move heuristics
-    NullMoveDisable = IsNullMove | NullMoveReduction | IsCapture
+    NullMoveDisable = NullMove | NullMoveReduction | Capture
   };
 
   inline Searcher(Job &job, Board &board, const SearchLimits &limits, RepetitionTable &repetitions)
@@ -444,7 +444,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     MoveMakeGuard guard(board_, Move::null(), tag);
     DGN_ASSERT(isMoveLegal(board_));
     results_.inc(JobStat::Nodes);
-    const Flags newFlags = (flags & Flags::Inherit) | Flags::IsNullMove;
+    const Flags newFlags = (flags & Flags::Inherit) | Flags::NullMove;
     const score_t score = -search<NodeKind::Simple>(depth - NullMove::DEPTH_DEC, idepth + 1, -beta,
                                                     -beta + 1, guard.tag(), newFlags);
     if (mustStop()) {
@@ -479,13 +479,13 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       }
     }
     results_.inc(JobStat::Nodes);
-    const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::IsCapture : Flags::None);
+    const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::Capture : Flags::None);
 
     // Late move reduction (LMR)
     if constexpr (Node != NodeKind::Root) {
-      const bool lmrEnabled =
-          hasMove && !isNodeKindPv(Node) && !isCheck(board_) && depth >= LateMove::MIN_DEPTH &&
-          picker.stage() == MovePickerStage::History && numHistoryMoves > LateMove::MOVES_NO_REDUCE;
+      const bool lmrEnabled = hasMove && !isNodeKindPv(Node) && depth >= LateMove::MIN_DEPTH &&
+                              picker.stage() == MovePickerStage::History &&
+                              numHistoryMoves > LateMove::MOVES_NO_REDUCE && !isCheck(board_);
       if (lmrEnabled) {
         const score_t score =
             -search<NodeKind::Simple>(depth - 1 - LateMove::REDUCE_DEPTH, idepth + 1, -alpha - 1,

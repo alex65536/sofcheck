@@ -124,7 +124,7 @@ S Evaluator<S>::evalByColor(const Board &b) {
     result += Weights::TWO_BISHOPS;
   }
 
-  // Calculate queens near to opponent's king
+  // Calculate queens near to the opponent's king
   const auto king =
       static_cast<coord_t>(SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]));
   const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
