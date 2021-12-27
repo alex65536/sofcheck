@@ -27,6 +27,8 @@ namespace SoFUtil {
 
 // Wrapper for `cxxopts::Options`. It extends the features of `cxxopts`. For example, it allows to
 // use long descriptions with word-wrapping in help messages
+//
+// See also: https://github.com/jarro2783/cxxopts/issues/321
 class OptParser {
 public:
   OptParser(int argc, const char *const *argv, std::string description);
