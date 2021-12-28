@@ -40,8 +40,7 @@ enum class FenParseResult {
   CastlingDuplicate,
   CastlingFieldMissing,
   EnpassantInvalidCell,
-  RedundantData,
-  InternalError
+  RedundantData
 };
 
 enum class ValidateResult {

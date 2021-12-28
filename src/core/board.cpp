@@ -26,6 +26,7 @@
 #include "core/private/zobrist.h"
 #include "core/strutil.h"
 #include "util/bit.h"
+#include "util/misc.h"
 #include "util/strutil.h"
 
 namespace SoFCore {
@@ -221,7 +222,7 @@ FenParseResult Board::setFromFen(const char *fen) {
     if (c == ' ') {
       D_PARSE_CHECK(y == 8, FenParseResult::BoardRowUnderflow);
       D_PARSE_CHECK(x == 7, FenParseResult::BoardNotEnoughRows);
-      D_PARSE_CHECK(cur == 64, FenParseResult::InternalError);
+      SOF_ASSERT(cur == 64);
       break;
     }
     D_PARSE_CHECK(y < 8, FenParseResult::BoardRowOverflow);
