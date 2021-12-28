@@ -40,7 +40,6 @@ using SoFBotApi::ApiResult;
 using SoFBotApi::TimeControl;
 using SoFCore::Board;
 using SoFCore::Move;
-using SoFUtil::panic;
 
 // Type of log entry
 constexpr const char *ENGINE = "Engine";
