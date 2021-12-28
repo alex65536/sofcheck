@@ -72,8 +72,6 @@ const char *fenParseResultToStr(const FenParseResult res) {
       return "Invalid enpassant cell";
     case FenParseResult::RedundantData:
       return "Redundant data in the string";
-    case FenParseResult::InternalError:
-      return "Internal parser error";
   }
   return "";
 }
