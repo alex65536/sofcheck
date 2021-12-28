@@ -32,6 +32,8 @@ int doGenerate(SourcePrinter &p, const Json::Value &json) {
 
   p.headerGuard("SOF_EVAL_FEATURE_COUNT_INCLUDED");
   p.skip();
+  p.sysInclude("cstddef");
+  p.skip();
   auto ns = p.inNamespace("SoFEval");
   p.skip();
   p.line() << "// Total number of features";

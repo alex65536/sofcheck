@@ -66,9 +66,7 @@ void Engine::disconnect() {
 Engine::Engine() : options_(makeOptions(this)), p_(std::make_unique<Impl>()) {}
 
 Engine::~Engine() {
-  if (SOF_UNLIKELY(server_)) {
-    panic("Server was not disconnected properly");
-  }
+  SOF_ASSERT_MSG("Server was not disconnected properly", !server_);
 }
 
 SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {

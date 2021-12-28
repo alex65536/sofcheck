@@ -77,9 +77,7 @@ constexpr const char *UCI_SERVER = "UCI server";
   }
 
 void UciServerConnector::ensureClient() {
-  if (SOF_UNLIKELY(!client_)) {
-    panic("The client is not connected");
-  }
+  SOF_ASSERT_MSG("The client is not connected", client_);
 }
 
 ApiResult UciServerConnector::finishSearch(const Move bestMove) {
@@ -720,9 +718,7 @@ PollResult UciServerConnector::processUciCommand(std::istream &tokens) {
 }
 
 ApiResult UciServerConnector::connect(Client *client) {
-  if (SOF_UNLIKELY(client_)) {
-    panic("The client is already connected");
-  }
+  SOF_ASSERT_MSG("The client is already connected", !client_);
   client_ = client;
   return ApiResult::Ok;
 }
@@ -738,9 +734,7 @@ UciServerConnector::UciServerConnector(std::istream &in, std::ostream &out)
     : searchStarted_(false), debugEnabled_(false), client_(nullptr), in_(in), out_(out) {}
 
 UciServerConnector::~UciServerConnector() {
-  if (SOF_UNLIKELY(client_)) {
-    panic("Client was not disconnected properly");
-  }
+  SOF_ASSERT_MSG("Client was not disconnected properly", !client_);
 }
 
 }  // namespace SoFBotApi::Clients

@@ -50,9 +50,7 @@ public:
   constexpr const_iterator end() const { return data_.begin() + size_; }
 
   constexpr void push_back(T item) {  // NOLINT(readability-identifier-naming)
-    if (size_ == Size) {
-      panic("SmallVector size exceeds its capacity");
-    }
+    SOF_ASSERT_MSG("SmallVector size exceeds its capacity", size_ != Size);
     data_[size_++] = std::move(item);
   }
 
