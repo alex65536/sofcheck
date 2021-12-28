@@ -74,9 +74,6 @@ enum class Color : int8_t { White = 0, Black = 1 };
 // Piece kind type
 enum class Piece : int8_t { Pawn = 0, King = 1, Knight = 2, Bishop = 3, Rook = 4, Queen = 5 };
 
-// Full bitboard (i.e. containing all bits set to one)
-constexpr bitboard_t BITBOARD_FULL = ~static_cast<bitboard_t>(0);
-
 // Color offsets
 constexpr cell_t WHITE_OFFSET = 1;
 constexpr cell_t BLACK_OFFSET = 9;
