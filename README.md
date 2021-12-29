@@ -32,7 +32,7 @@ and alpha-beta pruning to find out how to analyze positions. The main features o
   relatively easy add new communication protocols to the engine or integrate it into your GUI. Now
   the engine supports only UCI, but the situation will change in the future.
 
-To learn more, see [the project design](DESIGN.md).
+To learn more, see [the project design](docs/design.md).
 
 ## State of the project
 
