@@ -58,6 +58,8 @@ below description means one or more spaces.
   a list of valid moves in UCI format, separated by one or more spaces. There must be at least one
   board in the list of boards before this command.
 
+The file format is case-sensitive, so all the commands above must be written in lower case.
+
 A game is considered _canonical_ if there is at most one `title` command and exactly one command
 from the set (`startpos`, `fen`). If the whole file contains only canonical games, it is considered
 _canonical_.
