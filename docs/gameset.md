@@ -67,13 +67,13 @@ The following file is canonical.
 
 ```
 # Fool's mate: 1. g4 e5 f3 Qh4#.
-game W 1
+game W fools_mate
 start
 moves g2g4 e7e5 f2f3 d8h4
 
 # Okay, let's see a drawn game
 # You will get a draw by repetitions
-game D 1
+game D -
 board 7k/4Q1p1/8/8/8/8/rrp5/2K5 w - - 0 1
 moves e7e8 h8h7 e8h5 h7g8 h5e8 g8h7 e8h5 h7g8 h5e8 g8h7
 ```
