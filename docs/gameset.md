@@ -61,6 +61,23 @@ A game is considered _canonical_ if there is at most one `title` command and exa
 from the set (`startpos`, `fen`). If the whole file contains only canonical games, it is considered
 _canonical_.
 
+## Example
+
+The following file is canonical.
+
+```
+# Fool's mate: 1. g4 e5 f3 Qh4#.
+game W 1
+start
+moves g2g4 e7e5 f2f3 d8h4
+
+# Okay, let's see a drawn game
+# You will get a draw by repetitions
+game D 1
+board 7k/4Q1p1/8/8/8/8/rrp5/2K5 w - - 0 1
+moves e7e8 h8h7 e8h5 h7g8 h5e8 g8h7 e8h5 h7g8 h5e8 g8h7
+```
+
 ## Implementation
 
 Files in `SoFGameSet` format are produced by [Battlefield][1]. Versions `0.9.12` or later produce
