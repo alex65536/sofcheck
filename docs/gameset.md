@@ -41,18 +41,19 @@ considered empty.
 Known command names (with the corresponding command bodies) are described below. A space in the
 below description means one or more spaces.
 
-- `game <winner> <label>`. Starts a new game with winner `<winner>` and label `<label>`. Everything
+- `game <winner> <label>`: Starts a new game with winner `<winner>` and label `<label>`. Everything
   after `<label>` must be ignored, as it is reserved for future use. Each game has a list of
   boards, initially empty. In the end, each game must have a non-empty list of boards. `<winner>`
   must be equal to either `W` (white wins), `B` (black wins), `D` (draw) or `?` (game not
   finished). `<label>` must consist of the characters from the set `[0-9a-zA-Z_]` and should
-  uniquely identify each game in the file. If `<label>` is not specified, it must be equal to `-`.
-- `title <title>`. Sets the current game title to `<title>`. `<title>` is arbitrary UTF-8 string
-  that doesn't contain line endings.
-- `start`. Adds the initial position to the list of boards.
-- `board <board>`. Adds the position specified by FEN string `<board>` to the list of boards.
+  uniquely identify each game in the file and should be no more than `64` characters long. If
+  `<label>` is not specified, it must be equal to `-`.
+- `title <title>`: Sets the current game title to `<title>`. `<title>` is arbitrary UTF-8 string
+  that doesn't contain line endings. Title should be no more than `2048` UTF-8 characters long.
+- `start`: Adds the initial position to the list of boards.
+- `board <board>`: Adds the position specified by FEN string `<board>` to the list of boards.
   `<board>` must be a valid FEN.
-- `moves <moves>`. Adds new boards to the list, by applying the moves to the last board one by
+- `moves <moves>`: Adds new boards to the list, by applying the moves to the last board one by
   one. Thus, the number of added boards is equal to the number of provided moves. `<moves>` must be
   a list of valid moves in UCI format, separated by one or more spaces. There must be at least one
   board in the list of boards before this command.
