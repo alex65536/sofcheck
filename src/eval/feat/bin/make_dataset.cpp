@@ -199,8 +199,9 @@ public:
         continue;
       }
 
-      // Ignore boards after capture
-      if (idx != 0 && isMoveCapture(boards[idx - 1], moves[idx - 1])) {
+      // Ignore boards after capture or promote
+      if (idx != 0 && (isMoveCapture(boards[idx - 1], moves[idx - 1]) ||
+                       isMoveKindPromote(moves[idx - 1].kind))) {
         continue;
       }
 
