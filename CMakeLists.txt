@@ -288,7 +288,10 @@ target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 add_executable(make_dataset
   src/eval/feat/bin/make_dataset.cpp
 )
-target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat ${JSONCPP_TARGET})
+target_link_libraries(
+  make_dataset
+  sof_core sof_util sof_eval sof_eval_feat sof_gameset ${JSONCPP_TARGET}
+)
 
 add_executable(apply_weights
   src/eval/feat/bin/apply_weights.cpp
