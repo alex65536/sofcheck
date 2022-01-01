@@ -36,6 +36,15 @@ def bin_path(path):
 FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
 
 
+def show_owl(args):
+    print('''\
+   ^ ^
+   @,@
+  ((_))
+   ^ ^
+''', end='')
+
+
 def show_weights(args):
     subprocess.check_call([bin_path(['show_weights']), '-f', FEATURES_PATH])
 
@@ -51,8 +60,9 @@ def make_dataset(args):
 
 parser = argparse.ArgumentParser(
     description='Script to run SoFCheck utilites more conveniently')
+parser.set_defaults(func=show_owl)
 subparsers = parser.add_subparsers(
-    help='command to execute', dest='cmd', required=True)
+    help='command to execute', dest='cmd')
 
 weights_parser = subparsers.add_parser(
     'weights', aliases=['w', 'wt'], help='manipulate feature weights')
