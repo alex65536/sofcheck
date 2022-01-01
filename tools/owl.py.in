@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+# This file is part of SoFCheck
+#
+# Copyright (c) 2022 Alexander Kernozhitsky and SoFCheck contributors
+#
+# SoFCheck is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SoFCheck is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
+
+import argparse
+import os
+import subprocess
+import sys
+
+SOURCE_DIR = '@PROJECT_SOURCE_DIR@'
+BINARY_DIR = '@PROJECT_BINARY_DIR@'
+
+
+def src_path(path):
+    return os.path.join(*([SOURCE_DIR] + path))
+
+
+def bin_path(path):
+    return os.path.join(*([BINARY_DIR] + path))
+
+
+FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
+
+
+def show_weights(args):
+    subprocess.check_call([bin_path(['show_weights']), '-f', FEATURES_PATH])
+
+
+def apply_weights(args):
+    subprocess.check_call([bin_path(['apply_weights']), '-f', FEATURES_PATH])
+
+
+def make_dataset(args):
+    cmdline = [bin_path(['make_dataset']), '-f', FEATURES_PATH] + args.flags
+    subprocess.check_call(cmdline)
+
+
+parser = argparse.ArgumentParser(
+    description='Script to run SoFCheck utilites more conveniently')
+subparsers = parser.add_subparsers(
+    help='command to execute', dest='cmd', required=True)
+
+weights_parser = subparsers.add_parser(
+    'weights', aliases=['w', 'wt'], help='manipulate feature weights')
+weights_subparsers = weights_parser.add_subparsers(
+    help='subcommand to execute', dest='subcmd', required=True)
+show_parser = weights_subparsers.add_parser(
+    'show', aliases=['s'], help='show feature weights')
+show_parser.set_defaults(func=show_weights)
+apply_parser = weights_subparsers.add_parser(
+    'apply', aliases=['a'], help='apply feature weights')
+apply_parser.set_defaults(func=apply_weights)
+
+dataset_parser = subparsers.add_parser(
+    'dataset', aliases=['d', 'ds'], help='create a dataset via make_dataset')
+dataset_parser.add_argument(
+    'flags', nargs='*', help='arguments for make_dataset')
+dataset_parser.set_defaults(func=make_dataset)
+
+args = parser.parse_args()
+try:
+    args.func(args)
+except Exception as exc:
+    etype = type(exc).__name__
+    emsg = str(exc)
+    sys.stderr.write(f'Error {etype}: {emsg}\n')
+    sys.exit(1)

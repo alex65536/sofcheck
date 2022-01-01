@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -306,6 +306,27 @@ target_link_libraries(show_weights sof_util sof_eval_feat ${JSONCPP_TARGET})
 
 # Generate files
 include(Generators)
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
+  configure_file(tools/owl.py.in
+    "${PROJECT_BINARY_DIR}/owl.py"
+    @ONLY
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+else()
+  configure_file(tools/owl.py.in "${PROJECT_BINARY_DIR}/tmp/owl.py" @ONLY)
+  file(COPY
+    "${PROJECT_BINARY_DIR}/tmp/owl.py"
+    DESTINATION "${PROJECT_BINARY_DIR}"
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+endif()
 
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 
