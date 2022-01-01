@@ -243,6 +243,12 @@ add_library(sof_bot_api_clients STATIC
 )
 target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
+add_library(sof_gameset STATIC
+  src/gameset/reader.cpp
+  src/gameset/types.cpp
+)
+target_link_libraries(sof_gameset PUBLIC sof_core sof_util)
+
 add_library(sof_eval STATIC
   src/eval/evaluate.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"

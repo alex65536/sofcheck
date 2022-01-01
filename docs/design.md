@@ -50,6 +50,7 @@ module. Currently, only UCI is implemented, but support for more protocols will 
 - `eval` contains the implementation of position cost evaluation
   - `eval/feat` allows to tune the position cost weights. It contains utilities to extract the
 features from positions to perform such tuning, and to apply the updated weights to the engine
+- `gameset` contains APIs to work with SoFGameSet format
 - `search` contains the chess engine implementation. It uses the interface described in `bot_api`
   - `search/bin` contains the chess engine executable
 - `version` is a tiny module that contains the version info. This information is taken from Git
