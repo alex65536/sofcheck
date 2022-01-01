@@ -53,7 +53,11 @@ Result<Game, GameReader::Error> GameReader::nextGame() {
     auto readResult = readCommand();
     if (readResult.isErr()) {
       lastCommand_ = readResult;
-      return Err(std::move(readResult).unwrapErr());
+      auto error = std::move(readResult).unwrapErr();
+      if (error.status == Error::Status::EndOfStream) {
+        return Ok(std::move(game));
+      }
+      return Err(std::move(error));
     }
     const bool breakFromLoop = std::visit(
         [&](auto &&command) {
