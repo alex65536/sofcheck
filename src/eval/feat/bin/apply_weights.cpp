@@ -38,8 +38,7 @@ constexpr const char *DESCRIPTION =
     "and updates the JSON file with features using these weights.\n";
 
 constexpr const char *FEATURES_DESCRIPTION =
-    "JSON file that contains all the evaluation features. This file will be updated with new "
-    "features";
+    "JSON file with evaluation features. This file will be updated with new weights";
 
 std::vector<weight_t> readWeights(const Features &features) {
   std::vector<weight_t> coefs(features.count());
