@@ -36,7 +36,7 @@ using SoFUtil::makeCopyPtr;
 using SoFUtil::Ok;
 using SoFUtil::Result;
 
-GameReader::GameReader(std::istream &is, Options options) : is_(&is), options_(options) {
+GameReader::GameReader(std::istream &in, Options options) : in_(&in), options_(options) {
   lastCommand_ = readCommand();
 }
 
@@ -95,7 +95,7 @@ bool GameReader::canCaptureBoards() const {
 
 std::optional<std::string> GameReader::readLine() {
   std::string result;
-  if (std::getline(*is_, result)) {
+  if (std::getline(*in_, result)) {
     ++line_;
     return result;
   }

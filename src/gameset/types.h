@@ -45,16 +45,16 @@ struct GameCommand {
   Winner winner;
   std::optional<std::string> label;
 
-  // Write command to stream `os` in SoFGameSet format
-  void write(std::ostream &os) const;
+  // Write command to stream `out` in SoFGameSet format
+  void write(std::ostream &out) const;
 };
 
 // "title" command
 struct TitleCommand {
   std::string title;
 
-  // Write command to stream `os` in SoFGameSet format
-  void write(std::ostream &os) const;
+  // Write command to stream `out` in SoFGameSet format
+  void write(std::ostream &out) const;
 };
 
 // "board" (or "start") command
@@ -62,8 +62,8 @@ struct BoardCommand {
   // Must be non-null
   SoFUtil::CopyPtr<SoFCore::Board> board;
 
-  // Write command to stream `os` in SoFGameSet format
-  void write(std::ostream &os) const;
+  // Write command to stream `out` in SoFGameSet format
+  void write(std::ostream &out) const;
 };
 
 // "moves" command
@@ -71,8 +71,8 @@ struct MovesCommand {
   // Must be non-empty
   std::vector<SoFCore::Move> moves;
 
-  // Write command to stream `os` in SoFGameSet format
-  void write(std::ostream &os) const;
+  // Write command to stream `out` in SoFGameSet format
+  void write(std::ostream &out) const;
 };
 
 // Variant containing all possible commands
@@ -88,9 +88,9 @@ using MetadataCommand = std::variant<TitleCommand>;
 // type
 std::variant<GameCommand, MetadataCommand, InnerCommand> commandSplit(AnyCommand command);
 
-// Write command `command` to stream `os` in SoFGameSet format
-void commandWrite(std::ostream &os, const AnyCommand &command);
-void commandWrite(std::ostream &os, const InnerCommand &command);
+// Write command `command` to stream `out` in SoFGameSet format
+void commandWrite(std::ostream &out, const AnyCommand &command);
+void commandWrite(std::ostream &out, const InnerCommand &command);
 
 // Represents entire chess game in SoFGameSet format. A game is just a sequence of boards and is not
 // required to be a valid chess game. You need to check separately whether the game is valid (e.g.
@@ -108,11 +108,14 @@ struct Game {
   Game() = default;
   explicit Game(GameCommand header) : header(std::move(header)) {}
 
+  // Return `true` if the game is canonical in terms of SoFGameSet
+  bool isCanonical() const;
+
   // Update metadata from the command `command`
   void apply(TitleCommand command);
 
-  // Write the game to the stream `os` in SoFGameSet format
-  void write(std::ostream &os) const;
+  // Write the game to the stream `out` in SoFGameSet format
+  void write(std::ostream &out) const;
 };
 
 }  // namespace SoFGameSet

@@ -56,32 +56,32 @@ char winnerToChar(const Winner winner) {
   SOF_UNREACHABLE();
 }
 
-void GameCommand::write(std::ostream &os) const {
-  os << "game " << winnerToChar(winner) << " " << label.value_or("-") << "\n";
+void GameCommand::write(std::ostream &out) const {
+  out << "game " << winnerToChar(winner) << " " << label.value_or("-") << "\n";
 }
 
-void TitleCommand::write(std::ostream &os) const { os << "title " << title << "\n"; }
+void TitleCommand::write(std::ostream &out) const { out << "title " << title << "\n"; }
 
-void BoardCommand::write(std::ostream &os) const {
+void BoardCommand::write(std::ostream &out) const {
   static constexpr const char *INITIAL_POSITION_FEN =
       "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
   char fen[SoFCore::BUFSZ_BOARD_FEN];
   board->asFen(fen);
   if (std::strcmp(fen, INITIAL_POSITION_FEN) == 0) {
-    os << "start\n";
+    out << "start\n";
   } else {
-    os << "board " << fen << "\n";
+    out << "board " << fen << "\n";
   }
 }
 
-void MovesCommand::write(std::ostream &os) const {
-  os << "moves";
+void MovesCommand::write(std::ostream &out) const {
+  out << "moves";
   for (const auto move : moves) {
     char moveStr[SoFCore::BUFSZ_MOVE_STR];
     moveToStr(move, moveStr);
-    os << " " << moveStr;
+    out << " " << moveStr;
   }
-  os << "\n";
+  out << "\n";
 }
 
 std::variant<GameCommand, MetadataCommand, InnerCommand> commandSplit(AnyCommand command) {
@@ -92,26 +92,39 @@ std::variant<GameCommand, MetadataCommand, InnerCommand> commandSplit(AnyCommand
       std::move(command));
 }
 
-void commandWrite(const AnyCommand &command, std::ostream &os) {
-  std::visit([&](const auto &command) { command.write(os); }, command);
+void commandWrite(const AnyCommand &command, std::ostream &out) {
+  std::visit([&](const auto &command) { command.write(out); }, command);
 }
 
-void commandWrite(const InnerCommand &command, std::ostream &os) {
-  std::visit([&](const auto &command) { command.write(os); }, command);
+void commandWrite(const InnerCommand &command, std::ostream &out) {
+  std::visit([&](const auto &command) { command.write(out); }, command);
+}
+
+bool Game::isCanonical() const {
+  if (commands.empty()) {
+    return false;
+  }
+  size_t boardCount = 0;
+  for (const auto &command : commands) {
+    if (std::holds_alternative<BoardCommand>(command)) {
+      ++boardCount;
+    }
+  }
+  return boardCount == 1;
 }
 
 void Game::apply(TitleCommand command) { title = std::move(command.title); }
 
-void Game::write(std::ostream &os) const {
-  header.write(os);
+void Game::write(std::ostream &out) const {
+  header.write(out);
   if (title) {
     TitleCommand cmd{*title};
-    cmd.write(os);
+    cmd.write(out);
   }
   for (const auto &command : commands) {
-    commandWrite(command, os);
+    commandWrite(command, out);
   }
-  os << "\n";
+  out << "\n";
 }
 
 }  // namespace SoFGameSet

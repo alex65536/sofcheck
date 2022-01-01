@@ -64,10 +64,13 @@ public:
     static Error endOfStream() { return Error{Status::EndOfStream, 0, ""}; }
   };
 
-  explicit GameReader(std::istream &is, Options options = Options::None);
+  explicit GameReader(std::istream &in, Options options = Options::None);
 
   // Read the next game from the stream
   SoFUtil::Result<Game, Error> nextGame();
+
+  // Get number of lines that were already read
+  size_t lineCount() const { return line_; }
 
   // Call this function only if the last call to `nextGame()` finished successfully, and
   // `CaptureBoards` is set in the options. It will return all the boards from the last game, in the
@@ -93,7 +96,7 @@ private:
   // Read next command from the stream
   CommandResult readCommand();
 
-  std::istream *is_;
+  std::istream *in_;
   Options options_;
   size_t line_ = 0;
   CommandResult lastCommand_ = SoFUtil::Err(Error::endOfStream());
