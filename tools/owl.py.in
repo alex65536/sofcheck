@@ -47,7 +47,7 @@ FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
 
 
 def rebuild(jobs=None):
-    cmdline = [CMAKE_EXECUTABLE, '--build', '.']
+    cmdline = [CMAKE_EXECUTABLE, '--build', BINARY_DIR]
     if jobs is None:
         cmdline += ['-j']
     else:
