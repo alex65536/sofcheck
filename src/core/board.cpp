@@ -434,7 +434,7 @@ ValidateResult Board::validate() {
 void Board::update() {
   // Update invalid enpassant coord
   if (enpassantCoord != INVALID_COORD) {
-    const coord_t enpassantPreCoord = enpassantCoord + Private::pawnMoveDelta(side);
+    const coord_t enpassantPreCoord = enpassantCoord + Private::pawnForwardDelta(side);
     if (cells[enpassantCoord] != makeCell(invert(side), Piece::Pawn) ||
         cells[enpassantPreCoord] != EMPTY_CELL) {
       enpassantCoord = INVALID_COORD;

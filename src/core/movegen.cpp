@@ -79,28 +79,13 @@ inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t s
   return size;
 }
 
-template <Color C>
-inline static bitboard_t advancePawnForward(const bitboard_t bbPawns) {
-  return (C == Color::White) ? (bbPawns >> 8) : (bbPawns << 8);
-}
-
-template <Color C>
-inline static bitboard_t advancePawnLeft(const bitboard_t bbPawns) {
-  return (C == Color::White) ? (bbPawns >> 9) : (bbPawns << 7);
-}
-
-template <Color C>
-inline static bitboard_t advancePawnRight(const bitboard_t bbPawns) {
-  return (C == Color::White) ? (bbPawns >> 7) : (bbPawns << 9);
-}
-
 template <Color C, bool IsPromote>
 inline static size_t doGenPawnSingle(const Board &b, const bitboard_t bbPawns, Move *list,
                                      size_t size) {
-  bitboard_t bbPawnDsts = advancePawnForward<C>(bbPawns) & ~b.bbAll;
+  bitboard_t bbPawnDsts = Private::advancePawnForward(C, bbPawns) & ~b.bbAll;
   while (bbPawnDsts) {
     const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
-    size = addPawnWithPromote<IsPromote>(list, size, dst - Private::pawnMoveDelta(C), dst);
+    size = addPawnWithPromote<IsPromote>(list, size, dst - Private::pawnForwardDelta(C), dst);
   }
   return size;
 }
@@ -108,11 +93,11 @@ inline static size_t doGenPawnSingle(const Board &b, const bitboard_t bbPawns, M
 template <Color C>
 inline static size_t doGenPawnDouble(const Board &b, const bitboard_t bbPawns, Move *list,
                                      size_t size) {
-  const bitboard_t bbPawnTmps = advancePawnForward<C>(bbPawns) & ~b.bbAll;
-  bitboard_t bbPawnDsts = advancePawnForward<C>(bbPawnTmps) & ~b.bbAll;
+  const bitboard_t bbPawnTmps = Private::advancePawnForward(C, bbPawns) & ~b.bbAll;
+  bitboard_t bbPawnDsts = Private::advancePawnForward(C, bbPawnTmps) & ~b.bbAll;
   while (bbPawnDsts) {
     const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
-    const coord_t src = dst - 2 * Private::pawnMoveDelta(C);
+    const coord_t src = dst - 2 * Private::pawnForwardDelta(C);
     list[size++] = Move{MoveKind::PawnDoubleMove, src, dst, 0};
   }
   return size;
@@ -122,11 +107,11 @@ template <Color C, bool IsPromote>
 inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, Move *list,
                                       size_t size) {
   const bitboard_t bbAllowed = b.bbColor(invert(C));
-  constexpr coord_t leftDelta = (C == Color::White) ? -9 : 7;
-  constexpr coord_t rightDelta = (C == Color::White) ? -7 : 9;
+  constexpr coord_t leftDelta = Private::pawnLeftDelta(C);
+  constexpr coord_t rightDelta = Private::pawnRightDelta(C);
   {
     // Left capture
-    bitboard_t bbPawnDsts = advancePawnLeft<C>(bbPawns & ~Private::BB_COL[0]) & bbAllowed;
+    bitboard_t bbPawnDsts = Private::advancePawnLeft(C, bbPawns & ~Private::BB_COL[0]) & bbAllowed;
     while (bbPawnDsts) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
       size = addPawnWithPromote<IsPromote>(list, size, dst - leftDelta, dst);
@@ -134,7 +119,7 @@ inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, 
   }
   {
     // Right capture
-    bitboard_t bbPawnDsts = advancePawnRight<C>(bbPawns & ~Private::BB_COL[7]) & bbAllowed;
+    bitboard_t bbPawnDsts = Private::advancePawnRight(C, bbPawns & ~Private::BB_COL[7]) & bbAllowed;
     while (bbPawnDsts) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
       size = addPawnWithPromote<IsPromote>(list, size, dst - rightDelta, dst);
@@ -180,7 +165,7 @@ inline static size_t genPawnEnpassant(const Board &b, Move *list) {
   }
   size_t size = 0;
   const subcoord_t y = coordY(enpassantCoord);
-  const coord_t dst = enpassantCoord + Private::pawnMoveDelta(C);
+  const coord_t dst = enpassantCoord + Private::pawnForwardDelta(C);
   // We assume that the cell behind the pawn that made double move is empty, so don't check it
   const coord_t leftPawn = enpassantCoord - 1;
   if (y != 0 && b.cells[leftPawn] == makeCell(C, Piece::Pawn)) {
@@ -363,14 +348,14 @@ inline static bool isMoveValidImpl(const Board &b, const Move move) {
     }
     if (move.kind == MoveKind::Enpassant) {
       return (src + 1 == b.enpassantCoord || src - 1 == b.enpassantCoord) &&
-             dst == static_cast<coord_t>(b.enpassantCoord + Private::pawnMoveDelta(C));
+             dst == static_cast<coord_t>(b.enpassantCoord + Private::pawnForwardDelta(C));
     }
     constexpr subcoord_t promoteX = Private::promoteSrcRow(C);
     if (!isMoveKindPromote(move.kind) && coordX(src) == promoteX) {
       return false;
     }
     if (dstCell == EMPTY_CELL) {
-      return dst == static_cast<coord_t>(src + Private::pawnMoveDelta(C));
+      return dst == static_cast<coord_t>(src + Private::pawnForwardDelta(C));
     }
     if (cellPieceColor(dstCell) != C) {
       const bitboard_t *attackArr =
