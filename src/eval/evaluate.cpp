@@ -151,7 +151,7 @@ S Evaluator<S>::evalByColor(const Board &b) {
   for (subcoord_t col = 0; col < 8; ++col) {
     const bitboard_t bbPawnLine = bbPawns & SoFCore::Private::BB_COL[col];
     if (bbPawnLine) {
-      pawnMask |= 1U << col;
+      pawnMask |= static_cast<size_t>(1) << col;
     }
     doublePawnCount += SoFUtil::clearLowest(bbPawnLine) != 0;
   }
