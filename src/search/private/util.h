@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -66,6 +66,7 @@ private:
 
   std::unique_ptr<uint64_t[]> tab_;
 
+  // NOLINTNEXTLINE(bugprone-implicit-widening-of-multiplication-result)
   static constexpr size_t TAB_SIZE = 64 * 64;
 };
 

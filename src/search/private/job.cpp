@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -525,6 +525,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       if constexpr (Node != NodeKind::Root) {
         if (picker.stage() >= MovePickerStage::Killer) {
           frame.killers.add(move);
+          // NOLINTNEXTLINE(bugprone-implicit-widening-of-multiplication-result)
           history_[move] += depth * depth;
         }
       }

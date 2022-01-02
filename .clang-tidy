@@ -11,7 +11,9 @@ performance-*, \
 portability-*, \
 readability-*, \
 llvm-namespace-comment, \
+-bugprone-easily-swappable-parameters, \
 -bugprone-exception-escape, \
+-bugprone-narrowing-conversions, \
 -bugprone-suspicious-semicolon, \
 -modernize-use-trailing-return-type, \
 -modernize-avoid-c-arrays, \
@@ -21,6 +23,7 @@ llvm-namespace-comment, \
 -cppcoreguidelines-avoid-magic-numbers, \
 -cppcoreguidelines-avoid-non-const-global-variables, \
 -cppcoreguidelines-macro-usage, \
+-cppcoreguidelines-narrowing-conversions, \
 -cppcoreguidelines-owning-memory, \
 -cppcoreguidelines-pro-bounds-*, \
 -cppcoreguidelines-pro-type-reinterpret-cast, \
@@ -34,9 +37,11 @@ llvm-namespace-comment, \
 -hicpp-signed-bitwise, \
 -hicpp-special-member-functions, \
 -modernize-use-nodiscard, \
+-modernize-return-braced-init-list, \
 -misc-no-recursion, \
 -misc-non-private-member-variables-in-classes, \
 -readability-braces-around-statements, \
+-readability-function-cognitive-complexity, \
 -readability-implicit-bool-conversion, \
 -readability-magic-numbers, \
 -readability-named-parameter, \
@@ -60,6 +65,9 @@ llvm-namespace-comment, \
 # - cert-err58-cpp also has false-positives with Google Test.
 # - cppcoreguidelines-avoid-non-const-global-variables conflicts with tests and benchmarks.
 # - clang-analyzer-security.insecureAPI.rand yields false positives on macOS with SoFUtil::random().
+# - bugprone-narrowing-conversions might be interesting to fix, but it triggers too many times and
+# if I fix it, the code will be harder to read because of many `static_cast<>`'s.
+# - cppcoreguidelines-narrowing-conversions is tightly related to the previous issue.
 
 HeaderFilterRegex: '(bench|gen|src)/.+'
 
