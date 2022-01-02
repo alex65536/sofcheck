@@ -18,11 +18,15 @@
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 
 SOURCE_DIR = '@PROJECT_SOURCE_DIR@'
 BINARY_DIR = '@PROJECT_BINARY_DIR@'
+CMAKE_EXECUTABLE = '@CMAKE_COMMAND@'
+GIT_EXECUTABLE = '@GIT_EXECUTABLE@'
+GIT_FOUND = ('@Git_FOUND@'.lower() == 'true')
 
 
 def src_path(path):
@@ -33,7 +37,22 @@ def bin_path(path):
     return os.path.join(*([BINARY_DIR] + path))
 
 
+def git(*args):
+    if not GIT_FOUND:
+        raise RuntimeError('Git not found')
+    return subprocess.check_output([GIT_EXECUTABLE] + list(args))
+
+
 FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
+
+
+def rebuild(jobs=None):
+    cmdline = [CMAKE_EXECUTABLE, '--build', '.']
+    if jobs is None:
+        cmdline += ['-j']
+    else:
+        cmdline += ['-j', str(jobs)]
+    subprocess.check_call(cmdline)
 
 
 def show_owl(args):
@@ -51,11 +70,40 @@ def show_weights(args):
 
 def apply_weights(args):
     subprocess.check_call([bin_path(['apply_weights']), '-f', FEATURES_PATH])
+    if not args.no_rebuild:
+        rebuild()
 
 
 def make_dataset(args):
     cmdline = [bin_path(['make_dataset']), '-f', FEATURES_PATH] + args.flags
     subprocess.check_call(cmdline)
+
+
+def build(args):
+    def exe_name(tag):
+        name = 'sofcheck' if not tag else 'sofcheck_' + tag
+        return os.path.join(args.dest_dir, name)
+
+    if not args.tags:
+        rebuild()
+        try:
+            shutil.copyfile(bin_path(['sofcheck']), exe_name(''))
+        except shutil.SameFileError:
+            pass
+        return
+
+    if not GIT_FOUND:
+        raise RuntimeError('Git not found')
+
+    for idx, tag in enumerate(args.tags):
+        sys.stderr.write(f'Building SoFCheck version {tag}...\n')
+        sys.stderr.flush()
+        if tag.startswith('-'):
+            raise RuntimeError('Tags starting with "-" are forbidden')
+        git('checkout', tag)
+        rebuild()
+        exe_tag = str(idx + 1) if args.numbers else tag
+        shutil.copyfile(bin_path(['sofcheck']), exe_name(exe_tag))
 
 
 parser = argparse.ArgumentParser(
@@ -74,12 +122,30 @@ show_parser.set_defaults(func=show_weights)
 apply_parser = weights_subparsers.add_parser(
     'apply', aliases=['a'], help='apply feature weights')
 apply_parser.set_defaults(func=apply_weights)
+apply_parser.add_argument(
+    '-B', '--no-rebuild', help='do not rebuild the engine after apply',
+    action='store_true')
 
 dataset_parser = subparsers.add_parser(
     'dataset', aliases=['d', 'ds'], help='create a dataset via make_dataset')
 dataset_parser.add_argument(
     'flags', nargs='*', help='arguments for make_dataset')
 dataset_parser.set_defaults(func=make_dataset)
+
+build_parser = subparsers.add_parser(
+    'build', aliases=['b', 'bl'],
+    help='rebuild SoFCheck, possibly from various git tags')
+build_parser.add_argument(
+    'tags', nargs='*',
+    help='git tags from which to rebuild the engine. '
+         'If empty, build current version')
+build_parser.add_argument(
+    '-d', '--dest-dir', help='directory to put binaries', action='store',
+    default='.')
+build_parser.add_argument(
+    '-n', '--numbers', action='store_true',
+    help='use numbers instead of git tags in executable names')
+build_parser.set_defaults(func=build)
 
 args = parser.parse_args()
 try:
