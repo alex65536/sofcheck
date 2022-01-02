@@ -55,6 +55,21 @@ def rebuild(jobs=None):
     subprocess.check_call(cmdline)
 
 
+def git_save():
+    branch = git('rev-parse', '--abbrev-ref', 'HEAD').strip()
+    if branch == 'HEAD':
+        branch = git('rev-parse', 'HEAD').strip()
+    stash_msg = git('stash', '-m', 'Temporary stash by owl.py')
+    stashed = stash_msg.find(b'Temporary stash by owl.py') != -1
+    return (branch, stashed)
+
+
+def git_restore(saved_state):
+    branch, stashed = saved_state
+    git('checkout', branch)
+    git('stash', 'pop')
+
+
 def show_owl(args):
     print('''\
    ^ ^
@@ -95,15 +110,19 @@ def build(args):
     if not GIT_FOUND:
         raise RuntimeError('Git not found')
 
-    for idx, tag in enumerate(args.tags):
-        sys.stderr.write(f'Building SoFCheck version {tag}...\n')
-        sys.stderr.flush()
-        if tag.startswith('-'):
-            raise RuntimeError('Tags starting with "-" are forbidden')
-        git('checkout', tag)
-        rebuild()
-        exe_tag = str(idx + 1) if args.numbers else tag
-        shutil.copyfile(bin_path(['sofcheck']), exe_name(exe_tag))
+    saved_state = git_save()
+    try:
+        for idx, tag in enumerate(args.tags):
+            sys.stderr.write(f'Building SoFCheck version {tag}...\n')
+            sys.stderr.flush()
+            if tag.startswith('-'):
+                raise RuntimeError('Tags starting with "-" are forbidden')
+            git('checkout', tag)
+            rebuild()
+            exe_tag = str(idx + 1) if args.numbers else tag
+            shutil.copyfile(bin_path(['sofcheck']), exe_name(exe_tag))
+    finally:
+        git_restore(saved_state)
 
 
 parser = argparse.ArgumentParser(
