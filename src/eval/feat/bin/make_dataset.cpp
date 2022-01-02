@@ -47,7 +47,6 @@ using namespace SoFUtil::Logging;
 using SoFCore::Board;
 using SoFCore::Move;
 using SoFEval::coef_t;
-using SoFEval::Coefs;
 using SoFEval::Feat::Features;
 using SoFGameSet::Game;
 using SoFGameSet::Winner;
@@ -87,9 +86,8 @@ public:
 
 private:
   void writeHeader() {
-    auto names = features_.names();
     *out_ << "winner,game_id,board_total,board_left";
-    for (const auto &name : names) {
+    for (const auto &name : features_.names()) {
       *out_ << "," << name.name;
     }
     *out_ << "\n";
@@ -118,7 +116,7 @@ private:
     SOF_UNREACHABLE();
   }
 
-  using Evaluator = SoFEval::Evaluator<Coefs>;
+  using Evaluator = SoFEval::Evaluator<SoFEval::Coefs>;
 
   std::ostream *out_;
   Features features_;
@@ -134,11 +132,11 @@ public:
         consumer_(consumer) {}
 
   void consume(const RichBoard &board) override {
+    ++count_;
     if (!sampleSize_) {
       consumer_->consume(board);
       return;
     }
-    ++count_;
     const uint64_t size = *sampleSize_;
     if (count_ <= size) {
       sample_.push_back(board);
@@ -238,20 +236,19 @@ Result<std::monostate, Error> processGameSet(std::istream &in, GameConsumer &con
     auto readResult = reader.nextGame();
     if (readResult.isErr()) {
       consumer.finish();
-      const auto error = std::move(readResult).unwrapErr();
+      const auto &error = readResult.err();
       if (error.status == ReadError::Status::EndOfStream) {
-        break;
+        return Ok(std::monostate{});
       }
       return Err(Error{"Line " + std::to_string(error.line) + ": " + error.message});
     }
     auto consumeResult = consumer.consume(std::move(readResult).unwrap(), reader.capturedBoards());
     if (consumeResult.isErr()) {
-      const auto error = std::move(consumeResult).unwrapErr();
+      consumer.finish();
+      const auto &error = consumeResult.err();
       return Err(Error{"Line " + std::to_string(line) + ": " + error.message});
     }
   }
-
-  return Ok(std::monostate{});
 }
 
 struct Options {
