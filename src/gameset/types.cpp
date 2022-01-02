@@ -82,10 +82,11 @@ void MovesCommand::write(std::ostream &out) const {
   out << "\n";
 }
 
+// NOLINTNEXTLINE(performance-unnecessary-value-param): false positive, `command` is moved
 std::variant<GameCommand, MetadataCommand, InnerCommand> commandSplit(AnyCommand command) {
   return std::visit(
-      [&](auto &&command) -> std::variant<GameCommand, MetadataCommand, InnerCommand> {
-        return std::move(command);  // NOLINT(bugprone-move-forwarding-reference)
+      [&](auto command) -> std::variant<GameCommand, MetadataCommand, InnerCommand> {
+        return command;
       },
       std::move(command));
 }
