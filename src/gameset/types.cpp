@@ -84,8 +84,8 @@ void MovesCommand::write(std::ostream &out) const {
 
 std::variant<GameCommand, MetadataCommand, InnerCommand> commandSplit(AnyCommand command) {
   return std::visit(
-      [&](auto command) -> std::variant<GameCommand, MetadataCommand, InnerCommand> {
-        return command;
+      [&](auto &&command) -> std::variant<GameCommand, MetadataCommand, InnerCommand> {
+        return std::move(command);  // NOLINT(bugprone-move-forwarding-reference)
       },
       std::move(command));
 }
