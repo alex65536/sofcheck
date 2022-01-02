@@ -100,7 +100,38 @@ public:
     if (SOF_LIKELY(isErr())) {
       return std::move(std::get<1>(variant_));
     }
-    panic("Attempt to unwrap() Result<T, E> without an error");
+    panic("Attempt to unwrapErr() Result<T, E> without an error");
+  }
+
+  // Returns a view on `ok()` value. If it doesn't hold the specified value, it panics
+  inline constexpr const T &ok() const noexcept {
+    if (SOF_LIKELY(isOk())) {
+      return std::get<0>(variant_);
+    }
+    panic("Attempt to ok() Result<T, E> without a value");
+  }
+
+  // Returns a view on `ok()` value. If it doesn't hold the specified value, it panics
+  inline constexpr T &ok() noexcept {
+    if (SOF_LIKELY(isOk())) {
+      return std::get<0>(variant_);
+    }
+    panic("Attempt to ok() Result<T, E> without a value");
+  }
+
+  // Returns a view on `err()` value. If it doesn't hold the specified value, it panics
+  inline constexpr const E &err() const noexcept {
+    if (SOF_LIKELY(isErr())) {
+      return std::get<1>(variant_);
+    }
+    panic("Attempt to err() Result<T, E> without an error");
+  }
+
+  inline constexpr E &err() noexcept {
+    if (SOF_LIKELY(isErr())) {
+      return std::get<1>(variant_);
+    }
+    panic("Attempt to err() Result<T, E> without an error");
   }
 
   inline friend constexpr bool operator==(const Result<T, E> &r1, const Result<T, E> &r2) {
