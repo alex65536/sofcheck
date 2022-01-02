@@ -145,7 +145,7 @@ public:
       return;
     }
     if (random_() % count_ < size) {
-      sample_[random_() % size] = board;
+      sample_[static_cast<size_t>(random_() % size)] = board;
     }
   }
 

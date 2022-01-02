@@ -87,8 +87,7 @@ void runSelfTest(Board b) {
   if (!loadResult.isOk()) {
     panic("Cannot load from the board from its own FEN");
   }
-  // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-  const Board loaded = std::move(loadResult).unwrap();
+  const Board &loaded = loadResult.ok();
   if (!boardsBitCompare(b, loaded)) {
     panic("Loading the board from FEN produces a different board");
   }

@@ -104,7 +104,7 @@ private:
   std::vector<SoFCore::Board> capturedBoards_;
 };
 
-SOF_ENUM_BITWISE(GameReader::Options, int32_t);
+SOF_ENUM_BITWISE(GameReader::Options, int32_t)
 
 }  // namespace SoFGameSet
 

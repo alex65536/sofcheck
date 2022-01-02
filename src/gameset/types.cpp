@@ -24,8 +24,6 @@
 
 namespace SoFGameSet {
 
-using SoFCore::Board;
-
 std::optional<Winner> winnerFromChar(const char ch) {
   switch (ch) {
     case '?':
@@ -86,8 +84,8 @@ void MovesCommand::write(std::ostream &out) const {
 
 std::variant<GameCommand, MetadataCommand, InnerCommand> commandSplit(AnyCommand command) {
   return std::visit(
-      [&](auto &&command) -> std::variant<GameCommand, MetadataCommand, InnerCommand> {
-        return std::move(command);
+      [&](auto command) -> std::variant<GameCommand, MetadataCommand, InnerCommand> {
+        return command;
       },
       std::move(command));
 }

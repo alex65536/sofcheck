@@ -60,7 +60,7 @@ Result<Game, GameReader::Error> GameReader::nextGame() {
       return Err(std::move(error));
     }
     const bool breakFromLoop = std::visit(
-        [&](auto &&command) {
+        [&](auto command) {
           using CommandType = std::decay_t<decltype(command)>;
           if constexpr (std::is_same_v<CommandType, GameCommand>) {
             lastCommand_ = Ok<AnyCommand>(std::move(command));
@@ -174,10 +174,9 @@ auto GameReader::tryReadCommand() -> std::optional<CommandResult> {
   if (name == "board") {
     auto result = Board::fromFen(bodyBegin);
     if (result.isErr()) {
-      return error(std::string("Error parsing FEN: ") +
-                   fenParseResultToStr(std::move(result).unwrapErr()));
+      return error(std::string("Error parsing FEN: ") + fenParseResultToStr(result.err()));
     }
-    lastBoard_ = std::move(result).unwrap();
+    lastBoard_ = result.ok();
     if (canCaptureBoards()) {
       capturedBoards_.push_back(*lastBoard_);
     }

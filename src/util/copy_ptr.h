@@ -31,8 +31,8 @@ public:
   CopyPtr() = default;
   explicit CopyPtr(T *value) : inner_(value) {}
 
-  CopyPtr(CopyPtr &&) = default;
-  CopyPtr &operator=(CopyPtr &&) = default;
+  CopyPtr(CopyPtr &&) noexcept = default;
+  CopyPtr &operator=(CopyPtr &&) noexcept = default;
 
   CopyPtr(const CopyPtr &other) : CopyPtr(other.inner_ ? new T(*other.inner_) : nullptr) {}
   CopyPtr &operator=(const CopyPtr &other) {
@@ -46,7 +46,7 @@ public:
         inner_ = std::unique_ptr<T>(new T(*other.inner_));
       }
     } else {
-      inner_.release();
+      inner_.reset();
     }
     return *this;
   }
