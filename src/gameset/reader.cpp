@@ -66,7 +66,7 @@ Result<Game, GameReader::Error> GameReader::nextGame() {
             lastCommand_ = Ok<AnyCommand>(std::move(command));
             return true;
           } else if constexpr (std::is_same_v<CommandType, MetadataCommand>) {
-            std::visit([&](auto &&command) { game.apply(std::move(command)); }, std::move(command));
+            std::visit([&](auto command) { game.apply(std::move(command)); }, std::move(command));
           } else if constexpr (std::is_same_v<CommandType, InnerCommand>) {
             game.commands.push_back(std::move(command));
           } else {
