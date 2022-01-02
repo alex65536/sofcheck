@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -38,8 +38,7 @@ constexpr const char *DESCRIPTION =
     "and updates the JSON file with features using these weights.\n";
 
 constexpr const char *FEATURES_DESCRIPTION =
-    "JSON file that contains all the evaluation features. This file will be updated with new "
-    "features";
+    "JSON file with evaluation features. This file will be updated with new weights";
 
 std::vector<weight_t> readWeights(const Features &features) {
   std::vector<weight_t> coefs(features.count());

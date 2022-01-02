@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -243,6 +243,12 @@ add_library(sof_bot_api_clients STATIC
 )
 target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
+add_library(sof_gameset STATIC
+  src/gameset/reader.cpp
+  src/gameset/types.cpp
+)
+target_link_libraries(sof_gameset PUBLIC sof_core sof_util)
+
 add_library(sof_eval STATIC
   src/eval/evaluate.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
@@ -282,7 +288,10 @@ target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 add_executable(make_dataset
   src/eval/feat/bin/make_dataset.cpp
 )
-target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat ${JSONCPP_TARGET})
+target_link_libraries(
+  make_dataset
+  sof_core sof_util sof_eval sof_eval_feat sof_gameset ${JSONCPP_TARGET}
+)
 
 add_executable(apply_weights
   src/eval/feat/bin/apply_weights.cpp
@@ -297,6 +306,27 @@ target_link_libraries(show_weights sof_util sof_eval_feat ${JSONCPP_TARGET})
 
 # Generate files
 include(Generators)
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
+  configure_file(tools/owl.py.in
+    "${PROJECT_BINARY_DIR}/owl.py"
+    @ONLY
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+else()
+  configure_file(tools/owl.py.in "${PROJECT_BINARY_DIR}/tmp/owl.py" @ONLY)
+  file(COPY
+    "${PROJECT_BINARY_DIR}/tmp/owl.py"
+    DESTINATION "${PROJECT_BINARY_DIR}"
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+endif()
 
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 
