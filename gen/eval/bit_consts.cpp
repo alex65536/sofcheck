@@ -35,14 +35,34 @@ std::vector<std::vector<bitboard_t>> generateKingMetricRings() {
   return result;
 }
 
+std::vector<int> generateIsolatedCounts() {
+  std::vector<int> result(256);
+  for (int i = 0; i < 256; ++i) {
+    int bits[10] = {};
+    for (int j = 0; j < 8; ++j) {
+      if ((i >> j) & 1) {
+        ++bits[j + 1];
+      }
+    }
+    int &isolatedCount = result[i];
+    for (int j = 1; j < 9; ++j) {
+      if (bits[j - 1] == 0 && bits[j] == 1 && bits[j + 1] == 0) {
+        ++isolatedCount;
+      }
+    }
+  }
+  return result;
+}
+
 GeneratorInfo getGeneratorInfo() {
-  return GeneratorInfo{"Generate rings with the given distance for king"};
+  return GeneratorInfo{"Generate various bitboard-related constants needed for evaluation"};
 }
 
 int doGenerate(SourcePrinter &p) {
   auto kingRings = generateKingMetricRings();
+  auto isolatedCounts = generateIsolatedCounts();
 
-  p.headerGuard("SOF_EVAL_PRIVATE_METRIC_INCLUDED");
+  p.headerGuard("SOF_EVAL_PRIVATE_BIT_CONSTS_INCLUDED");
   p.skip();
   p.include("core/types.h");
   p.skip();
@@ -53,6 +73,8 @@ int doGenerate(SourcePrinter &p) {
     p.arrayBody(64, [&](const size_t j) { printBitboard(p.stream(), kingRings[i][j]); });
   });
   p.line() << ";";
+  p.skip();
+  p.array("ISOLATED_COUNTS", "int", isolatedCounts);
   p.skip();
 
   return 0;

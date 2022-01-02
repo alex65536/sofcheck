@@ -92,6 +92,8 @@ private:
   // Helper function, evaluates only the features for pieces belonging to the color `C`
   template <SoFCore::Color C>
   S evalByColor(const SoFCore::Board &b);
+
+  static S mix(const Pair &pair, uint32_t stage);
 };
 
 }  // namespace SoFEval
