@@ -188,7 +188,7 @@ public:
     std::vector<Move> moves;
     moves.reserve(boards.size());
     for (const auto &command : game.commands) {
-      if (auto *movesCmd = std::get_if<SoFGameSet::MovesCommand>(&command)) {
+      if (const auto *movesCmd = std::get_if<SoFGameSet::MovesCommand>(&command)) {
         moves.insert(moves.end(), movesCmd->moves.begin(), movesCmd->moves.end());
       }
     }
