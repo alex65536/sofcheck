@@ -54,12 +54,12 @@ llvm-namespace-comment, \
 # - readability-braces-around-statements is also buggy with if constexpr.
 # - misc-non-private-member-variables-in-classes is disabled by design.
 # - bugprone-exception-escape is very expensive and can be false-positive on Result<T, E>.
-# - cppcoreguidelines-owning-memory has false-positives with Google Test
-# - cppcoreguidelines-special-member-functions also has false-positives with Google Test
-# - hicpp-special-member-functions also has false-positives with Google Test
-# - cert-err58-cpp also has false-positives with Google Test
-# - cppcoreguidelines-avoid-non-const-global-variables conflicts with tests and benchmarks
-# - clang-analyzer-security.insecureAPI.rand yields false positives on macOS with SoFUtil::random()
+# - cppcoreguidelines-owning-memory has false-positives with Google Test.
+# - cppcoreguidelines-special-member-functions also has false-positives with Google Test.
+# - hicpp-special-member-functions also has false-positives with Google Test.
+# - cert-err58-cpp also has false-positives with Google Test.
+# - cppcoreguidelines-avoid-non-const-global-variables conflicts with tests and benchmarks.
+# - clang-analyzer-security.insecureAPI.rand yields false positives on macOS with SoFUtil::random().
 
 HeaderFilterRegex: '(bench|gen|src)/.+'
 
