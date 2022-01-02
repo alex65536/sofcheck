@@ -119,14 +119,40 @@ public:
   // Extracts second item from the pair
   constexpr const Item &second() const { return value_[1]; }
 
-  SOF_PROPAGATE_VECTOR_OPS(BaseCoefsPair, Item, value_)
+  constexpr BaseCoefsPair &operator+=(const BaseCoefsPair &other) {
+    value_[0] += other.value_[0];
+    value_[1] += other.value_[1];
+    return *this;
+  }
+
+  constexpr BaseCoefsPair &operator-=(const BaseCoefsPair &other) {
+    value_[0] -= other.value_[0];
+    value_[1] -= other.value_[1];
+    return *this;
+  }
+
+  constexpr BaseCoefsPair &operator*=(const coef_t other) {
+    value_[0] *= other;
+    value_[1] *= other;
+    return *this;
+  }
+
+  constexpr BaseCoefsPair operator+() const { return *this; }
+  constexpr BaseCoefsPair operator-() const { return BaseCoefsPair({-value_[0], -value_[1]}); }
+
+  constexpr bool operator==(const BaseCoefsPair &other) const {
+    return value_[0] == other.value_[0] && value_[1] == other.value_[1];
+  }
+  constexpr bool operator!=(const BaseCoefsPair &other) const { return !(*this == other); }
+
+  SOF_VECTOR_OPS(BaseCoefsPair, coef_t)
 
 private:
   explicit constexpr BaseCoefsPair(std::array<Item, 2> value) : value_(std::move(value)) {}
   explicit constexpr BaseCoefsPair(SoFUtil::FixedValArray<Item, 2> value)
       : value_(std::move(value)) {}
 
-  SoFUtil::FixedValArray<Item, 2> value_;
+  std::array<Item, 2> value_;
 };
 
 // Definitions for `Coefs`
