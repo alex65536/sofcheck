@@ -133,7 +133,7 @@ template <typename S>
 S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
   using Weights = Private::Weights<S>;
 
-  auto doEvalPawns = [&](const Color c) {
+  const auto doEvalPawns = [&](const Color c) {
     S result{};
 
     const bitboard_t bbPawns = b.bbPieces[makeCell(c, Piece::Pawn)];
@@ -162,7 +162,7 @@ S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
     return result;
   };
 
-  return doEvalPawns(Color::White, b) - doEvalPawns(Color::Black, b);
+  return doEvalPawns(Color::White) - doEvalPawns(Color::Black);
 }
 
 template <typename S>

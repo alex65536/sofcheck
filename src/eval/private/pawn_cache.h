@@ -76,7 +76,7 @@ private:
   // entire hash
   static_assert(CACHE_SIZE >= (1U << 16));
 
-  size_t keyFromHash(const SoFCore::board_hash_t hash) const { return hash & (CACHE_SIZE - 1); }
+  static size_t keyFromHash(const SoFCore::board_hash_t hash) { return hash & (CACHE_SIZE - 1); }
 
   struct Entry {
     uint64_t value;
