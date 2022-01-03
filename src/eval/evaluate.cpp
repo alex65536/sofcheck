@@ -21,10 +21,11 @@
 #include <cstddef>
 #include <utility>
 
-#include "core/private/bit_consts.h"  // FIXME : move from private
-#include "core/private/geometry.h"    // FIXME : move from private
+#include "core/private/bit_consts.h"  // FIXME : refactor
+#include "core/private/geometry.h"    // FIXME : refactor
 #include "eval/coefs.h"
 #include "eval/private/bit_consts.h"
+#include "eval/private/pawn_cache.h"
 #include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/bit.h"
@@ -64,7 +65,7 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
     psq += Weights::PSQ[b.cells[i]][i];
     stage += STAGES[b.cells[i]];
   }
-  return Tag(std::move(psq), stage);
+  return Tag(std::move(psq), stage, Private::pawnHashInit(b));
 }
 
 template <typename S>
@@ -72,6 +73,7 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
   using Weights = Private::Weights<S>;
 
   auto result = *this;
+  result.pawnHash_ = Private::pawnHashUpdate(b, result.pawnHash_, move);
   if (move.kind == MoveKind::Null) {
     return result;
   }
@@ -104,11 +106,18 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
 }
 
 template <typename S>
+Evaluator<S>::Evaluator() : pawnCache_(std::make_unique<Private::PawnCache<S>>()) {}
+
+template <typename S>
+Evaluator<S>::~Evaluator() = default;
+
+template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
   const uint32_t rawStage = ((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE;
   const uint32_t stage = std::min<uint32_t>(rawStage, 256);
 
   auto result = mix(tag.inner_, stage);
+  result += pawnCache_->get(tag.pawnHash_, [&]() { return evalPawns(b); });
   result += evalByColor<Color::White>(b);
   result -= evalByColor<Color::Black>(b);
 
@@ -116,8 +125,44 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
 }
 
 template <typename S>
-S Evaluator<S>::mix(const Pair &pair, uint32_t stage) {
+S Evaluator<S>::mix(const Pair &pair, const uint32_t stage) {
   return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> 8);
+}
+
+template <typename S>
+S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
+  using Weights = Private::Weights<S>;
+
+  auto doEvalPawns = [&](const Color c) {
+    S result{};
+
+    const bitboard_t bbPawns = b.bbPieces[makeCell(c, Piece::Pawn)];
+
+    // Calculate isolated and double pawns
+    size_t pawnMask = 0;
+    coef_t doublePawnCount = 0;
+    for (subcoord_t col = 0; col < 8; ++col) {
+      const bitboard_t bbPawnLine = bbPawns & SoFCore::Private::BB_COL[col];
+      if (bbPawnLine) {
+        pawnMask |= static_cast<size_t>(1) << col;
+      }
+      doublePawnCount += SoFUtil::clearLowest(bbPawnLine) != 0;
+    }
+    const coef_t isolatedPawnCount = Private::ISOLATED_COUNTS[pawnMask];
+    result += static_cast<S>(Weights::PAWN_DOUBLE * doublePawnCount +
+                             Weights::PAWN_ISOLATED * isolatedPawnCount);
+
+    // Calculate protected pawns
+    const bitboard_t bbProtectedPawns =
+        bbPawns & ((SoFCore::Private::advancePawnLeft(c, bbPawns & ~SoFCore::Private::BB_COL[0])) |
+                   (SoFCore::Private::advancePawnRight(c, bbPawns & ~SoFCore::Private::BB_COL[7])));
+    const auto protectedPawnCount = static_cast<coef_t>(SoFUtil::popcount(bbProtectedPawns));
+    result += static_cast<S>(Weights::PAWN_PROTECTED * protectedPawnCount);
+
+    return result;
+  };
+
+  return doEvalPawns(Color::White, b) - doEvalPawns(Color::Black, b);
 }
 
 template <typename S>
@@ -142,29 +187,6 @@ S Evaluator<S>::evalByColor(const Board &b) {
         static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen));
   }
   result += static_cast<S>(Weights::QUEEN_NEAR_TO_KING * nearCount);
-
-  const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
-
-  // Calculate isolated and double pawns
-  size_t pawnMask = 0;
-  coef_t doublePawnCount = 0;
-  for (subcoord_t col = 0; col < 8; ++col) {
-    const bitboard_t bbPawnLine = bbPawns & SoFCore::Private::BB_COL[col];
-    if (bbPawnLine) {
-      pawnMask |= static_cast<size_t>(1) << col;
-    }
-    doublePawnCount += SoFUtil::clearLowest(bbPawnLine) != 0;
-  }
-  const coef_t isolatedPawnCount = Private::ISOLATED_COUNTS[pawnMask];
-  result += static_cast<S>(Weights::PAWN_DOUBLE * doublePawnCount +
-                           Weights::PAWN_ISOLATED * isolatedPawnCount);
-
-  // Calculate protected pawns
-  const bitboard_t bbProtectedPawns =
-      bbPawns & ((SoFCore::Private::advancePawnLeft(C, bbPawns & ~SoFCore::Private::BB_COL[0])) |
-                 (SoFCore::Private::advancePawnRight(C, bbPawns & ~SoFCore::Private::BB_COL[7])));
-  const coef_t protectedPawnCount = SoFUtil::popcount(bbProtectedPawns);
-  result += static_cast<S>(Weights::PAWN_PROTECTED * protectedPawnCount);
 
   return result;
 }
