@@ -22,6 +22,7 @@
 #include "core/move.h"
 #include "core/types.h"
 #include "eval/score.h"
+#include "util/misc.h"
 
 namespace SoFEval::Private {
 
@@ -53,9 +54,9 @@ public:
   score_t get(SoFCore::board_hash_t pawnHash, F func) {
     const size_t key = keyFromHash(pawnHash);
     Entry &entry = entries_[key];
-    if (entry.hashMatches(pawnHash)) {
+    if (SOF_LIKELY(entry.hashMatches(pawnHash))) {
       const score_t score = entry.score();
-      if (score != SCORE_INVALID) {
+      if (SOF_LIKELY(score != SCORE_INVALID)) {
         return score;
       }
     }
@@ -66,7 +67,7 @@ public:
 
 private:
   // Must be power of two
-  static constexpr size_t CACHE_SIZE = 1U << 16;
+  static constexpr size_t CACHE_SIZE = 1U << 18;
 
   // Only 48 bits of hash are stored in the entries, so we need the size at least 2^16 to use the
   // entire hash
