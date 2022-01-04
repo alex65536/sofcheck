@@ -26,13 +26,15 @@
 
 namespace SoFEval::Private {
 
+// Caches evaluation result for pawns
 template <typename S>
 class PawnCache {
 public:
   PawnCache() = default;
 
-  // Try to get the score from the cache if the position of pawns is specified by hash `pawnHash`.
-  // If the value is not found, call `func()` to calculate the score and cache the result.
+  // Try to get the score from the cache if the position of pawns (both white and black) is
+  // specified by hash `pawnHash`. If the value is not found, call `func()` to calculate the score
+  // and cache the result.
   template <typename F>
   S get(SoFCore::board_hash_t /*pawnHash*/, F func) {
     // No value is cached in this implementation, so just run `func` to get the score
