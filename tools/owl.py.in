@@ -59,7 +59,7 @@ def git_save():
     branch = git('rev-parse', '--abbrev-ref', 'HEAD').strip()
     if branch == 'HEAD':
         branch = git('rev-parse', 'HEAD').strip()
-    stash_msg = git('stash', '-m', 'Temporary stash by owl.py')
+    stash_msg = git('stash', 'push', '-m', 'Temporary stash by owl.py')
     stashed = stash_msg.find(b'Temporary stash by owl.py') != -1
     return (branch, stashed)
 
