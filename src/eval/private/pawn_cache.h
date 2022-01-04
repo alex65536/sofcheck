@@ -25,10 +25,6 @@
 
 namespace SoFEval::Private {
 
-SoFCore::board_hash_t pawnHashInit(const SoFCore::Board &b);
-SoFCore::board_hash_t pawnHashUpdate(const SoFCore::Board &b, SoFCore::board_hash_t hash,
-                                     SoFCore::Move move);
-
 template <typename S>
 class PawnCache {
 public:

@@ -23,6 +23,7 @@
 
 #include "core/private/bit_consts.h"  // FIXME : refactor
 #include "core/private/geometry.h"    // FIXME : refactor
+#include "core/private/zobrist.h"     // FIXME : refactor
 #include "eval/coefs.h"
 #include "eval/private/bit_consts.h"
 #include "eval/private/pawn_cache.h"
@@ -65,7 +66,15 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
     psq += Weights::PSQ[b.cells[i]][i];
     stage += STAGES[b.cells[i]];
   }
-  return Tag(std::move(psq), stage, Private::pawnHashInit(b));
+  SoFCore::board_hash_t pawnHash = 0;
+  for (coord_t i = 0; i < 64; ++i) {
+    const cell_t cell = b.cells[i];
+    if (cell == SoFCore::EMPTY_CELL || SoFCore::cellPiece(cell) != Piece::Pawn) {
+      continue;
+    }
+    pawnHash ^= SoFCore::Private::g_zobristPieces[cell][i];
+  }
+  return Tag(std::move(psq), stage, pawnHash);
 }
 
 template <typename S>
@@ -73,7 +82,6 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
   using Weights = Private::Weights<S>;
 
   auto result = *this;
-  result.pawnHash_ = Private::pawnHashUpdate(b, result.pawnHash_, move);
   if (move.kind == MoveKind::Null) {
     return result;
   }
@@ -94,12 +102,22 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
     const cell_t promoteCell = makeCell(color, moveKindPromotePiece(move.kind));
     result.inner_ += Weights::PSQ[promoteCell][move.dst];
     result.stage_ += STAGES[promoteCell] - PAWN_STAGE;
+    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[srcCell][move.src];
     return result;
+  }
+  if (srcCell == makeCell(color, Piece::Pawn)) {
+    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[srcCell][move.src];
+    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[srcCell][move.dst];
+  }
+  if (dstCell == makeCell(invert(color), Piece::Pawn)) {
+    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[dstCell][move.dst];
   }
   result.inner_ += Weights::PSQ[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {
     const coord_t pawnPos = enpassantPawnPos(color, move.dst);
-    result.inner_ -= Weights::PSQ[makeCell(invert(color), Piece::Pawn)][pawnPos];
+    const cell_t enemyPawn = makeCell(invert(color), Piece::Pawn);
+    result.inner_ -= Weights::PSQ[enemyPawn][pawnPos];
+    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[enemyPawn][pawnPos];
     result.stage_ -= PAWN_STAGE;
   }
   return result;
