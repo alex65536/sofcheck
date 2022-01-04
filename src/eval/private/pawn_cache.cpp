@@ -51,16 +51,19 @@ board_hash_t pawnHashUpdate(const Board &b, board_hash_t hash, const Move move) 
   const SoFCore::Color color = b.side;
   const cell_t srcCell = b.cells[move.src];
   const cell_t ourPawn = makeCell(color, Piece::Pawn);
-  if (srcCell != ourPawn) {
-    return hash;
-  }
-  hash ^= SoFCore::Private::g_zobristPieces[ourPawn][move.src];
-  if (isMoveKindPromote(move.kind)) {
-    return hash;
-  }
-  hash ^= SoFCore::Private::g_zobristPieces[ourPawn][move.dst];
   const cell_t dstCell = b.cells[move.dst];
   const cell_t enemyPawn = makeCell(invert(color), Piece::Pawn);
+  if (srcCell != ourPawn && dstCell != enemyPawn) {
+    return hash;
+  }
+  if (isMoveKindPromote(move.kind)) {
+    hash ^= SoFCore::Private::g_zobristPieces[ourPawn][move.src];
+    return hash;
+  }
+  if (srcCell == ourPawn) {
+    hash ^= SoFCore::Private::g_zobristPieces[ourPawn][move.src];
+    hash ^= SoFCore::Private::g_zobristPieces[ourPawn][move.dst];
+  }
   if (dstCell == enemyPawn) {
     hash ^= SoFCore::Private::g_zobristPieces[enemyPawn][move.dst];
   }
