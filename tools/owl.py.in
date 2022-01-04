@@ -67,7 +67,8 @@ def git_save():
 def git_restore(saved_state):
     branch, stashed = saved_state
     git('checkout', branch)
-    git('stash', 'pop')
+    if stashed:
+        git('stash', 'pop')
 
 
 def copy_with_perms(src, dst):
