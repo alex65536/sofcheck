@@ -55,7 +55,6 @@ std::vector<bitboard_t> generateIsolatedPawns() {
     if (y != 7) {
       result[i] |= Private::BB_COL[static_cast<size_t>(y + 1)];
     }
-    result[i] ^= coordToBitboard(i);
   }
   return result;
 }
