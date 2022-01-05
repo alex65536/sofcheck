@@ -171,7 +171,8 @@ public:
     std::string message;
   };
 
-  explicit GameConsumer(BoardConsumer *consumer) : consumer_(consumer) {}
+  GameConsumer(BoardConsumer *consumer, bool filterBoards)
+      : consumer_(consumer), filterBoards_(filterBoards) {}
 
   Result<std::monostate, Error> consume(const Game &game, const std::vector<Board> &boards) {
     if (!game.isCanonical()) {
@@ -192,20 +193,22 @@ public:
     }
 
     for (size_t idx = 0; idx < boards.size(); ++idx) {
-      // Ignore boards in the start of the game
-      if (idx < 5) {
-        continue;
-      }
+      if (filterBoards_) {
+        // Ignore boards in the start of the game
+        if (idx < 5) {
+          continue;
+        }
 
-      // Ignore boards after capture or promote
-      if (idx != 0 && (isMoveCapture(boards[idx - 1], moves[idx - 1]) ||
-                       isMoveKindPromote(moves[idx - 1].kind))) {
-        continue;
-      }
+        // Ignore boards after capture or promote
+        if (idx != 0 && (isMoveCapture(boards[idx - 1], moves[idx - 1]) ||
+                         isMoveKindPromote(moves[idx - 1].kind))) {
+          continue;
+        }
 
-      // Ignore boards with checks or responses to checks
-      if (isCheck(boards[idx]) || (idx != 0 && isCheck(boards[idx - 1]))) {
-        continue;
+        // Ignore boards with checks or responses to checks
+        if (isCheck(boards[idx]) || (idx != 0 && isCheck(boards[idx - 1]))) {
+          continue;
+        }
       }
 
       consumer_->consume(RichBoard{game.header.winner, count_, boards.size(),
@@ -220,6 +223,7 @@ public:
 private:
   BoardConsumer *consumer_;
   uint64_t count_ = 0;
+  bool filterBoards_;
 };
 
 struct Error {
@@ -254,6 +258,7 @@ Result<std::monostate, Error> processGameSet(std::istream &in, GameConsumer &con
 struct Options {
   std::optional<uint64_t> sampleSize = std::nullopt;
   std::optional<uint64_t> randomSeed = std::nullopt;
+  bool filterBoards = true;
 };
 
 int run(std::istream &jsonIn, std::istream &in, std::ostream &out, const Options &options) {
@@ -261,7 +266,7 @@ int run(std::istream &jsonIn, std::istream &in, std::ostream &out, const Options
     panic("Error extracting features: " + err.description);
   }));
   BoardSampler sampler(&extractor, options.sampleSize, options.randomSeed);
-  GameConsumer consumer(&sampler);
+  GameConsumer consumer(&sampler, options.filterBoards);
 
   auto result = processGameSet(in, consumer);
   if (result.isErr()) {
@@ -287,6 +292,7 @@ constexpr const char *COUNT_DESCRIPTION =
     "extract will be selected uniformly at random";
 constexpr const char *SEED_DESCRIPTION =
     "Random seed. If not specified, generate the seed randomly";
+constexpr const char *ALL_DESCRIPTION = "Do not skip the boards which are undesired for learning";
 
 int main(int argc, char **argv) {
   std::ios_base::sync_with_stdio(false);
@@ -294,11 +300,12 @@ int main(int argc, char **argv) {
 
   SoFUtil::OptParser parser(argc, argv, "MakeDataset for SoFCheck");
   parser.setLongDescription(DESCRIPTION);
-  parser.addOptions()                                                      //
-      ("f,features", FEATURES_DESCRIPTION, cxxopts::value<std::string>())  //
-      ("i,input", INPUT_DESCRIPTION, cxxopts::value<std::string>())        //
-      ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>())      //
-      ("c,count", COUNT_DESCRIPTION, cxxopts::value<uint64_t>())           //
+  parser.addOptions()                                                             //
+      ("f,features", FEATURES_DESCRIPTION, cxxopts::value<std::string>())         //
+      ("i,input", INPUT_DESCRIPTION, cxxopts::value<std::string>())               //
+      ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>())             //
+      ("c,count", COUNT_DESCRIPTION, cxxopts::value<uint64_t>())                  //
+      ("a,all", ALL_DESCRIPTION, cxxopts::value<bool>()->default_value("false"))  //
       ("s,seed", SEED_DESCRIPTION, cxxopts::value<uint64_t>());
   auto options = parser.parse();
 
@@ -320,7 +327,7 @@ int main(int argc, char **argv) {
   const Options runOptions{
       options.count("count") ? std::make_optional(options["count"].as<uint64_t>()) : std::nullopt,
       options.count("seed") ? std::make_optional(options["seed"].as<uint64_t>()) : std::nullopt,
-  };
+      !options["all"].as<bool>()};
 
   return run(jsonIn, *in, *out, runOptions);
 }
