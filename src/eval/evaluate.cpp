@@ -25,7 +25,7 @@
 #include "core/private/geometry.h"    // FIXME : refactor
 #include "core/private/zobrist.h"     // FIXME : refactor
 #include "eval/coefs.h"
-#include "eval/private/bit_consts.h"
+#include "eval/private/bitboards.h"
 #include "eval/private/pawn_cache.h"
 #include "eval/private/weights.h"
 #include "eval/score.h"
@@ -151,31 +151,75 @@ template <typename S>
 S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
   using Weights = Private::Weights<S>;
 
+  const bitboard_t bbWhitePawns = b.bbPieces[makeCell(Color::White, Piece::Pawn)];
+  const bitboard_t bbBlackPawns = b.bbPieces[makeCell(Color::Black, Piece::Pawn)];
+  const bitboard_t bbAllPawns = bbWhitePawns | bbBlackPawns;
+  const bitboard_t bbWhiteAttacks =
+      ((SoFCore::Private::advancePawnLeft(Color::White,
+                                          bbWhitePawns & ~SoFCore::Private::BB_COL[0])) |
+       (SoFCore::Private::advancePawnRight(Color::White,
+                                           bbWhitePawns & ~SoFCore::Private::BB_COL[7])));
+  const bitboard_t bbBlackAttacks =
+      ((SoFCore::Private::advancePawnLeft(Color::Black,
+                                          bbBlackPawns & ~SoFCore::Private::BB_COL[0])) |
+       (SoFCore::Private::advancePawnRight(Color::Black,
+                                           bbBlackPawns & ~SoFCore::Private::BB_COL[7])));
+
   const auto doEvalPawns = [&](const Color c) {
     S result{};
 
-    const bitboard_t bbPawns = b.bbPieces[makeCell(c, Piece::Pawn)];
+    const bitboard_t bbPawns = (c == Color::White) ? bbWhitePawns : bbBlackPawns;
+    const bitboard_t bbEnemyPawns = (c == Color::White) ? bbBlackPawns : bbWhitePawns;
+    const bitboard_t bbAttacks = (c == Color::White) ? bbWhiteAttacks : bbBlackAttacks;
+    const bitboard_t bbEnemyAttacks = (c == Color::White) ? bbBlackAttacks : bbWhiteAttacks;
 
-    // Calculate isolated and double pawns
-    size_t pawnMask = 0;
-    coef_t doublePawnCount = 0;
-    for (subcoord_t col = 0; col < 8; ++col) {
-      const bitboard_t bbPawnLine = bbPawns & SoFCore::Private::BB_COL[col];
-      if (bbPawnLine) {
-        pawnMask |= static_cast<size_t>(1) << col;
+    coef_t isolatedPawns = 0;
+    coef_t doublePawns = 0;
+    coef_t passedPawns = 0;
+    coef_t openPawns = 0;
+    coef_t candidatePawns = 0;
+
+    const auto *bbOpenPawns =
+        (c == Color::White) ? Private::BB_OPEN_PAWN_WHITE : Private::BB_OPEN_PAWN_BLACK;
+    const auto *bbPassedPawns =
+        (c == Color::White) ? Private::BB_PASSED_PAWN_WHITE : Private::BB_PASSED_PAWN_BLACK;
+    const auto *attackFrontspans =
+        (c == Color::White) ? Private::ATTACK_FRONTSPANS_WHITE : Private::ATTACK_FRONTSPANS_BLACK;
+
+    bitboard_t bbIterPawns = bbPawns;
+    bitboard_t bbAttackFrontspans = 0;
+    while (bbIterPawns) {
+      const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbIterPawns));
+      if (!(bbPawns & Private::BB_ISOLATED_PAWN[src])) {
+        ++isolatedPawns;
       }
-      doublePawnCount += SoFUtil::clearLowest(bbPawnLine) != 0;
+      if (bbPawns & Private::BB_DOUBLE_PAWN[src]) {
+        ++doublePawns;
+      }
+      if (!(bbAllPawns & bbOpenPawns[src])) {
+        ++openPawns;
+        if (!(bbEnemyPawns & bbPassedPawns[src])) {
+          ++passedPawns;
+        } else if (!(bbEnemyAttacks & ~bbAttacks & bbOpenPawns[src])) {
+          ++candidatePawns;
+        }
+      }
+      bbAttackFrontspans |= attackFrontspans[src];
     }
-    const coef_t isolatedPawnCount = Private::ISOLATED_COUNTS[pawnMask];
-    result += static_cast<S>(Weights::PAWN_DOUBLE * doublePawnCount +
-                             Weights::PAWN_ISOLATED * isolatedPawnCount);
+    openPawns -= candidatePawns;
+    openPawns -= passedPawns;
 
-    // Calculate protected pawns
-    const bitboard_t bbProtectedPawns =
-        bbPawns & ((SoFCore::Private::advancePawnLeft(c, bbPawns & ~SoFCore::Private::BB_COL[0])) |
-                   (SoFCore::Private::advancePawnRight(c, bbPawns & ~SoFCore::Private::BB_COL[7])));
-    const auto protectedPawnCount = static_cast<coef_t>(SoFUtil::popcount(bbProtectedPawns));
-    result += static_cast<S>(Weights::PAWN_PROTECTED * protectedPawnCount);
+    const auto protectedPawns = static_cast<coef_t>(SoFUtil::popcount(bbPawns & bbAttacks));
+    const auto backwardPawns = static_cast<coef_t>(SoFUtil::popcount(
+        SoFCore::Private::advancePawnForward(c, bbPawns) & bbEnemyAttacks & ~bbAttackFrontspans));
+
+    result += static_cast<S>(Weights::PAWN_ISOLATED * isolatedPawns);
+    result += static_cast<S>(Weights::PAWN_DOUBLE * doublePawns);
+    result += static_cast<S>(Weights::PAWN_PASSED * passedPawns);
+    result += static_cast<S>(Weights::PAWN_OPEN * openPawns);
+    result += static_cast<S>(Weights::PAWN_CANDIDATE * candidatePawns);
+    result += static_cast<S>(Weights::PAWN_PROTECTED * protectedPawns);
+    result += static_cast<S>(Weights::PAWN_BACKWARD * backwardPawns);
 
     return result;
   };

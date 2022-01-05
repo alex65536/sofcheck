@@ -253,7 +253,7 @@ add_library(sof_eval STATIC
   src/eval/evaluate.cpp
   src/eval/private/pawn_cache.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
-  "${PROJECT_BINARY_DIR}/src/eval/private/bit_consts.h"
+  "${PROJECT_BINARY_DIR}/src/eval/private/bitboards.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
 )
@@ -370,8 +370,8 @@ generate_file_json(
 target_link_libraries(gen_eval_feature_count sof_eval_feat)
 
 generate_file(
-  gen/eval/bit_consts.cpp
-  src/eval/private/bit_consts.h
+  gen/eval/bitboards.cpp
+  src/eval/private/bitboards.h
 )
 
 generate_file_json(
