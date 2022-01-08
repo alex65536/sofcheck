@@ -143,6 +143,8 @@ public:
       return;
     }
     if (random_() % count_ < size) {
+      // Due to a strange bug, clang-tidy complains about division by zero here. So, add the assert
+      SOF_ASSERT(size != 0);
       sample_[static_cast<size_t>(random_() % size)] = board;
     }
   }
