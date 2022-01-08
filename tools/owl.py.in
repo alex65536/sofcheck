@@ -177,6 +177,4 @@ try:
     args.func(args)
 except Exception as exc:
     etype = type(exc).__name__
-    emsg = str(exc)
-    sys.stderr.write(f'Error {etype}: {emsg}\n')
-    sys.exit(1)
+    sys.exit(f'Error {etype}: {exc}')
