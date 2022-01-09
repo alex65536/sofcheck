@@ -124,6 +124,17 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
 }
 
 template <typename S>
+S Evaluator<S>::mix(const Pair &pair, const coef_t stage) {
+  return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> 8);
+}
+
+template <typename S>
+template <typename W>
+void Evaluator<S>::addWithCoef(S &result, const W &weight, coef_t coef) {
+  result += static_cast<S>(weight * coef);
+}
+
+template <typename S>
 Evaluator<S>::Evaluator() : pawnCache_(std::make_unique<Private::PawnCache<S>>()) {}
 
 template <typename S>
@@ -140,17 +151,6 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
   result -= evalByColor<Color::Black>(b);
 
   return result;
-}
-
-template <typename S>
-S Evaluator<S>::mix(const Pair &pair, const coef_t stage) {
-  return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> 8);
-}
-
-template <typename S>
-template <typename W>
-void Evaluator<S>::addWithCoef(S &result, const W &weight, coef_t coef) {
-  result += static_cast<S>(weight * coef);
 }
 
 template <typename S>
