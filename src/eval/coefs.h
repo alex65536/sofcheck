@@ -29,9 +29,6 @@
 
 namespace SoFEval {
 
-// Underlying integer type for `BaseCoefs`
-using coef_t = int32_t;
-
 // Minimal unit in `BaseCoefs` that corresponds to one added coefficient. This constant is greater
 // than `1` because we can perform the division to blend the ordinary score with the endgame score
 constexpr coef_t COEF_UNIT = 256;

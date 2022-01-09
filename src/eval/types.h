@@ -25,6 +25,9 @@ namespace SoFEval {
 template <typename T>
 struct ScoreTraits {};
 
+// Integer type to store multiplier coefficients for weights
+using coef_t = int32_t;
+
 }  // namespace SoFEval
 
 #endif  // SOF_EVAL_TYPES_INCLUDED

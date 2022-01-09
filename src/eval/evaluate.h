@@ -96,7 +96,7 @@ public:
   }
 
 private:
-  inline static constexpr int16_t colorCoef(const SoFCore::Color c) {
+  inline static constexpr coef_t colorCoef(const SoFCore::Color c) {
     return (c == SoFCore::Color::White) ? +1 : -1;
   }
 
@@ -109,7 +109,7 @@ private:
 
   // Given a pair `pair` of midgame and endgame score, and current game stage `stage`, calculate the
   // real score
-  static S mix(const Pair &pair, uint32_t stage);
+  static S mix(const Pair &pair, coef_t stage);
 
   std::unique_ptr<Private::PawnCache<S>> pawnCache_;
 };

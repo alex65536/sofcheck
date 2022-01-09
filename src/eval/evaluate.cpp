@@ -131,8 +131,9 @@ Evaluator<S>::~Evaluator() = default;
 
 template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
-  const uint32_t rawStage = ((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE;
-  const uint32_t stage = std::min<uint32_t>(rawStage, 256);
+  const auto rawStage =
+    static_cast<coef_t>(((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE);
+  const auto stage = std::min<coef_t>(rawStage, 256);
 
   auto result = mix(tag.inner_, stage);
   result += pawnCache_->get(tag.pawnHash_, [&]() { return evalPawns(b); });
@@ -143,8 +144,8 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
 }
 
 template <typename S>
-S Evaluator<S>::mix(const Pair &pair, const uint32_t stage) {
-  return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> 8);
+S Evaluator<S>::mix(const Pair &pair, const coef_t stage) {
+  return (pair.first() * stage + pair.second() * (256 - stage)) >> 8;
 }
 
 template <typename S>
@@ -213,13 +214,13 @@ S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
     const auto backwardPawns = static_cast<coef_t>(SoFUtil::popcount(
         SoFCore::Private::advancePawnForward(c, bbPawns) & bbEnemyAttacks & ~bbAttackFrontspans));
 
-    result += static_cast<S>(Weights::PAWN_ISOLATED * isolatedPawns);
-    result += static_cast<S>(Weights::PAWN_DOUBLE * doublePawns);
-    result += static_cast<S>(Weights::PAWN_PASSED * passedPawns);
-    result += static_cast<S>(Weights::PAWN_OPEN * openPawns);
-    result += static_cast<S>(Weights::PAWN_CANDIDATE * candidatePawns);
-    result += static_cast<S>(Weights::PAWN_PROTECTED * protectedPawns);
-    result += static_cast<S>(Weights::PAWN_BACKWARD * backwardPawns);
+    result += Weights::PAWN_ISOLATED * isolatedPawns;
+    result += Weights::PAWN_DOUBLE * doublePawns;
+    result += Weights::PAWN_PASSED * passedPawns;
+    result += Weights::PAWN_OPEN * openPawns;
+    result += Weights::PAWN_CANDIDATE * candidatePawns;
+    result += Weights::PAWN_PROTECTED * protectedPawns;
+    result += Weights::PAWN_BACKWARD * backwardPawns;
 
     return result;
   };
@@ -248,7 +249,7 @@ S Evaluator<S>::evalByColor(const Board &b) {
         QUEEN_DISTANCES[i] *
         static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen));
   }
-  result += static_cast<S>(Weights::QUEEN_NEAR_TO_KING * nearCount);
+  result += Weights::QUEEN_NEAR_TO_KING * nearCount;
 
   return result;
 }
