@@ -39,7 +39,7 @@ std::vector<std::vector<bitboard_t>> generateKingMetricRings() {
 std::vector<bitboard_t> generateDoublePawns() {
   std::vector<bitboard_t> result(64);
   for (coord_t i = 0; i < 64; ++i) {
-    result[i] = Private::BB_COL[static_cast<size_t>(coordY(i))];
+    result[i] = Private::BB_COL[coordY(i)];
     result[i] ^= coordToBitboard(i);
   }
   return result;
@@ -50,10 +50,10 @@ std::vector<bitboard_t> generateIsolatedPawns() {
   for (coord_t i = 0; i < 64; ++i) {
     const subcoord_t y = coordY(i);
     if (y != 0) {
-      result[i] |= Private::BB_COL[static_cast<size_t>(y - 1)];
+      result[i] |= Private::BB_COL[y - 1];
     }
     if (y != 7) {
-      result[i] |= Private::BB_COL[static_cast<size_t>(y + 1)];
+      result[i] |= Private::BB_COL[y + 1];
     }
   }
   return result;
