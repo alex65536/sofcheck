@@ -111,6 +111,11 @@ private:
   // real score
   static S mix(const Pair &pair, coef_t stage);
 
+  // Helper function to add `weight * coef` to `result`. This function is mostly needed to silence
+  // MSVC warnings about narrowing type conversions
+  template <typename W>
+  static void addWithCoef(S &result, const W &weight, coef_t coef);
+
   std::unique_ptr<Private::PawnCache<S>> pawnCache_;
 };
 
