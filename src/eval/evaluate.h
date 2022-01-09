@@ -80,7 +80,7 @@ public:
   S evalForWhite(const SoFCore::Board &b, const Tag &tag);
 
   S evalForCur(const SoFCore::Board &b, const Tag &tag) {
-    return evalForWhite(b, tag) * colorCoef(b.side);
+    return applyColor(evalForWhite(b, tag), b.side);
   }
 
   // Returns a rough estimate of the position cost of `b`, based only on piece-square tables. `tag`
@@ -92,12 +92,12 @@ public:
   }
 
   inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) {
-    return evalMaterialForWhite(b, tag) * colorCoef(b.side);
+    return applyColor(evalMaterialForWhite(b, tag), b.side);
   }
 
 private:
-  inline static constexpr coef_t colorCoef(const SoFCore::Color c) {
-    return (c == SoFCore::Color::White) ? +1 : -1;
+  inline static S applyColor(const S &result, const SoFCore::Color c) {
+    return (c == SoFCore::Color::White) ? result : -result;
   }
 
   // Helper function, evaluates only the features for pieces belonging to the color `C`
