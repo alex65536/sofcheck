@@ -102,7 +102,7 @@ private:
 
   // Helper function, evaluates only the features for pieces belonging to the color `C`
   template <SoFCore::Color C>
-  S evalByColor(const SoFCore::Board &b);
+  S evalByColor(const SoFCore::Board &b, coef_t stage);
 
   // Helper function, evaluates only the features for pawns
   S evalPawns(const SoFCore::Board &b);

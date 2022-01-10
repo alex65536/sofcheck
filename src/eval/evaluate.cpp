@@ -56,6 +56,11 @@ constexpr uint32_t STAGES[15] = {
 
 constexpr coef_t QUEEN_DISTANCES[8] = {0, 3, 2, 1, 0, 0, 0, 0};
 
+constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
+constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
+
+constexpr bitboard_t BB_SHIELD_INVERTED[8] = {0, 4, 2, 6, 1, 5, 3, 7};
+
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
   using Weights = Private::Weights<S>;
@@ -147,8 +152,8 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
 
   auto result = mix(tag.inner_, stage);
   result += pawnCache_->get(tag.pawnHash_, [&]() { return evalPawns(b); });
-  result += evalByColor<Color::White>(b);
-  result -= evalByColor<Color::Black>(b);
+  result += evalByColor<Color::White>(b, stage);
+  result -= evalByColor<Color::Black>(b, stage);
 
   return result;
 }
@@ -235,7 +240,7 @@ S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
 
 template <typename S>
 template <Color C>
-S Evaluator<S>::evalByColor(const Board &b) {
+S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
   using Weights = Private::Weights<S>;
 
   // Calculate pairs of bishops
@@ -244,17 +249,46 @@ S Evaluator<S>::evalByColor(const Board &b) {
     result += Weights::TWO_BISHOPS;
   }
 
+  const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
+  const bitboard_t bbKing = b.bbPieces[makeCell(C, Piece::King)];
+  const bitboard_t bbEnemyKing = b.bbPieces[makeCell(invert(C), Piece::King)];
+  const auto kingPos = static_cast<coord_t>(SoFUtil::getLowest(bbKing));
+  const auto enemyKingPos = static_cast<coord_t>(SoFUtil::getLowest(bbEnemyKing));
+
   // Calculate queens near to the opponent's king
-  const auto king =
-      static_cast<coord_t>(SoFUtil::getLowest(b.bbPieces[makeCell(invert(C), Piece::King)]));
   const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
   coef_t nearCount = 0;
   for (size_t i = 1; i < 8; ++i) {
-    nearCount +=
-        QUEEN_DISTANCES[i] *
-        static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][king] & bbQueen));
+    nearCount += QUEEN_DISTANCES[i] * static_cast<coef_t>(SoFUtil::popcount(
+                                          Private::KING_METRIC_RINGS[i][enemyKingPos] & bbQueen));
   }
   addWithCoef(result, Weights::QUEEN_NEAR_TO_KING, nearCount);
+
+  // Calculate king shield
+  constexpr bitboard_t bbShieldedKing =
+      (C == Color::White) ? BB_WHITE_SHIELDED_KING : BB_BLACK_SHIELDED_KING;
+  constexpr bitboard_t shieldFirstRow = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
+  constexpr bitboard_t shieldSecondRow = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
+
+  S shieldResult{};
+  if (bbKing & bbShieldedKing) {
+    const subcoord_t kingY = SoFCore::coordY(kingPos);
+    const coord_t shiftFirst = (C == Color::White) ? (kingY + 47) : (kingY + 7);
+    const coord_t shiftSecond = (C == Color::White) ? (kingY + 39) : (kingY + 15);
+    bitboard_t shieldFirst = ((bbPawns & shieldFirstRow) >> shiftFirst) & 7U;
+    bitboard_t shieldSecond = ((bbPawns & shieldSecondRow) >> shiftSecond) & 7U;
+    if (kingY > 4) {
+      shieldFirst = BB_SHIELD_INVERTED[shieldFirst];
+      shieldSecond = BB_SHIELD_INVERTED[shieldSecond];
+    }
+    const bitboard_t shield = shieldFirst | (shieldSecond << 3);
+    for (size_t i = 0; i < 6; ++i) {
+      if ((shield >> i) & 1U) {
+        shieldResult += Weights::KING_SHIELD[i];
+      }
+    }
+  }
+  result += mix(Pair::from(shieldResult, S{}), stage);
 
   return result;
 }
