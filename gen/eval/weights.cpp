@@ -100,6 +100,39 @@ Psq psqFromBundle(const PsqBundle &bundle) {
   return result;
 }
 
+std::vector<std::vector<std::string>> kingShieldFromBundle(const ArrayBundle &bundle,
+                                                           const bool inverted) {
+  SOF_ASSERT(bundle.count() == 6);
+
+  auto applyInv = [&](const size_t x) {
+    if (inverted) {
+      return ((x & 4U) >> 2) | (x & 2U) | ((x & 1U) << 2);
+    }
+    return x;
+  };
+
+  std::vector<std::vector<std::string>> result(8, std::vector<std::string>(8));
+  for (size_t mask1 = 0; mask1 < 8; ++mask1) {
+    for (size_t mask2 = 0; mask2 < 8; ++mask2) {
+      const size_t mask = applyInv(mask1) | (applyInv(mask2) << 3);
+      std::string &str = result[mask1][mask2];
+      for (size_t idx = 0; idx < 6; ++idx) {
+        if ((mask >> idx) & 1U) {
+          if (!str.empty()) {
+            str += " + ";
+          }
+          str += "LargePair::from(number(" + std::to_string(bundle.name().offset + idx) +
+                 "), empty())";
+        }
+      }
+      if (str.empty()) {
+        str = "LargePair::from(empty())";
+      }
+    }
+  }
+  return result;
+}
+
 void fillWeights(SourcePrinter &p, const Features &features) {
   for (const auto &bundle : features.bundles()) {
     if (const auto *b = bundle.asSingle()) {
@@ -139,6 +172,23 @@ void fillWeights(SourcePrinter &p, const Features &features) {
 
       outCastling("KINGSIDE", psq.kingsideCastling);
       outCastling("QUEENSIDE", psq.queensideCastling);
+      continue;
+    }
+
+    if (const auto *b = bundle.asKingPawn()) {
+      auto printShield = [&](const char *name, const bool inverted) {
+        const auto shield = kingShieldFromBundle(b->shield(), inverted);
+        p.lineStart() << "inline static const LargePair " << formatName(b->name()) << "_" << name
+                      << "[8][8] = ";
+        p.arrayBody(shield.size(), [&](const size_t i) {
+          p.arrayBody(shield[i].size(), [&](const size_t j) { p.stream() << shield[i][j]; });
+        });
+        p.stream() << ";\n";
+      };
+
+      printShield("SHIELD", false);
+      printShield("SHIELD_INV", true);
+
       continue;
     }
 

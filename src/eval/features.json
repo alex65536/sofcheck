@@ -82,5 +82,8 @@
     {"pawn_open": 2},
     {"pawn_protected": 7},
     {"pawn_backward": -1},
-    {"king_shield": [41, 98, 20, 49, 71, 3]}
+    {"king_pawn": {
+        "type": "king_pawn",
+        "shield": [41, 98, 20, 49, 71, 3]
+    }}
 ]

@@ -59,8 +59,6 @@ constexpr coef_t QUEEN_DISTANCES[8] = {0, 3, 2, 1, 0, 0, 0, 0};
 constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
 constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
 
-constexpr bitboard_t BB_SHIELD_INVERTED[8] = {0, 4, 2, 6, 1, 5, 3, 7};
-
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
   using Weights = Private::Weights<S>;
@@ -267,28 +265,19 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
   // Calculate king shield
   constexpr bitboard_t bbShieldedKing =
       (C == Color::White) ? BB_WHITE_SHIELDED_KING : BB_BLACK_SHIELDED_KING;
-  constexpr bitboard_t shieldFirstRow = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
-  constexpr bitboard_t shieldSecondRow = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
-
-  S shieldResult{};
   if (bbKing & bbShieldedKing) {
     const subcoord_t kingY = SoFCore::coordY(kingPos);
-    const coord_t shiftFirst = (C == Color::White) ? (kingY + 47) : (kingY + 7);
-    const coord_t shiftSecond = (C == Color::White) ? (kingY + 39) : (kingY + 15);
-    bitboard_t shieldFirst = ((bbPawns & shieldFirstRow) >> shiftFirst) & 7U;
-    bitboard_t shieldSecond = ((bbPawns & shieldSecondRow) >> shiftSecond) & 7U;
-    if (kingY > 4) {
-      shieldFirst = BB_SHIELD_INVERTED[shieldFirst];
-      shieldSecond = BB_SHIELD_INVERTED[shieldSecond];
-    }
-    const bitboard_t shield = shieldFirst | (shieldSecond << 3);
-    for (size_t i = 0; i < 6; ++i) {
-      if ((shield >> i) & 1U) {
-        shieldResult += Weights::KING_SHIELD[i];
-      }
-    }
+    const coord_t shift1 = (C == Color::White) ? (kingY + 47) : (kingY + 7);
+    const coord_t shift2 = (C == Color::White) ? (kingY + 39) : (kingY + 15);
+    constexpr bitboard_t shieldRow1 = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
+    constexpr bitboard_t shieldRow2 = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
+    const bitboard_t mask1 = ((bbPawns & shieldRow1) >> shift1) & 7U;
+    const bitboard_t mask2 = ((bbPawns & shieldRow2) >> shift2) & 7U;
+    const auto shieldWeights =
+        (kingY < 4) ? Weights::KING_PAWN_SHIELD : Weights::KING_PAWN_SHIELD_INV;
+    const Pair shieldResult = shieldWeights[mask1][mask2];
+    result += mix(shieldResult, stage);
   }
-  result += mix(Pair::from(shieldResult, S{}), stage);
 
   return result;
 }
