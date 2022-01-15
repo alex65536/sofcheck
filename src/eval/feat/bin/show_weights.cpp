@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "eval/feat/feat.h"
-#include "util/fileutil.h"
+#include "util/ioutil.h"
 #include "util/misc.h"
 #include "util/optparse.h"
 #include "util/result.h"
