@@ -16,10 +16,10 @@
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
 #include <algorithm>
-#include <iomanip>
 #include <iostream>
 #include <optional>
 #include <random>
+#include <thread>
 #include <variant>
 
 #include "core/board.h"
@@ -31,11 +31,12 @@
 #include "eval/feat/feat.h"
 #include "gameset/reader.h"
 #include "gameset/types.h"
-#include "util/fileutil.h"
+#include "util/ioutil.h"
 #include "util/logging.h"
 #include "util/misc.h"
 #include "util/no_copy_move.h"
 #include "util/optparse.h"
+#include "util/queue.h"
 #include "util/random.h"
 #include "util/result.h"
 
@@ -50,12 +51,17 @@ using SoFEval::coef_t;
 using SoFEval::Feat::Features;
 using SoFGameSet::Game;
 using SoFGameSet::Winner;
+using SoFUtil::BlockingQueue;
+using SoFUtil::BufWriter;
 using SoFUtil::Err;
 using SoFUtil::Ok;
 using SoFUtil::openReadFile;
 using SoFUtil::openWriteFile;
+using SoFUtil::OstreamWriter;
 using SoFUtil::panic;
 using SoFUtil::Result;
+using SoFUtil::StringWriter;
+using SoFUtil::Writer;
 
 struct RichBoard {
   Winner winner;
@@ -71,56 +77,143 @@ public:
   virtual void finish() {}
 };
 
-class FeatureExtractor : public BoardConsumer {
+class FeatureExtractor : public BoardConsumer, public virtual SoFUtil::NoCopyMove {
 public:
-  explicit FeatureExtractor(std::ostream &out, Features features)
-      : out_(&out), features_(std::move(features)) {
-    writeHeader();
+  explicit FeatureExtractor(Writer *writer, const Features &features, size_t numThreads)
+      : boardQueue_(QUEUE_SIZE), stringQueue_(QUEUE_SIZE), printer_(&stringQueue_, writer) {
+    if (numThreads == 0) {
+      numThreads = std::thread::hardware_concurrency();
+    }
+    for (size_t i = 0; i < numThreads; ++i) {
+      workers_.emplace_back(&boardQueue_, &stringQueue_);
+    }
+    putHeader(features);
+    drainBatch();
   }
 
   void consume(const RichBoard &board) override {
-    const std::vector<coef_t> coefs =
-        evaluator_.evalForWhite(board.board, Evaluator::Tag::from(board.board)).take();
-    writeLine(board, coefs);
+    batch_.push_back(board);
+    if (batch_.size() == BATCH_SIZE) {
+      drainBatch();
+    }
+  }
+
+  void finish() override {
+    drainBatch();
+    boardQueue_.close();
+    for (auto &worker : workers_) {
+      worker.join();
+    }
+    stringQueue_.close();
+    printer_.join();
   }
 
 private:
-  void writeHeader() {
-    *out_ << "winner,game_id,board_total,board_left";
-    for (const auto &name : features_.names()) {
-      *out_ << "," << name.name;
+  static constexpr size_t BATCH_SIZE = 64;
+  static constexpr size_t QUEUE_SIZE = 512;
+
+  using BoardQueue = BlockingQueue<std::vector<RichBoard>>;
+  using StringQueue = BlockingQueue<std::string>;
+
+  void drainBatch() {
+    if (!batch_.empty()) {
+      boardQueue_.push(std::move(batch_));
+      batch_.clear();
     }
-    *out_ << "\n";
+    batch_.reserve(BATCH_SIZE);
   }
 
-  void writeLine(const RichBoard &board, const std::vector<coef_t> &coefs) {
-    *out_ << std::fixed << std::setprecision(1) << winnerToNumber(board.winner) << ","
-          << board.gameId << "," << board.boardsTotal << "," << board.boardsLeft;
-    for (const coef_t c : coefs) {
-      *out_ << "," << c;
+  void putHeader(const Features &features) {
+    std::string result = "winner,game_id,board_total,board_left";
+    for (const auto &name : features.names()) {
+      result += "," + name.name;
     }
-    *out_ << "\n";
+    result += "\n";
+    stringQueue_.push(std::move(result));
   }
 
-  static double winnerToNumber(const Winner winner) {
-    switch (winner) {
-      case Winner::Black:
-        return 0.0;
-      case Winner::White:
-        return 1.0;
-      case Winner::Draw:
-        return 0.5;
-      case Winner::Unknown:
-        panic("Winner::Unknown not supported here");
+  struct Worker {
+    Worker(BoardQueue *in, StringQueue *out)
+        : in(in), out(out), writer(StringWriter::create()), buf(writer.get()), thread([this]() {
+            run();
+          }) {}
+
+    void join() { thread.join(); }
+
+    void run() {
+      while (const auto inBatch = in->pop()) {
+        writer->str().clear();
+        for (const auto &board : *inBatch) {
+          const std::vector<coef_t> coefs =
+              evaluator.evalForWhite(board.board, Evaluator::Tag::from(board.board)).take();
+          writeLine(board, coefs);
+        }
+        buf.flush();
+        out->push(std::move(writer->str()));
+      }
     }
-    SOF_UNREACHABLE();
-  }
 
-  using Evaluator = SoFEval::Evaluator<SoFEval::Coefs>;
+    static const char *winnerToNumber(const Winner winner) {
+      switch (winner) {
+        case Winner::Black:
+          return "0.0";
+        case Winner::White:
+          return "1.0";
+        case Winner::Draw:
+          return "0.5";
+        case Winner::Unknown:
+          panic("Winner::Unknown not supported here");
+      }
+      SOF_UNREACHABLE();
+    }
 
-  std::ostream *out_;
-  Features features_;
-  Evaluator evaluator_;
+    void writeLine(const RichBoard &board, const std::vector<coef_t> &coefs) {
+      buf.writeStr(winnerToNumber(board.winner))
+          .writeStr(",")
+          .writeInt(board.gameId)
+          .writeStr(",")
+          .writeInt(board.boardsTotal)
+          .writeStr(",")
+          .writeInt(board.boardsLeft);
+      for (const coef_t c : coefs) {
+        buf.writeStr(",").writeInt(c);
+      }
+      buf.writeStr("\n");
+    }
+
+    using Evaluator = SoFEval::Evaluator<SoFEval::Coefs>;
+
+    BoardQueue *in;
+    StringQueue *out;
+    Evaluator evaluator;
+    StringWriter::Ptr writer;
+    BufWriter buf;
+    std::thread thread;
+  };
+
+  struct Printer {
+    Printer(StringQueue *in, Writer *writer) : in(in), out(writer), thread([this]() { run(); }) {}
+
+    void join() { thread.join(); }
+
+    void run() {
+      while (const auto str = in->pop()) {
+        out.writeStr(*str);
+      }
+    }
+
+    StringQueue *in;
+    BufWriter out;
+    std::thread thread;
+  };
+
+  BoardQueue boardQueue_;
+  StringQueue stringQueue_;
+
+  std::vector<RichBoard> batch_;
+
+  Printer printer_;
+  std::deque<Worker> workers_;
 };
 
 class BoardSampler : public BoardConsumer {
@@ -260,13 +353,15 @@ Result<std::monostate, Error> processGameSet(std::istream &in, GameConsumer &con
 struct Options {
   std::optional<uint64_t> sampleSize = std::nullopt;
   std::optional<uint64_t> randomSeed = std::nullopt;
+  uint32_t jobs = 0;
   bool filterBoards = true;
 };
 
 int run(std::istream &jsonIn, std::istream &in, std::ostream &out, const Options &options) {
-  FeatureExtractor extractor(out, Features::load(jsonIn).okOrErr([](const auto err) {
-    panic("Error extracting features: " + err.description);
-  }));
+  const auto features = Features::load(jsonIn).okOrErr(
+      [](const auto err) { panic("Error extracting features: " + err.description); });
+  Writer::Ptr writer = OstreamWriter::create(out);
+  FeatureExtractor extractor(writer.get(), features, options.jobs);
   BoardSampler sampler(&extractor, options.sampleSize, options.randomSeed);
   GameConsumer consumer(&sampler, options.filterBoards);
 
@@ -294,10 +389,13 @@ constexpr const char *COUNT_DESCRIPTION =
     "extract will be selected uniformly at random";
 constexpr const char *SEED_DESCRIPTION =
     "Random seed. If not specified, generate the seed randomly";
+constexpr const char *JOBS_DESCRIPTION =
+    "Number of threads to run. If not specified, the number of threads is the number of CPU cores";
 constexpr const char *ALL_DESCRIPTION = "Do not skip the boards which are undesired for learning";
 
 int main(int argc, char **argv) {
   std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
   SoFCore::init();
 
   SoFUtil::OptParser parser(argc, argv, "MakeDataset for SoFCheck");
@@ -308,7 +406,8 @@ int main(int argc, char **argv) {
       ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>())             //
       ("c,count", COUNT_DESCRIPTION, cxxopts::value<uint64_t>())                  //
       ("a,all", ALL_DESCRIPTION, cxxopts::value<bool>()->default_value("false"))  //
-      ("s,seed", SEED_DESCRIPTION, cxxopts::value<uint64_t>());
+      ("s,seed", SEED_DESCRIPTION, cxxopts::value<uint64_t>())                    //
+      ("j,jobs", JOBS_DESCRIPTION, cxxopts::value<uint32_t>()->default_value("0"));
   auto options = parser.parse();
 
   auto badFile = [&](auto err) { return panic(std::move(err.description)); };
@@ -329,6 +428,7 @@ int main(int argc, char **argv) {
   const Options runOptions{
       options.count("count") ? std::make_optional(options["count"].as<uint64_t>()) : std::nullopt,
       options.count("seed") ? std::make_optional(options["seed"].as<uint64_t>()) : std::nullopt,
+      options["jobs"].as<uint32_t>(),  //
       !options["all"].as<bool>()};
 
   return run(jsonIn, *in, *out, runOptions);
