@@ -202,7 +202,7 @@ add_library(sof_version STATIC
 
 add_library(sof_util STATIC
   src/util/formatter.cpp
-  src/util/fileutil.cpp
+  src/util/ioutil.cpp
   src/util/logging.cpp
   src/util/misc.cpp
   src/util/optparse.cpp
@@ -291,7 +291,7 @@ add_executable(make_dataset
 )
 target_link_libraries(
   make_dataset
-  sof_core sof_util sof_eval sof_eval_feat sof_gameset ${JSONCPP_TARGET}
+  sof_core sof_util sof_eval sof_eval_feat sof_gameset Threads::Threads ${JSONCPP_TARGET}
 )
 
 add_executable(apply_weights
