@@ -127,7 +127,7 @@ void fillWeights(SourcePrinter &p, const Features &features) {
       p.stream() << ";\n";
 
       auto outCastling = [&](const char *name, const std::string value[2]) {
-        p.line() << "inline static const LargePair " << formatName(b->name()) << "_" << name
+        p.line() << "static constexpr LargePair " << formatName(b->name()) << "_" << name
                  << "_UPD[2] = {";
         static_assert(static_cast<int>(Color::White) == 0 && static_cast<int>(Color::Black) == 1);
         p.indent(2);
