@@ -94,63 +94,64 @@ public:
   template <typename Storage1>
   // NOLINTNEXTLINE(hicpp-explicit-conversions)
   constexpr BaseCoefsPair(const BaseCoefsPair<Storage1> &other)
-      : BaseCoefsPair({Item(other.first()), Item(other.second())}) {}
+      : BaseCoefsPair(Item(other.first()), Item(other.second())) {}
 
   template <typename Storage1>
   constexpr BaseCoefsPair &operator=(const BaseCoefsPair<Storage1> &other) {
-    *this = BaseCoefsPair({Item(other.first()), Item(other.second())});
+    *this = BaseCoefsPair(Item(other.first()), Item(other.second()));
     return *this;
   }
 
   // Creates a score pair from two `Coefs`
   static constexpr BaseCoefsPair from(Item first, Item second) {
-    return BaseCoefsPair({std::move(first), std::move(second)});
+    return BaseCoefsPair(std::move(first), std::move(second));
   }
 
   // Creates a score pair from two equal `Coefs`
   static constexpr BaseCoefsPair from(Item first) {
     Item second = first;
-    return BaseCoefsPair({std::move(first), std::move(second)});
+    return BaseCoefsPair(std::move(first), std::move(second));
   }
 
   // Extracts first item from the pair
-  constexpr const Item &first() const { return value_[0]; }
+  constexpr const Item &first() const { return first_; }
 
   // Extracts second item from the pair
-  constexpr const Item &second() const { return value_[1]; }
+  constexpr const Item &second() const { return second_; }
 
   constexpr BaseCoefsPair &operator+=(const BaseCoefsPair &other) {
-    value_[0] += other.value_[0];
-    value_[1] += other.value_[1];
+    first_ += other.first_;
+    second_ += other.second_;
     return *this;
   }
 
   constexpr BaseCoefsPair &operator-=(const BaseCoefsPair &other) {
-    value_[0] -= other.value_[0];
-    value_[1] -= other.value_[1];
+    first_ -= other.first_;
+    second_ -= other.second_;
     return *this;
   }
 
   constexpr BaseCoefsPair &operator*=(const coef_t other) {
-    value_[0] *= other;
-    value_[1] *= other;
+    first_ *= other;
+    second_ *= other;
     return *this;
   }
 
   constexpr BaseCoefsPair operator+() const { return *this; }
-  constexpr BaseCoefsPair operator-() const { return BaseCoefsPair({-value_[0], -value_[1]}); }
+  constexpr BaseCoefsPair operator-() const { return BaseCoefsPair(-first_, -second_); }
 
   constexpr bool operator==(const BaseCoefsPair &other) const {
-    return value_[0] == other.value_[0] && value_[1] == other.value_[1];
+    return first_ == other.first_ && second_ == other.second_;
   }
   constexpr bool operator!=(const BaseCoefsPair &other) const { return !(*this == other); }
 
   SOF_VECTOR_OPS(BaseCoefsPair, coef_t)
 
 private:
-  explicit constexpr BaseCoefsPair(std::array<Item, 2> value) : value_(std::move(value)) {}
+  constexpr BaseCoefsPair(Item first, Item second) : first_(std::move(first)), second_(std::move(second)) {}
 
-  std::array<Item, 2> value_;
+  Item first_;
+  Item second_;
 };
 
 // Definitions for `Coefs`
