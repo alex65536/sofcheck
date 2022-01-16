@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 project(SoFCheck)
 
@@ -341,8 +341,8 @@ endif()
 add_custom_command(
   OUTPUT "${PROJECT_BINARY_DIR}/src/version/version.cpp"
   COMMAND "${CMAKE_COMMAND}"
-    -DINPUT_FILE="${PROJECT_SOURCE_DIR}/src/version/version.cpp.in"
-    -DOUTPUT_FILE="${PROJECT_BINARY_DIR}/src/version/version.cpp"
+    -DINPUT_FILE=${PROJECT_SOURCE_DIR}/src/version/version.cpp.in
+    -DOUTPUT_FILE=${PROJECT_BINARY_DIR}/src/version/version.cpp
     -DGIT_EXECUTABLE="${GIT_EXECUTABLE}"
     -P "${PROJECT_SOURCE_DIR}/cmake/scripts/GitRevisionConfig.cmake"
   DEPENDS
@@ -447,7 +447,7 @@ if(BASH AND PYTHONINTERP_FOUND)
         "COMMUNICATE_SCRIPT=${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
         "TEST_EXECUTABLE=$<TARGET_FILE:test_uci_client>"
         "IN_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in${test_id}.txt"
-        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
+        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_${test_id}.txt"
         "ANS_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out${test_id}.txt"
       "${BASH}" "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
       WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
