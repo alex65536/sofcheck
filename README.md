@@ -62,7 +62,7 @@ Other compilers are not tested.
 The following dependencies are optional:
 - [_Google Test_](https://github.com/google/googletest/): to run the unit tests
 - [_Google Benchmark_](https://github.com/google/benchmark): to run benchmarks
-- [`boost::Stacktrace`](https://www.boost.org/doc/libs/1_65_0/doc/html/stacktrace.html): to display
+- [`boost::stacktrace`](https://www.boost.org/doc/libs/1_65_0/doc/html/stacktrace.html): to display
 stack traces when the application panics
 - [`jsoncpp`](https://github.com/open-source-parsers/jsoncpp): to extract evaluation weights
 located in a JSON file. This one isn't compiled into the final executable and is used only for
