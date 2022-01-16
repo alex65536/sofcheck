@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 project(SoFCheck)
 

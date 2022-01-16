@@ -1,7 +1,7 @@
 #!/bin/bash
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,4 +35,4 @@ verify_env OUT_FILE
 verify_env ANS_FILE
 
 "${PYTHON_EXECUTABLE}" "${COMMUNICATE_SCRIPT}" "${TEST_EXECUTABLE}" <"${IN_FILE}" >"${OUT_FILE}"
-"${CMAKE_COMMAND}" -E compare_files "${ANS_FILE}" "${OUT_FILE}"
+"${CMAKE_COMMAND}" -E compare_files --ignore-eol "${ANS_FILE}" "${OUT_FILE}"
