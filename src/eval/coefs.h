@@ -149,8 +149,6 @@ public:
 
 private:
   explicit constexpr BaseCoefsPair(std::array<Item, 2> value) : value_(std::move(value)) {}
-  explicit constexpr BaseCoefsPair(SoFUtil::FixedValArray<Item, 2> value)
-      : value_(std::move(value)) {}
 
   std::array<Item, 2> value_;
 };
