@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 project(SoFCheck_SelfTest)
 
