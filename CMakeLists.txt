@@ -340,8 +340,8 @@ endif()
 add_custom_command(
   OUTPUT "${PROJECT_BINARY_DIR}/src/version/version.cpp"
   COMMAND "${CMAKE_COMMAND}"
-    -DINPUT_FILE="${PROJECT_SOURCE_DIR}/src/version/version.cpp.in"
-    -DOUTPUT_FILE="${PROJECT_BINARY_DIR}/src/version/version.cpp"
+    -DINPUT_FILE=${PROJECT_SOURCE_DIR}/src/version/version.cpp.in
+    -DOUTPUT_FILE=${PROJECT_BINARY_DIR}/src/version/version.cpp
     -DGIT_EXECUTABLE="${GIT_EXECUTABLE}"
     -P "${PROJECT_SOURCE_DIR}/cmake/scripts/GitRevisionConfig.cmake"
   DEPENDS
