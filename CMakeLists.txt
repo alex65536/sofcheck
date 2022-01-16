@@ -446,7 +446,7 @@ if(BASH AND PYTHONINTERP_FOUND)
         "COMMUNICATE_SCRIPT=${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
         "TEST_EXECUTABLE=$<TARGET_FILE:test_uci_client>"
         "IN_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in${test_id}.txt"
-        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
+        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_${test_id}.txt"
         "ANS_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out${test_id}.txt"
       "${BASH}" "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
       WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
