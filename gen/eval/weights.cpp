@@ -100,9 +100,12 @@ Psq psqFromBundle(const PsqBundle &bundle) {
   return result;
 }
 
-std::vector<std::vector<std::string>> kingShieldFromBundle(const ArrayBundle &bundle,
-                                                           const bool inverted) {
-  SOF_ASSERT(bundle.count() == 6);
+struct KingPawn {
+  std::string shield[8][8];
+};
+
+KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
+  SOF_ASSERT(bundle.shield().count() == 6);
 
   auto applyInv = [&](const size_t x) {
     if (inverted) {
@@ -111,23 +114,40 @@ std::vector<std::vector<std::string>> kingShieldFromBundle(const ArrayBundle &bu
     return x;
   };
 
-  std::vector<std::vector<std::string>> result(8, std::vector<std::string>(8));
+  auto getStr = [&](const size_t mask, const size_t count, const size_t offset) -> std::string {
+    std::vector<size_t> offsets;
+    for (size_t idx = 0; idx < count; ++idx) {
+      if ((mask >> idx) & 1U) {
+        offsets.push_back(offset + idx);
+      }
+    }
+
+    if (offsets.empty()) {
+      return "LargePair::from(empty())";
+    }
+
+    std::string result;
+    size_t pos = 0;
+    while (pos < offsets.size()) {
+      if (!result.empty()) {
+        result += " + ";
+      }
+      std::string inner = std::to_string(offsets[pos]);
+      if (pos + 1 < offsets.size()) {
+        inner += ", " + std::to_string(offsets[pos + 1]);
+      }
+      pos += 2;
+      result += "LargeItem(number(" + inner + "))";
+    }
+
+    return "LargePair::from(" + result + ", empty())";
+  };
+
+  KingPawn result;
   for (size_t mask1 = 0; mask1 < 8; ++mask1) {
     for (size_t mask2 = 0; mask2 < 8; ++mask2) {
       const size_t mask = applyInv(mask1) | (applyInv(mask2) << 3);
-      std::string &str = result[mask1][mask2];
-      for (size_t idx = 0; idx < 6; ++idx) {
-        if ((mask >> idx) & 1U) {
-          if (!str.empty()) {
-            str += " + ";
-          }
-          str += "LargePair::from(number(" + std::to_string(bundle.name().offset + idx) +
-                 "), empty())";
-        }
-      }
-      if (str.empty()) {
-        str = "LargePair::from(empty())";
-      }
+      result.shield[mask1][mask2] = getStr(mask, 6, bundle.shield().name().offset);
     }
   }
   return result;
@@ -176,18 +196,20 @@ void fillWeights(SourcePrinter &p, const Features &features) {
     }
 
     if (const auto *b = bundle.asKingPawn()) {
-      auto printShield = [&](const char *name, const bool inverted) {
-        const auto shield = kingShieldFromBundle(b->shield(), inverted);
-        p.lineStart() << "static constexpr LargePair " << formatName(b->name()) << "_" << name
-                      << "[8][8] = ";
-        p.arrayBody(shield.size(), [&](const size_t i) {
-          p.arrayBody(shield[i].size(), [&](const size_t j) { p.stream() << shield[i][j]; });
+      const auto src = kingPawnFromBundle(*b, false);
+      const auto srcInv = kingPawnFromBundle(*b, true);
+
+      auto printKingPawn = [&](const KingPawn &src, const char *suffix) {
+        p.lineStart() << "static constexpr LargePair " << formatName(b->name()) << "_SHIELD"
+                      << suffix << "[8][8] = ";
+        p.arrayBody(8, [&](const size_t i) {
+          p.arrayBody(8, [&](const size_t j) { p.stream() << src.shield[i][j]; });
         });
         p.stream() << ";\n";
       };
 
-      printShield("SHIELD", false);
-      printShield("SHIELD_INV", true);
+      printKingPawn(src, "");
+      printKingPawn(srcInv, "_INV");
 
       continue;
     }

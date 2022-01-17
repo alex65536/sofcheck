@@ -262,21 +262,26 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
   }
   addWithCoef(result, Weights::QUEEN_NEAR_TO_KING, nearCount);
 
-  // Calculate king shield
+  // Calculate king pawn shield
   constexpr bitboard_t bbShieldedKing =
       (C == Color::White) ? BB_WHITE_SHIELDED_KING : BB_BLACK_SHIELDED_KING;
   if (bbKing & bbShieldedKing) {
     const subcoord_t kingY = SoFCore::coordY(kingPos);
+
     const coord_t shift1 = (C == Color::White) ? (kingY + 47) : (kingY + 7);
     const coord_t shift2 = (C == Color::White) ? (kingY + 39) : (kingY + 15);
-    constexpr bitboard_t shieldRow1 = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
-    constexpr bitboard_t shieldRow2 = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
-    const bitboard_t mask1 = ((bbPawns & shieldRow1) >> shift1) & 7U;
-    const bitboard_t mask2 = ((bbPawns & shieldRow2) >> shift2) & 7U;
-    const auto shieldWeights =
-        (kingY < 4) ? Weights::KING_PAWN_SHIELD : Weights::KING_PAWN_SHIELD_INV;
-    const Pair shieldResult = shieldWeights[mask1][mask2];
-    result += mix(shieldResult, stage);
+
+    constexpr bitboard_t row1 = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
+    constexpr bitboard_t row2 = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
+
+    const bitboard_t shieldMask1 = ((bbPawns & row1) >> shift1) & 7U;
+    const bitboard_t shieldMask2 = ((bbPawns & row2) >> shift2) & 7U;
+
+    const bool inverted = kingY > 4;
+    const auto shieldWeights = inverted ? Weights::KING_PAWN_SHIELD_INV : Weights::KING_PAWN_SHIELD;
+    const Pair kingPawnResult = shieldWeights[shieldMask1][shieldMask2];
+
+    result += mix(kingPawnResult, stage);
   }
 
   return result;
