@@ -536,7 +536,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
 
   // Detect checkmate and stalemate
   if (!hasMove) {
-    return isCheck(board_) ? SoFEval::scoreCheckmateLose(static_cast<int16_t>(idepth)) : 0;
+    return isInCheck ? SoFEval::scoreCheckmateLose(static_cast<int16_t>(idepth)) : 0;
   }
 
   // End of search
