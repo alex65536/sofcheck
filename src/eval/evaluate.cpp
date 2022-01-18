@@ -54,7 +54,7 @@ constexpr uint32_t STAGES[15] = {
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE, 0,
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE};
 
-constexpr coef_t QUEEN_DISTANCES[8] = {0, 3, 2, 1, 0, 0, 0, 0};
+constexpr coef_t KING_ZONE_COSTS[8] = {0, 3, 2, 1, 0, 0, 0, 0};
 
 constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
 constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
@@ -253,14 +253,21 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
   const auto kingPos = static_cast<coord_t>(SoFUtil::getLowest(bbKing));
   const auto enemyKingPos = static_cast<coord_t>(SoFUtil::getLowest(bbEnemyKing));
 
-  // Calculate queens near to the opponent's king
-  const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
-  coef_t nearCount = 0;
-  for (size_t i = 1; i < 8; ++i) {
-    nearCount += QUEEN_DISTANCES[i] * static_cast<coef_t>(SoFUtil::popcount(
-                                          Private::KING_METRIC_RINGS[i][enemyKingPos] & bbQueen));
+  // Calculate pieces near to the opponent's king
+  constexpr Piece nearPieces[4] = {Piece::Queen, Piece::Rook, Piece::Bishop, Piece::Knight};
+  constexpr typename Private::WeightTraits<S>::Item nearCosts[4] = {
+      Weights::QUEEN_NEAR_TO_KING, Weights::ROOK_NEAR_TO_KING, Weights::BISHOP_NEAR_TO_KING,
+      Weights::KNIGHT_NEAR_TO_KING};
+  for (size_t num = 0; num < 4; ++num) {
+    const bitboard_t bb = b.bbPieces[makeCell(C, nearPieces[num])];
+    coef_t nearCount = 0;
+    for (size_t i = 1; i < 8; ++i) {
+      nearCount +=
+          KING_ZONE_COSTS[i] *
+          static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][enemyKingPos] & bb));
+    }
+    addWithCoef(result, nearCosts[num], nearCount);
   }
-  addWithCoef(result, Weights::QUEEN_NEAR_TO_KING, nearCount);
 
   // Calculate king pawn shield
   constexpr bitboard_t bbShieldedKing =
