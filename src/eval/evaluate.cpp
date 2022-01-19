@@ -254,20 +254,25 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
   const auto enemyKingPos = static_cast<coord_t>(SoFUtil::getLowest(bbEnemyKing));
 
   // Calculate pieces near to the opponent's king
-  constexpr Piece nearPieces[4] = {Piece::Queen, Piece::Rook, Piece::Bishop, Piece::Knight};
-  constexpr typename Private::WeightTraits<S>::Item nearCosts[4] = {
-      Weights::QUEEN_NEAR_TO_KING, Weights::ROOK_NEAR_TO_KING, Weights::BISHOP_NEAR_TO_KING,
-      Weights::KNIGHT_NEAR_TO_KING};
-  for (size_t num = 0; num < 4; ++num) {
-    const bitboard_t bb = b.bbPieces[makeCell(C, nearPieces[num])];
-    coef_t nearCount = 0;
-    for (size_t i = 1; i < 8; ++i) {
-      nearCount +=
-          KING_ZONE_COSTS[i] *
-          static_cast<coef_t>(SoFUtil::popcount(Private::KING_METRIC_RINGS[i][enemyKingPos] & bb));
-    }
-    addWithCoef(result, nearCosts[num], nearCount);
-  }
+  const auto generateNearPieces = [&](const Piece piece, const auto &weight) {
+    const bitboard_t bb = b.bbPieces[makeCell(C, piece)];
+
+    const auto countAtDistance = [&](const size_t dist) {
+      return static_cast<coef_t>(
+          SoFUtil::popcount(Private::KING_METRIC_RINGS[dist][enemyKingPos] & bb));
+    };
+
+    const coef_t nearCount = KING_ZONE_COSTS[1] * countAtDistance(1) +
+                             KING_ZONE_COSTS[2] * countAtDistance(2) +
+                             KING_ZONE_COSTS[3] * countAtDistance(3);
+
+    addWithCoef(result, weight, nearCount);
+  };
+
+  generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);
+  generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
+  generateNearPieces(Piece::Bishop, Weights::BISHOP_NEAR_TO_KING);
+  generateNearPieces(Piece::Rook, Weights::KNIGHT_NEAR_TO_KING);
 
   // Calculate king pawn shield
   constexpr bitboard_t bbShieldedKing =
