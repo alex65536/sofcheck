@@ -54,7 +54,7 @@ constexpr uint32_t STAGES[15] = {
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE, 0,
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE};
 
-constexpr coef_t KING_ZONE_COSTS[8] = {0, 3, 2, 1, 0, 0, 0, 0};
+constexpr coef_t KING_ZONE_COSTS[8] = {0, 5, 3, 1, 0, 0, 0, 0};
 
 constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
 constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
@@ -271,8 +271,6 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
 
   generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);
   generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
-  generateNearPieces(Piece::Bishop, Weights::BISHOP_NEAR_TO_KING);
-  generateNearPieces(Piece::Rook, Weights::KNIGHT_NEAR_TO_KING);
 
   // Calculate king pawn shield
   constexpr bitboard_t bbShieldedKing =
