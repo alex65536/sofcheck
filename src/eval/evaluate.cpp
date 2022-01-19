@@ -54,7 +54,7 @@ constexpr uint32_t STAGES[15] = {
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE, 0,
     0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE};
 
-constexpr coef_t KING_ZONE_COSTS[8] = {0, 5, 3, 1, 0, 0, 0, 0};
+constexpr coef_t KING_ZONE_COSTS[8] = {0, 5, 4, 1, 0, 0, 0, 0};
 
 constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
 constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
