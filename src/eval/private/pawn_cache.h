@@ -26,17 +26,43 @@
 
 namespace SoFEval::Private {
 
+// Value stored in the pawn cache
+template <typename S>
+struct PawnCacheValue {
+  static constexpr uint8_t FLAG_IS_VALID = 1;
+
+  constexpr bool isValid() const { return flags & FLAG_IS_VALID; }
+
+  // Creates a `PawnCacheValue` that correspond to an invalid cache entry
+  static constexpr PawnCacheValue invalid() { return {0, 0, 0, 0, 0, S{}}; }
+
+  // Creates a `PawnCacheValue` that correspond to a valid cache entry
+  static constexpr PawnCacheValue from(const uint8_t bbOpenLine, const uint8_t bbWhiteOnlyLine,
+                                       const uint8_t bbBlackOnlyLine, S score) {
+    return {bbOpenLine, bbWhiteOnlyLine, bbBlackOnlyLine, FLAG_IS_VALID, 0, std::move(score)};
+  }
+
+  uint8_t bbOpenCols;
+  uint8_t bbWhiteOnlyCols;
+  uint8_t bbBlackOnlyCols;
+  uint8_t flags;
+  uint16_t unused;  // Required for alignment, must be set to zero
+  S score;
+};
+
 // Caches evaluation result for pawns
 template <typename S>
 class PawnCache {
 public:
+  using Value = PawnCacheValue<S>;
+
   PawnCache() = default;
 
   // Try to get the score from the cache if the position of pawns (both white and black) is
   // specified by hash `pawnHash`. If the value is not found, call `func()` to calculate the score
   // and cache the result.
   template <typename F>
-  S get(SoFCore::board_hash_t /*pawnHash*/, F func) {
+  Value get(SoFCore::board_hash_t /*pawnHash*/, F func) {
     // No value is cached in this implementation, so just run `func` to get the score
     return func();
   }
@@ -50,21 +76,23 @@ private:
   static constexpr score_t SCORE_INVALID = SCORE_INF;
 
 public:
+  using Value = PawnCacheValue<score_t>;
+
   PawnCache();
 
   template <typename F>
-  score_t get(SoFCore::board_hash_t pawnHash, F func) {
+  Value get(SoFCore::board_hash_t pawnHash, F func) {
     const size_t key = keyFromHash(pawnHash);
     Entry &entry = entries_[key];
-    if (SOF_LIKELY(entry.hashMatches(pawnHash))) {
-      const score_t score = entry.score();
-      if (SOF_LIKELY(score != SCORE_INVALID)) {
-        return score;
+    if (SOF_LIKELY(entry.hash == pawnHash)) {
+      const Value &value = entry.value;
+      if (SOF_LIKELY(value.isValid())) {
+        return value;
       }
     }
-    const score_t score = func();
-    entry = Entry::from(pawnHash, score);
-    return score;
+    const Value value = func();
+    entry = Entry::from(pawnHash, value);
+    return value;
   }
 
 private:
@@ -78,22 +106,15 @@ private:
   static size_t keyFromHash(const SoFCore::board_hash_t hash) { return hash & (CACHE_SIZE - 1); }
 
   struct Entry {
-    uint64_t value;
+    SoFCore::board_hash_t hash;
+    Value value;
 
     static_assert(sizeof(score_t) == 2);
     static_assert(sizeof(SoFCore::board_hash_t) == 8);
+    static_assert(sizeof(Value) == 8);
 
-    static constexpr Entry from(const uint64_t hash, const score_t score) {
-      return {(hash & ~static_cast<uint64_t>(0xffffU)) | static_cast<uint16_t>(score)};
-    }
-
-    static constexpr Entry invalid() { return from(0U, SCORE_INVALID); }
-
-    constexpr score_t score() const { return static_cast<score_t>(value & 0xffffU); }
-
-    constexpr bool hashMatches(const uint64_t hash) const {
-      return ((hash ^ value) & ~static_cast<uint64_t>(0xffffU)) == 0;
-    }
+    static constexpr Entry from(const uint64_t hash, const Value value) { return {hash, value}; }
+    static constexpr Entry invalid() { return from(0U, Value::invalid()); }
   };
 
   Entry entries_[CACHE_SIZE];

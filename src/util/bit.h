@@ -115,6 +115,23 @@ inline uint64_t swapBytes(uint64_t x) {
 }
 #endif
 
+// Calculates bitwise OR over all the bytes in 8-byte number `x`
+inline constexpr uint8_t byteGather(uint64_t x) {
+  x |= x >> 32;
+  x |= x >> 16;
+  x |= x >> 8;
+  return static_cast<uint8_t>(x);
+}
+
+// Creates a 8-bit number, with all of its bytes equal to `x`
+inline constexpr uint64_t byteScatter(uint8_t x) {
+  uint64_t r = x;
+  r |= r << 8;
+  r |= r << 16;
+  r |= r << 32;
+  return r;
+}
+
 #ifdef USE_BMI2
 
 // The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)

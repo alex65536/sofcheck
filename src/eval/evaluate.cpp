@@ -149,15 +149,18 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
   const auto stage = std::min<coef_t>(rawStage, 256);
 
   auto result = mix(tag.inner_, stage);
-  result += pawnCache_->get(tag.pawnHash_, [&]() { return evalPawns(b); });
-  result += evalByColor<Color::White>(b, stage);
-  result -= evalByColor<Color::Black>(b, stage);
+
+  const auto pawnValue = pawnCache_->get(tag.pawnHash_, [&]() { return evalPawns(b); });
+
+  result += pawnValue.score;
+  result += evalByColor<Color::White>(b, stage, pawnValue);
+  result -= evalByColor<Color::Black>(b, stage, pawnValue);
 
   return result;
 }
 
 template <typename S>
-S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
+Private::PawnCacheValue<S> Evaluator<S>::evalPawns(const SoFCore::Board &b) {
   using Weights = Private::Weights<S>;
 
   const bitboard_t bbWhitePawns = b.bbPieces[makeCell(Color::White, Piece::Pawn)];
@@ -233,12 +236,18 @@ S Evaluator<S>::evalPawns(const SoFCore::Board &b) {
     return result;
   };
 
-  return doEvalPawns(Color::White) - doEvalPawns(Color::Black);
+  S score = doEvalPawns(Color::White) - doEvalPawns(Color::Black);
+  const uint8_t bbWhiteCols = SoFUtil::byteGather(bbWhitePawns);
+  const uint8_t bbBlackCols = SoFUtil::byteGather(bbBlackPawns);
+
+  return Private::PawnCacheValue<S>::from(~bbWhiteCols & ~bbBlackCols, bbWhiteCols & ~bbBlackCols,
+                                          ~bbWhiteCols & bbBlackCols, std::move(score));
 }
 
 template <typename S>
 template <Color C>
-S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
+S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
+                            const Private::PawnCacheValue<S> &pawnValue) {
   using Weights = Private::Weights<S>;
 
   // Calculate pairs of bishops
@@ -293,6 +302,22 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage) {
 
     result += mix(kingPawnResult, stage);
   }
+
+  // Calculate open and semi-open columns
+  const bitboard_t bbOpenCols = SoFUtil::byteScatter(pawnValue.bbOpenCols);
+  const bitboard_t bbSemiOpenCols = SoFUtil::byteScatter(
+      (C == Color::White) ? pawnValue.bbBlackOnlyCols : pawnValue.bbWhiteOnlyCols);
+  const bitboard_t bbRook = b.bbPieces[makeCell(C, Piece::Rook)];
+  const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
+
+  addWithCoef(result, Weights::ROOK_OPEN_COL,
+              static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbRook)));
+  addWithCoef(result, Weights::ROOK_SEMI_OPEN_COL,
+              static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbRook)));
+  addWithCoef(result, Weights::QUEEN_OPEN_COL,
+              static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbQueen)));
+  addWithCoef(result, Weights::QUEEN_SEMI_OPEN_COL,
+              static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbQueen)));
 
   return result;
 }

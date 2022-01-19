@@ -32,6 +32,9 @@ namespace SoFEval {
 namespace Private {
 template <typename S>
 class PawnCache;
+
+template <typename S>
+struct PawnCacheValue;
 }  // namespace Private
 
 // Base class to perform position cost evaluation
@@ -102,10 +105,10 @@ private:
 
   // Helper function, evaluates only the features for pieces belonging to the color `C`
   template <SoFCore::Color C>
-  S evalByColor(const SoFCore::Board &b, coef_t stage);
+  S evalByColor(const SoFCore::Board &b, coef_t stage, const Private::PawnCacheValue<S> &pawnValue);
 
   // Helper function, evaluates only the features for pawns
-  S evalPawns(const SoFCore::Board &b);
+  Private::PawnCacheValue<S> evalPawns(const SoFCore::Board &b);
 
   // Given a pair `pair` of midgame and endgame score, and current game stage `stage`, calculate the
   // real score
