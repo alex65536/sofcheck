@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,30 +15,30 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#include <array>
-#include <cstring>
-#include <fstream>
-#include <iomanip>
+#include <algorithm>
 #include <iostream>
 #include <optional>
-#include <utility>
+#include <random>
+#include <thread>
 #include <variant>
-#include <vector>
 
 #include "core/board.h"
 #include "core/init.h"
+#include "core/move.h"
 #include "core/movegen.h"
-#include "core/strutil.h"
-#include "core/types.h"
 #include "eval/coefs.h"
 #include "eval/evaluate.h"
 #include "eval/feat/feat.h"
-#include "util/fileutil.h"
+#include "gameset/reader.h"
+#include "gameset/types.h"
+#include "util/ioutil.h"
 #include "util/logging.h"
 #include "util/misc.h"
+#include "util/no_copy_move.h"
 #include "util/optparse.h"
+#include "util/queue.h"
+#include "util/random.h"
 #include "util/result.h"
-#include "util/strutil.h"
 
 // Type of log entry
 constexpr const char *MAKE_DATASET = "MakeDataset";
@@ -46,300 +46,368 @@ constexpr const char *MAKE_DATASET = "MakeDataset";
 using namespace SoFUtil::Logging;
 
 using SoFCore::Board;
+using SoFCore::Move;
 using SoFEval::coef_t;
-using SoFEval::Coefs;
 using SoFEval::Feat::Features;
+using SoFGameSet::Game;
+using SoFGameSet::Winner;
+using SoFUtil::BlockingQueue;
+using SoFUtil::BufWriter;
+using SoFUtil::Err;
+using SoFUtil::Ok;
 using SoFUtil::openReadFile;
 using SoFUtil::openWriteFile;
+using SoFUtil::OstreamWriter;
 using SoFUtil::panic;
 using SoFUtil::Result;
+using SoFUtil::StringWriter;
+using SoFUtil::Writer;
 
-enum class Winner { White, Black, Draw };
+struct RichBoard {
+  Winner winner;
+  uint64_t gameId;
+  size_t boardsTotal;
+  size_t boardsLeft;
+  Board board;
+};
 
-inline constexpr std::optional<Winner> winnerFromChar(const char ch) {
-  switch (ch) {
-    case 'W':
-      return Winner::White;
-    case 'B':
-      return Winner::Black;
-    case 'D':
-      return Winner::Draw;
-    default:
-      return std::nullopt;
+class BoardConsumer : public virtual SoFUtil::VirtualNoCopy {
+public:
+  virtual void consume(const RichBoard &board) = 0;
+  virtual void finish() {}
+};
+
+class FeatureExtractor : public BoardConsumer, public virtual SoFUtil::NoCopyMove {
+public:
+  explicit FeatureExtractor(Writer *writer, const Features &features, size_t numThreads)
+      : boardQueue_(QUEUE_SIZE), stringQueue_(QUEUE_SIZE), printer_(&stringQueue_, writer) {
+    if (numThreads == 0) {
+      numThreads = std::thread::hardware_concurrency();
+    }
+    for (size_t i = 0; i < numThreads; ++i) {
+      workers_.emplace_back(&boardQueue_, &stringQueue_);
+    }
+    putHeader(features);
+    drainBatch();
   }
-  SOF_UNREACHABLE();
+
+  void consume(const RichBoard &board) override {
+    batch_.push_back(board);
+    if (batch_.size() == BATCH_SIZE) {
+      drainBatch();
+    }
+  }
+
+  void finish() override {
+    drainBatch();
+    boardQueue_.close();
+    for (auto &worker : workers_) {
+      worker.join();
+    }
+    stringQueue_.close();
+    printer_.join();
+  }
+
+private:
+  static constexpr size_t BATCH_SIZE = 64;
+  static constexpr size_t QUEUE_SIZE = 512;
+
+  using BoardQueue = BlockingQueue<std::vector<RichBoard>>;
+  using StringQueue = BlockingQueue<std::string>;
+
+  void drainBatch() {
+    if (!batch_.empty()) {
+      boardQueue_.push(std::move(batch_));
+      batch_.clear();
+    }
+    batch_.reserve(BATCH_SIZE);
+  }
+
+  void putHeader(const Features &features) {
+    std::string result = "winner,game_id,board_total,board_left";
+    for (const auto &name : features.names()) {
+      result += "," + name.name;
+    }
+    result += "\n";
+    stringQueue_.push(std::move(result));
+  }
+
+  struct Worker {
+    Worker(BoardQueue *in, StringQueue *out)
+        : in(in), out(out), writer(StringWriter::create()), buf(writer.get()), thread([this]() {
+            run();
+          }) {}
+
+    void join() { thread.join(); }
+
+    void run() {
+      while (const auto inBatch = in->pop()) {
+        writer->str().clear();
+        for (const auto &board : *inBatch) {
+          const std::vector<coef_t> coefs =
+              evaluator.evalForWhite(board.board, Evaluator::Tag::from(board.board)).take();
+          writeLine(board, coefs);
+        }
+        buf.flush();
+        out->push(std::move(writer->str()));
+      }
+    }
+
+    static const char *winnerToNumber(const Winner winner) {
+      switch (winner) {
+        case Winner::Black:
+          return "0.0";
+        case Winner::White:
+          return "1.0";
+        case Winner::Draw:
+          return "0.5";
+        case Winner::Unknown:
+          panic("Winner::Unknown not supported here");
+      }
+      SOF_UNREACHABLE();
+    }
+
+    void writeLine(const RichBoard &board, const std::vector<coef_t> &coefs) {
+      buf.writeStr(winnerToNumber(board.winner))
+          .writeStr(",")
+          .writeInt(board.gameId)
+          .writeStr(",")
+          .writeInt(board.boardsTotal)
+          .writeStr(",")
+          .writeInt(board.boardsLeft);
+      for (const coef_t c : coefs) {
+        buf.writeStr(",").writeInt(c);
+      }
+      buf.writeStr("\n");
+    }
+
+    using Evaluator = SoFEval::Evaluator<SoFEval::Coefs>;
+
+    BoardQueue *in;
+    StringQueue *out;
+    Evaluator evaluator;
+    StringWriter::Ptr writer;
+    BufWriter buf;
+    std::thread thread;
+  };
+
+  struct Printer {
+    Printer(StringQueue *in, Writer *writer) : in(in), out(writer), thread([this]() { run(); }) {}
+
+    void join() { thread.join(); }
+
+    void run() {
+      while (const auto str = in->pop()) {
+        out.writeStr(*str);
+      }
+    }
+
+    StringQueue *in;
+    BufWriter out;
+    std::thread thread;
+  };
+
+  BoardQueue boardQueue_;
+  StringQueue stringQueue_;
+
+  std::vector<RichBoard> batch_;
+
+  Printer printer_;
+  std::deque<Worker> workers_;
+};
+
+class BoardSampler : public BoardConsumer {
+public:
+  BoardSampler(BoardConsumer *consumer, std::optional<uint64_t> sampleSize,
+               std::optional<uint64_t> randomSeed)
+      : sampleSize_(sampleSize),
+        random_(randomSeed ? *randomSeed : SoFUtil::random()),
+        consumer_(consumer) {}
+
+  void consume(const RichBoard &board) override {
+    ++count_;
+    if (!sampleSize_) {
+      consumer_->consume(board);
+      return;
+    }
+    const uint64_t size = *sampleSize_;
+    if (count_ <= size) {
+      sample_.push_back(board);
+      return;
+    }
+    if (random_() % count_ < size) {
+      // Due to a strange bug, clang-tidy complains about division by zero here. So, add the assert
+      SOF_ASSERT(size != 0);
+      sample_[static_cast<size_t>(random_() % size)] = board;
+    }
+  }
+
+  void finish() override {
+    if (sampleSize_) {
+      std::shuffle(sample_.begin(), sample_.end(), random_);
+      for (const auto &board : sample_) {
+        consumer_->consume(board);
+      }
+    }
+    consumer_->finish();
+  }
+
+private:
+  std::optional<uint64_t> sampleSize_;
+  std::vector<RichBoard> sample_;
+  std::mt19937_64 random_;
+  BoardConsumer *consumer_;
+  uint64_t count_ = 0;
+};
+
+class GameConsumer : public SoFUtil::NoCopy {
+public:
+  struct Error {
+    std::string message;
+  };
+
+  GameConsumer(BoardConsumer *consumer, bool filterBoards)
+      : consumer_(consumer), filterBoards_(filterBoards) {}
+
+  Result<std::monostate, Error> consume(const Game &game, const std::vector<Board> &boards) {
+    if (!game.isCanonical()) {
+      return Err(Error{"The game is not canonical"});
+    }
+    if (game.header.winner == Winner::Unknown) {
+      return Err(Error{"Games without winners are not supported"});
+    }
+
+    ++count_;
+
+    std::vector<Move> moves;
+    moves.reserve(boards.size());
+    for (const auto &command : game.commands) {
+      if (const auto *movesCmd = std::get_if<SoFGameSet::MovesCommand>(&command)) {
+        moves.insert(moves.end(), movesCmd->moves.begin(), movesCmd->moves.end());
+      }
+    }
+
+    for (size_t idx = 0; idx < boards.size(); ++idx) {
+      if (filterBoards_) {
+        // Ignore boards in the start of the game
+        if (idx < 5) {
+          continue;
+        }
+
+        // Ignore boards after capture or promote
+        if (idx != 0 && (isMoveCapture(boards[idx - 1], moves[idx - 1]) ||
+                         isMoveKindPromote(moves[idx - 1].kind))) {
+          continue;
+        }
+
+        // Ignore boards with checks or responses to checks
+        if (isCheck(boards[idx]) || (idx != 0 && isCheck(boards[idx - 1]))) {
+          continue;
+        }
+      }
+
+      consumer_->consume(RichBoard{game.header.winner, count_, boards.size(),
+                                   boards.size() - idx - 1, boards[idx]});
+    }
+
+    return Ok(std::monostate{});
+  }
+
+  void finish() { consumer_->finish(); }
+
+private:
+  BoardConsumer *consumer_;
+  uint64_t count_ = 0;
+  bool filterBoards_;
+};
+
+struct Error {
+  std::string message;
+};
+
+Result<std::monostate, Error> processGameSet(std::istream &in, GameConsumer &consumer) {
+  using ReadError = SoFGameSet::GameReader::Error;
+  using ReadOptions = SoFGameSet::GameReader::Options;
+
+  SoFGameSet::GameReader reader(in, ReadOptions::CaptureBoards);
+  for (;;) {
+    const size_t line = reader.lineCount();
+    auto readResult = reader.nextGame();
+    if (readResult.isErr()) {
+      consumer.finish();
+      const auto &error = readResult.err();
+      if (error.status == ReadError::Status::EndOfStream) {
+        return Ok(std::monostate{});
+      }
+      return Err(Error{"Line " + std::to_string(error.line) + ": " + error.message});
+    }
+    auto consumeResult = consumer.consume(std::move(readResult).unwrap(), reader.capturedBoards());
+    if (consumeResult.isErr()) {
+      consumer.finish();
+      const auto &error = consumeResult.err();
+      return Err(Error{"Line " + std::to_string(line) + ": " + error.message});
+    }
+  }
 }
 
-struct Game {
-  Winner winner;
-  size_t id;
-  std::vector<Board> boards;
-
-  Game() = default;
-
-  Game(const Winner winner, const size_t id) : winner(winner), id(id) {}
-
-  Game &add(const Board &board) {
-    boards.push_back(board);
-    return *this;
-  }
+struct Options {
+  std::optional<uint64_t> sampleSize = std::nullopt;
+  std::optional<uint64_t> randomSeed = std::nullopt;
+  uint32_t jobs = 0;
+  bool filterBoards = true;
 };
 
-class DatasetGenerator {
-public:
-  explicit DatasetGenerator(Features features) : features_(std::move(features)) {}
+int run(std::istream &jsonIn, std::istream &in, std::ostream &out, const Options &options) {
+  const auto features = Features::load(jsonIn).okOrErr(
+      [](const auto err) { panic("Error extracting features: " + err.description); });
+  Writer::Ptr writer = OstreamWriter::create(out);
+  FeatureExtractor extractor(writer.get(), features, options.jobs);
+  BoardSampler sampler(&extractor, options.sampleSize, options.randomSeed);
+  GameConsumer consumer(&sampler, options.filterBoards);
 
-  void addGame(const Game &game) {
-    std::vector<bool> isBoardGood(game.boards.size(), true);
-
-    auto getMaterialEstimate = [&](const Board &b) {
-      std::array<size_t, Board::BB_PIECES_SZ> counts{};
-      for (const SoFCore::cell_t cell : b.cells) {
-        ++counts[cell];
-      }
-      return counts;
-    };
-
-    // Find the positions where tactics play an important role in the evaluation result. Such
-    // positions include boards after captures, checks and responses to checks. Evaluation doesn't
-    // give a good estimate of the position cost on such boards, so don't include it to the dataset
-    for (size_t idx = 0; idx < game.boards.size(); ++idx) {
-      // Ignore moves in the start of the game
-      if (idx < 5) {
-        isBoardGood[idx] = false;
-      }
-
-      // Captures
-      if (idx != 0 &&
-          getMaterialEstimate(game.boards[idx - 1]) != getMaterialEstimate(game.boards[idx])) {
-        isBoardGood[idx] = false;
-      }
-
-      // Checks
-      if (idx != 0 && isCheck(game.boards[idx - 1])) {
-        isBoardGood[idx - 1] = false;
-        isBoardGood[idx] = false;
-      }
-    }
-
-    // Evaluate good positions and add the coefficients from them into `lines_`
-    for (size_t idx = 0; idx < game.boards.size(); ++idx) {
-      if (!isBoardGood[idx]) {
-        continue;
-      }
-      const Board &b = game.boards[idx];
-      std::vector<coef_t> coefs = evaluator_.evalForWhite(b, Evaluator::Tag::from(b)).take();
-      lines_.push_back({winnerToNumber(game.winner), game.id, game.boards.size(),
-                        game.boards.size() - 1 - idx, std::move(coefs)});
-    }
-  }
-
-  void write(std::ostream &out) {
-    writeHeader(out);
-    for (const Line &line : lines_) {
-      writeLine(out, line);
-    }
-  }
-
-private:
-  struct Line {
-    double winner;
-    size_t gameId;
-    size_t boardsTotal;
-    size_t boardsLeft;
-    std::vector<coef_t> coefs;
-  };
-
-  void writeHeader(std::ostream &out) {
-    auto names = features_.names();
-    out << "winner,game_id,board_total,board_left";
-    for (const auto &name : names) {
-      out << "," << name.name;
-    }
-    out << "\n";
-  }
-
-  static void writeLine(std::ostream &out, const Line &line) {
-    out << std::fixed << std::setprecision(1) << line.winner << "," << line.gameId << ","
-        << line.boardsTotal << "," << line.boardsLeft;
-    for (const coef_t c : line.coefs) {
-      out << "," << c;
-    }
-    out << "\n";
-  }
-
-  static double winnerToNumber(const Winner winner) {
-    switch (winner) {
-      case Winner::Black:
-        return 0.0;
-      case Winner::White:
-        return 1.0;
-      case Winner::Draw:
-        return 0.5;
-    }
-    SOF_UNREACHABLE();
-  }
-
-  using Evaluator = SoFEval::Evaluator<Coefs>;
-
-  Features features_;
-  std::vector<Line> lines_;
-  Evaluator evaluator_;
-};
-
-class GameParser {
-public:
-  struct Status {
-    enum class Kind { Error, EndOfStream };
-    Kind kind;
-    size_t line;
-    std::string description;
-
-    static Status error(const size_t line, std::string description) {
-      return Status{Kind::Error, line, std::move(description)};
-    }
-
-    static Status endOfStream() { return Status{Kind::EndOfStream, 0, ""}; }
-  };
-
-  explicit GameParser(std::istream &in) : in_(in) { readLine(); }
-
-  Result<Game, Status> nextGame() {
-    SOF_TRY_DECL(game, readGameHeader());
-    for (;;) {
-      auto ln = readLine();
-      if (!ln || !SoFUtil::startsWith(*ln, "board ")) {
-        break;
-      }
-      const char *fen = ln->c_str() + std::strlen("board ");
-      SOF_TRY_DECL(board, Board::fromFen(fen).mapErr([this](const auto err) {
-        return error(std::string("FEN parse error: ") + SoFCore::fenParseResultToStr(err));
-      }));
-      game.boards.push_back(board);
-    }
-    return SoFUtil::Ok(std::move(game));
-  }
-
-private:
-  Status error(const std::string &description) const { return Status::error(line_, description); }
-
-  Result<Game, Status> readGameHeader() {
-    auto ln = peekLine();
-    if (!ln) {
-      return SoFUtil::Err(Status::endOfStream());
-    }
-    const auto tokens = SoFUtil::split(ln->c_str());
-    if (tokens.size() != 3) {
-      return SoFUtil::Err(error("Game header must contain exactly three fields"));
-    }
-
-    if (tokens[0] != "game") {
-      return SoFUtil::Err(error("Invalid game header"));
-    }
-
-    if (tokens[1].size() != 1) {
-      return SoFUtil::Err(error("Winner must be single character"));
-    }
-    std::optional<Winner> winner = winnerFromChar(tokens[1].front());
-    if (!winner) {
-      return SoFUtil::Err(error("Invalid winner character"));
-    }
-
-    size_t id = 0;
-    if (!SoFUtil::valueFromStr(tokens[2], id)) {
-      return SoFUtil::Err(error("Invalid game ID"));
-    }
-
-    return SoFUtil::Ok(Game(*winner, id));
-  }
-
-  std::optional<std::string> readLineRaw() {
-    std::string result;
-    if (std::getline(in_, result)) {
-      ++line_;
-      return result;
-    }
-    return std::nullopt;
-  }
-
-  std::optional<std::string> readLine() {
-    for (;;) {
-      auto maybeLine = readLineRaw();
-      if (!maybeLine) {
-        lastLine_ = std::nullopt;
-        break;
-      }
-      std::string line(SoFUtil::trim(*maybeLine));
-      if (line.empty() || line[0] == '#') {
-        continue;
-      }
-      lastLine_ = std::make_optional(std::move(line));
-      break;
-    }
-    return lastLine_;
-  }
-
-  std::optional<std::string> peekLine() const { return lastLine_; }
-
-  size_t line_ = 0;
-  std::optional<std::string> lastLine_ = std::nullopt;
-  std::istream &in_;
-};
-
-int run(std::istream &jsonIn, std::istream &in, std::ostream &out) {
-  DatasetGenerator gen(Features::load(jsonIn).okOrErr(
-      [](const auto err) { panic("Error extracting features: " + err.description); }));
-  GameParser parser(in);
-
-  auto addGames = [&]() -> Result<std::monostate, GameParser::Status> {
-    for (;;) {
-      // Load games one by one until we get an error or encounter the end of the stream
-      SOF_TRY_DECL(game, parser.nextGame());
-      gen.addGame(game);
-    }
-  };
-
-  const auto status = addGames().unwrapErr();
-  if (status.kind == GameParser::Status::Kind::Error) {
-    logFatal(MAKE_DATASET) << "Line " << status.line << ": " << status.description;
+  auto result = processGameSet(in, consumer);
+  if (result.isErr()) {
+    logFatal(MAKE_DATASET) << std::move(result).unwrapErr().message;
     return 1;
   }
-
-  gen.write(out);
 
   return 0;
 }
 
-// TODO: move file format description somewhere else
 constexpr const char *DESCRIPTION =
-    "This utility extracts coefficients from specified FEN boards to tune the weights in the "
-    "engine.\n\nThe file with boards has the following format. It contains one or more game "
-    "sections. Each game section starts with line \"game <winner> <id>\", where <winner> is equal "
-    "to B, W or D depending on the winning side, and <id> is equal to some unsigned integer called "
-    "the game ID. Each of the following lines describe a single board and has the format \"board "
-    "<fen>\", where <fen> is the board encoded as FEN. The boards arrive in the same order as they "
-    "were played. It\'s also worth to mention that the blank lines and the lines starting with "
-    "\"#\" are ignored in the file.";
+    "Extracts coefficients from the games in canonical SoFGameSet format to tune the weights in "
+    "the engine";
 
-constexpr const char *FEATURES_DESCRIPTION =
-    "The JSON file that contains all the evaluation features";
+constexpr const char *FEATURES_DESCRIPTION = "JSON file with evaluation features";
 constexpr const char *INPUT_DESCRIPTION =
-    "The file with boards from which we want to extract coefficients, in the format described "
-    "above. If not provided, use standard input";
+    "Input games in canonical SoFGameSet format. If not provided, use standard input";
 constexpr const char *OUTPUT_DESCRIPTION =
     "Resulting CSV file with coefficients, which can be used then for parameter tuning. If not "
     "provided, use standard output";
+constexpr const char *COUNT_DESCRIPTION =
+    "Maximum number of boards to extract. If not specified, extract all the boards. The boards to "
+    "extract will be selected uniformly at random";
+constexpr const char *SEED_DESCRIPTION =
+    "Random seed. If not specified, generate the seed randomly";
+constexpr const char *JOBS_DESCRIPTION =
+    "Number of threads to run. If not specified, the number of threads is the number of CPU cores";
+constexpr const char *ALL_DESCRIPTION = "Do not skip the boards which are undesired for learning";
 
 int main(int argc, char **argv) {
   std::ios_base::sync_with_stdio(false);
+  std::cin.tie(nullptr);
   SoFCore::init();
 
   SoFUtil::OptParser parser(argc, argv, "MakeDataset for SoFCheck");
   parser.setLongDescription(DESCRIPTION);
-  parser.addOptions()                                                      //
-      ("f,features", FEATURES_DESCRIPTION, cxxopts::value<std::string>())  //
-      ("i,input", INPUT_DESCRIPTION, cxxopts::value<std::string>())        //
-      ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>());
+  parser.addOptions()                                                             //
+      ("f,features", FEATURES_DESCRIPTION, cxxopts::value<std::string>())         //
+      ("i,input", INPUT_DESCRIPTION, cxxopts::value<std::string>())               //
+      ("o,output", OUTPUT_DESCRIPTION, cxxopts::value<std::string>())             //
+      ("c,count", COUNT_DESCRIPTION, cxxopts::value<uint64_t>())                  //
+      ("a,all", ALL_DESCRIPTION, cxxopts::value<bool>()->default_value("false"))  //
+      ("s,seed", SEED_DESCRIPTION, cxxopts::value<uint64_t>())                    //
+      ("j,jobs", JOBS_DESCRIPTION, cxxopts::value<uint32_t>()->default_value("0"));
   auto options = parser.parse();
 
   auto badFile = [&](auto err) { return panic(std::move(err.description)); };
@@ -357,5 +425,11 @@ int main(int argc, char **argv) {
     out = &fileOut;
   }
 
-  return run(jsonIn, *in, *out);
+  const Options runOptions{
+      options.count("count") ? std::make_optional(options["count"].as<uint64_t>()) : std::nullopt,
+      options.count("seed") ? std::make_optional(options["seed"].as<uint64_t>()) : std::nullopt,
+      options["jobs"].as<uint32_t>(),  //
+      !options["all"].as<bool>()};
+
+  return run(jsonIn, *in, *out, runOptions);
 }

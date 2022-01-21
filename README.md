@@ -47,15 +47,22 @@ C++17-compatible compiler. The engine is tested on the following compilers:
 - GCC >= 8 (GCC 7 and earlier don't support `<charconv>` header)
 - Clang >= 8 (Clang 6 and earlier don't support `<charconv>` header, and Clang 7 fails with
   linker error `undefined reference to '__muloti4'` in `std::from_chars`)
-- MSVC 15.x (Visual Studio 2017) or 16.x (Visual Studio 2019). This ones are not supported as good
-  as GCC and Clang, and the resulting binaries may be slower. Be aware of it
+- Visual Studio 2019. (Visual Studio 2017 won't work for the reasons described below, and other
+  versions are just not tested). Note that MSVC is not supported as good as GCC and Clang, and the
+  resulting binaries may be slower. Be aware of it.
+
+  Now, let's talk why Visual Studio 2017 fails to build SoFCheck. It produces errors like
+  `result cannot be constant expression` when overloading some operators in the template code. I
+  tried to work around this issue, but didn't find a good way to fix it without using arcane
+  template magic, so I gave up. I am pretty sure that it is a bug in the compiler, because all other
+  compilers (including VS 2019) are OK with this code.
 
 Other compilers are not tested.
 
 The following dependencies are optional:
 - [_Google Test_](https://github.com/google/googletest/): to run the unit tests
 - [_Google Benchmark_](https://github.com/google/benchmark): to run benchmarks
-- [`boost::Stacktrace`](https://www.boost.org/doc/libs/1_65_0/doc/html/stacktrace.html): to display
+- [`boost::stacktrace`](https://www.boost.org/doc/libs/1_65_0/doc/html/stacktrace.html): to display
 stack traces when the application panics
 - [`jsoncpp`](https://github.com/open-source-parsers/jsoncpp): to extract evaluation weights
 located in a JSON file. This one isn't compiled into the final executable and is used only for

@@ -19,6 +19,7 @@
 #define SOF_EVAL_EVALUATE_INCLUDED
 
 #include <cstdint>
+#include <memory>
 #include <utility>
 
 #include "core/board.h"
@@ -27,6 +28,14 @@
 #include "eval/types.h"
 
 namespace SoFEval {
+
+namespace Private {
+template <typename S>
+class PawnCache;
+
+template <typename S>
+struct PawnCacheValue;
+}  // namespace Private
 
 // Base class to perform position cost evaluation
 template <typename S>
@@ -49,18 +58,23 @@ public:
     // Returns `true` if the tag is strictly equal to `Tag::from(b)`
     bool isValid(const SoFCore::Board &b) const {
       const Tag other = Tag::from(b);
-      return inner_ == other.inner_ && stage_ == other.stage_;
+      return inner_ == other.inner_ && stage_ == other.stage_ && pawnHash_ == other.pawnHash_;
     }
 
   private:
-    explicit Tag(Pair inner, const uint32_t stage) : inner_(std::move(inner)), stage_(stage) {}
+    explicit Tag(Pair inner, const uint32_t stage, SoFCore::board_hash_t pawnHash)
+        : inner_(std::move(inner)), stage_(stage), pawnHash_(pawnHash) {}
 
     Pair inner_;
     uint32_t stage_;
+    SoFCore::board_hash_t pawnHash_;
 
     template <typename>
     friend class Evaluator;
   };
+
+  Evaluator();
+  ~Evaluator();
 
   // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
   // `isValid(b)` must hold. The `evalForWhite` variant returns positive score if the position is
@@ -69,7 +83,7 @@ public:
   S evalForWhite(const SoFCore::Board &b, const Tag &tag);
 
   S evalForCur(const SoFCore::Board &b, const Tag &tag) {
-    return evalForWhite(b, tag) * colorCoef(b.side);
+    return applyColor(evalForWhite(b, tag), b.side);
   }
 
   // Returns a rough estimate of the position cost of `b`, based only on piece-square tables. `tag`
@@ -81,17 +95,31 @@ public:
   }
 
   inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) {
-    return evalMaterialForWhite(b, tag) * colorCoef(b.side);
+    return applyColor(evalMaterialForWhite(b, tag), b.side);
   }
 
 private:
-  inline static constexpr int16_t colorCoef(const SoFCore::Color c) {
-    return (c == SoFCore::Color::White) ? +1 : -1;
+  inline static S applyColor(const S &result, const SoFCore::Color c) {
+    return (c == SoFCore::Color::White) ? result : -result;
   }
 
   // Helper function, evaluates only the features for pieces belonging to the color `C`
   template <SoFCore::Color C>
-  S evalByColor(const SoFCore::Board &b);
+  S evalByColor(const SoFCore::Board &b, coef_t stage, const Private::PawnCacheValue<S> &pawnValue);
+
+  // Helper function, evaluates only the features for pawns
+  Private::PawnCacheValue<S> evalPawns(const SoFCore::Board &b);
+
+  // Given a pair `pair` of midgame and endgame score, and current game stage `stage`, calculate the
+  // real score
+  static S mix(const Pair &pair, coef_t stage);
+
+  // Helper function to add `weight * coef` to `result`. This function is mostly needed to silence
+  // MSVC warnings about narrowing type conversions
+  template <typename W>
+  static void addWithCoef(S &result, const W &weight, coef_t coef);
+
+  std::unique_ptr<Private::PawnCache<S>> pawnCache_;
 };
 
 }  // namespace SoFEval

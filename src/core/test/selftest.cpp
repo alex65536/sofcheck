@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -87,8 +87,7 @@ void runSelfTest(Board b) {
   if (!loadResult.isOk()) {
     panic("Cannot load from the board from its own FEN");
   }
-  // NOLINTNEXTLINE(hicpp-move-const-arg,performance-move-const-arg)
-  const Board loaded = std::move(loadResult).unwrap();
+  const Board &loaded = loadResult.ok();
   if (!boardsBitCompare(b, loaded)) {
     panic("Loading the board from FEN produces a different board");
   }

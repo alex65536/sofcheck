@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -15,19 +15,12 @@
 // You should have received a copy of the GNU General Public License
 // along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef SOF_EVAL_TYPES_INCLUDED
-#define SOF_EVAL_TYPES_INCLUDED
+#include "eval/private/pawn_cache.h"
 
-namespace SoFEval {
+#include <algorithm>
 
-// Base struct to define helper types and methods for your score type (e. g. define a type to
-// represent score pair). You must specialize this struct when you implement a score type.
-template <typename T>
-struct ScoreTraits {};
+namespace SoFEval::Private {
 
-// Integer type to store multiplier coefficients for weights
-using coef_t = int32_t;
+PawnCache<score_t>::PawnCache() { std::fill(entries_, entries_ + CACHE_SIZE, Entry::invalid()); }
 
-}  // namespace SoFEval
-
-#endif  // SOF_EVAL_TYPES_INCLUDED
+}  // namespace SoFEval::Private

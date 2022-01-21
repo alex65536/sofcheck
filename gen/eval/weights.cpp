@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -100,6 +100,59 @@ Psq psqFromBundle(const PsqBundle &bundle) {
   return result;
 }
 
+struct KingPawn {
+  std::string shield[8][8];
+};
+
+KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
+  SOF_ASSERT(bundle.shield().count() == 6);
+
+  auto applyInv = [&](const size_t x) {
+    if (inverted) {
+      return ((x & 4U) >> 2) | (x & 2U) | ((x & 1U) << 2);
+    }
+    return x;
+  };
+
+  auto getStr = [&](const size_t mask, const size_t count, const size_t offset) -> std::string {
+    std::vector<size_t> offsets;
+    for (size_t idx = 0; idx < count; ++idx) {
+      if ((mask >> idx) & 1U) {
+        offsets.push_back(offset + idx);
+      }
+    }
+
+    if (offsets.empty()) {
+      return "LargePair::from(empty())";
+    }
+
+    std::string result;
+    size_t pos = 0;
+    while (pos < offsets.size()) {
+      if (!result.empty()) {
+        result += " + ";
+      }
+      std::string inner = std::to_string(offsets[pos]);
+      if (pos + 1 < offsets.size()) {
+        inner += ", " + std::to_string(offsets[pos + 1]);
+      }
+      pos += 2;
+      result += "LargeItem(number(" + inner + "))";
+    }
+
+    return "LargePair::from(" + result + ", empty())";
+  };
+
+  KingPawn result;
+  for (size_t mask1 = 0; mask1 < 8; ++mask1) {
+    for (size_t mask2 = 0; mask2 < 8; ++mask2) {
+      const size_t mask = applyInv(mask1) | (applyInv(mask2) << 3);
+      result.shield[mask1][mask2] = getStr(mask, 6, bundle.shield().name().offset);
+    }
+  }
+  return result;
+}
+
 void fillWeights(SourcePrinter &p, const Features &features) {
   for (const auto &bundle : features.bundles()) {
     if (const auto *b = bundle.asSingle()) {
@@ -127,7 +180,7 @@ void fillWeights(SourcePrinter &p, const Features &features) {
       p.stream() << ";\n";
 
       auto outCastling = [&](const char *name, const std::string value[2]) {
-        p.line() << "inline static const LargePair " << formatName(b->name()) << "_" << name
+        p.line() << "static constexpr LargePair " << formatName(b->name()) << "_" << name
                  << "_UPD[2] = {";
         static_assert(static_cast<int>(Color::White) == 0 && static_cast<int>(Color::Black) == 1);
         p.indent(2);
@@ -139,6 +192,25 @@ void fillWeights(SourcePrinter &p, const Features &features) {
 
       outCastling("KINGSIDE", psq.kingsideCastling);
       outCastling("QUEENSIDE", psq.queensideCastling);
+      continue;
+    }
+
+    if (const auto *b = bundle.asKingPawn()) {
+      const auto src = kingPawnFromBundle(*b, false);
+      const auto srcInv = kingPawnFromBundle(*b, true);
+
+      auto printKingPawn = [&](const KingPawn &src, const char *suffix) {
+        p.lineStart() << "static constexpr LargePair " << formatName(b->name()) << "_SHIELD"
+                      << suffix << "[8][8] = ";
+        p.arrayBody(8, [&](const size_t i) {
+          p.arrayBody(8, [&](const size_t j) { p.stream() << src.shield[i][j]; });
+        });
+        p.stream() << ";\n";
+      };
+
+      printKingPawn(src, "");
+      printKingPawn(srcInv, "_INV");
+
       continue;
     }
 

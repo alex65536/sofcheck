@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.14)
 
 project(SoFCheck)
 
@@ -202,7 +202,7 @@ add_library(sof_version STATIC
 
 add_library(sof_util STATIC
   src/util/formatter.cpp
-  src/util/fileutil.cpp
+  src/util/ioutil.cpp
   src/util/logging.cpp
   src/util/misc.cpp
   src/util/optparse.cpp
@@ -243,10 +243,17 @@ add_library(sof_bot_api_clients STATIC
 )
 target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
 
+add_library(sof_gameset STATIC
+  src/gameset/reader.cpp
+  src/gameset/types.cpp
+)
+target_link_libraries(sof_gameset PUBLIC sof_core sof_util)
+
 add_library(sof_eval STATIC
   src/eval/evaluate.cpp
+  src/eval/private/pawn_cache.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
-  "${PROJECT_BINARY_DIR}/src/eval/private/metric.h"
+  "${PROJECT_BINARY_DIR}/src/eval/private/bitboards.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weight_values.h"
 )
@@ -282,7 +289,10 @@ target_link_libraries(sofcheck sof_bot_api sof_bot_api_clients sof_search)
 add_executable(make_dataset
   src/eval/feat/bin/make_dataset.cpp
 )
-target_link_libraries(make_dataset sof_core sof_util sof_eval sof_eval_feat ${JSONCPP_TARGET})
+target_link_libraries(
+  make_dataset
+  sof_core sof_util sof_eval sof_eval_feat sof_gameset Threads::Threads ${JSONCPP_TARGET}
+)
 
 add_executable(apply_weights
   src/eval/feat/bin/apply_weights.cpp
@@ -298,6 +308,27 @@ target_link_libraries(show_weights sof_util sof_eval_feat ${JSONCPP_TARGET})
 # Generate files
 include(Generators)
 
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.20)
+  configure_file(tools/owl.py.in
+    "${PROJECT_BINARY_DIR}/owl.py"
+    @ONLY
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+else()
+  configure_file(tools/owl.py.in "${PROJECT_BINARY_DIR}/tmp/owl.py" @ONLY)
+  file(COPY
+    "${PROJECT_BINARY_DIR}/tmp/owl.py"
+    DESTINATION "${PROJECT_BINARY_DIR}"
+    FILE_PERMISSIONS
+      OWNER_READ OWNER_WRITE OWNER_EXECUTE
+      GROUP_READ GROUP_EXECUTE
+      WORLD_READ WORLD_EXECUTE
+  )
+endif()
+
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/version")
@@ -310,8 +341,8 @@ endif()
 add_custom_command(
   OUTPUT "${PROJECT_BINARY_DIR}/src/version/version.cpp"
   COMMAND "${CMAKE_COMMAND}"
-    -DINPUT_FILE="${PROJECT_SOURCE_DIR}/src/version/version.cpp.in"
-    -DOUTPUT_FILE="${PROJECT_BINARY_DIR}/src/version/version.cpp"
+    -DINPUT_FILE=${PROJECT_SOURCE_DIR}/src/version/version.cpp.in
+    -DOUTPUT_FILE=${PROJECT_BINARY_DIR}/src/version/version.cpp
     -DGIT_EXECUTABLE="${GIT_EXECUTABLE}"
     -P "${PROJECT_SOURCE_DIR}/cmake/scripts/GitRevisionConfig.cmake"
   DEPENDS
@@ -339,8 +370,8 @@ generate_file_json(
 target_link_libraries(gen_eval_feature_count sof_eval_feat)
 
 generate_file(
-  gen/eval/metric.cpp
-  src/eval/private/metric.h
+  gen/eval/bitboards.cpp
+  src/eval/private/bitboards.h
 )
 
 generate_file_json(
@@ -416,7 +447,7 @@ if(BASH AND PYTHONINTERP_FOUND)
         "COMMUNICATE_SCRIPT=${PROJECT_SOURCE_DIR}/tools/communicate_process.py"
         "TEST_EXECUTABLE=$<TARGET_FILE:test_uci_client>"
         "IN_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_in${test_id}.txt"
-        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_log1.txt"
+        "OUT_FILE=${PROJECT_BINARY_DIR}/test_uci_client_${test_id}.txt"
         "ANS_FILE=${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_out${test_id}.txt"
       "${BASH}" "${PROJECT_SOURCE_DIR}/src/bot_api/clients/test/uci_run.sh"
       WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"

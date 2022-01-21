@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -227,7 +227,7 @@ FenParseResult Board::setFromFen(const char *fen) {
     }
     D_PARSE_CHECK(y < 8, FenParseResult::BoardRowOverflow);
     const char lowC = SoFUtil::asciiToLower(c);
-    Piece piece;
+    Piece piece;  // NOLINT: uninitialized
     switch (lowC) {
       case 'p':
         piece = Piece::Pawn;
@@ -434,7 +434,7 @@ ValidateResult Board::validate() {
 void Board::update() {
   // Update invalid enpassant coord
   if (enpassantCoord != INVALID_COORD) {
-    const coord_t enpassantPreCoord = enpassantCoord + Private::pawnMoveDelta(side);
+    const coord_t enpassantPreCoord = enpassantCoord + Private::pawnForwardDelta(side);
     if (cells[enpassantCoord] != makeCell(invert(side), Piece::Pawn) ||
         cells[enpassantPreCoord] != EMPTY_CELL) {
       enpassantCoord = INVALID_COORD;

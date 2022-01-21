@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "eval/feat/feat.h"
-#include "util/fileutil.h"
+#include "util/ioutil.h"
 #include "util/misc.h"
 #include "util/optparse.h"
 #include "util/result.h"
@@ -36,7 +36,7 @@ constexpr const char *DESCRIPTION =
     "This utility reads the weights from the JSON file with features and displays them as a list "
     "of space-separated integers on the standard output.";
 
-constexpr const char *FEATURES_DESCRIPTION = "JSON file that contains all the evaluation features";
+constexpr const char *FEATURES_DESCRIPTION = "JSON file with evaluation features";
 
 int main(int argc, char **argv) {
   SoFUtil::OptParser parser(argc, argv, "ShowWeights for SoFCheck");

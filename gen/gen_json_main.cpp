@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #include <utility>
 
 #include "common.h"
-#include "util/fileutil.h"
+#include "util/ioutil.h"
 #include "util/misc.h"
 #include "util/optparse.h"
 #include "util/result.h"

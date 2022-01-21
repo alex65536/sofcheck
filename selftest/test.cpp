@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ inline std::vector<std::string> getMoveStrList(const ChessIntf::Board &board,
 
 std::string hexDump(const unsigned char *buf, int size) {
   std::string result;
-  result.reserve(3 * size);
+  result.reserve(3U * static_cast<size_t>(size));
   for (int i = 0; i < size; ++i) {
     char digits[] = "0123456789ABCDEF";
     if (i != 0) {

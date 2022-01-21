@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -121,7 +121,7 @@ private:
   const SoFCore::Board &board_;
   SoFCore::Move moves_[std::max(SoFCore::BUFSZ_CAPTURES, SoFCore::BUFSZ_SIMPLE_PROMOTES)];
   size_t moveCount_;
-  size_t movePosition_;
+  size_t movePosition_ = 0;
   Stage stage_;
 };
 

@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -44,8 +44,7 @@ void sortMvvLva(const Board &board, Move *moves, const size_t count) {
 }
 
 QuiescenseMovePicker::QuiescenseMovePicker(const Board &board)
-    : board_(board), movePosition_(0), stage_(Stage::Capture) {
-  moveCount_ = genCaptures(board, moves_);
+    : board_(board), moveCount_(genCaptures(board, moves_)), stage_(Stage::Capture) {
   sortMvvLva(board, moves_, moveCount_);
 }
 

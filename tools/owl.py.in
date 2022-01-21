@@ -1,0 +1,180 @@
+#!/usr/bin/env python3
+# This file is part of SoFCheck
+#
+# Copyright (c) 2022 Alexander Kernozhitsky and SoFCheck contributors
+#
+# SoFCheck is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# SoFCheck is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
+
+import argparse
+import os
+import shutil
+import subprocess
+import sys
+
+SOURCE_DIR = '@PROJECT_SOURCE_DIR@'
+BINARY_DIR = '@PROJECT_BINARY_DIR@'
+CMAKE_EXECUTABLE = '@CMAKE_COMMAND@'
+GIT_EXECUTABLE = '@GIT_EXECUTABLE@'
+GIT_FOUND = ('@Git_FOUND@'.lower() == 'true')
+
+
+def src_path(path):
+    return os.path.join(*([SOURCE_DIR] + path))
+
+
+def bin_path(path):
+    return os.path.join(*([BINARY_DIR] + path))
+
+
+def git(*args):
+    if not GIT_FOUND:
+        raise RuntimeError('Git not found')
+    return subprocess.check_output([GIT_EXECUTABLE] + list(args))
+
+
+FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
+
+
+def rebuild(jobs=None):
+    cmdline = [CMAKE_EXECUTABLE, '--build', BINARY_DIR]
+    if jobs is None:
+        cmdline += ['-j']
+    else:
+        cmdline += ['-j', str(jobs)]
+    subprocess.check_call(cmdline)
+
+
+def git_save():
+    branch = git('rev-parse', '--abbrev-ref', 'HEAD').strip()
+    if branch == 'HEAD':
+        branch = git('rev-parse', 'HEAD').strip()
+    stash_msg = git('stash', 'push', '-m', 'Temporary stash by owl.py')
+    stashed = stash_msg.find(b'Temporary stash by owl.py') != -1
+    return (branch, stashed)
+
+
+def git_restore(saved_state):
+    branch, stashed = saved_state
+    git('checkout', branch)
+    if stashed:
+        git('stash', 'pop')
+
+
+def copy_with_perms(src, dst):
+    shutil.copyfile(src, dst)
+    shutil.copymode(src, dst)
+
+
+def show_owl(args):
+    print('''\
+   ^ ^
+   @,@
+  ((_))
+   ^ ^
+''', end='')
+
+
+def show_weights(args):
+    subprocess.check_call([bin_path(['show_weights']), '-f', FEATURES_PATH])
+
+
+def apply_weights(args):
+    subprocess.check_call([bin_path(['apply_weights']), '-f', FEATURES_PATH])
+    if not args.no_rebuild:
+        rebuild()
+
+
+def make_dataset(args):
+    cmdline = [bin_path(['make_dataset']), '-f', FEATURES_PATH] + args.flags
+    subprocess.check_call(cmdline)
+
+
+def build(args):
+    def exe_name(tag):
+        name = 'sofcheck' if not tag else 'sofcheck_' + tag
+        return os.path.join(args.dest_dir, name)
+
+    if not args.tags:
+        rebuild()
+        try:
+            copy_with_perms(bin_path(['sofcheck']), exe_name(''))
+        except shutil.SameFileError:
+            pass
+        return
+
+    if not GIT_FOUND:
+        raise RuntimeError('Git not found')
+
+    saved_state = git_save()
+    try:
+        for idx, tag in enumerate(args.tags):
+            sys.stderr.write(f'Building SoFCheck version {tag}...\n')
+            sys.stderr.flush()
+            if tag.startswith('-'):
+                raise RuntimeError('Tags starting with "-" are forbidden')
+            git('checkout', tag)
+            rebuild()
+            exe_tag = str(idx + 1) if args.numbers else tag
+            copy_with_perms(bin_path(['sofcheck']), exe_name(exe_tag))
+    finally:
+        git_restore(saved_state)
+
+
+parser = argparse.ArgumentParser(
+    description='Script to run SoFCheck utilites more conveniently')
+parser.set_defaults(func=show_owl)
+subparsers = parser.add_subparsers(
+    help='command to execute', dest='cmd')
+
+weights_parser = subparsers.add_parser(
+    'weights', aliases=['w', 'wt'], help='manipulate feature weights')
+weights_subparsers = weights_parser.add_subparsers(
+    help='subcommand to execute', dest='subcmd', required=True)
+show_parser = weights_subparsers.add_parser(
+    'show', aliases=['s'], help='show feature weights')
+show_parser.set_defaults(func=show_weights)
+apply_parser = weights_subparsers.add_parser(
+    'apply', aliases=['a'], help='apply feature weights')
+apply_parser.set_defaults(func=apply_weights)
+apply_parser.add_argument(
+    '-B', '--no-rebuild', help='do not rebuild the engine after apply',
+    action='store_true')
+
+dataset_parser = subparsers.add_parser(
+    'dataset', aliases=['d', 'ds'], help='create a dataset via make_dataset')
+dataset_parser.add_argument(
+    'flags', nargs='*', help='arguments for make_dataset')
+dataset_parser.set_defaults(func=make_dataset)
+
+build_parser = subparsers.add_parser(
+    'build', aliases=['b', 'bl'],
+    help='rebuild SoFCheck, possibly from various git tags')
+build_parser.add_argument(
+    'tags', nargs='*',
+    help='git tags from which to rebuild the engine. '
+         'If empty, build current version')
+build_parser.add_argument(
+    '-d', '--dest-dir', help='directory to put binaries', action='store',
+    default='.')
+build_parser.add_argument(
+    '-n', '--numbers', action='store_true',
+    help='use numbers instead of git tags in executable names')
+build_parser.set_defaults(func=build)
+
+args = parser.parse_args()
+try:
+    args.func(args)
+except Exception as exc:
+    etype = type(exc).__name__
+    sys.exit(f'Error {etype}: {exc}')
