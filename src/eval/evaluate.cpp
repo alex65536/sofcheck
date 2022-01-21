@@ -257,6 +257,7 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
   }
 
   const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
+  const bitboard_t bbEnemyPawns = b.bbPieces[makeCell(invert(C), Piece::Pawn)];
   const bitboard_t bbKing = b.bbPieces[makeCell(C, Piece::King)];
   const bitboard_t bbEnemyKing = b.bbPieces[makeCell(invert(C), Piece::King)];
   const auto kingPos = static_cast<coord_t>(SoFUtil::getLowest(bbKing));
@@ -281,7 +282,7 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
   generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);
   generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
 
-  // Calculate king pawn shield
+  // Calculate king pawn shield and pawn storm
   constexpr bitboard_t bbShieldedKing =
       (C == Color::White) ? BB_WHITE_SHIELDED_KING : BB_BLACK_SHIELDED_KING;
   if (bbKing & bbShieldedKing) {
@@ -289,16 +290,23 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
 
     const coord_t shift1 = (C == Color::White) ? (kingY + 47) : (kingY + 7);
     const coord_t shift2 = (C == Color::White) ? (kingY + 39) : (kingY + 15);
+    const coord_t shift3 = (C == Color::White) ? (kingY + 31) : (kingY + 23);
 
     constexpr bitboard_t row1 = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
     constexpr bitboard_t row2 = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
+    constexpr bitboard_t row3 = SoFCore::Private::BB_ROW[(C == Color::White) ? 4 : 3];
 
     const bitboard_t shieldMask1 = ((bbPawns & row1) >> shift1) & 7U;
     const bitboard_t shieldMask2 = ((bbPawns & row2) >> shift2) & 7U;
 
+    const bitboard_t stormMask2 = ((bbEnemyPawns & row2) >> shift2) & 7U;
+    const bitboard_t stormMask3 = ((bbEnemyPawns & row3) >> shift3) & 7U;
+
     const bool inverted = kingY > 4;
     const auto shieldWeights = inverted ? Weights::KING_PAWN_SHIELD_INV : Weights::KING_PAWN_SHIELD;
-    const Pair kingPawnResult = shieldWeights[shieldMask1][shieldMask2];
+    const auto stormWeights = inverted ? Weights::KING_PAWN_STORM_INV : Weights::KING_PAWN_STORM;
+    const Pair kingPawnResult =
+        shieldWeights[shieldMask1][shieldMask2] + stormWeights[stormMask2][stormMask3];
 
     result += mix(kingPawnResult, stage);
   }

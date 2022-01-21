@@ -107,7 +107,8 @@ constexpr const char *SRC_JSON = R"JSON(
     {"some_array": [56, -15, 126, -35]},
     {"king_pawn": {
         "type": "king_pawn",
-        "shield": [41, 98, 20, 49, 71, 3]
+        "shield": [41, 98, 20, 49, 71, 3],
+        "storm": [-28, -45, -119, 2, 0, -35]
     }}
 ]
 )JSON";
@@ -149,9 +150,9 @@ TEST(SoFEval_Feat, Feat_Weights) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  EXPECT_EQ(features.count(), 471U);
+  EXPECT_EQ(features.count(), 477U);
   WeightVec weights = features.extract();
-  ASSERT_EQ(weights.size(), 471U);
+  ASSERT_EQ(weights.size(), 477U);
   EXPECT_EQ(weights[0], -41);
   EXPECT_EQ(weights[3], 55);
   EXPECT_EQ(weights[9], -142);
@@ -173,9 +174,9 @@ TEST(SoFEval_Feat, Feat_Names) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  EXPECT_EQ(features.count(), 471U);
+  EXPECT_EQ(features.count(), 477U);
   const auto names = features.names();
-  ASSERT_EQ(names.size(), 471U);
+  ASSERT_EQ(names.size(), 477U);
   EXPECT_EQ(names[0].name, "first");
   EXPECT_EQ(names[3].name, "second.2");
   EXPECT_EQ(names[10].name, "our_psq.cost.4");

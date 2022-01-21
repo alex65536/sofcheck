@@ -102,10 +102,12 @@ Psq psqFromBundle(const PsqBundle &bundle) {
 
 struct KingPawn {
   std::string shield[8][8];
+  std::string storm[8][8];
 };
 
 KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
   SOF_ASSERT(bundle.shield().count() == 6);
+  SOF_ASSERT(bundle.storm().count() == 6);
 
   auto applyInv = [&](const size_t x) {
     if (inverted) {
@@ -148,6 +150,7 @@ KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
     for (size_t mask2 = 0; mask2 < 8; ++mask2) {
       const size_t mask = applyInv(mask1) | (applyInv(mask2) << 3);
       result.shield[mask1][mask2] = getStr(mask, 6, bundle.shield().name().offset);
+      result.storm[mask1][mask2] = getStr(mask, 6, bundle.storm().name().offset);
     }
   }
   return result;
@@ -204,6 +207,13 @@ void fillWeights(SourcePrinter &p, const Features &features) {
                       << suffix << "[8][8] = ";
         p.arrayBody(8, [&](const size_t i) {
           p.arrayBody(8, [&](const size_t j) { p.stream() << src.shield[i][j]; });
+        });
+        p.stream() << ";\n";
+
+        p.lineStart() << "static constexpr LargePair " << formatName(b->name()) << "_STORM"
+                      << suffix << "[8][8] = ";
+        p.arrayBody(8, [&](const size_t i) {
+          p.arrayBody(8, [&](const size_t j) { p.stream() << src.storm[i][j]; });
         });
         p.stream() << ";\n";
       };

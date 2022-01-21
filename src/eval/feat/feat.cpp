@@ -264,6 +264,7 @@ void KingPawnBundle::iterate(ThisType &obj, Callback callback) {
   static_assert(std::is_same_v<KingPawnBundle, std::remove_cv_t<ThisType>>);
 
   callback(obj.shield_, "shield");
+  callback(obj.storm_, "storm");
 }
 
 LoadResult<KingPawnBundle> KingPawnBundle::load(const Name &name, const Json::Value &json) {
@@ -275,6 +276,7 @@ LoadResult<KingPawnBundle> KingPawnBundle::load(const Name &name, const Json::Va
   SubBundleLoader loader(name, json);
 
   SOF_TRY_CONSUME(loader.loadFixedArray(bundle.shield_, "shield", 6));
+  SOF_TRY_CONSUME(loader.loadFixedArray(bundle.storm_, "storm", 6));
 
   return Ok(std::move(bundle));
 }
@@ -292,6 +294,10 @@ void KingPawnBundle::print(SoFUtil::SourceFormatter &fmt) const {
 
   fmt.lineStart() << R"TEXT("shield": )TEXT";
   shield_.print(fmt);
+  fmt.stream() << ",\n";
+
+  fmt.lineStart() << R"TEXT("storm": )TEXT";
+  storm_.print(fmt);
   fmt.stream() << "\n";
 
   fmt.outdent(1);

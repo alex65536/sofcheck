@@ -171,6 +171,9 @@ public:
   // Returns the bundle that corresponds to pawn shield
   const ArrayBundle &shield() const { return shield_; }
 
+  // Returns the bundle that corresponds to pawn storm
+  const ArrayBundle &storm() const { return storm_; }
+
   KingPawnBundle() = default;
 
 private:
@@ -183,6 +186,7 @@ private:
 
   Name name_;
   ArrayBundle shield_;
+  ArrayBundle storm_;
 };
 
 // A container for all the bundles described above
