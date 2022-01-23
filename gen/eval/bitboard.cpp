@@ -107,7 +107,7 @@ GeneratorInfo getGeneratorInfo() {
 int doGenerate(SourcePrinter &p) {
   const auto kingRings = generateKingMetricRings();
 
-  p.headerGuard("SOF_EVAL_PRIVATE_BITBOARDS_INCLUDED");
+  p.headerGuard("SOF_EVAL_PRIVATE_BITBOARD_INCLUDED");
   p.skip();
   p.include("core/types.h");
   p.skip();
