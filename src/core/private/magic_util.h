@@ -18,7 +18,8 @@
 #ifndef SOF_CORE_PRIVATE_MAGIC_UTIL_INCLUDED
 #define SOF_CORE_PRIVATE_MAGIC_UTIL_INCLUDED
 
-#include "core/private/bit_consts.h"
+#include "core/bitboard.h"
+#include "core/private/bitboard.h"
 #include "core/types.h"
 #include "util/bit.h"
 

@@ -20,8 +20,8 @@
 #include <charconv>
 #include <cstring>
 
+#include "core/bitboard.h"
 #include "core/movegen.h"
-#include "core/private/bit_consts.h"
 #include "core/private/geometry.h"
 #include "core/private/zobrist.h"
 #include "core/strutil.h"
@@ -491,7 +491,7 @@ bool isBoardDrawInsufficientMaterial(const Board &b) {
 
   // If we have pieces on both white and black squares, then no draw occurs. This cutoff optimizes
   // the function in most positions.
-  if ((bbNoKings & Private::BB_CELLS_WHITE) && (bbNoKings & Private::BB_CELLS_BLACK)) {
+  if ((bbNoKings & BB_CELLS_WHITE) && (bbNoKings & BB_CELLS_BLACK)) {
     return false;
   }
 
