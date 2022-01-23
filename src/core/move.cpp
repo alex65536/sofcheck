@@ -20,7 +20,7 @@
 #include <cstddef>
 
 #include "core/board.h"
-#include "core/private/bit_consts.h"
+#include "core/private/bitboard.h"
 #include "core/private/geometry.h"
 #include "core/private/zobrist.h"
 #include "util/misc.h"

@@ -17,7 +17,8 @@
 
 #include "core/movegen.h"
 
-#include "core/private/bit_consts.h"
+#include "core/bitboard.h"
+#include "core/private/bitboard.h"
 #include "core/private/geometry.h"
 #include "core/private/magic.h"
 #include "core/private/near_attacks.h"
@@ -82,7 +83,7 @@ inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t s
 template <Color C, bool IsPromote>
 inline static size_t doGenPawnSingle(const Board &b, const bitboard_t bbPawns, Move *list,
                                      size_t size) {
-  bitboard_t bbPawnDsts = Private::advancePawnForward(C, bbPawns) & ~b.bbAll;
+  bitboard_t bbPawnDsts = advancePawnForward(C, bbPawns) & ~b.bbAll;
   while (bbPawnDsts) {
     const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
     size = addPawnWithPromote<IsPromote>(list, size, dst - Private::pawnForwardDelta(C), dst);
@@ -93,8 +94,8 @@ inline static size_t doGenPawnSingle(const Board &b, const bitboard_t bbPawns, M
 template <Color C>
 inline static size_t doGenPawnDouble(const Board &b, const bitboard_t bbPawns, Move *list,
                                      size_t size) {
-  const bitboard_t bbPawnTmps = Private::advancePawnForward(C, bbPawns) & ~b.bbAll;
-  bitboard_t bbPawnDsts = Private::advancePawnForward(C, bbPawnTmps) & ~b.bbAll;
+  const bitboard_t bbPawnTmps = advancePawnForward(C, bbPawns) & ~b.bbAll;
+  bitboard_t bbPawnDsts = advancePawnForward(C, bbPawnTmps) & ~b.bbAll;
   while (bbPawnDsts) {
     const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
     const coord_t src = dst - 2 * Private::pawnForwardDelta(C);
@@ -111,7 +112,7 @@ inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, 
   constexpr coord_t rightDelta = Private::pawnRightDelta(C);
   {
     // Left capture
-    bitboard_t bbPawnDsts = Private::advancePawnLeft(C, bbPawns & ~Private::BB_COL[0]) & bbAllowed;
+    bitboard_t bbPawnDsts = advancePawnLeft(C, bbPawns) & bbAllowed;
     while (bbPawnDsts) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
       size = addPawnWithPromote<IsPromote>(list, size, dst - leftDelta, dst);
@@ -119,7 +120,7 @@ inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, 
   }
   {
     // Right capture
-    bitboard_t bbPawnDsts = Private::advancePawnRight(C, bbPawns & ~Private::BB_COL[7]) & bbAllowed;
+    bitboard_t bbPawnDsts = advancePawnRight(C, bbPawns) & bbAllowed;
     while (bbPawnDsts) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
       size = addPawnWithPromote<IsPromote>(list, size, dst - rightDelta, dst);
@@ -133,8 +134,8 @@ enum class PromoteGenPolicy { All, PromoteOnly, NoPromote };
 template <Color C, PromoteGenPolicy P>
 inline static size_t genPawnSimple(const Board &b, Move *list) {
   size_t size = 0;
-  constexpr bitboard_t bbPromote = Private::BB_ROW[Private::promoteSrcRow(C)];
-  constexpr bitboard_t bbDouble = Private::BB_ROW[Private::doubleMoveSrcRow(C)];
+  constexpr bitboard_t bbPromote = BB_ROW[Private::promoteSrcRow(C)];
+  constexpr bitboard_t bbDouble = BB_ROW[Private::doubleMoveSrcRow(C)];
   const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
   if constexpr (P == PromoteGenPolicy::All || P == PromoteGenPolicy::NoPromote) {
     size = doGenPawnSingle<C, false>(b, bbPawns & ~bbPromote, list, size);
@@ -149,7 +150,7 @@ inline static size_t genPawnSimple(const Board &b, Move *list) {
 template <Color C>
 inline static size_t genPawnCapture(const Board &b, Move *list) {
   size_t size = 0;
-  constexpr bitboard_t bbPromote = Private::BB_ROW[Private::promoteSrcRow(C)];
+  constexpr bitboard_t bbPromote = BB_ROW[Private::promoteSrcRow(C)];
   const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
   size = doGenPawnCapture<C, false>(b, bbPawns & ~bbPromote, list, size);
   size = doGenPawnCapture<C, true>(b, bbPawns & bbPromote, list, size);

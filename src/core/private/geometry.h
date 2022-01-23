@@ -55,23 +55,6 @@ inline constexpr coord_t pawnLeftDelta(Color c) { return (c == Color::White) ? -
 // Offset of the pawn of color `c` after making a right capture
 inline constexpr coord_t pawnRightDelta(Color c) { return (c == Color::White) ? -7 : 9; }
 
-// Move all the pawns in the bitboard `bbPawns` by `pawnForwardDelta`
-inline constexpr bitboard_t advancePawnForward(const Color c, const bitboard_t bbPawns) {
-  return (c == Color::White) ? (bbPawns >> 8) : (bbPawns << 8);
-}
-
-// Move all the pawns in the bitboard `bbPawns` by `pawnLeftDelta`. Be careful to ensure that there
-// are no pawns in the first column before using
-inline constexpr bitboard_t advancePawnLeft(const Color c, const bitboard_t bbPawns) {
-  return (c == Color::White) ? (bbPawns >> 9) : (bbPawns << 7);
-}
-
-// Move all the pawns in the bitboard `bbPawns` by `pawnRightDelta`. Be careful to ensure that there
-// are no pawns in the last column before using
-inline constexpr bitboard_t advancePawnRight(const Color c, const bitboard_t bbPawns) {
-  return (c == Color::White) ? (bbPawns >> 7) : (bbPawns << 9);
-}
-
 }  // namespace SoFCore::Private
 
 #endif  // SOF_CORE_PRIVATE_GEOMETRY_INCLUDED

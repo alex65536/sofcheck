@@ -332,7 +332,7 @@ endif()
 configure_file(src/config.h.in "${PROJECT_BINARY_DIR}/src/config.h")
 
 file(MAKE_DIRECTORY "${PROJECT_BINARY_DIR}/src/version")
-if(Git_FOUND)
+if(Git_FOUND AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/.git")
   set(GIT_HEAD_DEPS "${PROJECT_SOURCE_DIR}/.git/logs/HEAD")
 else()
   set(GIT_HEAD_DEPS "")
