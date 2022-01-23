@@ -188,8 +188,8 @@ Private::PawnCacheValue<S> Evaluator<S>::evalPawns(const SoFCore::Board &b) {
         (c == Color::White) ? Private::BB_OPEN_PAWN_WHITE : Private::BB_OPEN_PAWN_BLACK;
     const auto *bbPassedPawns =
         (c == Color::White) ? Private::BB_PASSED_PAWN_WHITE : Private::BB_PASSED_PAWN_BLACK;
-    const auto *attackFrontspans =
-        (c == Color::White) ? Private::ATTACK_FRONTSPANS_WHITE : Private::ATTACK_FRONTSPANS_BLACK;
+    const auto *attackFrontspans = (c == Color::White) ? Private::BB_ATTACK_FRONTSPANS_WHITE
+                                                       : Private::BB_ATTACK_FRONTSPANS_BLACK;
 
     bitboard_t bbIterPawns = bbPawns;
     bitboard_t bbAttackFrontspans = 0;
@@ -262,7 +262,7 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
 
     const auto countAtDistance = [&](const size_t dist) {
       return static_cast<coef_t>(
-          SoFUtil::popcount(Private::KING_METRIC_RINGS[dist][enemyKingPos] & bb));
+          SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][enemyKingPos] & bb));
     };
 
     const coef_t nearCount = KING_ZONE_COSTS[1] * countAtDistance(1) +

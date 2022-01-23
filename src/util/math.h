@@ -39,6 +39,13 @@ inline constexpr size_t log10(uint64_t val) {
   return res - 1;
 }
 
+// Returns `std::abs(x - y)`. Unlike the former, it is safe to use for both signed and unsigned
+// integers
+template <typename Int>
+inline constexpr Int absDiff(const Int x, const Int y) {
+  return x > y ? x - y : y - x;
+}
+
 }  // namespace SoFUtil
 
 #endif  // SOF_UTIL_MATH_INCLUDED
