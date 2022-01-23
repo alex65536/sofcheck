@@ -62,7 +62,7 @@ public:
     }
 
   private:
-    explicit Tag(Pair inner, const uint32_t stage, SoFCore::board_hash_t pawnHash)
+    explicit Tag(Pair inner, const uint32_t stage, const SoFCore::board_hash_t pawnHash)
         : inner_(std::move(inner)), stage_(stage), pawnHash_(pawnHash) {}
 
     Pair inner_;

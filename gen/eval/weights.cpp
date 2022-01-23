@@ -110,13 +110,11 @@ KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
   SOF_ASSERT(bundle.storm().count() == 6);
 
   auto applyInv = [&](const size_t x) {
-    if (inverted) {
-      return ((x & 4U) >> 2) | (x & 2U) | ((x & 1U) << 2);
-    }
-    return x;
+    return inverted ? ((x & 4U) >> 2) | (x & 2U) | ((x & 1U) << 2) : x;
   };
 
-  auto getStr = [&](const size_t mask, const size_t count, const size_t offset) -> std::string {
+  auto maskToWeightSum = [&](const size_t mask, const size_t count,
+                             const size_t offset) -> std::string {
     std::vector<size_t> offsets;
     for (size_t idx = 0; idx < count; ++idx) {
       if ((mask >> idx) & 1U) {
@@ -129,8 +127,7 @@ KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
     }
 
     std::string result;
-    size_t pos = 0;
-    while (pos < offsets.size()) {
+    for (size_t pos = 0; pos < offsets.size();) {
       if (!result.empty()) {
         result += " + ";
       }
@@ -149,8 +146,8 @@ KingPawn kingPawnFromBundle(const KingPawnBundle &bundle, const bool inverted) {
   for (size_t mask1 = 0; mask1 < 8; ++mask1) {
     for (size_t mask2 = 0; mask2 < 8; ++mask2) {
       const size_t mask = applyInv(mask1) | (applyInv(mask2) << 3);
-      result.shield[mask1][mask2] = getStr(mask, 6, bundle.shield().name().offset);
-      result.storm[mask1][mask2] = getStr(mask, 6, bundle.storm().name().offset);
+      result.shield[mask1][mask2] = maskToWeightSum(mask, 6, bundle.shield().name().offset);
+      result.storm[mask1][mask2] = maskToWeightSum(mask, 6, bundle.storm().name().offset);
     }
   }
   return result;
@@ -199,9 +196,6 @@ void fillWeights(SourcePrinter &p, const Features &features) {
     }
 
     if (const auto *b = bundle.asKingPawn()) {
-      const auto src = kingPawnFromBundle(*b, false);
-      const auto srcInv = kingPawnFromBundle(*b, true);
-
       auto printKingPawn = [&](const KingPawn &src, const char *suffix) {
         p.lineStart() << "static constexpr LargePair " << formatName(b->name()) << "_SHIELD"
                       << suffix << "[8][8] = ";
@@ -218,8 +212,8 @@ void fillWeights(SourcePrinter &p, const Features &features) {
         p.stream() << ";\n";
       };
 
-      printKingPawn(src, "");
-      printKingPawn(srcInv, "_INV");
+      printKingPawn(kingPawnFromBundle(*b, false), "");
+      printKingPawn(kingPawnFromBundle(*b, true), "_INV");
 
       continue;
     }
