@@ -21,9 +21,8 @@
 #include <cstddef>
 #include <utility>
 
-#include "core/private/bit_consts.h"  // FIXME : refactor
-#include "core/private/geometry.h"    // FIXME : refactor
-#include "core/private/zobrist.h"     // FIXME : refactor
+#include "core/bitboard.h"
+#include "core/private/zobrist.h"  // FIXME : refactor
 #include "eval/coefs.h"
 #include "eval/private/bitboards.h"
 #include "eval/private/pawn_cache.h"
@@ -166,16 +165,10 @@ Private::PawnCacheValue<S> Evaluator<S>::evalPawns(const SoFCore::Board &b) {
   const bitboard_t bbWhitePawns = b.bbPieces[makeCell(Color::White, Piece::Pawn)];
   const bitboard_t bbBlackPawns = b.bbPieces[makeCell(Color::Black, Piece::Pawn)];
   const bitboard_t bbAllPawns = bbWhitePawns | bbBlackPawns;
-  const bitboard_t bbWhiteAttacks =
-      ((SoFCore::Private::advancePawnLeft(Color::White,
-                                          bbWhitePawns & ~SoFCore::Private::BB_COL[0])) |
-       (SoFCore::Private::advancePawnRight(Color::White,
-                                           bbWhitePawns & ~SoFCore::Private::BB_COL[7])));
-  const bitboard_t bbBlackAttacks =
-      ((SoFCore::Private::advancePawnLeft(Color::Black,
-                                          bbBlackPawns & ~SoFCore::Private::BB_COL[0])) |
-       (SoFCore::Private::advancePawnRight(Color::Black,
-                                           bbBlackPawns & ~SoFCore::Private::BB_COL[7])));
+  const bitboard_t bbWhiteAttacks = SoFCore::advancePawnLeft(Color::White, bbWhitePawns) |
+                                    SoFCore::advancePawnRight(Color::White, bbWhitePawns);
+  const bitboard_t bbBlackAttacks = SoFCore::advancePawnLeft(Color::Black, bbBlackPawns) |
+                                    SoFCore::advancePawnRight(Color::Black, bbBlackPawns);
 
   const auto doEvalPawns = [&](const Color c) {
     S result{};
@@ -223,7 +216,7 @@ Private::PawnCacheValue<S> Evaluator<S>::evalPawns(const SoFCore::Board &b) {
 
     const auto protectedPawns = static_cast<coef_t>(SoFUtil::popcount(bbPawns & bbAttacks));
     const auto backwardPawns = static_cast<coef_t>(SoFUtil::popcount(
-        SoFCore::Private::advancePawnForward(c, bbPawns) & bbEnemyAttacks & ~bbAttackFrontspans));
+        SoFCore::advancePawnForward(c, bbPawns) & bbEnemyAttacks & ~bbAttackFrontspans));
 
     addWithCoef(result, Weights::PAWN_ISOLATED, isolatedPawns);
     addWithCoef(result, Weights::PAWN_DOUBLE, doublePawns);
@@ -292,9 +285,9 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
     const coord_t shift2 = (C == Color::White) ? (kingY + 39) : (kingY + 15);
     const coord_t shift3 = (C == Color::White) ? (kingY + 31) : (kingY + 23);
 
-    constexpr bitboard_t row1 = SoFCore::Private::BB_ROW[(C == Color::White) ? 6 : 1];
-    constexpr bitboard_t row2 = SoFCore::Private::BB_ROW[(C == Color::White) ? 5 : 2];
-    constexpr bitboard_t row3 = SoFCore::Private::BB_ROW[(C == Color::White) ? 4 : 3];
+    constexpr bitboard_t row1 = SoFCore::BB_ROW[(C == Color::White) ? 6 : 1];
+    constexpr bitboard_t row2 = SoFCore::BB_ROW[(C == Color::White) ? 5 : 2];
+    constexpr bitboard_t row3 = SoFCore::BB_ROW[(C == Color::White) ? 4 : 3];
 
     const bitboard_t shieldMask1 = ((bbPawns & row1) >> shift1) & 7U;
     const bitboard_t shieldMask2 = ((bbPawns & row2) >> shift2) & 7U;
