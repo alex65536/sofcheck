@@ -37,15 +37,11 @@ inline constexpr bitboard_t buildMagicRookPostMask(const coord_t c) {
 }
 
 inline constexpr bitboard_t buildMagicBishopMask(const coord_t c) {
-  const subcoord_t d1 = coordX(c) + coordY(c);
-  const subcoord_t d2 = 7 - coordX(c) + coordY(c);
-  return (BB_DIAG1[d1] ^ BB_DIAG2[d2]) & ~BB_DIAG_FRAME;
+  return (BB_DIAG1[coordDiag1(c)] ^ BB_DIAG2[coordDiag2(c)]) & ~BB_DIAG_FRAME;
 }
 
 inline constexpr bitboard_t buildMagicBishopPostMask(const coord_t c) {
-  const subcoord_t d1 = coordX(c) + coordY(c);
-  const subcoord_t d2 = 7 - coordX(c) + coordY(c);
-  return BB_DIAG1[d1] ^ BB_DIAG2[d2];
+  return BB_DIAG1[coordDiag1(c)] ^ BB_DIAG2[coordDiag2(c)];
 }
 
 enum class MagicType { Rook, Bishop };

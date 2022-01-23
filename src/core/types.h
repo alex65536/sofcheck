@@ -104,6 +104,14 @@ inline constexpr subcoord_t coordX(coord_t coord) { return coord >> 3; }
 // Extracts Y subcoordinate from `coord`
 inline constexpr subcoord_t coordY(coord_t coord) { return coord & 7; }
 
+// Returns the number of diagonal of type I (i. e. from top-left to bottom-right), on which the cell
+// `coord` lies. The diagonals are numbered from `0` to `14` inclusively
+inline constexpr subcoord_t coordDiag1(coord_t coord) { return coordX(coord) + coordY(coord); }
+
+// Returns the number of diagonal of type II (i. e. from top-right to bottom-left), on which the
+// cell `coord` lies. The diagonals are numbered from `0` to `14` inclusively
+inline constexpr subcoord_t coordDiag2(coord_t coord) { return 7 - coordX(coord) + coordY(coord); }
+
 // Flips X subcoordinate. This is equal to `makeCoord(7 - x, y)`
 inline constexpr subcoord_t coordFlipX(coord_t coord) { return coord ^ 56; }
 
