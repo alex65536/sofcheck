@@ -251,7 +251,6 @@ target_link_libraries(sof_gameset PUBLIC sof_core sof_util)
 
 add_library(sof_eval STATIC
   src/eval/evaluate.cpp
-  src/eval/private/pawn_cache.cpp
   "${PROJECT_BINARY_DIR}/src/eval/feature_count.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/bitboard.h"
   "${PROJECT_BINARY_DIR}/src/eval/private/weights.h"

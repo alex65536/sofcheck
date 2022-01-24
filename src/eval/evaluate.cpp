@@ -25,7 +25,7 @@
 #include "core/private/zobrist.h"  // FIXME : refactor
 #include "eval/coefs.h"
 #include "eval/private/bitboard.h"
-#include "eval/private/pawn_cache.h"
+#include "eval/private/cache.h"
 #include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/bit.h"
