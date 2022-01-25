@@ -145,6 +145,9 @@ int doGenerate(SourcePrinter &p) {
   p.skip();
   p.bitboardArray("BB_ATTACK_FRONTSPANS_BLACK", generateAttackFrontspans(Color::Black));
   p.skip();
+  p.line() << "constexpr SoFCore::bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;";
+  p.line() << "constexpr SoFCore::bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;";
+  p.skip();
 
   return 0;
 }

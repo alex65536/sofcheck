@@ -31,7 +31,8 @@ namespace SoFEval {
 
 // Minimal unit in `BaseCoefs` that corresponds to one added coefficient. This constant is greater
 // than `1` because we can perform the division to blend the ordinary score with the endgame score
-constexpr coef_t COEF_UNIT = 256;
+constexpr int COEF_UNIT_SHIFT = 8;
+constexpr coef_t COEF_UNIT = static_cast<coef_t>(1) << COEF_UNIT_SHIFT;
 
 // Score type useful for tuning the feature weights. It doesn't keep the position cost, but keeps
 // the number of times each feature is used instead. This is a base type, which has specializations
@@ -145,7 +146,8 @@ public:
   SOF_VECTOR_OPS(BaseCoefsPair, coef_t)
 
 private:
-  constexpr BaseCoefsPair(Item first, Item second) : first_(std::move(first)), second_(std::move(second)) {}
+  constexpr BaseCoefsPair(Item first, Item second)
+      : first_(std::move(first)), second_(std::move(second)) {}
 
   Item first_;
   Item second_;

@@ -22,10 +22,10 @@
 #include <utility>
 
 #include "core/bitboard.h"
-#include "core/private/zobrist.h"  // FIXME : refactor
 #include "eval/coefs.h"
 #include "eval/private/bitboard.h"
 #include "eval/private/cache.h"
+#include "eval/private/consts.h"
 #include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/bit.h"
@@ -43,22 +43,6 @@ using SoFCore::MoveKind;
 using SoFCore::Piece;
 using SoFCore::subcoord_t;
 
-constexpr uint32_t PAWN_STAGE = 0;
-constexpr uint32_t KNIGHT_STAGE = 1;
-constexpr uint32_t BISHOP_STAGE = 1;
-constexpr uint32_t ROOK_STAGE = 2;
-constexpr uint32_t QUEEN_STAGE = 4;
-constexpr uint32_t TOTAL_STAGE =
-    16 * PAWN_STAGE + 4 * KNIGHT_STAGE + 4 * BISHOP_STAGE + 4 * ROOK_STAGE + 2 * QUEEN_STAGE;
-constexpr uint32_t STAGES[15] = {
-    0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE, 0,
-    0, PAWN_STAGE, 0, KNIGHT_STAGE, BISHOP_STAGE, ROOK_STAGE, QUEEN_STAGE};
-
-constexpr coef_t KING_ZONE_COSTS[8] = {0, 5, 4, 1, 0, 0, 0, 0};
-
-constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
-constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
-
 inline static Private::hash_t pawnHash(const Board &b) {
   return SoFUtil::hash16(b.bbPieces[makeCell(Color::White, Piece::Pawn)],
                          b.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
@@ -72,7 +56,7 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
   uint32_t stage = 0;
   for (coord_t i = 0; i < 64; ++i) {
     psq += Weights::PSQ[b.cells[i]][i];
-    stage += STAGES[b.cells[i]];
+    stage += Private::STAGES[b.cells[i]];
   }
   return Tag(std::move(psq), stage);
 }
@@ -97,11 +81,11 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
   result.inner_ -= Weights::PSQ[srcCell][move.src] + Weights::PSQ[dstCell][move.dst];
-  result.stage_ -= STAGES[dstCell];
+  result.stage_ -= Private::STAGES[dstCell];
   if (isMoveKindPromote(move.kind)) {
     const cell_t promoteCell = makeCell(color, moveKindPromotePiece(move.kind));
     result.inner_ += Weights::PSQ[promoteCell][move.dst];
-    result.stage_ += STAGES[promoteCell] - PAWN_STAGE;
+    result.stage_ += Private::STAGES[promoteCell] - Private::STAGE_PAWN;
     return result;
   }
   result.inner_ += Weights::PSQ[srcCell][move.dst];
@@ -109,14 +93,14 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
     const coord_t pawnPos = enpassantPawnPos(color, move.dst);
     const cell_t enemyPawn = makeCell(invert(color), Piece::Pawn);
     result.inner_ -= Weights::PSQ[enemyPawn][pawnPos];
-    result.stage_ -= PAWN_STAGE;
+    result.stage_ -= Private::STAGE_PAWN;
   }
   return result;
 }
 
 template <typename S>
 S Evaluator<S>::mix(const Pair &pair, const coef_t stage) {
-  return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> 8);
+  return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> COEF_UNIT_SHIFT);
 }
 
 template <typename S>
@@ -133,7 +117,8 @@ Evaluator<S>::~Evaluator() = default;
 
 template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
-  const auto rawStage = static_cast<coef_t>(((tag.stage_ << 8) + (TOTAL_STAGE >> 1)) / TOTAL_STAGE);
+  const auto rawStage = static_cast<coef_t>(
+      ((tag.stage_ << COEF_UNIT_SHIFT) + (Private::STAGE_TOTAL >> 1)) / Private::STAGE_TOTAL);
   const auto stage = std::min<coef_t>(rawStage, 256);
 
   auto result = mix(tag.inner_, stage);
@@ -254,9 +239,9 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
           SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][enemyKingPos] & bb));
     };
 
-    const coef_t nearCount = KING_ZONE_COSTS[1] * countAtDistance(1) +
-                             KING_ZONE_COSTS[2] * countAtDistance(2) +
-                             KING_ZONE_COSTS[3] * countAtDistance(3);
+    const coef_t nearCount = Private::KING_ZONE_COST1 * countAtDistance(1) +
+                             Private::KING_ZONE_COST2 * countAtDistance(2) +
+                             Private::KING_ZONE_COST3 * countAtDistance(3);
 
     addWithCoef(result, weight, nearCount);
   };
@@ -266,7 +251,7 @@ S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
 
   // Calculate king pawn shield and pawn storm
   constexpr bitboard_t bbShieldedKing =
-      (C == Color::White) ? BB_WHITE_SHIELDED_KING : BB_BLACK_SHIELDED_KING;
+      (C == Color::White) ? Private::BB_WHITE_SHIELDED_KING : Private::BB_BLACK_SHIELDED_KING;
   if (bbKing & bbShieldedKing) {
     const subcoord_t kingY = SoFCore::coordY(kingPos);
 
