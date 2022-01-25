@@ -53,7 +53,7 @@ enum class PrefetchLocality : int { L0 = 0, L1 = 1, L2 = 2, L3 = 3 };
 template <PrefetchKind Kind = PrefetchKind::Read, PrefetchLocality Locality = PrefetchLocality::L3>
 void prefetch(const void *addr) {
 #ifdef _MSC_VER
-  _mm_prefetch(static_cast<char *>(addr), static_cast<int>(Locality));
+  _mm_prefetch(static_cast<const char *>(addr), static_cast<int>(Locality));
 #else
   __builtin_prefetch(addr, static_cast<int>(Kind), static_cast<int>(Locality));
 #endif
