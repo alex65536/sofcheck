@@ -101,7 +101,7 @@ public:
   Impl(Evaluator<S> &parent, const Board &b, Tag tag)
       : pawnCache_(*parent.pawnCache_), b_(b), tag_(std::move(tag)), stage_(calcStage(tag_)) {}
 
-  S evalForWhite() {
+  inline S evalForWhite() {
     auto result = mix(tag_.inner_);
     const auto pawnValue = pawnCache_.get(calcPawnHash(), [&]() { return evalPawns(); });
     result += pawnValue.score;
@@ -116,7 +116,7 @@ private:
 
   // Given a pair `pair` of midgame and endgame score, and current game stage `stage`, calculate
   // the real score
-  S mix(const Pair &pair) const {
+  inline S mix(const Pair &pair) const {
     const coef_t stage = stage_;
     return static_cast<S>((pair.first() * stage + pair.second() * (COEF_UNIT - stage)) >>
                           COEF_UNIT_SHIFT);
@@ -125,24 +125,24 @@ private:
   // Helper function to add `weight * coef` to `result`. This function is mostly needed to silence
   // MSVC warnings about narrowing type conversions
   template <typename W>
-  static void addWithCoef(S &result, const W &weight, const coef_t coef) {
+  inline static void addWithCoef(S &result, const W &weight, const coef_t coef) {
     result += static_cast<S>(weight * coef);
   }
 
   // Calculates hash which is used as a key in pawn hash table
-  Private::hash_t calcPawnHash() const {
+  inline Private::hash_t calcPawnHash() const {
     return SoFUtil::hash16(b_.bbPieces[makeCell(Color::White, Piece::Pawn)],
                            b_.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
   }
 
   // Calculates the game stage (as a value in range from `0` to `COEF_UNIT`) from tag
-  static coef_t calcStage(const Tag &tag) {
+  inline static coef_t calcStage(const Tag &tag) {
     const auto rawStage = static_cast<coef_t>(
         ((tag.stage_ << COEF_UNIT_SHIFT) + (Private::STAGE_TOTAL >> 1)) / Private::STAGE_TOTAL);
     return std::min<coef_t>(rawStage, COEF_UNIT);
   }
 
-  Private::PawnCacheValue<S> evalPawns() const {
+  inline Private::PawnCacheValue<S> evalPawns() const {
     const bitboard_t bbWhitePawns = b_.bbPieces[makeCell(Color::White, Piece::Pawn)];
     const bitboard_t bbBlackPawns = b_.bbPieces[makeCell(Color::Black, Piece::Pawn)];
     const bitboard_t bbAllPawns = bbWhitePawns | bbBlackPawns;
@@ -222,7 +222,7 @@ private:
   }
 
   template <Color C>
-  S evalKingSafety() const {
+  inline S evalKingSafety() const {
     S result{};
 
     const bitboard_t bbKing = b_.bbPieces[makeCell(C, Piece::King)];
@@ -285,7 +285,7 @@ private:
   }
 
   template <Color C>
-  S evalMaterial() const {
+  inline S evalMaterial() const {
     S result{};
 
     // Bishop pair
@@ -297,7 +297,7 @@ private:
   }
 
   template <Color C>
-  S evalOpenLines(const Private::PawnCacheValue<S> &pawnValue) const {
+  inline S evalOpenLines(const Private::PawnCacheValue<S> &pawnValue) const {
     S result{};
 
     // Open and semi-open columns
