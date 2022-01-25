@@ -43,11 +43,6 @@ using SoFCore::MoveKind;
 using SoFCore::Piece;
 using SoFCore::subcoord_t;
 
-inline static Private::hash_t pawnHash(const Board &b) {
-  return SoFUtil::hash16(b.bbPieces[makeCell(Color::White, Piece::Pawn)],
-                         b.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
-}
-
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
   using Weights = Private::Weights<S>;
@@ -99,15 +94,222 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
 }
 
 template <typename S>
-S Evaluator<S>::mix(const Pair &pair, const coef_t stage) {
-  return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >> COEF_UNIT_SHIFT);
-}
+class Evaluator<S>::Impl {
+public:
+  using Tag = Evaluator<S>::Tag;
 
-template <typename S>
-template <typename W>
-void Evaluator<S>::addWithCoef(S &result, const W &weight, coef_t coef) {
-  result += static_cast<S>(weight * coef);
-}
+  Impl(Evaluator<S> &parent, const Board &b, Tag tag)
+      : pawnCache_(*parent.pawnCache_), b_(b), tag_(std::move(tag)), stage_(calculateStage(tag_)) {}
+
+  S evalForWhite() {
+    auto result = mix(tag_.inner_);
+    const auto pawnValue = pawnCache_.get(pawnHash(b_), [&]() { return evalPawns(); });
+    result += pawnValue.score;
+    result += evalByColor<Color::White>(pawnValue);
+    result -= evalByColor<Color::Black>(pawnValue);
+    return result;
+  }
+
+private:
+  using Weights = Private::Weights<S>;
+
+  // Given a pair `pair` of midgame and endgame score, and current game stage `stage`, calculate
+  // the real score
+  S mix(const Pair &pair) const {
+    const coef_t stage = stage_;
+    return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >>
+                          COEF_UNIT_SHIFT);
+  }
+
+  // Helper function to add `weight * coef` to `result`. This function is mostly needed to silence
+  // MSVC warnings about narrowing type conversions
+  template <typename W>
+  static void addWithCoef(S &result, const W &weight, const coef_t coef) {
+    result += static_cast<S>(weight * coef);
+  }
+
+  // Calculates hash which is used as a key in pawn hash table
+  static Private::hash_t pawnHash(const Board &b) {
+    return SoFUtil::hash16(b.bbPieces[makeCell(Color::White, Piece::Pawn)],
+                           b.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
+  }
+
+  static coef_t calculateStage(const Tag &tag) {
+    const auto rawStage = static_cast<coef_t>(
+        ((tag.stage_ << COEF_UNIT_SHIFT) + (Private::STAGE_TOTAL >> 1)) / Private::STAGE_TOTAL);
+    return std::min<coef_t>(rawStage, 256);
+  }
+
+  Private::PawnCacheValue<S> evalPawns() const {
+    const bitboard_t bbWhitePawns = b_.bbPieces[makeCell(Color::White, Piece::Pawn)];
+    const bitboard_t bbBlackPawns = b_.bbPieces[makeCell(Color::Black, Piece::Pawn)];
+    const bitboard_t bbAllPawns = bbWhitePawns | bbBlackPawns;
+    const bitboard_t bbWhiteAttacks = SoFCore::advancePawnLeft(Color::White, bbWhitePawns) |
+                                      SoFCore::advancePawnRight(Color::White, bbWhitePawns);
+    const bitboard_t bbBlackAttacks = SoFCore::advancePawnLeft(Color::Black, bbBlackPawns) |
+                                      SoFCore::advancePawnRight(Color::Black, bbBlackPawns);
+
+    const auto doEvalPawns = [&](const Color c) {
+      S result{};
+
+      const bitboard_t bbPawns = (c == Color::White) ? bbWhitePawns : bbBlackPawns;
+      const bitboard_t bbEnemyPawns = (c == Color::White) ? bbBlackPawns : bbWhitePawns;
+      const bitboard_t bbAttacks = (c == Color::White) ? bbWhiteAttacks : bbBlackAttacks;
+      const bitboard_t bbEnemyAttacks = (c == Color::White) ? bbBlackAttacks : bbWhiteAttacks;
+
+      coef_t isolatedPawns = 0;
+      coef_t doublePawns = 0;
+      coef_t passedPawns = 0;
+      coef_t openPawns = 0;
+      coef_t candidatePawns = 0;
+
+      const auto *bbOpenPawns =
+          (c == Color::White) ? Private::BB_OPEN_PAWN_WHITE : Private::BB_OPEN_PAWN_BLACK;
+      const auto *bbPassedPawns =
+          (c == Color::White) ? Private::BB_PASSED_PAWN_WHITE : Private::BB_PASSED_PAWN_BLACK;
+      const auto *attackFrontspans = (c == Color::White) ? Private::BB_ATTACK_FRONTSPANS_WHITE
+                                                         : Private::BB_ATTACK_FRONTSPANS_BLACK;
+
+      bitboard_t bbIterPawns = bbPawns;
+      bitboard_t bbAttackFrontspans = 0;
+      while (bbIterPawns) {
+        const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbIterPawns));
+        if (!(bbPawns & Private::BB_ISOLATED_PAWN[src])) {
+          ++isolatedPawns;
+        }
+        if (bbPawns & Private::BB_DOUBLE_PAWN[src]) {
+          ++doublePawns;
+        }
+        if (!(bbAllPawns & bbOpenPawns[src])) {
+          ++openPawns;
+          if (!(bbEnemyPawns & bbPassedPawns[src])) {
+            ++passedPawns;
+          } else if (!(bbEnemyAttacks & ~bbAttacks & bbOpenPawns[src])) {
+            ++candidatePawns;
+          }
+        }
+        bbAttackFrontspans |= attackFrontspans[src];
+      }
+      openPawns -= candidatePawns;
+      openPawns -= passedPawns;
+
+      const auto protectedPawns = static_cast<coef_t>(SoFUtil::popcount(bbPawns & bbAttacks));
+      const auto backwardPawns = static_cast<coef_t>(SoFUtil::popcount(
+          SoFCore::advancePawnForward(c, bbPawns) & bbEnemyAttacks & ~bbAttackFrontspans));
+
+      addWithCoef(result, Weights::PAWN_ISOLATED, isolatedPawns);
+      addWithCoef(result, Weights::PAWN_DOUBLE, doublePawns);
+      addWithCoef(result, Weights::PAWN_PASSED, passedPawns);
+      addWithCoef(result, Weights::PAWN_OPEN, openPawns);
+      addWithCoef(result, Weights::PAWN_CANDIDATE, candidatePawns);
+      addWithCoef(result, Weights::PAWN_PROTECTED, protectedPawns);
+      addWithCoef(result, Weights::PAWN_BACKWARD, backwardPawns);
+
+      return result;
+    };
+
+    S score = doEvalPawns(Color::White) - doEvalPawns(Color::Black);
+    const uint8_t bbWhiteCols = SoFUtil::byteGather(bbWhitePawns);
+    const uint8_t bbBlackCols = SoFUtil::byteGather(bbBlackPawns);
+    const uint8_t bbOpenCols = ~bbWhiteCols & ~bbBlackCols;
+    const uint8_t bbWhiteOnlyCols = bbWhiteCols & ~bbBlackCols;
+    const uint8_t bbBlackOnlyCols = ~bbWhiteCols & bbBlackCols;
+
+    return Private::PawnCacheValue<S>::from(bbOpenCols, bbWhiteOnlyCols, bbBlackOnlyCols,
+                                            std::move(score));
+  }
+
+  template <Color C>
+  S evalByColor(const Private::PawnCacheValue<S> &pawnValue) const {
+    // Calculate pairs of bishops
+    S result{};
+    if (SoFUtil::popcount(b_.bbPieces[makeCell(C, Piece::Bishop)]) >= 2) {
+      result += Weights::TWO_BISHOPS;
+    }
+
+    const bitboard_t bbPawns = b_.bbPieces[makeCell(C, Piece::Pawn)];
+    const bitboard_t bbEnemyPawns = b_.bbPieces[makeCell(invert(C), Piece::Pawn)];
+    const bitboard_t bbKing = b_.bbPieces[makeCell(C, Piece::King)];
+    const bitboard_t bbEnemyKing = b_.bbPieces[makeCell(invert(C), Piece::King)];
+    const auto kingPos = static_cast<coord_t>(SoFUtil::getLowest(bbKing));
+    const auto enemyKingPos = static_cast<coord_t>(SoFUtil::getLowest(bbEnemyKing));
+
+    // Calculate pieces near to the opponent's king
+    const auto generateNearPieces = [&](const Piece piece, const auto &weight) {
+      const bitboard_t bb = b_.bbPieces[makeCell(C, piece)];
+
+      const auto countAtDistance = [&](const size_t dist) {
+        return static_cast<coef_t>(
+            SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][enemyKingPos] & bb));
+      };
+
+      const coef_t nearCount = Private::KING_ZONE_COST1 * countAtDistance(1) +
+                               Private::KING_ZONE_COST2 * countAtDistance(2) +
+                               Private::KING_ZONE_COST3 * countAtDistance(3);
+
+      addWithCoef(result, weight, nearCount);
+    };
+
+    generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);
+    generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
+
+    // Calculate king pawn shield and pawn storm
+    constexpr bitboard_t bbShieldedKing =
+        (C == Color::White) ? Private::BB_WHITE_SHIELDED_KING : Private::BB_BLACK_SHIELDED_KING;
+    if (bbKing & bbShieldedKing) {
+      const subcoord_t kingY = SoFCore::coordY(kingPos);
+
+      const coord_t shift1 = (C == Color::White) ? (kingY + 47) : (kingY + 7);
+      const coord_t shift2 = (C == Color::White) ? (kingY + 39) : (kingY + 15);
+      const coord_t shift3 = (C == Color::White) ? (kingY + 31) : (kingY + 23);
+
+      constexpr bitboard_t row1 = SoFCore::BB_ROW[(C == Color::White) ? 6 : 1];
+      constexpr bitboard_t row2 = SoFCore::BB_ROW[(C == Color::White) ? 5 : 2];
+      constexpr bitboard_t row3 = SoFCore::BB_ROW[(C == Color::White) ? 4 : 3];
+
+      const bitboard_t shieldMask1 = ((bbPawns & row1) >> shift1) & 7U;
+      const bitboard_t shieldMask2 = ((bbPawns & row2) >> shift2) & 7U;
+
+      const bitboard_t stormMask2 = ((bbEnemyPawns & row2) >> shift2) & 7U;
+      const bitboard_t stormMask3 = ((bbEnemyPawns & row3) >> shift3) & 7U;
+
+      const bool inverted = kingY > 4;
+      const auto shieldWeights =
+          inverted ? Weights::KING_PAWN_SHIELD_INV : Weights::KING_PAWN_SHIELD;
+      const auto stormWeights = inverted ? Weights::KING_PAWN_STORM_INV : Weights::KING_PAWN_STORM;
+      const Pair kingPawnResult =
+          shieldWeights[shieldMask1][shieldMask2] + stormWeights[stormMask2][stormMask3];
+
+      result += mix(kingPawnResult);
+    }
+
+    // Calculate open and semi-open columns
+    const bitboard_t bbOpenCols = SoFUtil::byteScatter(pawnValue.bbOpenCols);
+    const bitboard_t bbSemiOpenCols = SoFUtil::byteScatter(
+        (C == Color::White) ? pawnValue.bbBlackOnlyCols : pawnValue.bbWhiteOnlyCols);
+    const bitboard_t bbRook = b_.bbPieces[makeCell(C, Piece::Rook)];
+    const bitboard_t bbQueen = b_.bbPieces[makeCell(C, Piece::Queen)];
+
+    addWithCoef(result, Weights::ROOK_OPEN_COL,
+                static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbRook)));
+    addWithCoef(result, Weights::ROOK_SEMI_OPEN_COL,
+                static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbRook)));
+    addWithCoef(result, Weights::QUEEN_OPEN_COL,
+                static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbQueen)));
+    addWithCoef(result, Weights::QUEEN_SEMI_OPEN_COL,
+                static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbQueen)));
+
+    return result;
+  }
+
+private:
+  Private::PawnCache<S> &pawnCache_;
+  const Board &b_;
+  const Tag tag_;
+
+  // Precalculated values
+  const coef_t stage_;
+};
 
 template <typename S>
 Evaluator<S>::Evaluator() : pawnCache_(std::make_unique<Private::PawnCache<S>>()) {}
@@ -117,184 +319,7 @@ Evaluator<S>::~Evaluator() = default;
 
 template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
-  const auto rawStage = static_cast<coef_t>(
-      ((tag.stage_ << COEF_UNIT_SHIFT) + (Private::STAGE_TOTAL >> 1)) / Private::STAGE_TOTAL);
-  const auto stage = std::min<coef_t>(rawStage, 256);
-
-  auto result = mix(tag.inner_, stage);
-
-  const auto pawnValue = pawnCache_->get(pawnHash(b), [&]() { return evalPawns(b); });
-
-  result += pawnValue.score;
-  result += evalByColor<Color::White>(b, stage, pawnValue);
-  result -= evalByColor<Color::Black>(b, stage, pawnValue);
-
-  return result;
-}
-
-template <typename S>
-Private::PawnCacheValue<S> Evaluator<S>::evalPawns(const SoFCore::Board &b) {
-  using Weights = Private::Weights<S>;
-
-  const bitboard_t bbWhitePawns = b.bbPieces[makeCell(Color::White, Piece::Pawn)];
-  const bitboard_t bbBlackPawns = b.bbPieces[makeCell(Color::Black, Piece::Pawn)];
-  const bitboard_t bbAllPawns = bbWhitePawns | bbBlackPawns;
-  const bitboard_t bbWhiteAttacks = SoFCore::advancePawnLeft(Color::White, bbWhitePawns) |
-                                    SoFCore::advancePawnRight(Color::White, bbWhitePawns);
-  const bitboard_t bbBlackAttacks = SoFCore::advancePawnLeft(Color::Black, bbBlackPawns) |
-                                    SoFCore::advancePawnRight(Color::Black, bbBlackPawns);
-
-  const auto doEvalPawns = [&](const Color c) {
-    S result{};
-
-    const bitboard_t bbPawns = (c == Color::White) ? bbWhitePawns : bbBlackPawns;
-    const bitboard_t bbEnemyPawns = (c == Color::White) ? bbBlackPawns : bbWhitePawns;
-    const bitboard_t bbAttacks = (c == Color::White) ? bbWhiteAttacks : bbBlackAttacks;
-    const bitboard_t bbEnemyAttacks = (c == Color::White) ? bbBlackAttacks : bbWhiteAttacks;
-
-    coef_t isolatedPawns = 0;
-    coef_t doublePawns = 0;
-    coef_t passedPawns = 0;
-    coef_t openPawns = 0;
-    coef_t candidatePawns = 0;
-
-    const auto *bbOpenPawns =
-        (c == Color::White) ? Private::BB_OPEN_PAWN_WHITE : Private::BB_OPEN_PAWN_BLACK;
-    const auto *bbPassedPawns =
-        (c == Color::White) ? Private::BB_PASSED_PAWN_WHITE : Private::BB_PASSED_PAWN_BLACK;
-    const auto *attackFrontspans = (c == Color::White) ? Private::BB_ATTACK_FRONTSPANS_WHITE
-                                                       : Private::BB_ATTACK_FRONTSPANS_BLACK;
-
-    bitboard_t bbIterPawns = bbPawns;
-    bitboard_t bbAttackFrontspans = 0;
-    while (bbIterPawns) {
-      const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbIterPawns));
-      if (!(bbPawns & Private::BB_ISOLATED_PAWN[src])) {
-        ++isolatedPawns;
-      }
-      if (bbPawns & Private::BB_DOUBLE_PAWN[src]) {
-        ++doublePawns;
-      }
-      if (!(bbAllPawns & bbOpenPawns[src])) {
-        ++openPawns;
-        if (!(bbEnemyPawns & bbPassedPawns[src])) {
-          ++passedPawns;
-        } else if (!(bbEnemyAttacks & ~bbAttacks & bbOpenPawns[src])) {
-          ++candidatePawns;
-        }
-      }
-      bbAttackFrontspans |= attackFrontspans[src];
-    }
-    openPawns -= candidatePawns;
-    openPawns -= passedPawns;
-
-    const auto protectedPawns = static_cast<coef_t>(SoFUtil::popcount(bbPawns & bbAttacks));
-    const auto backwardPawns = static_cast<coef_t>(SoFUtil::popcount(
-        SoFCore::advancePawnForward(c, bbPawns) & bbEnemyAttacks & ~bbAttackFrontspans));
-
-    addWithCoef(result, Weights::PAWN_ISOLATED, isolatedPawns);
-    addWithCoef(result, Weights::PAWN_DOUBLE, doublePawns);
-    addWithCoef(result, Weights::PAWN_PASSED, passedPawns);
-    addWithCoef(result, Weights::PAWN_OPEN, openPawns);
-    addWithCoef(result, Weights::PAWN_CANDIDATE, candidatePawns);
-    addWithCoef(result, Weights::PAWN_PROTECTED, protectedPawns);
-    addWithCoef(result, Weights::PAWN_BACKWARD, backwardPawns);
-
-    return result;
-  };
-
-  S score = doEvalPawns(Color::White) - doEvalPawns(Color::Black);
-  const uint8_t bbWhiteCols = SoFUtil::byteGather(bbWhitePawns);
-  const uint8_t bbBlackCols = SoFUtil::byteGather(bbBlackPawns);
-
-  return Private::PawnCacheValue<S>::from(~bbWhiteCols & ~bbBlackCols, bbWhiteCols & ~bbBlackCols,
-                                          ~bbWhiteCols & bbBlackCols, std::move(score));
-}
-
-template <typename S>
-template <Color C>
-S Evaluator<S>::evalByColor(const Board &b, const coef_t stage,
-                            const Private::PawnCacheValue<S> &pawnValue) {
-  using Weights = Private::Weights<S>;
-
-  // Calculate pairs of bishops
-  S result{};
-  if (SoFUtil::popcount(b.bbPieces[makeCell(C, Piece::Bishop)]) >= 2) {
-    result += Weights::TWO_BISHOPS;
-  }
-
-  const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
-  const bitboard_t bbEnemyPawns = b.bbPieces[makeCell(invert(C), Piece::Pawn)];
-  const bitboard_t bbKing = b.bbPieces[makeCell(C, Piece::King)];
-  const bitboard_t bbEnemyKing = b.bbPieces[makeCell(invert(C), Piece::King)];
-  const auto kingPos = static_cast<coord_t>(SoFUtil::getLowest(bbKing));
-  const auto enemyKingPos = static_cast<coord_t>(SoFUtil::getLowest(bbEnemyKing));
-
-  // Calculate pieces near to the opponent's king
-  const auto generateNearPieces = [&](const Piece piece, const auto &weight) {
-    const bitboard_t bb = b.bbPieces[makeCell(C, piece)];
-
-    const auto countAtDistance = [&](const size_t dist) {
-      return static_cast<coef_t>(
-          SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][enemyKingPos] & bb));
-    };
-
-    const coef_t nearCount = Private::KING_ZONE_COST1 * countAtDistance(1) +
-                             Private::KING_ZONE_COST2 * countAtDistance(2) +
-                             Private::KING_ZONE_COST3 * countAtDistance(3);
-
-    addWithCoef(result, weight, nearCount);
-  };
-
-  generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);
-  generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
-
-  // Calculate king pawn shield and pawn storm
-  constexpr bitboard_t bbShieldedKing =
-      (C == Color::White) ? Private::BB_WHITE_SHIELDED_KING : Private::BB_BLACK_SHIELDED_KING;
-  if (bbKing & bbShieldedKing) {
-    const subcoord_t kingY = SoFCore::coordY(kingPos);
-
-    const coord_t shift1 = (C == Color::White) ? (kingY + 47) : (kingY + 7);
-    const coord_t shift2 = (C == Color::White) ? (kingY + 39) : (kingY + 15);
-    const coord_t shift3 = (C == Color::White) ? (kingY + 31) : (kingY + 23);
-
-    constexpr bitboard_t row1 = SoFCore::BB_ROW[(C == Color::White) ? 6 : 1];
-    constexpr bitboard_t row2 = SoFCore::BB_ROW[(C == Color::White) ? 5 : 2];
-    constexpr bitboard_t row3 = SoFCore::BB_ROW[(C == Color::White) ? 4 : 3];
-
-    const bitboard_t shieldMask1 = ((bbPawns & row1) >> shift1) & 7U;
-    const bitboard_t shieldMask2 = ((bbPawns & row2) >> shift2) & 7U;
-
-    const bitboard_t stormMask2 = ((bbEnemyPawns & row2) >> shift2) & 7U;
-    const bitboard_t stormMask3 = ((bbEnemyPawns & row3) >> shift3) & 7U;
-
-    const bool inverted = kingY > 4;
-    const auto shieldWeights = inverted ? Weights::KING_PAWN_SHIELD_INV : Weights::KING_PAWN_SHIELD;
-    const auto stormWeights = inverted ? Weights::KING_PAWN_STORM_INV : Weights::KING_PAWN_STORM;
-    const Pair kingPawnResult =
-        shieldWeights[shieldMask1][shieldMask2] + stormWeights[stormMask2][stormMask3];
-
-    result += mix(kingPawnResult, stage);
-  }
-
-  // Calculate open and semi-open columns
-  const bitboard_t bbOpenCols = SoFUtil::byteScatter(pawnValue.bbOpenCols);
-  const bitboard_t bbSemiOpenCols = SoFUtil::byteScatter(
-      (C == Color::White) ? pawnValue.bbBlackOnlyCols : pawnValue.bbWhiteOnlyCols);
-  const bitboard_t bbRook = b.bbPieces[makeCell(C, Piece::Rook)];
-  const bitboard_t bbQueen = b.bbPieces[makeCell(C, Piece::Queen)];
-
-  addWithCoef(result, Weights::ROOK_OPEN_COL,
-              static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbRook)));
-  addWithCoef(result, Weights::ROOK_SEMI_OPEN_COL,
-              static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbRook)));
-  addWithCoef(result, Weights::QUEEN_OPEN_COL,
-              static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbQueen)));
-  addWithCoef(result, Weights::QUEEN_SEMI_OPEN_COL,
-              static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbQueen)));
-
-  return result;
+  return Impl(*this, b, tag).evalForWhite();
 }
 
 // Template instantiations for all score types

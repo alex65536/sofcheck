@@ -98,9 +98,9 @@ struct PawnCacheValue {
   static constexpr PawnCacheValue invalid() { return {0, 0, 0, 0, 0, S{}}; }
 
   // Creates a `PawnCacheValue` that correspond to a valid cache entry
-  static constexpr PawnCacheValue from(const uint8_t bbOpenLine, const uint8_t bbWhiteOnlyLine,
-                                       const uint8_t bbBlackOnlyLine, S score) {
-    return {bbOpenLine, bbWhiteOnlyLine, bbBlackOnlyLine, FLAG_IS_VALID, 0, std::move(score)};
+  static constexpr PawnCacheValue from(const uint8_t bbOpenCols, const uint8_t bbWhiteOnlyCols,
+                                       const uint8_t bbBlackOnlyCols, S score) {
+    return {bbOpenCols, bbWhiteOnlyCols, bbBlackOnlyCols, FLAG_IS_VALID, 0, std::move(score)};
   }
 
   uint8_t bbOpenCols;

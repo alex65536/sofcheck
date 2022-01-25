@@ -32,9 +32,6 @@ namespace SoFEval {
 namespace Private {
 template <typename S>
 class PawnCache;
-
-template <typename S>
-struct PawnCacheValue;
 }  // namespace Private
 
 // Base class to perform position cost evaluation
@@ -101,21 +98,7 @@ private:
     return (c == SoFCore::Color::White) ? result : -result;
   }
 
-  // Helper function, evaluates only the features for pieces belonging to the color `C`
-  template <SoFCore::Color C>
-  S evalByColor(const SoFCore::Board &b, coef_t stage, const Private::PawnCacheValue<S> &pawnValue);
-
-  // Helper function, evaluates only the features for pawns
-  Private::PawnCacheValue<S> evalPawns(const SoFCore::Board &b);
-
-  // Given a pair `pair` of midgame and endgame score, and current game stage `stage`, calculate the
-  // real score
-  static S mix(const Pair &pair, coef_t stage);
-
-  // Helper function to add `weight * coef` to `result`. This function is mostly needed to silence
-  // MSVC warnings about narrowing type conversions
-  template <typename W>
-  static void addWithCoef(S &result, const W &weight, coef_t coef);
+  class Impl;
 
   std::unique_ptr<Private::PawnCache<S>> pawnCache_;
 };
