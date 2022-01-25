@@ -29,6 +29,7 @@
 #include "eval/private/weights.h"
 #include "eval/score.h"
 #include "util/bit.h"
+#include "util/hash.h"
 
 namespace SoFEval {
 
@@ -58,6 +59,11 @@ constexpr coef_t KING_ZONE_COSTS[8] = {0, 5, 4, 1, 0, 0, 0, 0};
 constexpr bitboard_t BB_WHITE_SHIELDED_KING = 0xc300000000000000;
 constexpr bitboard_t BB_BLACK_SHIELDED_KING = 0x00000000000000c3;
 
+inline static Private::hash_t pawnHash(const Board &b) {
+  return SoFUtil::hash16(b.bbPieces[makeCell(Color::White, Piece::Pawn)],
+                         b.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
+}
+
 template <typename S>
 typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
   using Weights = Private::Weights<S>;
@@ -68,15 +74,7 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::from(const Board &b) {
     psq += Weights::PSQ[b.cells[i]][i];
     stage += STAGES[b.cells[i]];
   }
-  SoFCore::board_hash_t pawnHash = 0;
-  for (coord_t i = 0; i < 64; ++i) {
-    const cell_t cell = b.cells[i];
-    if (cell == SoFCore::EMPTY_CELL || SoFCore::cellPiece(cell) != Piece::Pawn) {
-      continue;
-    }
-    pawnHash ^= SoFCore::Private::g_zobristPieces[cell][i];
-  }
-  return Tag(std::move(psq), stage, pawnHash);
+  return Tag(std::move(psq), stage);
 }
 
 template <typename S>
@@ -104,22 +102,13 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
     const cell_t promoteCell = makeCell(color, moveKindPromotePiece(move.kind));
     result.inner_ += Weights::PSQ[promoteCell][move.dst];
     result.stage_ += STAGES[promoteCell] - PAWN_STAGE;
-    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[srcCell][move.src];
     return result;
-  }
-  if (srcCell == makeCell(color, Piece::Pawn)) {
-    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[srcCell][move.src];
-    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[srcCell][move.dst];
-  }
-  if (dstCell == makeCell(invert(color), Piece::Pawn)) {
-    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[dstCell][move.dst];
   }
   result.inner_ += Weights::PSQ[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {
     const coord_t pawnPos = enpassantPawnPos(color, move.dst);
     const cell_t enemyPawn = makeCell(invert(color), Piece::Pawn);
     result.inner_ -= Weights::PSQ[enemyPawn][pawnPos];
-    result.pawnHash_ ^= SoFCore::Private::g_zobristPieces[enemyPawn][pawnPos];
     result.stage_ -= PAWN_STAGE;
   }
   return result;
@@ -149,7 +138,7 @@ S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
 
   auto result = mix(tag.inner_, stage);
 
-  const auto pawnValue = pawnCache_->get(tag.pawnHash_, [&]() { return evalPawns(b); });
+  const auto pawnValue = pawnCache_->get(pawnHash(b), [&]() { return evalPawns(b); });
 
   result += pawnValue.score;
   result += evalByColor<Color::White>(b, stage, pawnValue);

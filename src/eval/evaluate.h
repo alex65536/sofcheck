@@ -58,16 +58,14 @@ public:
     // Returns `true` if the tag is strictly equal to `Tag::from(b)`
     bool isValid(const SoFCore::Board &b) const {
       const Tag other = Tag::from(b);
-      return inner_ == other.inner_ && stage_ == other.stage_ && pawnHash_ == other.pawnHash_;
+      return inner_ == other.inner_ && stage_ == other.stage_;
     }
 
   private:
-    explicit Tag(Pair inner, const uint32_t stage, const SoFCore::board_hash_t pawnHash)
-        : inner_(std::move(inner)), stage_(stage), pawnHash_(pawnHash) {}
+    explicit Tag(Pair inner, const uint32_t stage) : inner_(std::move(inner)), stage_(stage) {}
 
     Pair inner_;
     uint32_t stage_;
-    SoFCore::board_hash_t pawnHash_;
 
     template <typename>
     friend class Evaluator;

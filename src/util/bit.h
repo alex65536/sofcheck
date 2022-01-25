@@ -132,6 +132,16 @@ inline constexpr uint64_t byteScatter(uint8_t x) {
   return r;
 }
 
+// Performs a left rotation of `x` by `shift`. If `shift >= 64`, the behavior is undefined
+inline constexpr uint64_t rotateLeft(const uint64_t x, const size_t shift) {
+  return (shift == 0) ? x : ((x << shift) | (x >> (64 - shift)));
+}
+
+// Performs a right rotation of `x` by `shift`. If `shift >= 64`, the behavior is undefined
+inline constexpr uint64_t rotateRight(const uint64_t x, const size_t shift) {
+  return (shift == 0) ? x : ((x >> shift) | (x << (64 - shift)));
+}
+
 #ifdef USE_BMI2
 
 // The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)
