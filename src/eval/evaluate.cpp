@@ -99,14 +99,15 @@ public:
   using Tag = Evaluator<S>::Tag;
 
   Impl(Evaluator<S> &parent, const Board &b, Tag tag)
-      : pawnCache_(*parent.pawnCache_), b_(b), tag_(std::move(tag)), stage_(calculateStage(tag_)) {}
+      : pawnCache_(*parent.pawnCache_), b_(b), tag_(std::move(tag)), stage_(calcStage(tag_)) {}
 
   S evalForWhite() {
     auto result = mix(tag_.inner_);
-    const auto pawnValue = pawnCache_.get(pawnHash(b_), [&]() { return evalPawns(); });
+    const auto pawnValue = pawnCache_.get(calcPawnHash(), [&]() { return evalPawns(); });
     result += pawnValue.score;
-    result += evalByColor<Color::White>(pawnValue);
-    result -= evalByColor<Color::Black>(pawnValue);
+    result += evalKingSafety<Color::White>() - evalKingSafety<Color::Black>();
+    result += evalMaterial<Color::White>() - evalMaterial<Color::Black>();
+    result += evalOpenLines<Color::White>(pawnValue) - evalOpenLines<Color::Black>(pawnValue);
     return result;
   }
 
@@ -117,7 +118,7 @@ private:
   // the real score
   S mix(const Pair &pair) const {
     const coef_t stage = stage_;
-    return static_cast<S>((pair.first() * stage + pair.second() * (256 - stage)) >>
+    return static_cast<S>((pair.first() * stage + pair.second() * (COEF_UNIT - stage)) >>
                           COEF_UNIT_SHIFT);
   }
 
@@ -129,15 +130,16 @@ private:
   }
 
   // Calculates hash which is used as a key in pawn hash table
-  static Private::hash_t pawnHash(const Board &b) {
-    return SoFUtil::hash16(b.bbPieces[makeCell(Color::White, Piece::Pawn)],
-                           b.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
+  Private::hash_t calcPawnHash() const {
+    return SoFUtil::hash16(b_.bbPieces[makeCell(Color::White, Piece::Pawn)],
+                           b_.bbPieces[makeCell(Color::Black, Piece::Pawn)]);
   }
 
-  static coef_t calculateStage(const Tag &tag) {
+  // Calculates the game stage (as a value in range from `0` to `COEF_UNIT`) from tag
+  static coef_t calcStage(const Tag &tag) {
     const auto rawStage = static_cast<coef_t>(
         ((tag.stage_ << COEF_UNIT_SHIFT) + (Private::STAGE_TOTAL >> 1)) / Private::STAGE_TOTAL);
-    return std::min<coef_t>(rawStage, 256);
+    return std::min<coef_t>(rawStage, COEF_UNIT);
   }
 
   Private::PawnCacheValue<S> evalPawns() const {
@@ -220,42 +222,38 @@ private:
   }
 
   template <Color C>
-  S evalByColor(const Private::PawnCacheValue<S> &pawnValue) const {
-    // Calculate pairs of bishops
+  S evalKingSafety() const {
     S result{};
-    if (SoFUtil::popcount(b_.bbPieces[makeCell(C, Piece::Bishop)]) >= 2) {
-      result += Weights::TWO_BISHOPS;
-    }
 
-    const bitboard_t bbPawns = b_.bbPieces[makeCell(C, Piece::Pawn)];
-    const bitboard_t bbEnemyPawns = b_.bbPieces[makeCell(invert(C), Piece::Pawn)];
     const bitboard_t bbKing = b_.bbPieces[makeCell(C, Piece::King)];
-    const bitboard_t bbEnemyKing = b_.bbPieces[makeCell(invert(C), Piece::King)];
     const auto kingPos = static_cast<coord_t>(SoFUtil::getLowest(bbKing));
-    const auto enemyKingPos = static_cast<coord_t>(SoFUtil::getLowest(bbEnemyKing));
 
-    // Calculate pieces near to the opponent's king
+    // Enemy pieces near king
     const auto generateNearPieces = [&](const Piece piece, const auto &weight) {
       const bitboard_t bb = b_.bbPieces[makeCell(C, piece)];
 
       const auto countAtDistance = [&](const size_t dist) {
         return static_cast<coef_t>(
-            SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][enemyKingPos] & bb));
+            SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][kingPos] & bb));
       };
 
       const coef_t nearCount = Private::KING_ZONE_COST1 * countAtDistance(1) +
                                Private::KING_ZONE_COST2 * countAtDistance(2) +
                                Private::KING_ZONE_COST3 * countAtDistance(3);
 
-      addWithCoef(result, weight, nearCount);
+      // FIXME : use `weight` instead of `-weight` here
+      addWithCoef(result, -weight, nearCount);
     };
 
     generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);
     generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
 
-    // Calculate king pawn shield and pawn storm
+    // Pawn shield and pawn storm
+    const bitboard_t bbPawns = b_.bbPieces[makeCell(C, Piece::Pawn)];
+    const bitboard_t bbEnemyPawns = b_.bbPieces[makeCell(invert(C), Piece::Pawn)];
     constexpr bitboard_t bbShieldedKing =
         (C == Color::White) ? Private::BB_WHITE_SHIELDED_KING : Private::BB_BLACK_SHIELDED_KING;
+
     if (bbKing & bbShieldedKing) {
       const subcoord_t kingY = SoFCore::coordY(kingPos);
 
@@ -283,21 +281,40 @@ private:
       result += mix(kingPawnResult);
     }
 
-    // Calculate open and semi-open columns
+    return result;
+  }
+
+  template <Color C>
+  S evalMaterial() const {
+    S result{};
+
+    // Bishop pair
+    if (SoFUtil::popcount(b_.bbPieces[makeCell(C, Piece::Bishop)]) >= 2) {
+      result += Weights::TWO_BISHOPS;
+    }
+
+    return result;
+  }
+
+  template <Color C>
+  S evalOpenLines(const Private::PawnCacheValue<S> &pawnValue) const {
+    S result{};
+
+    // Open and semi-open columns
     const bitboard_t bbOpenCols = SoFUtil::byteScatter(pawnValue.bbOpenCols);
     const bitboard_t bbSemiOpenCols = SoFUtil::byteScatter(
         (C == Color::White) ? pawnValue.bbBlackOnlyCols : pawnValue.bbWhiteOnlyCols);
-    const bitboard_t bbRook = b_.bbPieces[makeCell(C, Piece::Rook)];
-    const bitboard_t bbQueen = b_.bbPieces[makeCell(C, Piece::Queen)];
+    const bitboard_t bbRooks = b_.bbPieces[makeCell(C, Piece::Rook)];
+    const bitboard_t bbQueens = b_.bbPieces[makeCell(C, Piece::Queen)];
 
     addWithCoef(result, Weights::ROOK_OPEN_COL,
-                static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbRook)));
+                static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbRooks)));
     addWithCoef(result, Weights::ROOK_SEMI_OPEN_COL,
-                static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbRook)));
+                static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbRooks)));
     addWithCoef(result, Weights::QUEEN_OPEN_COL,
-                static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbQueen)));
+                static_cast<coef_t>(SoFUtil::popcount(bbOpenCols & bbQueens)));
     addWithCoef(result, Weights::QUEEN_SEMI_OPEN_COL,
-                static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbQueen)));
+                static_cast<coef_t>(SoFUtil::popcount(bbSemiOpenCols & bbQueens)));
 
     return result;
   }
