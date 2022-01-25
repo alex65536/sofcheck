@@ -21,11 +21,8 @@
 #include <limits>
 #include <utility>
 
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
-
 #include "util/parallel.h"
+#include "util/prefetch.h"
 
 namespace SoFSearch::Private {
 
@@ -71,13 +68,11 @@ TranspositionTable::Data TranspositionTable::load(const board_hash_t key) const 
 }
 
 void TranspositionTable::prefetch(const board_hash_t key) {
+  using SoFUtil::PrefetchKind;
+  using SoFUtil::PrefetchLocality;
+
   const size_t idx = key & (size_ - 1);
-#ifdef _MSC_VER
-  _mm_prefetch(reinterpret_cast<char *>(&table_[idx]), 0);
-#else
-  // NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-vararg)
-  __builtin_prefetch(&table_[idx], 0, 1);
-#endif
+  SoFUtil::prefetch<PrefetchKind::Read, PrefetchLocality::L1>(&table_[idx]);
 }
 
 void TranspositionTable::resize(size_t maxSize, const bool clearTable, const size_t jobs) {
