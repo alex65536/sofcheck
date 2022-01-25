@@ -55,13 +55,13 @@ public:
     // Returns `true` if the tag is strictly equal to `Tag::from(b)`
     bool isValid(const SoFCore::Board &b) const {
       const Tag other = Tag::from(b);
-      return inner_ == other.inner_ && stage_ == other.stage_;
+      return psqCost_ == other.psqCost_ && stage_ == other.stage_;
     }
 
   private:
-    explicit Tag(Pair inner, const uint32_t stage) : inner_(std::move(inner)), stage_(stage) {}
+    explicit Tag(Pair psqCost, const uint32_t stage) : psqCost_(std::move(psqCost)), stage_(stage) {}
 
-    Pair inner_;
+    Pair psqCost_;
     uint32_t stage_;
 
     template <typename>
@@ -86,7 +86,7 @@ public:
   // difference between `evalMaterialForWhite()` and `evalMaterialForCur()`, see the `evalFor...()`
   // description
   inline S evalMaterialForWhite(const SoFCore::Board &, const Tag &tag) {
-    return tag.inner_.first();
+    return tag.psqCost_.first();
   }
 
   inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) {

@@ -66,28 +66,28 @@ typename Evaluator<S>::Tag Evaluator<S>::Tag::updated(const Board &b, const Move
   }
   const Color color = b.side;
   if (move.kind == MoveKind::CastlingKingside) {
-    result.inner_ += Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)];
+    result.psqCost_ += Weights::PSQ_KINGSIDE_UPD[static_cast<size_t>(color)];
     return result;
   }
   if (move.kind == MoveKind::CastlingQueenside) {
-    result.inner_ += Weights::PSQ_QUEENSIDE_UPD[static_cast<size_t>(color)];
+    result.psqCost_ += Weights::PSQ_QUEENSIDE_UPD[static_cast<size_t>(color)];
     return result;
   }
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
-  result.inner_ -= Weights::PSQ[srcCell][move.src] + Weights::PSQ[dstCell][move.dst];
+  result.psqCost_ -= Weights::PSQ[srcCell][move.src] + Weights::PSQ[dstCell][move.dst];
   result.stage_ -= Private::STAGES[dstCell];
   if (isMoveKindPromote(move.kind)) {
     const cell_t promoteCell = makeCell(color, moveKindPromotePiece(move.kind));
-    result.inner_ += Weights::PSQ[promoteCell][move.dst];
+    result.psqCost_ += Weights::PSQ[promoteCell][move.dst];
     result.stage_ += Private::STAGES[promoteCell] - Private::STAGE_PAWN;
     return result;
   }
-  result.inner_ += Weights::PSQ[srcCell][move.dst];
+  result.psqCost_ += Weights::PSQ[srcCell][move.dst];
   if (move.kind == MoveKind::Enpassant) {
     const coord_t pawnPos = enpassantPawnPos(color, move.dst);
     const cell_t enemyPawn = makeCell(invert(color), Piece::Pawn);
-    result.inner_ -= Weights::PSQ[enemyPawn][pawnPos];
+    result.psqCost_ -= Weights::PSQ[enemyPawn][pawnPos];
     result.stage_ -= Private::STAGE_PAWN;
   }
   return result;
@@ -102,7 +102,7 @@ public:
       : pawnCache_(*parent.pawnCache_), b_(b), tag_(std::move(tag)), stage_(calcStage(tag_)) {}
 
   inline S evalForWhite() {
-    auto result = mix(tag_.inner_);
+    auto result = mix(tag_.psqCost_);
     const auto pawnValue = pawnCache_.get(calcPawnHash(), [&]() { return evalPawns(); });
     result += pawnValue.score;
     result += evalKingSafety<Color::White>() - evalKingSafety<Color::Black>();
