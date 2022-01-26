@@ -241,8 +241,7 @@ private:
                                Private::KING_ZONE_COST2 * countAtDistance(2) +
                                Private::KING_ZONE_COST3 * countAtDistance(3);
 
-      // FIXME : use `weight` instead of `-weight` here
-      addWithCoef(result, -weight, nearCount);
+      addWithCoef(result, weight, nearCount);
     };
 
     generateNearPieces(Piece::Queen, Weights::QUEEN_NEAR_TO_KING);

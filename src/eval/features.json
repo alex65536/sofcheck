@@ -73,8 +73,8 @@
               4, -81, -30, -37, -79, -24, -69, -70
         ]
     }},
-    {"queen_near_to_king": 17},
-    {"rook_near_to_king": 1},
+    {"queen_near_to_king": -17},
+    {"rook_near_to_king": -1},
     {"two_bishops": 34},
     {"pawn_isolated": -10},
     {"pawn_double": -6},
