@@ -319,7 +319,6 @@ private:
     return result;
   }
 
-private:
   Private::PawnCache<S> &pawnCache_;
   const Board &b_;
   const Tag tag_;
