@@ -22,7 +22,6 @@
 #include <cstdint>
 #include <type_traits>
 
-#include "core/types.h"
 #include "eval/score.h"
 #include "util/misc.h"
 
@@ -30,11 +29,9 @@ namespace SoFEval::Private {
 
 // Hash type
 using hash_t = uint64_t;
-static_assert(std::is_same_v<hash_t, SoFCore::board_hash_t>);
 
 // Base class for evaluation cache. It is used to create a cache with score type `S`, value type
-// `Value` and size `2 ^ SizePow`. Note that the cache is a no-op for all score types except
-// `score_t`
+// `Value` and size `2 ^ SizePow`. Note that the cache is no-op for all score types except `score_t`
 template <typename S, typename Value, size_t SizePow>
 class Cache {
 public:
@@ -42,7 +39,7 @@ public:
 
   Cache() = default;
 
-  // Try to get the value from the cache by key `hash`. If the value is not found, call `func()` to
+  // Try to get the value from the cache by key `key`. If the value is not found, call `func()` to
   // calculate and cache the result
   template <typename F>
   Value get(hash_t /*key*/, F func) {
