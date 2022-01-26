@@ -32,12 +32,12 @@ using SoFCore::coord_t;
 using SoFCore::subcoord_t;
 
 std::vector<std::vector<bitboard_t>> generateKingMetricRings() {
-  std::vector<std::vector<bitboard_t>> result(8, std::vector<bitboard_t>(64));
+  std::vector<std::vector<bitboard_t>> result(64, std::vector<bitboard_t>(8));
   for (coord_t i = 0; i < 64; ++i) {
     for (coord_t j = 0; j < 64; ++j) {
       const int distance = std::max(SoFUtil::absDiff(SoFCore::coordX(i), SoFCore::coordX(j)),
                                     SoFUtil::absDiff(SoFCore::coordY(i), SoFCore::coordY(j)));
-      result[distance][i] |= SoFCore::coordToBitboard(j);
+      result[i][distance] |= SoFCore::coordToBitboard(j);
     }
   }
   return result;
@@ -119,9 +119,9 @@ int doGenerate(SourcePrinter &p) {
   p.skip();
   auto ns = p.inNamespace("SoFEval::Private");
   p.skip();
-  p.lineStart() << "constexpr SoFCore::bitboard_t BB_KING_METRIC_RING[8][64] = ";
-  p.arrayBody(8, [&](const size_t i) {
-    p.arrayBody(64, [&](const size_t j) { printBitboard(p.stream(), kingRings[i][j]); });
+  p.lineStart() << "constexpr SoFCore::bitboard_t BB_KING_METRIC_RING[64][8] = ";
+  p.arrayBody(64, [&](const size_t i) {
+    p.arrayBody(8, [&](const size_t j) { printBitboard(p.stream(), kingRings[i][j]); });
   });
   p.line() << ";";
   p.skip();

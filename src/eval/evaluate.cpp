@@ -234,7 +234,7 @@ private:
 
       const auto countAtDistance = [&](const size_t dist) {
         return static_cast<coef_t>(
-            SoFUtil::popcount(Private::BB_KING_METRIC_RING[dist][kingPos] & bb));
+            SoFUtil::popcount(Private::BB_KING_METRIC_RING[kingPos][dist] & bb));
       };
 
       const coef_t nearCount = Private::KING_ZONE_COST1 * countAtDistance(1) +
@@ -249,12 +249,12 @@ private:
     generateNearPieces(Piece::Rook, Weights::ROOK_NEAR_TO_KING);
 
     // Pawn shield and pawn storm
-    const bitboard_t bbPawns = b_.bbPieces[makeCell(C, Piece::Pawn)];
-    const bitboard_t bbEnemyPawns = b_.bbPieces[makeCell(invert(C), Piece::Pawn)];
     constexpr bitboard_t bbShieldedKing =
         (C == Color::White) ? Private::BB_WHITE_SHIELDED_KING : Private::BB_BLACK_SHIELDED_KING;
 
     if (bbKing & bbShieldedKing) {
+      const bitboard_t bbPawns = b_.bbPieces[makeCell(C, Piece::Pawn)];
+      const bitboard_t bbEnemyPawns = b_.bbPieces[makeCell(invert(C), Piece::Pawn)];
       const subcoord_t kingY = SoFCore::coordY(kingPos);
 
       const coord_t shift1 = (C == Color::White) ? (kingY + 47) : (kingY + 7);
