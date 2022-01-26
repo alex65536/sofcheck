@@ -230,7 +230,7 @@ private:
 
     // Enemy pieces near king
     const auto generateNearPieces = [&](const Piece piece, const auto &weight) {
-      const bitboard_t bb = b_.bbPieces[makeCell(C, piece)];
+      const bitboard_t bb = b_.bbPieces[makeCell(invert(C), piece)];
 
       const auto countAtDistance = [&](const size_t dist) {
         return static_cast<coef_t>(
