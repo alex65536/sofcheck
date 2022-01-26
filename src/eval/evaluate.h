@@ -34,22 +34,24 @@ template <typename S>
 class PawnCache;
 }  // namespace Private
 
-// Base class to perform position cost evaluation
+// Performs position cost evaluation
 template <typename S>
 class Evaluator {
 private:
   using Pair = typename ScoreTraits<S>::Pair;
 
 public:
+  // Evaluation tag. Each board is associated with a tag, and if boards are equal, then their tags
+  // are also equal. Tags are used to update some aspects of position cost incrementally
   class Tag {
   public:
     Tag() = default;
 
-    // Returns the tag for the board `b`.
+    // Returns tag for the board `b`.
     static Tag from(const SoFCore::Board &b);
 
-    // Returns the tag for the board which is obtained by applying move `move` to board `b`. Current
-    // tag must be strictly equal to `Tag::from(b)`, i. e. `isValid(b)` must hold
+    // Returns tag for the board which is obtained by applying move `move` to board `b`. Current tag
+    // must be strictly equal to `Tag::from(b)`, i. e. `isValid(b)` must hold
     Tag updated(const SoFCore::Board &b, SoFCore::Move move) const;
 
     // Returns `true` if the tag is strictly equal to `Tag::from(b)`
@@ -59,7 +61,8 @@ public:
     }
 
   private:
-    explicit Tag(Pair psqCost, const uint32_t stage) : psqCost_(std::move(psqCost)), stage_(stage) {}
+    explicit Tag(Pair psqCost, const uint32_t stage)
+        : psqCost_(std::move(psqCost)), stage_(stage) {}
 
     Pair psqCost_;
     uint32_t stage_;
@@ -75,9 +78,9 @@ public:
   // `isValid(b)` must hold. The `evalForWhite` variant returns positive score if the position is
   // good for white, and negative score if the position is good for black. The `evaluateForCur`
   // variant returns positive score if the position is good for the moving side
-  S evalForWhite(const SoFCore::Board &b, const Tag &tag);
+  S evalForWhite(const SoFCore::Board &b, const Tag &tag) const;
 
-  S evalForCur(const SoFCore::Board &b, const Tag &tag) {
+  S evalForCur(const SoFCore::Board &b, const Tag &tag) const {
     return applyColor(evalForWhite(b, tag), b.side);
   }
 
@@ -85,11 +88,11 @@ public:
   // must be strictly equal to `Tag::from(b)`, i. e. `isValid(b)` must hold. To learn about the
   // difference between `evalMaterialForWhite()` and `evalMaterialForCur()`, see the `evalFor...()`
   // description
-  inline S evalMaterialForWhite(const SoFCore::Board &, const Tag &tag) {
+  inline S evalMaterialForWhite(const SoFCore::Board &, const Tag &tag) const {
     return tag.psqCost_.first();
   }
 
-  inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) {
+  inline S evalMaterialForCur(const SoFCore::Board &b, const Tag &tag) const {
     return applyColor(evalMaterialForWhite(b, tag), b.side);
   }
 

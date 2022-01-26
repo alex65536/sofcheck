@@ -98,7 +98,7 @@ class Evaluator<S>::Impl {
 public:
   using Tag = Evaluator<S>::Tag;
 
-  Impl(Evaluator<S> &parent, const Board &b, Tag tag)
+  Impl(const Evaluator<S> &parent, const Board &b, Tag tag)
       : pawnCache_(*parent.pawnCache_), b_(b), tag_(std::move(tag)), stage_(calcStage(tag_)) {}
 
   inline S evalForWhite() {
@@ -335,7 +335,7 @@ template <typename S>
 Evaluator<S>::~Evaluator() = default;
 
 template <typename S>
-S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) {
+S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) const {
   return Impl(*this, b, tag).evalForWhite();
 }
 
