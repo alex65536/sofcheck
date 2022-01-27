@@ -34,6 +34,17 @@ find_package(UnixCommands)
 find_package(Git)
 
 
+# Determine configuration options defaults
+if(MINGW)
+  # LTO is broken in MinGW. See the following bugs:
+  # - https://sourceware.org/bugzilla/show_bug.cgi?id=12762
+  # - https://sourceware.org/bugzilla/show_bug.cgi?id=13031
+  set(USE_LTO_DEFAULT OFF)
+else()
+  set(USE_LTO_DEFAULT ON)
+endif()
+
+
 # Declare configuration options
 if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
   set(USE_BMI1 ON CACHE BOOL "Use BMI1 insruction set (x86_64 only)")
@@ -43,6 +54,8 @@ set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
 set(USE_SEARCH_DIAGNOSTICS OFF CACHE BOOL
   "Build with search diagnostics (the engine becomes slower but checks itself for errors)")
+set(USE_LTO ${USE_LTO_DEFAULT} CACHE BOOL
+  "Enable link-time optimizations (makes engine faster, but may be broken on some compilers)")
 
 
 # Detect system configuration
@@ -116,13 +129,17 @@ include(BoostStacktrace)
 
 check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
-include(CheckIPOSupported)
-check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT LTO_SUPPORT_OUTPUT)
-if(LTO_SUPPORTED)
-  message(STATUS "Enabled link-time optimizations")
-  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+if(USE_LTO)
+  include(CheckIPOSupported)
+  check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT LTO_SUPPORT_OUTPUT)
+  if(LTO_SUPPORTED)
+    message(STATUS "Enabled link-time optimizations")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+  else()
+    message(STATUS "Link-time optimizations are NOT supported: ${LTO_SUPPORT_OUTPUT}")
+  endif()
 else()
-  message(STATUS "Link-time optimizations are NOT supported: ${LTO_SUPPORT_OUTPUT}")
+  message(STATUS "Link-time optimizations are disabled by configuration")
 endif()
 
 
