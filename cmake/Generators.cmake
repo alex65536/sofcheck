@@ -64,7 +64,7 @@ function(generate_file gen_src out_file)
   _ensure_dir("${PROJECT_BINARY_DIR}/${out_file}")
   add_custom_command(
     OUTPUT "${PROJECT_BINARY_DIR}/${out_file}"
-    COMMAND "${gen_target}" -o "${PROJECT_BINARY_DIR}/${out_file}"
+    COMMAND "$<TARGET_FILE:${gen_target}>" -o "${PROJECT_BINARY_DIR}/${out_file}"
     DEPENDS "${gen_target}"
   )
 endfunction()
@@ -79,7 +79,7 @@ function(generate_file_json gen_src out_file in_file)
   _ensure_dir("${PROJECT_BINARY_DIR}/${out_file}")
   add_custom_command(
     OUTPUT "${PROJECT_BINARY_DIR}/${out_file}"
-    COMMAND "${gen_target}" -o "${PROJECT_BINARY_DIR}/${out_file}" -i "${PROJECT_SOURCE_DIR}/${in_file}"
+    COMMAND "$<TARGET_FILE:${gen_target}>" -o "${PROJECT_BINARY_DIR}/${out_file}" -i "${PROJECT_SOURCE_DIR}/${in_file}"
     DEPENDS "${gen_target}" "${in_file}"
   )
 endfunction()
