@@ -103,20 +103,25 @@ bool Move::isWellFormed(Color c) const {
 }
 
 // Helper macro for `updateCastling`
-#define D_CHECK_CASTLING_FLAG(type, type1)             \
-  if (bbChange & Private::BB_CASTLING_##type##_SRCS) { \
-    castlingMask ^= Castling::type1;                   \
-  }
+#define D_CHECK_CASTLING_FLAG(type, type1) \
+  castlingMask ^=                          \
+      (bbChange & Private::BB_CASTLING_##type##_SRCS) ? Castling::type1 : Castling::None;
 
 inline static void updateCastling(Board &b, const bitboard_t bbChange) {
+  if (!(bbChange & Private::BB_CASTLING_ALL_SRCS)) {
+    return;
+  }
   Castling castlingMask = Castling::All;
   D_CHECK_CASTLING_FLAG(BLACK_KINGSIDE, BlackKingside);
   D_CHECK_CASTLING_FLAG(BLACK_QUEENSIDE, BlackQueenside);
   D_CHECK_CASTLING_FLAG(WHITE_KINGSIDE, WhiteKingside);
   D_CHECK_CASTLING_FLAG(WHITE_QUEENSIDE, WhiteQueenside);
-  b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
-  b.castling &= castlingMask;
-  b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
+  const Castling newCastling = b.castling & castlingMask;
+  if (newCastling != b.castling) {
+    b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
+    b.castling = newCastling;
+    b.hash ^= Private::g_zobristCastling[static_cast<uint8_t>(b.castling)];
+  }
 }
 
 #undef D_CHECK_CASTLING_FLAG
@@ -220,16 +225,16 @@ inline static void makePawnDoubleMove(Board &b, const Move move, const bitboard_
 
 template <Color C>
 inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
-  MovePersistence p{b.hash, b.castling, b.enpassantCoord, b.moveCounter, b.cells[move.dst], 0, 0};
   const cell_t srcCell = b.cells[move.src];
   const cell_t dstCell = b.cells[move.dst];
+  MovePersistence p{b.hash, b.castling, b.enpassantCoord, b.moveCounter, dstCell, 0, 0};
   const bitboard_t bbSrc = coordToBitboard(move.src);
   const bitboard_t bbDst = coordToBitboard(move.dst);
   const bitboard_t bbChange = bbSrc | bbDst;
   if (b.enpassantCoord != INVALID_COORD) {
     b.hash ^= Private::g_zobristEnpassant[b.enpassantCoord];
+    b.enpassantCoord = INVALID_COORD;
   }
-  b.enpassantCoord = INVALID_COORD;
   switch (move.kind) {
     case MoveKind::Simple: {
       b.cells[move.src] = EMPTY_CELL;
@@ -287,8 +292,7 @@ inline static MovePersistence moveMakeImpl(Board &b, const Move move) {
       break;
     }
   }
-  const bool resetMoveCounter = dstCell != EMPTY_CELL || srcCell == makeCell(C, Piece::Pawn) ||
-                                move.kind == MoveKind::Enpassant;
+  const bool resetMoveCounter = dstCell != EMPTY_CELL || srcCell == makeCell(C, Piece::Pawn);
   if (resetMoveCounter) {
     b.moveCounter = 0;
   } else {
