@@ -97,8 +97,9 @@ public:
     for (;;) {
       const size_t idx = board & mask_;
       for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-        if (SOF_LIKELY(tab_[idx + i] == 0)) {
-          tab_[idx + i] = board;
+        SoFCore::board_hash_t &val = tab_[idx + i];
+        if (SOF_LIKELY(val == 0)) {
+          val = board;
           return true;
         }
       }
@@ -110,7 +111,7 @@ public:
   inline void erase(const SoFCore::board_hash_t board) {
     const size_t idx = board & mask_;
     for (size_t i = 0; i < BUCKET_SIZE; ++i) {
-      uint64_t &val = tab_[idx + i];
+      SoFCore::board_hash_t &val = tab_[idx + i];
       if (val == board) {
         val = 0;
         return;

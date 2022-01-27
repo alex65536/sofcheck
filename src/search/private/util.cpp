@@ -34,8 +34,9 @@ void RepetitionTable::grow() {
     }
     const size_t idx = item & newMask;
     for (size_t j = 0; j < BUCKET_SIZE; ++j) {
-      if (newTab[idx + j] == 0) {
-        newTab[idx + j] = item;
+      board_hash_t &val = newTab[idx + j];
+      if (val == 0) {
+        val = item;
         break;
       }
     }
