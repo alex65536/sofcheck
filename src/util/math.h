@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -37,6 +37,13 @@ inline constexpr size_t log10(uint64_t val) {
     ++res;
   }
   return res - 1;
+}
+
+// Returns `std::abs(x - y)`. Unlike the former, it is safe to use for both signed and unsigned
+// integers
+template <typename Int>
+inline constexpr Int absDiff(const Int x, const Int y) {
+  return x > y ? x - y : y - x;
 }
 
 }  // namespace SoFUtil

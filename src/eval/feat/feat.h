@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -155,6 +155,40 @@ private:
   ArrayBundle endKingTable_;
 };
 
+// A bundle that represents king's interaction with pawns. To see the description of the methods,
+// refer to `Bundle` struct
+class KingPawnBundle {
+public:
+  static LoadResult<KingPawnBundle> load(const Name &name, const Json::Value &json);
+  void save(Json::Value &json) const;
+  void print(SoFUtil::SourceFormatter &fmt) const;
+  void apply(const WeightVec &weights);
+  void extract(WeightVec &weights) const;
+  std::vector<Name> names() const;
+  size_t count() const;
+  const Name &name() const { return name_; }
+
+  // Returns the bundle that corresponds to pawn shield
+  const ArrayBundle &shield() const { return shield_; }
+
+  // Returns the bundle that corresponds to pawn storm
+  const ArrayBundle &storm() const { return storm_; }
+
+  KingPawnBundle() = default;
+
+private:
+  template <typename ThisType, typename Callback>
+  static void iterate(ThisType &obj, Callback callback);
+
+  friend struct Private::BundleGroupImpl;
+
+  explicit KingPawnBundle(Name name) : name_(std::move(name)) {}
+
+  Name name_;
+  ArrayBundle shield_;
+  ArrayBundle storm_;
+};
+
 // A container for all the bundles described above
 class Bundle {
 public:
@@ -209,6 +243,7 @@ public:
   D_AS_BUNDLE(Single)
   D_AS_BUNDLE(Array)
   D_AS_BUNDLE(Psq)
+  D_AS_BUNDLE(KingPawn)
 
 #undef D_AS_BUNDLE
 
@@ -222,7 +257,7 @@ private:
   template <typename T>
   Bundle(VariantItemTag, T value) : inner_(std::move(value)) {}
 
-  std::variant<SingleBundle, ArrayBundle, PsqBundle> inner_;
+  std::variant<SingleBundle, ArrayBundle, PsqBundle, KingPawnBundle> inner_;
 };
 
 // The container for all the features

@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -104,7 +104,12 @@ constexpr const char *SRC_JSON = R"JSON(
         ]
     }},
     {"a": 49},
-    {"some_array": [56, -15, 126, -35]}
+    {"some_array": [56, -15, 126, -35]},
+    {"king_pawn": {
+        "type": "king_pawn",
+        "shield": [41, 98, 20, 49, 71, 3],
+        "storm": [-28, -45, -119, 2, 0, -35]
+    }}
 ]
 )JSON";
 
@@ -145,20 +150,22 @@ TEST(SoFEval_Feat, Feat_Weights) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  EXPECT_EQ(features.count(), 465U);
+  EXPECT_EQ(features.count(), 477U);
   WeightVec weights = features.extract();
-  ASSERT_EQ(weights.size(), 465U);
+  ASSERT_EQ(weights.size(), 477U);
   EXPECT_EQ(weights[0], -41);
   EXPECT_EQ(weights[3], 55);
   EXPECT_EQ(weights[9], -142);
   EXPECT_EQ(weights[22], -71);
   EXPECT_EQ(weights[463], 126);
+  EXPECT_EQ(weights[468], 49);
 
   weights[0] = -1;
   weights[3] = 20;
   weights[9] = -71;
   weights[22] = -10000;
   weights[463] = 88;
+  weights[468] = 42;
   features.apply(weights);
   EXPECT_EQ(features.extract(), weights);
 }
@@ -167,9 +174,9 @@ TEST(SoFEval_Feat, Feat_Names) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  EXPECT_EQ(features.count(), 465U);
+  EXPECT_EQ(features.count(), 477U);
   const auto names = features.names();
-  ASSERT_EQ(names.size(), 465U);
+  ASSERT_EQ(names.size(), 477U);
   EXPECT_EQ(names[0].name, "first");
   EXPECT_EQ(names[3].name, "second.2");
   EXPECT_EQ(names[10].name, "our_psq.cost.4");
@@ -177,13 +184,14 @@ TEST(SoFEval_Feat, Feat_Names) {
   EXPECT_EQ(names[203].name, "our_psq.knight.63");
   EXPECT_EQ(names[204].name, "our_psq.bishop.0");
   EXPECT_EQ(names[463].name, "some_array.2");
+  EXPECT_EQ(names[468].name, "king_pawn.shield.3");
 }
 
 TEST(SoFEval_Feat, Feat_Bundles) {
   std::istringstream featuresIn(SRC_JSON);
   auto features = Features::load(featuresIn).unwrap();
 
-  ASSERT_EQ(features.bundles().size(), 5U);
+  ASSERT_EQ(features.bundles().size(), 6U);
 
   EXPECT_EQ(features.bundles()[0].name().name, "first");
   EXPECT_EQ(features.bundles()[0].name().offset, 0U);
@@ -205,4 +213,8 @@ TEST(SoFEval_Feat, Feat_Bundles) {
   EXPECT_EQ(features.bundles()[4].name().name, "some_array");
   EXPECT_EQ(features.bundles()[4].name().offset, 461U);
   EXPECT_NE(features.bundles()[4].asArray(), nullptr);
+
+  EXPECT_EQ(features.bundles()[5].name().name, "king_pawn");
+  EXPECT_EQ(features.bundles()[5].name().offset, 465U);
+  EXPECT_NE(features.bundles()[5].asKingPawn(), nullptr);
 }

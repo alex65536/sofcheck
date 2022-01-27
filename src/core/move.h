@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -135,27 +135,6 @@ MovePersistence moveMake(Board &b, Move move);
 // moveUnmake(b, move2, p2);
 // moveUnmake(b, move1, p1);
 void moveUnmake(Board &b, Move move, MovePersistence p);
-
-// Calls `callback` for each cell that will be changed by the move `move`.
-template <typename Callback>
-inline constexpr void iterateChangedCells(Move move, Callback callback) {
-  callback(move.src);
-  callback(move.dst);
-  if (move.kind == MoveKind::CastlingKingside) {
-    callback(move.src + 1);
-    callback(move.src + 2);
-    return;
-  }
-  if (move.kind == MoveKind::CastlingQueenside) {
-    callback(move.src - 1);
-    callback(move.src - 2);
-    return;
-  }
-  if (move.kind == MoveKind::Enpassant) {
-    callback((move.src < move.dst) ? (move.dst - 8) : (move.dst + 8));
-    return;
-  }
-}
 
 }  // namespace SoFCore
 

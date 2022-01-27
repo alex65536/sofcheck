@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -114,6 +114,33 @@ inline uint64_t swapBytes(uint64_t x) {
   return x;
 }
 #endif
+
+// Calculates bitwise OR over all the bytes in 8-byte number `x`
+inline constexpr uint8_t byteGather(uint64_t x) {
+  x |= x >> 32;
+  x |= x >> 16;
+  x |= x >> 8;
+  return static_cast<uint8_t>(x);
+}
+
+// Creates a 8-bit number, with all of its bytes equal to `x`
+inline constexpr uint64_t byteScatter(uint8_t x) {
+  uint64_t r = x;
+  r |= r << 8;
+  r |= r << 16;
+  r |= r << 32;
+  return r;
+}
+
+// Performs a left rotation of `x` by `shift`. If `shift >= 64`, the behavior is undefined
+inline constexpr uint64_t rotateLeft(const uint64_t x, const size_t shift) {
+  return (shift == 0) ? x : ((x << shift) | (x >> (64 - shift)));
+}
+
+// Performs a right rotation of `x` by `shift`. If `shift >= 64`, the behavior is undefined
+inline constexpr uint64_t rotateRight(const uint64_t x, const size_t shift) {
+  return (shift == 0) ? x : ((x >> shift) | (x << (64 - shift)));
+}
 
 #ifdef USE_BMI2
 

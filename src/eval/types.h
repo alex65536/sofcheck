@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -24,6 +24,9 @@ namespace SoFEval {
 // represent score pair). You must specialize this struct when you implement a score type.
 template <typename T>
 struct ScoreTraits {};
+
+// Integer type to store multiplier coefficients for weights
+using coef_t = int32_t;
 
 }  // namespace SoFEval
 

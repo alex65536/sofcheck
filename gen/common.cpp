@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -50,13 +50,13 @@ void SourcePrinter::arrayBody(size_t size, const std::function<void(size_t)> &pr
 }
 
 void SourcePrinter::bitboardArray(const char *name, const std::vector<SoFCore::bitboard_t> &array) {
-  lineStart() << "constexpr bitboard_t " << name << "[" << array.size() << "] = ";
+  lineStart() << "constexpr SoFCore::bitboard_t " << name << "[" << array.size() << "] = ";
   arrayBody(array.size(), [&](const size_t idx) { printBitboard(stream(), array[idx]); });
   stream() << ";\n";
 }
 
 void SourcePrinter::coordArray(const char *name, const std::vector<SoFCore::coord_t> &array) {
-  lineStart() << "constexpr coord_t " << name << "[" << array.size() << "] = ";
+  lineStart() << "constexpr SoFCore::coord_t " << name << "[" << array.size() << "] = ";
   arrayBody(array.size(), [&](const size_t idx) { stream() << static_cast<int>(array[idx]); });
   stream() << ";\n";
 }

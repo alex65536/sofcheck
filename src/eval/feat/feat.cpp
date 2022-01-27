@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -79,7 +79,33 @@ struct BundleGroupImpl {
   }
 };
 
+// Helper class to implement `load()` for complex bundles without much boilerplate code
+class SubBundleLoader : public SoFUtil::NoCopyMove {
+public:
+  SubBundleLoader(Name name, const Json::Value &json) : name_(std::move(name)), json_(json) {}
+
+  LoadResult<std::monostate> loadFixedArray(ArrayBundle &sub, const char *subName, size_t len) {
+    if (!json_.isMember(subName)) {
+      return Err(LoadError{name_.name + "." + subName + " doesn\'t exist"});
+    }
+    const Name curName{name_.offset, name_.name + "." + subName};
+    SOF_TRY_ASSIGN(sub, ArrayBundle::load(curName, json_[subName]));
+    if (sub.count() != len) {
+      return Err(LoadError{name_.name + "." + subName + " must contain " + std::to_string(len) +
+                           " items"});
+    }
+    name_.offset += sub.count();
+    return Ok(std::monostate{});
+  }
+
+private:
+  Name name_;
+  const Json::Value &json_;
+};
+
 }  // namespace Private
+
+using Private::SubBundleLoader;
 
 LoadResult<SingleBundle> SingleBundle::load(const Name &name, const Json::Value &json) {
   if (!json.isInt()) {
@@ -163,29 +189,13 @@ LoadResult<PsqBundle> PsqBundle::load(const Name &name, const Json::Value &json)
   }
 
   PsqBundle bundle(name);
+  SubBundleLoader loader(name, json);
 
-  size_t curOffset = name.offset;
-
-  auto doLoad = [&](ArrayBundle &sub, const char *subName,
-                    size_t len) -> LoadResult<std::monostate> {
-    if (!json.isMember(subName)) {
-      return Err(LoadError{name.name + "." + subName + " doesn\'t exist"});
-    }
-    const Name curName{curOffset, name.name + "." + subName};
-    SOF_TRY_ASSIGN(sub, ArrayBundle::load(curName, json[subName]));
-    if (sub.count() != len) {
-      return Err(
-          LoadError{name.name + "." + subName + " must contain " + std::to_string(len) + " items"});
-    }
-    curOffset += sub.count();
-    return Ok(std::monostate{});
-  };
-
-  SOF_TRY_CONSUME(doLoad(bundle.pieceCosts_, "cost", PIECE_COUNT));
+  SOF_TRY_CONSUME(loader.loadFixedArray(bundle.pieceCosts_, "cost", PIECE_COUNT));
   for (size_t idx = 0; idx < PIECE_COUNT; ++idx) {
-    SOF_TRY_CONSUME(doLoad(bundle.tables_[idx], PIECE_NAMES[idx], 64));
+    SOF_TRY_CONSUME(loader.loadFixedArray(bundle.tables_[idx], PIECE_NAMES[idx], 64));
   }
-  SOF_TRY_CONSUME(doLoad(bundle.endKingTable_, "king_end", 64));
+  SOF_TRY_CONSUME(loader.loadFixedArray(bundle.endKingTable_, "king_end", 64));
 
   return Ok(std::move(bundle));
 }
@@ -249,6 +259,56 @@ void PsqBundle::extract(WeightVec &weights) const { BundleGroupImpl::extract(*th
 std::vector<Name> PsqBundle::names() const { return BundleGroupImpl::names(*this); }
 size_t PsqBundle::count() const { return BundleGroupImpl::count(*this); }
 
+template <typename ThisType, typename Callback>
+void KingPawnBundle::iterate(ThisType &obj, Callback callback) {
+  static_assert(std::is_same_v<KingPawnBundle, std::remove_cv_t<ThisType>>);
+
+  callback(obj.shield_, "shield");
+  callback(obj.storm_, "storm");
+}
+
+LoadResult<KingPawnBundle> KingPawnBundle::load(const Name &name, const Json::Value &json) {
+  if (!json.isObject() || json.get("type", Json::Value("")) != "king_pawn") {
+    return Err(LoadError{name.name + " must be object with type = king_pawn"});
+  }
+
+  KingPawnBundle bundle(name);
+  SubBundleLoader loader(name, json);
+
+  SOF_TRY_CONSUME(loader.loadFixedArray(bundle.shield_, "shield", 6));
+  SOF_TRY_CONSUME(loader.loadFixedArray(bundle.storm_, "storm", 6));
+
+  return Ok(std::move(bundle));
+}
+
+void KingPawnBundle::save(Json::Value &json) const {
+  json = Json::Value(Json::objectValue);
+  json["type"] = "king_pawn";
+  BundleGroupImpl::save(*this, json);
+}
+
+void KingPawnBundle::print(SoFUtil::SourceFormatter &fmt) const {
+  fmt.stream() << "{\n";
+  fmt.indent(1);
+  fmt.line() << R"TEXT("type": "king_pawn",)TEXT";
+
+  fmt.lineStart() << R"TEXT("shield": )TEXT";
+  shield_.print(fmt);
+  fmt.stream() << ",\n";
+
+  fmt.lineStart() << R"TEXT("storm": )TEXT";
+  storm_.print(fmt);
+  fmt.stream() << "\n";
+
+  fmt.outdent(1);
+  fmt.lineStart() << "}";
+}
+
+void KingPawnBundle::apply(const WeightVec &weights) { BundleGroupImpl::apply(*this, weights); }
+void KingPawnBundle::extract(WeightVec &weights) const { BundleGroupImpl::extract(*this, weights); }
+std::vector<Name> KingPawnBundle::names() const { return BundleGroupImpl::names(*this); }
+size_t KingPawnBundle::count() const { return BundleGroupImpl::count(*this); }
+
 LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
 #define D_TRY_LOAD(type)                               \
   {                                                    \
@@ -267,6 +327,9 @@ LoadResult<Bundle> Bundle::load(const Name &name, const Json::Value &json) {
     const Json::Value type = json.get("type", Json::Value(""));
     if (type == "psq") {
       D_TRY_LOAD(PsqBundle);
+    }
+    if (type == "king_pawn") {
+      D_TRY_LOAD(KingPawnBundle);
     }
   }
 
