@@ -443,6 +443,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
                            !isMateBounds && (flags & Flags::NullMoveDisable) == Flags::None;
   if (canNullMove) {
     MoveMakeGuard guard(board_, Move::null(), tag);
+    tt_.prefetch(board_.hash);
     DGN_ASSERT(isMoveLegal(board_));
     results_.inc(JobStat::Nodes);
     const Flags newFlags = (flags & Flags::Inherit) | Flags::NullMove;
@@ -471,6 +472,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     DIAGNOSTIC(dgnMoves.add(move);)
     const bool isCapture = isMoveCapture(board_, move);
     MoveMakeGuard guard(board_, move, tag);
+    tt_.prefetch(board_.hash);
     if (!isMoveLegal(board_)) {
       continue;
     }
