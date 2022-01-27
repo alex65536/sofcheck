@@ -28,6 +28,10 @@ struct ScoreTraits {};
 // Integer type to store multiplier coefficients for weights
 using coef_t = int32_t;
 
+// Forward declaration for evaluator type
+template <typename S>
+class Evaluator;
+
 }  // namespace SoFEval
 
 #endif  // SOF_EVAL_TYPES_INCLUDED

@@ -144,6 +144,8 @@ struct ScoreTraits<score_t> {
   static constexpr score_t MAX = SCORE_INF;
 };
 
+using ScoreEvaluator = Evaluator<score_t>;
+
 // Compile-time tests for score pairs
 static_assert(ScorePair::from(1000, 8000).first() == 1000);
 static_assert(ScorePair::from(1000, -8000).first() == 1000);

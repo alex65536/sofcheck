@@ -59,7 +59,7 @@ using SoFEval::isScoreCheckmate;
 using SoFEval::isScoreValid;
 #endif
 
-using Evaluator = SoFEval::Evaluator<score_t>;
+using Evaluator = SoFEval::ScoreEvaluator;
 
 void JobCommunicator::stop() {
   size_t tmp = 0;

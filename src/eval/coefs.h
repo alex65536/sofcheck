@@ -173,6 +173,8 @@ struct ScoreTraits<BaseCoefs<Storage>> {
   static constexpr SmallCoefs<1> MAX = SmallCoefs<1>();
 };
 
+using CoefsEvaluator = Evaluator<Coefs>;
+
 }  // namespace SoFEval
 
 #endif  // SOF_EVAL_COEFS_INCLUDED

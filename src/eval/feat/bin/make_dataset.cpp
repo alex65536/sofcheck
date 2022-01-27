@@ -47,6 +47,7 @@ using namespace SoFUtil::Logging;
 
 using SoFCore::Board;
 using SoFCore::Move;
+using SoFEval::CoefsEvaluator;
 using SoFEval::coef_t;
 using SoFEval::Feat::Features;
 using SoFGameSet::Game;
@@ -145,7 +146,7 @@ private:
         writer->str().clear();
         for (const auto &board : *inBatch) {
           const std::vector<coef_t> coefs =
-              evaluator.evalForWhite(board.board, Evaluator::Tag::from(board.board)).take();
+              evaluator.evalForWhite(board.board, CoefsEvaluator::Tag::from(board.board)).take();
           writeLine(board, coefs);
         }
         buf.flush();
@@ -181,11 +182,9 @@ private:
       buf.writeStr("\n");
     }
 
-    using Evaluator = SoFEval::Evaluator<SoFEval::Coefs>;
-
     BoardQueue *in;
     StringQueue *out;
-    Evaluator evaluator;
+    CoefsEvaluator evaluator;
     StringWriter::Ptr writer;
     BufWriter buf;
     std::thread thread;
