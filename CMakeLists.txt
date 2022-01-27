@@ -46,7 +46,7 @@ endif()
 
 
 # Declare configuration options
-if("${CMAKE_SYSTEM_PROCESSOR}" STREQUAL x86_64)
+if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86_64|amd64|AMD64)$")
   set(USE_BMI1 ON CACHE BOOL "Use BMI1 insruction set (x86_64 only)")
   set(USE_BMI2 OFF CACHE BOOL "Use BMI2 insruction set (x86_64 only)")
 endif()
