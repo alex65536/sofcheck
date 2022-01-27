@@ -116,6 +116,15 @@ include(BoostStacktrace)
 
 check_cxx_symbol_exists(stpcpy cstring USE_SYSTEM_STPCPY)
 
+include(CheckIPOSupported)
+check_ipo_supported(RESULT LTO_SUPPORTED OUTPUT LTO_SUPPORT_OUTPUT)
+if(LTO_SUPPORTED)
+  message(STATUS "Enabled link-time optimizations")
+  set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
+else()
+  message(STATUS "Link-time optimizations are NOT supported: ${LTO_SUPPORT_OUTPUT}")
+endif()
+
 
 # Apply compiler flags
 if("${CPU_ARCH}" STREQUAL amd64)
