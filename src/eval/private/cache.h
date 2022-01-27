@@ -24,6 +24,7 @@
 
 #include "eval/score.h"
 #include "util/misc.h"
+#include "util/prefetch.h"
 
 namespace SoFEval::Private {
 
@@ -38,6 +39,9 @@ public:
   static constexpr size_t SIZE = 0;
 
   Cache() = default;
+
+  // Prefetch the value from the cache by key `key`
+  void prefetch(hash_t /*key*/) {}
 
   // Try to get the value from the cache by key `key`. If the value is not found, call `func()` to
   // calculate and cache the result
@@ -54,6 +58,14 @@ public:
   static constexpr size_t SIZE = static_cast<size_t>(1) << SizePow;
 
   Cache() { std::fill(entries_, entries_ + SIZE, Entry::invalid()); }
+
+  void prefetch(const hash_t key) {
+    using SoFUtil::PrefetchKind;
+    using SoFUtil::PrefetchLocality;
+
+    const size_t index = indexFromKey(key);
+    SoFUtil::prefetch<PrefetchKind::Read, PrefetchLocality::L1>(&entries_[index]);
+  }
 
   template <typename F>
   Value get(const hash_t key, F func) {
@@ -116,6 +128,7 @@ class PawnCache : public Cache<S, PawnCacheValue<S>, 18> {
 public:
   using Value = PawnCacheValue<S>;
   using Cache<S, Value, 18>::get;
+  using Cache<S, Value, 18>::prefetch;
   using Cache<S, Value, 18>::SIZE;
 };
 

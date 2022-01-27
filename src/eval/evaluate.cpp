@@ -103,10 +103,12 @@ public:
 
   inline S evalForWhite() {
     auto result = mix(tag_.psqCost_);
-    const auto pawnValue = pawnCache_.get(calcPawnHash(), [&]() { return evalPawns(); });
-    result += pawnValue.score;
+    const Private::hash_t pawnHash = calcPawnHash();
+    pawnCache_.prefetch(pawnHash);
     result += evalKingSafety<Color::White>() - evalKingSafety<Color::Black>();
     result += evalMaterial<Color::White>() - evalMaterial<Color::Black>();
+    const auto pawnValue = pawnCache_.get(pawnHash, [&]() { return evalPawns(); });
+    result += pawnValue.score;
     result += evalOpenLines<Color::White>(pawnValue) - evalOpenLines<Color::Black>(pawnValue);
     return result;
   }
