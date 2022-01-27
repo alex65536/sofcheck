@@ -34,11 +34,11 @@
 #define SOF_PRIVATE_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #define SOF_PRIVATE_UNREACHABLE() __builtin_unreachable()
 #define SOF_PRIVATE_ASSUME(x)  \
-  {                            \
+  do {                         \
     if (!(x)) {                \
       __builtin_unreachable(); \
     }                          \
-  }
+  } while (false)
 
 #endif
 

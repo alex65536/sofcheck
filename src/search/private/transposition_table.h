@@ -136,7 +136,7 @@ public:
   void clear(size_t jobs);
 
   // Try to load the entry with the key `key` into CPU cache. You can invoke the method early before
-  // you plan to use the cache entry and do soemthing before it loads into CPU cache.
+  // you plan to use the cache entry and do something before it loads into CPU cache.
   void prefetch(SoFCore::board_hash_t key);
 
   // Returns the entry with the key `key`. If such entry doesn't exist, returns `Data::zero()`.

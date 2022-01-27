@@ -352,6 +352,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   Frame &frame = stack_[idepth];
   frame.bestMove = Move::null();
 
+  DGN_ASSERT(isNodeKindPv(Node) || beta == alpha + 1);
+
   // Check for draw
   if constexpr (Node != NodeKind::Root) {
     if (board_.moveCounter >= 100) {
@@ -499,6 +501,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
 
     if (hasMove && beta != alpha + 1) {
+      DGN_ASSERT(isNodeKindPv(Node));
       const score_t score = -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha,
                                                       guard.tag(), newFlags);
       if (mustStop()) {
