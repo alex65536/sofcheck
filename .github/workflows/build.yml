@@ -48,7 +48,7 @@ jobs:
           - suite: win-gcc
             os: windows-latest
             compiler: gcc
-            cmake-generator: 'Unix Makefiles'
+            cmake-generator: 'MinGW Makefiles'
           - suite: win-msvc32
             os: windows-latest
             compiler: msvc32
