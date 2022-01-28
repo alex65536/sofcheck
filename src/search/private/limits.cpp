@@ -27,15 +27,9 @@ using namespace std::chrono_literals;
 
 using std::chrono::milliseconds;
 
-SearchLimits SearchLimits::withTimeControl(const SoFCore::Board &board,
-                                           const SoFBotApi::TimeControl &timeControl) {
-  milliseconds totalTime = timeControl[board.side].time;
-  const milliseconds inc = timeControl[board.side].inc;
-  if (totalTime == milliseconds::max()) {
-    // This happens when the server didn't set time properly. I don't know whether such cases are
-    // valid, but it's better to come up with some definite value other than infinity.
-    totalTime = 1h;
-  }
+inline static milliseconds doCalculateMaxTime(const SoFCore::Board &board,
+                                              const milliseconds totalTime,
+                                              [[maybe_unused]] const size_t movesToGo) {
   milliseconds time = totalTime;
   if (board.moveNumber < 10) {
     time /= 40;
@@ -45,10 +39,34 @@ SearchLimits SearchLimits::withTimeControl(const SoFCore::Board &board,
   if (board.moveNumber > 30) {
     time += totalTime / 40;
   }
-  time += inc;
+  return time;
+}
+
+inline static milliseconds calculateMaxTime(const SoFCore::Board &board,
+                                            const SoFBotApi::TimeControl &timeControl) {
+  // Inspect time control
+  milliseconds totalTime = timeControl[board.side].time;
+  const milliseconds inc = timeControl[board.side].inc;
+  if (totalTime == milliseconds::max()) {
+    // This happens when the server didn't set time properly. I don't know whether such cases are
+    // valid, but it's better to come up with some definite value other than infinity.
+    totalTime = 1h;
+  }
+
+  // Calculate maximum time for thinking
+  milliseconds time = doCalculateMaxTime(board, totalTime, timeControl.movesToGo) + inc;
+
+  // Add safeguards against time forfeit
   time = std::min(time, totalTime - 35ms);
   time = std::max(time, 1ms);
-  return SearchLimits{DEPTH_UNLIMITED, NODES_UNLIMITED, time, timeControl};
+
+  return time;
+}
+
+SearchLimits SearchLimits::withTimeControl(const SoFCore::Board &board,
+                                           const SoFBotApi::TimeControl &timeControl) {
+  return SearchLimits{DEPTH_UNLIMITED, NODES_UNLIMITED, calculateMaxTime(board, timeControl),
+                      timeControl};
 }
 
 }  // namespace SoFSearch::Private
