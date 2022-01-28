@@ -73,8 +73,8 @@ public:
 
   Evaluator();
   ~Evaluator();
-  Evaluator(Evaluator &&other);
-  Evaluator &operator=(Evaluator &&other);
+  Evaluator(Evaluator &&other) noexcept;
+  Evaluator &operator=(Evaluator &&other) noexcept;
   Evaluator(const Evaluator &other) = delete;
   Evaluator &operator=(const Evaluator &other) = delete;
 

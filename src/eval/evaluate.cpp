@@ -335,10 +335,10 @@ template <typename S>
 Evaluator<S>::~Evaluator() = default;
 
 template <typename S>
-Evaluator<S>::Evaluator(Evaluator &&) = default;
+Evaluator<S>::Evaluator(Evaluator &&) noexcept = default;
 
 template <typename S>
-Evaluator<S> &Evaluator<S>::operator=(Evaluator &&) = default;
+Evaluator<S> &Evaluator<S>::operator=(Evaluator &&) noexcept = default;
 
 template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) const {
