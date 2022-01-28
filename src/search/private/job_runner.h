@@ -22,7 +22,9 @@
 #include <cstddef>
 #include <mutex>
 #include <thread>
+#include <vector>
 
+#include "eval/score.h"
 #include "search/private/job.h"
 #include "search/private/transposition_table.h"
 
@@ -41,8 +43,7 @@ public:
   // Default number of jobs for `JobRunner`
   static constexpr size_t DEFAULT_NUM_JOBS = 1;
 
-  inline explicit JobRunner(SoFBotApi::Server &server) : server_(server) {}
-
+  explicit JobRunner(SoFBotApi::Server &server);
   ~JobRunner();
 
   // Stops the search. This operation is asynchronous, so the jobs may work for some time after you
@@ -70,7 +71,7 @@ public:
 
   // Sets the number of jobs to run. If the search is already running, the change will be applied
   // only for the next search
-  inline void setNumJobs(const size_t value) { numJobs_ = value; }
+  void setNumJobs(size_t value);
 
   // Enables or disables debug mode. In debug mode the jobs may send extra information to server.
   inline void setDebugMode(const bool enable) {
@@ -82,11 +83,12 @@ public:
 
 private:
   // Main function of the thread which controls all the running jobs.
-  void runMainThread(const Position &position, const SearchLimits &limits, size_t jobCount);
+  void runMainThread(const Position &position, size_t jobCount);
 
   JobCommunicator comm_;
   TranspositionTable tt_;
   SoFBotApi::Server &server_;
+  std::vector<SoFEval::ScoreEvaluator> evaluators_;
 
   std::thread mainThread_;
   std::mutex hashChangeLock_;

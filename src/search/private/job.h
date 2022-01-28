@@ -26,6 +26,8 @@
 #include <mutex>
 
 #include "core/move.h"
+#include "eval/score.h"
+#include "search/private/limits.h"
 
 namespace SoFBotApi {
 class Server;
@@ -35,13 +37,16 @@ namespace SoFSearch::Private {
 
 class TranspositionTable;
 struct Position;
-struct SearchLimits;
 
 // Shared data between jobs, which allows them to communicate with each other and with outer world
 class JobCommunicator {
 public:
   // Tells all the jobs that they must stop the search
   void stop();
+
+  // If the search is timed out and needs to be stopped, then returns `true` and calls `stop()`.
+  // Otherwise, returns `false`
+  bool checkTimeout();
 
   // Waits until `stop()` is called or time period `time` is expired. If `stop()` was called before
   // or during waiting, returns `true`. Note that this function may sometimes return before `time`
@@ -62,10 +67,18 @@ public:
   // Returns the depth on which the jobs must search now
   inline size_t depth() const { return depth_.load(std::memory_order_acquire); }
 
+  // Returns the time point when the search was started
+  inline std::chrono::steady_clock::time_point startTime() const { return startTime_; }
+
+  // Returns search limits for the current search
+  inline const SearchLimits &limits() const { return limits_; }
+
   // Resets the job into its default state. This function must not be called when jobs are running.
-  inline void reset() {
+  inline void reset(const SearchLimits &limits) {
     depth_.store(1, std::memory_order_relaxed);
     stopped_.store(false, std::memory_order_relaxed);
+    startTime_ = Clock::now();
+    limits_ = limits;
   }
 
   // Indicates that the job has finished to search on depth `depth`. Returns `true` if it was the
@@ -75,8 +88,12 @@ public:
   }
 
 private:
+  using Clock = std::chrono::steady_clock;
+
   std::atomic<size_t> depth_ = 1;
   std::atomic<size_t> stopped_ = false;
+  Clock::time_point startTime_ = Clock::now();
+  SearchLimits limits_ = SearchLimits::withInfiniteTime();
 
   std::condition_variable stopEvent_;
   std::mutex stopLock_;
@@ -136,15 +153,19 @@ static_assert(std::atomic<SoFCore::Move>::is_always_lock_free);
 class Job {
 public:
   inline Job(JobCommunicator &communicator, TranspositionTable &table, SoFBotApi::Server &server,
-             size_t id)
-      : communicator_(communicator), table_(table), server_(server), id_(id) {}
+             SoFEval::ScoreEvaluator &evaluator, size_t id)
+      : communicator_(communicator),
+        table_(table),
+        server_(server),
+        evaluator_(evaluator),
+        id_(id) {}
 
   // Returns the current results of the search job. The results are updated while the job is
   // running.
   inline const JobResults &results() const { return results_; }
 
   // Starts the search job. This function must be called exactly once.
-  void run(const Position &position, const SearchLimits &limits);
+  void run(const Position &position);
 
 private:
   friend class Searcher;
@@ -152,6 +173,7 @@ private:
   JobCommunicator &communicator_;
   TranspositionTable &table_;
   SoFBotApi::Server &server_;
+  SoFEval::ScoreEvaluator &evaluator_;
   size_t id_;
   JobResults results_;
 };

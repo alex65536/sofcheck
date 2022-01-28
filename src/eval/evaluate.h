@@ -73,6 +73,10 @@ public:
 
   Evaluator();
   ~Evaluator();
+  Evaluator(Evaluator &&other);
+  Evaluator &operator=(Evaluator &&other);
+  Evaluator(const Evaluator &other) = delete;
+  Evaluator &operator=(const Evaluator &other) = delete;
 
   // Returns the position cost of `b`. `tag` must be strictly equal to `Tag::from(b)`, i. e.
   // `isValid(b)` must hold. The `evalForWhite` variant returns positive score if the position is

@@ -28,10 +28,8 @@
 #include "core/movegen.h"
 #include "core/strutil.h"
 #include "eval/evaluate.h"
-#include "eval/score.h"
 #include "search/private/consts.h"
 #include "search/private/diagnostics.h"
-#include "search/private/limits.h"
 #include "search/private/move_picker.h"
 #include "search/private/transposition_table.h"
 #include "search/private/types.h"
@@ -51,8 +49,6 @@ using SoFEval::adjustCheckmate;
 using SoFEval::SCORE_CHECKMATE_THRESHOLD;
 using SoFEval::SCORE_INF;
 using SoFEval::score_t;
-using std::chrono::milliseconds;
-using std::chrono::steady_clock;
 
 #ifdef USE_SEARCH_DIAGNOSTICS
 using SoFEval::isScoreCheckmate;
@@ -75,6 +71,14 @@ void JobCommunicator::stop() {
   stopLock_.lock();
   stopLock_.unlock();
   stopEvent_.notify_all();
+}
+
+bool JobCommunicator::checkTimeout() {
+  if (limits_.time != TIME_UNLIMITED && Clock::now() - startTime_ >= limits_.time) {
+    stop();
+    return true;
+  }
+  return false;
 }
 
 // RAII wrapper that unmakes the move on destruction
@@ -143,15 +147,14 @@ public:
     NullMoveDisable = NullMove | NullMoveReduction | Capture
   };
 
-  inline Searcher(Job &job, Board &board, const SearchLimits &limits, RepetitionTable &repetitions)
+  inline Searcher(Job &job, Board &board, RepetitionTable &repetitions)
       : board_(board),
         tt_(job.table_),
         comm_(job.communicator_),
         results_(job.results_),
+        evaluator_(job.evaluator_),
         repetitions_(repetitions),
-        limits_(limits),
-        jobId_(job.id_),
-        startTime_(steady_clock::now()) {}
+        jobId_(job.id_) {}
 
   inline score_t run(const size_t depth, Move &bestMove) {
     depth_ = depth;
@@ -178,11 +181,8 @@ private:
       return true;
     }
     ++counter_;
-    if (!(counter_ & 4095)) {
-      if (limits_.time != TIME_UNLIMITED && steady_clock::now() - startTime_ >= limits_.time) {
-        comm_.stop();
-        return true;
-      }
+    if (!(counter_ & 1023)) {
+      return comm_.checkTimeout();
     }
     return comm_.depth() != depth_;
   }
@@ -213,16 +213,14 @@ private:
   TranspositionTable &tt_;
   JobCommunicator &comm_;
   JobResults &results_;
+  Evaluator &evaluator_;
   RepetitionTable &repetitions_;
-  SearchLimits limits_;
-  Evaluator evaluator_;
   size_t jobId_;
 
   Frame stack_[MAX_STACK_DEPTH];
   HistoryTable history_;
   size_t depth_ = 0;
   mutable size_t counter_ = 0;
-  steady_clock::time_point startTime_;
 };
 
 SOF_ENUM_BITWISE(Searcher::Flags, uint64_t)
@@ -572,7 +570,7 @@ std::vector<Move> unwindPv(Board board, const Move bestMove, TranspositionTable 
   return pv;
 }
 
-void Job::run(const Position &position, const SearchLimits &limits) {
+void Job::run(const Position &position) {
   // Apply moves and fill repetition tables
   Board board = position.first;
   RepetitionTable singleRepeat;
@@ -585,8 +583,8 @@ void Job::run(const Position &position, const SearchLimits &limits) {
   }
 
   // Perform iterative deepening
-  Searcher searcher(*this, board, limits, doubleRepeat);
-  const size_t maxDepth = std::min(limits.depth, MAX_DEPTH);
+  Searcher searcher(*this, board, doubleRepeat);
+  const size_t maxDepth = std::min(communicator_.limits().depth, MAX_DEPTH);
   for (size_t depth = 1; depth <= maxDepth; ++depth) {
     Move bestMove = Move::null();
     const score_t score = searcher.run(depth, bestMove);

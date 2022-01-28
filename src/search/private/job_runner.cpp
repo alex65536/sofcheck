@@ -21,12 +21,12 @@
 #include <cstdint>
 #include <deque>
 #include <string>
-#include <vector>
 
 #include "bot_api/server.h"
 #include "core/board.h"
 #include "core/move.h"
 #include "core/movegen.h"
+#include "eval/evaluate.h"
 #include "search/private/limits.h"
 #include "search/private/types.h"
 #include "util/defer.h"
@@ -61,6 +61,10 @@ private:
   uint64_t stats_[JOB_STAT_SZ] = {};
 };
 
+// TODO : resize both transposition table and evaluators using the same mechanism
+
+JobRunner::JobRunner(SoFBotApi::Server &server) : server_(server), evaluators_(DEFAULT_NUM_JOBS) {}
+
 void JobRunner::hashClear() {
   std::unique_lock lock(hashChangeLock_);
   if (!canChangeHash_) {
@@ -80,8 +84,16 @@ void JobRunner::hashResize(const size_t size) {
   hashSize_ = tt_.sizeBytes();
 }
 
+void JobRunner::setNumJobs(const size_t value) {
+  numJobs_ = value;
+  if (!mainThread_.joinable()) {
+    evaluators_.resize(numJobs_);
+  }
+}
+
 void JobRunner::join() {
   if (mainThread_.joinable()) {
+    evaluators_.resize(numJobs_);
     comm_.stop();
     mainThread_.join();
   }
@@ -104,8 +116,7 @@ static Move pickRandomMove(Board board) {
   return Move::null();
 }
 
-void JobRunner::runMainThread(const Position &position, const SearchLimits &limits,
-                              const size_t jobCount) {
+void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
   {
     std::unique_lock lock(hashChangeLock_);
     canChangeHash_ = false;
@@ -121,13 +132,14 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
 
   // Create jobs and associated threads. We store the jobs in `deque` instead of `vector`, as `Job`
   // instances are not moveable
+  SOF_ASSERT(evaluators_.size() == jobCount);
   std::deque<Job> jobs;
   for (size_t i = 0; i < jobCount; ++i) {
-    jobs.emplace_back(comm_, tt_, server_, i);
+    jobs.emplace_back(comm_, tt_, server_, evaluators_[i], i);
   }
   std::vector<std::thread> threads;
   for (size_t i = 0; i < jobCount; ++i) {
-    threads.emplace_back([&job = jobs[i], &position, &limits]() { job.run(position, limits); });
+    threads.emplace_back([&job = jobs[i], &position]() { job.run(position); });
   }
 
   static constexpr auto STATS_UPDATE_INTERVAL = 3s;
@@ -146,6 +158,7 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
     }
 
     // Check if it's time to stop
+    const SearchLimits &limits = comm_.limits();
     if (stats.nodes() > limits.nodes ||
         (limits.time != TIME_UNLIMITED && now - startTime > limits.time)) {
       comm_.stop();
@@ -190,11 +203,10 @@ void JobRunner::runMainThread(const Position &position, const SearchLimits &limi
 
 void JobRunner::start(const Position &position, const SearchLimits &limits) {
   join();
-  comm_.reset();
+  comm_.reset(limits);
   tt_.nextEpoch();
-  mainThread_ = std::thread([this, position, limits, jobCount = this->numJobs_]() {
-    runMainThread(position, limits, jobCount);
-  });
+  mainThread_ = std::thread(
+      [this, position, jobCount = this->numJobs_]() { runMainThread(position, jobCount); });
 }
 
 void JobRunner::stop() { comm_.stop(); }

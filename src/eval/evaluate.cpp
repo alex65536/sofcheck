@@ -335,6 +335,12 @@ template <typename S>
 Evaluator<S>::~Evaluator() = default;
 
 template <typename S>
+Evaluator<S>::Evaluator(Evaluator &&) = default;
+
+template <typename S>
+Evaluator<S> &Evaluator<S>::operator=(Evaluator &&) = default;
+
+template <typename S>
 S Evaluator<S>::evalForWhite(const Board &b, const Tag &tag) const {
   return Impl(*this, b, tag).evalForWhite();
 }
