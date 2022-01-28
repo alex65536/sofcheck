@@ -47,7 +47,6 @@ constexpr const char *ENGINE = "Engine";
 struct Engine::Impl {
   std::optional<Private::JobRunner> runner;
   Position position = Position::from(Board::initialPosition(), {});
-  std::vector<Move> moves;
 };
 
 ApiResult Engine::connect(SoFBotApi::Server *server) {
@@ -64,9 +63,7 @@ void Engine::disconnect() {
 
 Engine::Engine() : options_(makeOptions(this)), p_(std::make_unique<Impl>()) {}
 
-Engine::~Engine() {
-  SOF_ASSERT_MSG("Server was not disconnected properly", !server_);
-}
+Engine::~Engine() { SOF_ASSERT_MSG("Server was not disconnected properly", !server_); }
 
 SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
   return SoFBotApi::OptionBuilder(engine)
@@ -137,7 +134,7 @@ ApiResult Engine::setInt(const std::string &key, const int64_t value) {
     if (value <= 0) {
       return ApiResult::InvalidArgument;
     }
-    p_->runner->hashResize(static_cast<size_t>(value) << 20);
+    p_->runner->setHashSize(static_cast<size_t>(value) << 20);
   } else if (key == "Threads") {
     if (value <= 0) {
       return ApiResult::InvalidArgument;
@@ -151,7 +148,7 @@ ApiResult Engine::setString(const std::string &, const std::string &) { return A
 
 ApiResult Engine::triggerAction(const std::string &key) {
   if (key == "Clear hash") {
-    p_->runner->hashClear();
+    p_->runner->clearHash();
   }
   return ApiResult::Ok;
 }

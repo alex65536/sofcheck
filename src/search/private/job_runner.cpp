@@ -61,39 +61,28 @@ private:
   uint64_t stats_[JOB_STAT_SZ] = {};
 };
 
-// TODO : resize both transposition table and evaluators using the same mechanism
-
 JobRunner::JobRunner(SoFBotApi::Server &server) : server_(server), evaluators_(DEFAULT_NUM_JOBS) {}
 
-void JobRunner::hashClear() {
-  std::unique_lock lock(hashChangeLock_);
-  if (!canChangeHash_) {
-    clearHash_ = true;
-    return;
-  }
-  tt_.clear(numJobs_);
+void JobRunner::clearHash() {
+  std::unique_lock lock(applyConfigLock_);
+  needClearHash_ = true;
+  tryApplyConfigUnlocked();
 }
 
-void JobRunner::hashResize(const size_t size) {
-  std::unique_lock lock(hashChangeLock_);
-  if (!canChangeHash_) {
-    hashSize_ = size;
-    return;
-  }
-  tt_.resize(size, false, numJobs_);
-  hashSize_ = tt_.sizeBytes();
+void JobRunner::setHashSize(const size_t size) {
+  std::unique_lock lock(applyConfigLock_);
+  hashSize_ = size;
+  tryApplyConfigUnlocked();
 }
 
-void JobRunner::setNumJobs(const size_t value) {
-  numJobs_ = value;
-  if (!mainThread_.joinable()) {
-    evaluators_.resize(numJobs_);
-  }
+void JobRunner::setNumJobs(const size_t jobs) {
+  std::unique_lock lock(applyConfigLock_);
+  numJobs_ = jobs;
+  tryApplyConfigUnlocked();
 }
 
 void JobRunner::join() {
   if (mainThread_.joinable()) {
-    evaluators_.resize(numJobs_);
     comm_.stop();
     mainThread_.join();
   }
@@ -116,18 +105,30 @@ static Move pickRandomMove(Board board) {
   return Move::null();
 }
 
+void JobRunner::tryApplyConfigUnlocked() {
+  if (!canApplyConfig_) {
+    return;
+  }
+  if (evaluators_.size() != numJobs_) {
+    evaluators_.resize(numJobs_);
+  }
+  if (needClearHash_ || tt_.sizeBytes() != hashSize_) {
+    tt_.resize(hashSize_, needClearHash_, numJobs_);
+    needClearHash_ = false;
+    hashSize_ = tt_.sizeBytes();
+  }
+}
+
 void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
   {
-    std::unique_lock lock(hashChangeLock_);
-    canChangeHash_ = false;
+    std::unique_lock lock(applyConfigLock_);
+    canApplyConfig_ = false;
   }
   SOF_DEFER({
-    // Perform delayed requests to modify transposition table
-    std::unique_lock lock(hashChangeLock_);
-    tt_.resize(hashSize_, clearHash_, jobCount);
-    hashSize_ = tt_.sizeBytes();
-    clearHash_ = false;
-    canChangeHash_ = true;
+    // Perform delayed reconfiguration
+    std::unique_lock lock(applyConfigLock_);
+    canApplyConfig_ = true;
+    tryApplyConfigUnlocked();
   });
 
   // Create jobs and associated threads. We store the jobs in `deque` instead of `vector`, as `Job`

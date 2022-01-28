@@ -60,18 +60,18 @@ public:
 
   // Indicates that the hash table size (in bytes) must be changed to `size`. The resize operation
   // may be deferred until the search is stopped.
-  void hashResize(size_t size);
+  void setHashSize(size_t size);
 
   // Indicates that the hash table must be cleared. The clear operation may be deferred until the
   // search is stopped.
-  void hashClear();
+  void clearHash();
 
   // Returns the number of jobs to run
   inline size_t numJobs() const { return numJobs_; }
 
   // Sets the number of jobs to run. If the search is already running, the change will be applied
   // only for the next search
-  void setNumJobs(size_t value);
+  void setNumJobs(size_t jobs);
 
   // Enables or disables debug mode. In debug mode the jobs may send extra information to server.
   inline void setDebugMode(const bool enable) {
@@ -85,18 +85,24 @@ private:
   // Main function of the thread which controls all the running jobs.
   void runMainThread(const Position &position, size_t jobCount);
 
+  // Does nothing if the search is running (i.e. `canApplyConfig_` is `false`). Otherwise, applies
+  // new configuration if it has changed since last successful call to this function.  Must be
+  // called under `applyConfigLock_`
+  void tryApplyConfigUnlocked();
+
   JobCommunicator comm_;
   TranspositionTable tt_;
   SoFBotApi::Server &server_;
   std::vector<SoFEval::ScoreEvaluator> evaluators_;
 
   std::thread mainThread_;
-  std::mutex hashChangeLock_;
+  std::mutex applyConfigLock_;
+  std::atomic<bool> debugMode_ = false;
+  bool canApplyConfig_ = true;
+
   size_t hashSize_ = TranspositionTable::DEFAULT_SIZE;
   size_t numJobs_ = DEFAULT_NUM_JOBS;
-  std::atomic<bool> debugMode_ = false;
-  bool clearHash_ = false;
-  bool canChangeHash_ = true;
+  bool needClearHash_ = false;
 };
 
 }  // namespace SoFSearch::Private
