@@ -199,6 +199,13 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
     bestMove = pickRandomMove(position.last);
   }
   server_.finishSearch(bestMove);
+
+  if (isDebugMode()) {
+    const auto endTime = std::chrono::steady_clock::now();
+    const auto timeElapsed =
+        std::chrono::duration_cast<std::chrono::microseconds>(endTime - comm_.startTime());
+    server_.sendString("Total search time: " + std::to_string(timeElapsed.count()) + " us");
+  }
 }
 
 void JobRunner::start(const Position &position, const SearchLimits &limits) {
