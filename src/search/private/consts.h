@@ -43,9 +43,9 @@ static_assert(MIN_DEPTH > REDUCTION_DEC, "We must not reach depth <= 0 after red
 // Constants for tuning futility pruning
 namespace Futility {
 // Maximum depth to activate futility pruning
-constexpr int32_t MAX_DEPTH = 2;
+constexpr int32_t MAX_DEPTH = 4;
 // Futility margins
-constexpr SoFEval::score_t MARGINS[MAX_DEPTH + 1] = {0, 50, 50};
+constexpr SoFEval::score_t MARGINS[MAX_DEPTH + 1] = {0, 50, 150, 250, 350};
 }  // namespace Futility
 
 // Constants for tuning razoring
