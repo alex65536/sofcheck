@@ -45,12 +45,6 @@ int32_t TranspositionTable::Data::weight(const uint8_t curEpoch) const {
   if (bound() == SoFBotApi::PositionCostBound::Exact) {
     result += 3;
   }
-  if (move() == SoFCore::Move::null()) {
-    result -= 4;
-  }
-  if (isPv()) {
-    result += 2;
-  }
   return result;
 }
 

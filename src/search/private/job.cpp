@@ -388,8 +388,9 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
     score = adjustCheckmate(score, -static_cast<int16_t>(idepth));
     DGN_ASSERT(bound != PositionCostBound::Exact || isScoreValid(score));
-    tt_.store(board_.hash,
-              TranspositionTable::Data(frame.bestMove, score, depth, bound, isNodeKindPv(Node)));
+    if (frame.bestMove != Move::null()) {
+      tt_.store(board_.hash, TranspositionTable::Data(frame.bestMove, score, depth, bound));
+    }
   };
 
   // Probe the transposition table
