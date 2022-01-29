@@ -490,7 +490,6 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       continue;
     }
     DIAGNOSTIC(dgnMoves.add(move);)
-    const bool isCapture = isMoveCapture(board_, move);
     MoveMakeGuard guard(board_, move, tag);
     tt_.prefetch(board_.hash);
     if (!isMoveLegal(board_)) {
@@ -502,6 +501,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       }
     }
     results_.inc(JobStat::Nodes);
+
+    const bool isCapture = isMoveCapture(board_, move);
     const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::Capture : Flags::None);
 
     // Late move reduction (LMR)
