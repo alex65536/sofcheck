@@ -44,9 +44,17 @@ static_assert(MIN_DEPTH > REDUCTION_DEC, "We must not reach depth <= 0 after red
 namespace Futility {
 // Maximum depth to activate futility pruning
 constexpr int32_t MAX_DEPTH = 2;
-// Futility margin (currenly, half a pawn)
-constexpr SoFEval::score_t MARGIN = 50;
+// Futility margins
+constexpr SoFEval::score_t MARGINS[MAX_DEPTH + 1] = {0, 50, 50};
 }  // namespace Futility
+
+// Constants for tuning razoring
+namespace Razoring {
+// Maximum depth to activate razoring
+constexpr int32_t MAX_DEPTH = 4;
+// Razoring margins
+constexpr SoFEval::score_t MARGINS[MAX_DEPTH + 1] = {0, 100, 200, 300, 400};
+}  // namespace Razoring
 
 // Constants for tuning late move reduction
 namespace LateMove {

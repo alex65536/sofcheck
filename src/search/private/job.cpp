@@ -426,12 +426,34 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   const bool isInCheck = isCheck(board_);
   const bool isMateBounds =
       alpha <= -SCORE_CHECKMATE_THRESHOLD || beta >= SCORE_CHECKMATE_THRESHOLD;
+  score_t evalScore = SCORE_INF;  // Initialized lazily, only when needed
 
-  // Futility pruning
-  if (!isNodeKindPv(Node) && depth <= Futility::MAX_DEPTH && !isInCheck && !isMateBounds) {
-    const score_t threshold = beta + Futility::MARGIN;
-    if (evaluator_.evalForCur(board_, tag) >= threshold) {
-      return beta;
+  const auto getEvalScore = [&]() {
+    if (evalScore == SCORE_INF) {
+      evalScore = evaluator_.evalForCur(board_, tag);
+    }
+    SOF_ASSUME(evalScore != SCORE_INF);
+    return evalScore;
+  };
+
+  DGN_ASSERT(depth > 0);
+
+  if (!isNodeKindPv(Node) && !isInCheck && !isMateBounds) {
+    // Futility pruning
+    if (depth <= Futility::MAX_DEPTH) {
+      const score_t threshold = beta + Futility::MARGINS[depth];
+      if (getEvalScore() >= threshold) {
+        return beta;
+      }
+    }
+
+    // Razoring
+    if (depth <= Razoring::MAX_DEPTH) {
+      const score_t threshold = alpha - Razoring::MARGINS[depth];
+      if (getEvalScore() <= threshold &&
+          quiescenseSearch(threshold, threshold + 1, tag) <= threshold) {
+        return alpha;
+      }
     }
   }
 
