@@ -41,9 +41,9 @@ int32_t TranspositionTable::Data::weight(const uint8_t curEpoch) const {
     return std::numeric_limits<int32_t>::min();
   }
   const uint8_t age = curEpoch - epoch_;
-  int32_t result = 4 * depth() - age;
+  int32_t result = depth() - 2 * static_cast<int32_t>(age);
   if (bound() == SoFBotApi::PositionCostBound::Exact) {
-    result += 6;
+    result += 3;
   }
   if (move() == SoFCore::Move::null()) {
     result -= 4;
