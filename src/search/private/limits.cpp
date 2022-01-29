@@ -59,8 +59,8 @@ inline static milliseconds calculateMaxTime(const SoFCore::Board &board,
           ? MAX_MOVES_TO_GO
           : std::min(MAX_MOVES_TO_GO, static_cast<int64_t>(timeControl.movesToGo));
   if (totalTime == milliseconds::max()) {
-    // This happens when the server didn't set time properly. I don't know whether such cases are
-    // valid, but it's better to come up with some definite value other than infinity.
+    // This happens when the UCI client didn't set time properly. I don't know whether such cases
+    // are valid, but it's better to come up with some definite value other than infinity.
     totalTime = 1h;
   }
 
