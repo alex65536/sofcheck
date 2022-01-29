@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@
 
 namespace SoFBotApi {
 
-constexpr size_t MOVES_INFINITE = std::numeric_limits<size_t>::max();
+constexpr uint32_t MOVES_INFINITE = std::numeric_limits<uint32_t>::max();
 
 // Time control for one side
 struct TimeControlSide {
@@ -41,8 +41,8 @@ struct TimeControlSide {
 struct TimeControl {
   TimeControlSide white;
   TimeControlSide black;
-  size_t movesToGo;  // Positive number that represents the number of moves until time control
-                     // changes. If it doesn't change, the value is equal to `MOVES_INFINITE`
+  uint32_t movesToGo;  // Positive number that represents the number of moves until time control
+                       // changes. If it doesn't change, the value is equal to `MOVES_INFINITE`
 
   inline constexpr TimeControl() : movesToGo(MOVES_INFINITE) {}
 

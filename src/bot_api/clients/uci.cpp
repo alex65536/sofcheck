@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -76,9 +76,7 @@ constexpr const char *UCI_SERVER = "UCI server";
     }                             \
   }
 
-void UciServerConnector::ensureClient() {
-  SOF_ASSERT_MSG("The client is not connected", client_);
-}
+void UciServerConnector::ensureClient() { SOF_ASSERT_MSG("The client is not connected", client_); }
 
 ApiResult UciServerConnector::finishSearch(const Move bestMove) {
   ensureClient();
@@ -336,7 +334,14 @@ PollResult UciServerConnector::processUciGo(std::istream &tokens) {
       continue;
     }
     if (token == "movestogo") {
-      hasTimeControl |= tryReadInt(timeControl.movesToGo, tokens, "uint64");
+      if (!tryReadInt(timeControl.movesToGo, tokens, "uint32")) {
+        continue;
+      }
+      hasTimeControl = true;
+      if (timeControl.movesToGo == 0) {
+        logWarn(UCI_SERVER) << "Value of \"movestogo\" must be strictly positive";
+        timeControl.movesToGo = MOVES_INFINITE;
+      }
       continue;
     }
     if (token == "depth") {
