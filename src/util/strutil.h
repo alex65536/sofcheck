@@ -62,7 +62,7 @@ inline constexpr bool isSpace(const char ch) {
 // Otherwise `false` is returned and `val` remains untouched.
 template <typename T>
 inline bool valueFromStr(const char *first, const char *last, T &val) {
-  T value;
+  T value = 0;
   const std::from_chars_result res = std::from_chars(first, last, value);
   if (res.ptr != last || res.ec != std::errc()) {
     return false;
