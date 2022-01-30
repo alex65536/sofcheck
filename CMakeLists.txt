@@ -191,6 +191,7 @@ if(USE_NO_EXCEPTIONS)
     message(WARNING
       "USE_NO_EXCEPTIONS conflicts with USE_BOOST_STACKTRACE. Disabling boost::stacktrace support.")
     set(USE_BOOST_STACKTRACE OFF)
+    set(BOOST_STACKTRACE_TARGET)
   endif()
   add_compile_options(-fno-exceptions)
   add_compile_definitions(JSON_USE_EXCEPTION=0)
