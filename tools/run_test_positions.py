@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020, 2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ while True:
         break
 
 for position in POSITIONS:
-    print('Checking position "' + position + '"...')
+    print('Running on position "' + position + '"...')
     proc.stdin.write('position fen ' + position + '\n')
     proc.stdin.write('go movetime {}\n'.format(MOVETIME))
     while True:
