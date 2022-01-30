@@ -57,6 +57,12 @@ if("${JSONCPP_TARGET}" STREQUAL "NOTFOUND")
     third-party/jsoncpp/jsoncpp.cpp
   )
   target_include_directories(jsoncpp_builtin PUBLIC third-party/jsoncpp)
+  if(NOT MSVC)
+    target_compile_options(jsoncpp_builtin PRIVATE -Wno-error=deprecated-declarations)
+  endif()
+  if(USE_NO_EXCEPTIONS)
+    target_compile_definitions(jsoncpp_builtin PUBLIC JSON_USE_EXCEPTION=0)
+  endif()
 
   set(JSONCPP_TARGET jsoncpp_builtin)
   message(STATUS "Found jsoncpp target: ${JSONCPP_TARGET}")
