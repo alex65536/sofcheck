@@ -152,13 +152,9 @@ static_assert(std::atomic<SoFCore::Move>::is_always_lock_free);
 // A class that represents a single search job.
 class Job {
 public:
-  inline Job(JobCommunicator &communicator, TranspositionTable &table, SoFBotApi::Server &server,
+  inline Job(JobCommunicator &communicator, TranspositionTable &tt, SoFBotApi::Server &server,
              SoFEval::ScoreEvaluator &evaluator, size_t id)
-      : communicator_(communicator),
-        table_(table),
-        server_(server),
-        evaluator_(evaluator),
-        id_(id) {}
+      : communicator_(communicator), tt_(tt), server_(server), evaluator_(evaluator), id_(id) {}
 
   // Returns the current results of the search job. The results are updated while the job is
   // running.
@@ -171,7 +167,7 @@ private:
   friend class Searcher;
 
   JobCommunicator &communicator_;
-  TranspositionTable &table_;
+  TranspositionTable &tt_;
   SoFBotApi::Server &server_;
   SoFEval::ScoreEvaluator &evaluator_;
   size_t id_;

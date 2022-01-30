@@ -149,7 +149,7 @@ public:
 
   inline Searcher(Job &job, Board &board, RepetitionTable &repetitions)
       : board_(board),
-        tt_(job.table_),
+        tt_(job.tt_),
         comm_(job.communicator_),
         results_(job.results_),
         evaluator_(job.evaluator_),
@@ -618,7 +618,7 @@ void Job::run(const Position &position) {
     if (communicator_.finishDepth(depth)) {
       DGN_ASSERT(bestMove != Move::null());
       results_.setBestMove(depth, bestMove);
-      std::vector<Move> pv = unwindPv(board, bestMove, table_);
+      std::vector<Move> pv = unwindPv(board, bestMove, tt_);
       server_.sendResult({depth, pv.data(), pv.size(), SoFEval::scoreToPositionCost(score),
                           PositionCostBound::Exact});
     }
