@@ -23,14 +23,6 @@
   https://github.com/niklasf/python-chess/blob/v1.6.1/chess/__init__.py#L3282. Maybe we can invent
   even more heuristics.
 
-* Add the functions to replace `std::from_chars` and `std::to_chars`
-  These two functions are declared in `<charconv>` and exist in C++17, but not every compiler
-  supports it. SoFCheck may gain support of older versions of Clang and GCC if we don't use the
-  `<charconv>` header on these platforms and use our hand-written functions instead. Now the issue
-  exists, as Ubuntu 18.04 uses GCC 7 as default compiler. But if it won't be fixed in the next
-  several years, we may simply consider that GCC 7 is old enough and unsupported, and just drop
-  this issue.
-
 * Rethink the Client/ServerConnector architecture
   The architecture where each `Client` is connected to `ServerConnector` and each `Server` is
   connected to `ClientConnector` is good now, but has some limitations which may arise in the
@@ -41,13 +33,6 @@
   `Server` are not thread-safe, while `ClientConnector` and `ServerConnector` are thread-safe.
   When we get rid of the current architecture, we will need another approach to define what must
   be thread-safe.
-
-* Ensure that the transposition table doesn't change search results
-  To do this, we need to perform a simple test. Get the score from the transposition table only
-  when the depth is equal to our depth, not greater-or-equal. Then, compare the results with this
-  modification of transposition table and without any transposition table. They must be equal. The
-  test must be performed only one time, as it will be unable to perform it in the future, when many
-  other heuristics will appear.
 
 * Do not analyze the same node twice in multiple threads
   To do this, we may put a flag `busy` into the hash table, which indicates that this position is
