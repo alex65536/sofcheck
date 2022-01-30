@@ -60,9 +60,9 @@ def write_stderr(string):
 FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
 
 
-def do_rebuild(jobs=None, target=None):
+def do_rebuild(jobs=0, target=None):
     cmdline = [CMAKE_EXECUTABLE, '--build', BINARY_DIR]
-    if jobs is None:
+    if jobs == 0:
         cmdline += ['-j']
     else:
         cmdline += ['-j', str(jobs)]
@@ -71,7 +71,7 @@ def do_rebuild(jobs=None, target=None):
     subprocess.check_call(cmdline)
 
 
-def rebuild(jobs=None, with_pgo=False):
+def rebuild(jobs=0, with_pgo=False):
     if not with_pgo:
         do_rebuild(jobs=jobs)
         return
@@ -160,8 +160,11 @@ def build(args):
         name = 'sofcheck' if not tag else 'sofcheck_' + tag
         return os.path.join(args.dest_dir, name)
 
+    if args.jobs < 0:
+        raise RuntimeError('Number of jobs must be non-negative')
+
     if not args.tags:
-        rebuild(with_pgo=args.pgo)
+        rebuild(jobs=args.jobs, with_pgo=args.pgo)
         try:
             copy_with_perms(bin_path(['sofcheck']), exe_name(''))
         except shutil.SameFileError:
@@ -178,7 +181,7 @@ def build(args):
             if tag.startswith('-'):
                 raise RuntimeError('Tags starting with "-" are forbidden')
             git('checkout', tag)
-            rebuild(with_pgo=args.pgo)
+            rebuild(jobs=args.jobs, with_pgo=args.pgo)
             exe_tag = str(idx + 1) if args.numbers else tag
             copy_with_perms(bin_path(['sofcheck']), exe_name(exe_tag))
     finally:
@@ -224,6 +227,9 @@ build_parser.add_argument(
 build_parser.add_argument(
     '-p', '--pgo', action='store_true',
     help='Use profile-guided optimizations')
+build_parser.add_argument(
+    '-j', '--jobs', action='store',
+    default=0, type=int, help='use given number of jobs for parallel build')
 build_parser.add_argument(
     '-n', '--numbers', action='store_true',
     help='use numbers instead of git tags in executable names')
