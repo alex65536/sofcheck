@@ -20,6 +20,8 @@
 
 include_guard(GLOBAL)
 
+include(Platform)
+
 
 # Declare configuration options
 set(USE_BUILTIN_JSONCPP OFF CACHE BOOL "Use jsoncpp version located in third-party/")
@@ -58,4 +60,10 @@ if("${JSONCPP_TARGET}" STREQUAL "NOTFOUND")
 
   set(JSONCPP_TARGET jsoncpp_builtin)
   message(STATUS "Found jsoncpp target: ${JSONCPP_TARGET}")
+endif()
+
+
+# Add compile options
+if(USE_NO_EXCEPTIONS)
+  target_compile_definitions("${JSONCPP_TARGET}" INTERFACE JSON_USE_EXCEPTION=0)
 endif()
