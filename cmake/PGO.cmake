@@ -17,7 +17,14 @@
 
 include_guard(GLOBAL)
 
-set(PROFILE_PATH "${PROJECT_BINARY_DIR}/pgo_data" CACHE PATH "Path to store profile data")
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+  set(PROFILE_TRAIN_FILE "${PROJECT_BINARY_DIR}/pgo_data.profraw" CACHE FILEPATH
+    "File where executables will put raw profile data")
+  set(PROFILE_USE_FILE "${PROJECT_BINARY_DIR}/pgo_data.profdata" CACHE FILEPATH
+    "File from which the compiler will take the resulting profile and use it for optimization")
+else()
+  set(PROFILE_PATH "${PROJECT_BINARY_DIR}/pgo_data" CACHE PATH "Path to store profile data")
+endif()
 set(PGO_BUILD_TYPE "NONE" CACHE STRING
   "Build type. NONE means that PGO is disabled, TRAIN means generating profiling data, and \
 USE means building with the generated data")
@@ -33,7 +40,7 @@ if("${PGO_BUILD_TYPE}" STREQUAL "TRAIN")
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(PGO_TRAIN_FLAGS "-fprofile-generate=${PROFILE_PATH}")
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(PGO_TRAIN_FLAGS "-fprofile-generate=${PROFILE_PATH}")
+    set(PGO_TRAIN_FLAGS "-fprofile-instr-generate=${PROFILE_TRAIN_FILE}")
   else()
     message(FATAL_ERROR "PGO is currently not supported on your platform")
   endif()
@@ -46,7 +53,11 @@ elseif("${PGO_BUILD_TYPE}" STREQUAL "USE")
   if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(PGO_USE_FLAGS "-fprofile-use=${PROFILE_PATH}" -fprofile-correction -Wno-missing-profile)
   elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(PGO_USE_FLAGS "-fprofile-use=${PROFILE_PATH}")
+    set(PGO_USE_FLAGS
+      "-fprofile-instr-use=${PROFILE_USE_FILE}"
+      -Wno-profile-instr-unprofiled
+      -Wno-error=profile-instr-out-of-date
+    )
   else()
     message(FATAL_ERROR "PGO is currently not supported on your platform")
   endif()

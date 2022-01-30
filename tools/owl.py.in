@@ -26,7 +26,16 @@ SOURCE_DIR = '@PROJECT_SOURCE_DIR@'
 BINARY_DIR = '@PROJECT_BINARY_DIR@'
 CMAKE_EXECUTABLE = '@CMAKE_COMMAND@'
 GIT_EXECUTABLE = '@GIT_EXECUTABLE@'
+PYTHON_EXECUTABLE = '@PYTHON_EXECUTABLE@'
+CXX_COMPILER_ID = '@CMAKE_CXX_COMPILER_ID@'
+CXX_COMPILER = '@CMAKE_CXX_COMPILER@'
+IS_CLANG = (CXX_COMPILER_ID.find('Clang') != -1)
 GIT_FOUND = ('@Git_FOUND@'.lower() == 'true')
+if IS_CLANG:
+    PROFILE_TRAIN_FILE = '@PROFILE_TRAIN_FILE@'
+    PROFILE_USE_FILE = '@PROFILE_USE_FILE@'
+else:
+    PROFILE_PATH = '@PROFILE_PATH@'
 
 
 def src_path(path):
@@ -43,16 +52,62 @@ def git(*args):
     return subprocess.check_output([GIT_EXECUTABLE] + list(args))
 
 
+def write_stderr(string):
+    sys.stderr.write(string + '\n')
+    sys.stderr.flush()
+
+
 FEATURES_PATH = src_path(['src', 'eval', 'features.json'])
 
 
-def rebuild(jobs=None):
+def do_rebuild(jobs=None, target=None):
     cmdline = [CMAKE_EXECUTABLE, '--build', BINARY_DIR]
     if jobs is None:
         cmdline += ['-j']
     else:
         cmdline += ['-j', str(jobs)]
+    if target is not None:
+        cmdline += ['-t', target]
     subprocess.check_call(cmdline)
+
+
+def rebuild(jobs=None, with_pgo=False):
+    if not with_pgo:
+        do_rebuild(jobs=jobs)
+        return
+
+    try:
+        write_stderr('Cleaning up...')
+        if IS_CLANG:
+            os.remove(PROFILE_TRAIN_FILE)
+            os.remove(PROFILE_USE_FILE)
+        else:
+            shutil.rmtree(PROFILE_PATH)
+
+        write_stderr('Building with profiling support...')
+        subprocess.check_call(
+            [CMAKE_EXECUTABLE, BINARY_DIR, '-DPGO_BUILD_TYPE=TRAIN'])
+        do_rebuild(jobs=jobs, target='sofcheck')
+
+        write_stderr('Running on test positions to gather profiling data...')
+        subprocess.check_call([
+            PYTHON_EXECUTABLE,
+            src_path(['tools', 'run_smoke_test.py']),
+            bin_path(['sofcheck'])])
+
+        if IS_CLANG:
+            write_stderr('Gathering profile...')
+            llvm_profdata = subprocess.check_output(
+                [CXX_COMPILER, '-print-prog-name=llvm-profdata']).strip().decode()
+            write_stderr(f'llvm-profdata binary is located at {llvm_profdata}')
+            subprocess.check_call([llvm_profdata, 'merge', PROFILE_TRAIN_FILE, '-o', PROFILE_USE_FILE])
+
+        write_stderr('Building final executable...')
+        subprocess.check_call(
+            [CMAKE_EXECUTABLE, BINARY_DIR, '-DPGO_BUILD_TYPE=USE'])
+        do_rebuild(jobs=jobs)
+    finally:
+        subprocess.check_call([CMAKE_EXECUTABLE, BINARY_DIR, '-DPGO_BUILD_TYPE=NONE'])
 
 
 def git_save():
@@ -106,7 +161,7 @@ def build(args):
         return os.path.join(args.dest_dir, name)
 
     if not args.tags:
-        rebuild()
+        rebuild(with_pgo=args.pgo)
         try:
             copy_with_perms(bin_path(['sofcheck']), exe_name(''))
         except shutil.SameFileError:
@@ -119,12 +174,11 @@ def build(args):
     saved_state = git_save()
     try:
         for idx, tag in enumerate(args.tags):
-            sys.stderr.write(f'Building SoFCheck version {tag}...\n')
-            sys.stderr.flush()
+            write_stderr(f'Building SoFCheck version {tag}...')
             if tag.startswith('-'):
                 raise RuntimeError('Tags starting with "-" are forbidden')
             git('checkout', tag)
-            rebuild()
+            rebuild(with_pgo=args.pgo)
             exe_tag = str(idx + 1) if args.numbers else tag
             copy_with_perms(bin_path(['sofcheck']), exe_name(exe_tag))
     finally:
@@ -167,6 +221,9 @@ build_parser.add_argument(
 build_parser.add_argument(
     '-d', '--dest-dir', help='directory to put binaries', action='store',
     default='.')
+build_parser.add_argument(
+    '-p', '--pgo', action='store_true',
+    help='Use profile-guided optimizations')
 build_parser.add_argument(
     '-n', '--numbers', action='store_true',
     help='use numbers instead of git tags in executable names')
