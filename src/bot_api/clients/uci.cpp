@@ -256,12 +256,14 @@ bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *in
 }
 
 bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
+  constexpr uint64_t MAX_ALLOWED_TIME_MSEC = 2'000'000'000'000;
+
   uint64_t val = 0;
   if (!tryReadInt(val, stream, "uint64")) {
     return false;
   }
-  if (val > static_cast<uint64_t>(milliseconds::max().count())) {
-    logError(UCI_SERVER) << "Value " << val << " is too large";
+  if (val > MAX_ALLOWED_TIME_MSEC) {
+    logError(UCI_SERVER) << "Value " << val << " is too large for time";
     return false;
   }
   time = milliseconds(val);
