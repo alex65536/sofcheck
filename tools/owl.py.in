@@ -79,10 +79,13 @@ def rebuild(jobs=0, with_pgo=False):
     try:
         write_stderr('Cleaning up...')
         if IS_CLANG:
-            os.remove(PROFILE_TRAIN_FILE)
-            os.remove(PROFILE_USE_FILE)
+            if os.path.exists(PROFILE_TRAIN_FILE):
+                os.remove(PROFILE_TRAIN_FILE)
+            if os.path.exists(PROFILE_USE_FILE):
+                os.remove(PROFILE_USE_FILE)
         else:
-            shutil.rmtree(PROFILE_PATH)
+            if os.path.exists(PROFILE_PATH):
+                shutil.rmtree(PROFILE_PATH)
 
         write_stderr('Building with profiling support...')
         subprocess.check_call(
