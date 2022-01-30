@@ -256,7 +256,7 @@ bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *in
 }
 
 bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
-  constexpr uint64_t MAX_ALLOWED_TIME_MSEC = 2'000'000'000'000;
+  static constexpr uint64_t MAX_ALLOWED_TIME_MSEC = 2'000'000'000'000;
 
   uint64_t val = 0;
   if (!tryReadInt(val, stream, "uint64")) {
