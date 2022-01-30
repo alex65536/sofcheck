@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 # Detects `boost::stacktrace`. If it's present, then the following variables are set:
 # - `USE_BOOST_STACKTRACE`
 # - `BOOST_STACKTRACE_TARGET` is set to name of the detected `boost::stacktrace` backend
+
+include_guard(GLOBAL)
 
 set(BOOST_STACKTRACE_BACKENDS
   stacktrace_windbg_cached
