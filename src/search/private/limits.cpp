@@ -46,7 +46,7 @@ inline static milliseconds doCalculateMaxTime(const SoFCore::Board &board,
     // Don't think too much on first moves
     movesLeft *= 2;
   }
-  return std::max(2ms, (totalTime - margin) / movesLeft);
+  return std::max(2ms, (totalTime - margin) / (movesLeft + 1));
 }
 
 inline static milliseconds calculateMaxTime(const SoFCore::Board &board,
