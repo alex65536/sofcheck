@@ -485,7 +485,7 @@ endif()
 if(PYTHONINTERP_FOUND)
   add_test(
     NAME smoke
-    COMMAND "${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_smoke_test.py"
+    COMMAND "${PYTHON_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/run_test_positions.py"
       "$<TARGET_FILE:sofcheck>"
   )
 endif()

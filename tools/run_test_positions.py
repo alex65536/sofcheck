@@ -16,7 +16,7 @@
 # You should have received a copy of the GNU General Public License
 # along with SoFCheck.  If not, see <https://www.gnu.org/licenses/>.
 
-# Ensures that the engine doesn't crash on given positions.
+# Runs the engine on test positions and ensures that it doesn't crash.
 import sys
 import subprocess
 from subprocess import PIPE

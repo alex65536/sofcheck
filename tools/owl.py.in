@@ -92,7 +92,7 @@ def rebuild(jobs=None, with_pgo=False):
         write_stderr('Running on test positions to gather profiling data...')
         subprocess.check_call([
             PYTHON_EXECUTABLE,
-            src_path(['tools', 'run_smoke_test.py']),
+            src_path(['tools', 'run_test_positions.py']),
             bin_path(['sofcheck'])])
 
         if IS_CLANG:
