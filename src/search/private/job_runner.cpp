@@ -40,6 +40,8 @@ using namespace SoFUtil::Logging;
 
 using SoFCore::Board;
 using SoFCore::Move;
+using std::chrono::duration_cast;
+using std::chrono::microseconds;
 using std::chrono::steady_clock;
 
 // Type of log entry
@@ -143,11 +145,24 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
     threads.emplace_back([&job = jobs[i], &position]() { job.run(position); });
   }
 
-  static constexpr auto STATS_UPDATE_INTERVAL = 3s;
-  static constexpr auto THREAD_TICK_INTERVAL = 30ms;
+  static constexpr microseconds STATS_UPDATE_INTERVAL = 3s;
+  static constexpr microseconds THREAD_TICK_INTERVAL = 30ms;
+
+  const auto startTime = comm_.startTime();
+  const SearchLimits &limits = comm_.limits();
+
+  const auto calcSleepTime = [&]() {
+    if (limits.time == TIME_UNLIMITED) {
+      return THREAD_TICK_INTERVAL;
+    }
+    const auto now = steady_clock::now();
+    const auto timePassed = now - startTime;
+    const auto timeLeft = duration_cast<microseconds>(limits.time - timePassed);
+    const auto delay = std::min(timeLeft + 100us, THREAD_TICK_INTERVAL);
+    return std::max(delay, 100us);
+  };
 
   // Run loop in which we check the jobs' status
-  const auto startTime = steady_clock::now();
   auto statsLastUpdatedTime = startTime;
   do {
     const auto now = steady_clock::now();
@@ -159,7 +174,6 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
     }
 
     // Check if it's time to stop
-    const SearchLimits &limits = comm_.limits();
     if (stats.nodes() > limits.nodes ||
         (limits.time != TIME_UNLIMITED && now - startTime > limits.time)) {
       comm_.stop();
@@ -176,7 +190,7 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }
     }
-  } while (!comm_.wait(THREAD_TICK_INTERVAL));
+  } while (!comm_.wait(calcSleepTime()));
 
   // Join job threads
   for (std::thread &thread : threads) {
