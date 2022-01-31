@@ -37,13 +37,16 @@ elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|X86)$")
 endif()
 message(STATUS "Detected CPU architecture: ${CPU_ARCH}")
 
+set(USE_LTO_DEFAULT ON)
 if(MINGW)
   # LTO is broken in MinGW. See the following bugs:
   # - https://sourceware.org/bugzilla/show_bug.cgi?id=12762
   # - https://sourceware.org/bugzilla/show_bug.cgi?id=13031
   set(USE_LTO_DEFAULT OFF)
-else()
-  set(USE_LTO_DEFAULT ON)
+endif()
+if("${CMAKE_BUILD_TYPE}" STREQUAL Debug)
+  # We probably don't want ANY optimizations in debug mode
+  set(USE_LTO_DEFAULT OFF)
 endif()
 
 
