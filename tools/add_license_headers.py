@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # This file is part of SoFCheck
 #
-# Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,7 +64,6 @@ WHITELIST_REGEX = [re.compile('^' + pat + '$') for pat in WHITELIST]
 # The sources from these paths are additionally excluded
 BLACKLIST = [
     'selftest/dodecahedron/(?!intf.h)',
-    'tools/add_license_header.py'  # TODO remove
 ]
 BLACKLIST_REGEX = [re.compile('^' + pat + '$') for pat in BLACKLIST]
 
