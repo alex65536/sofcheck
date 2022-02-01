@@ -17,7 +17,18 @@
 
 include_guard(GLOBAL)
 
+include(Platform)
+
 find_package(benchmark)
+
+if(benchmark_FOUND AND USE_STATIC_LINK)
+  get_target_property(benchmark_TARGET_TYPE benchmark::benchmark TYPE)
+  if(NOT ("${benchmark_TARGET_TYPE}" STREQUAL STATIC_LIBRARY))
+    message(WARNING
+      "Cannot link statically with Google Benchmark, because it is a shared library. Disabling.")
+    unset(benchmark_FOUND)
+  endif()
+endif()
 
 if(benchmark_FOUND)
   add_library(benchmark_main

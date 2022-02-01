@@ -98,7 +98,8 @@ def configure(config, storage, args):
     storage['path']['env'] = []
 
     storage['build-libs'] = {}
-    storage['build-libs']['benchmark'] = config['os'] in {'windows', 'macos'}
+    storage['build-libs']['benchmark'] = \
+        config['static'] or config['os'] in {'windows', 'macos'}
     storage['build-libs']['googletest'] = True
     storage['build-libs']['cxxopts'] = not config['builtin-cxxopts']
     storage['build-libs']['jsoncpp'] = \
@@ -164,9 +165,13 @@ def install_deps(config, storage, args):
         if shutil.which('cmake') is None:
             pexec(['choco', 'install', 'cmake'])
     elif config['os'] == 'linux' or config['os'] == 'ubuntu':
-        pexec(['sudo', 'apt', 'install', storage['pkg']['compiler'],
-               storage['pkg']['clang-tidy'], 'cmake', 'libbenchmark-dev',
-               'libjsoncpp-dev'])
+        install_pkgs = [storage['pkg']['compiler'],
+                        storage['pkg']['clang-tidy'],
+                        'cmake',
+                        'libjsoncpp-dev']
+        if not config['static']:
+            install_pkgs += ['libbenchmark-dev']
+        pexec(['sudo', 'apt', 'install'] + install_pkgs)
     elif config['os'] == 'macos':
         pexec(['brew', 'install', storage['pkg']['compiler'],
                storage['pkg']['clang-tidy'], 'cmake', 'jsoncpp'])
@@ -179,7 +184,8 @@ def build_deps(config, storage, args):
         'googletest': {
             'repo': 'https://github.com/google/googletest/',
             'branch': 'release-1.10.0',
-            'flags': ['-Dgtest_force_shared_crt=ON']
+            'flags': [],
+            'flags_nostatic': ['-Dgtest_force_shared_crt=ON']
         },
         'benchmark': {
             'repo': 'https://github.com/google/benchmark/',
@@ -194,7 +200,8 @@ def build_deps(config, storage, args):
         'jsoncpp': {
             'repo': 'https://github.com/open-source-parsers/jsoncpp',
             'branch': '1.9.5',
-            'flags': []
+            'flags': [],
+            'flags_static': ['-DJSONCPP_STATIC_WINDOWS_RUNTIME=ON']
         }
     }
 
@@ -208,6 +215,15 @@ def build_deps(config, storage, args):
         os.mkdir(build_dir)
         cmake_args = \
             gen_cmake_command(config, storage, '..') + lib_info['flags']
+        if config['static']:
+            cmake_args += lib_info.get('flags_static', [])
+        else:
+            cmake_args += lib_info.get('flags_nostatic', [])
+        if config['static'] and config['compiler'].find('msvc') != -1:
+            src_dir = storage['path']['src-dir']
+            override_file = \
+                os.path.join(src_dir, 'cmake', 'overrides', 'MSVCStaticBuild.cmake')
+            cmake_args += ['-DCMAKE_USER_MAKE_RULES_OVERRIDE=' + override_file]
         pexec(cmake_args, cwd=build_dir)
         cmake_build(config, storage, build_dir)
         pexec(['cmake', '--install', '.'], cwd=build_dir)
@@ -227,6 +243,7 @@ def build(config, storage, args):
         '-DUSE_BMI2=' + bool_to_onoff(config['bmi2']),
         '-DUSE_BUILTIN_JSONCPP=' + bool_to_onoff(config['builtin-jsoncpp']),
         '-DUSE_BUILTIN_CXXOPTS=' + bool_to_onoff(config['builtin-cxxopts']),
+        '-DUSE_STATIC_LINK=' + bool_to_onoff(config['static']),
     ]
     if diagnostic:
         cmake_args += ['-DUSE_SEARCH_DIAGNOSTICS=ON']

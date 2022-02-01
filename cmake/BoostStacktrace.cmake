@@ -31,6 +31,10 @@ set(BOOST_STACKTRACE_BACKENDS
   stacktrace_basic
 )
 
+if(USE_STATIC_LINK)
+  set(Boost_USE_STATIC_LIBS ON)
+endif()
+
 find_package(Boost 1.65.0 OPTIONAL_COMPONENTS ${BOOST_STACKTRACE_BACKENDS})
 
 set(USE_BOOST_STACKTRACE OFF)
@@ -44,6 +48,13 @@ if(Boost_FOUND)
         message(WARNING
           "USE_NO_EXCEPTIONS conflicts with USE_BOOST_STACKTRACE. Disabling boost::stacktrace support.")
         break()
+      endif()
+      if(USE_STATIC_LINK)
+        if("${backend}" MATCHES "^stacktrace_(basic|addr2line)$")
+          target_link_libraries(Boost::${backend} INTERFACE dl)
+        elseif("${backend}" STREQUAL stacktrace_backtrace)
+          target_link_libraries(Boost::${backend} INTERFACE dl backtrace)
+        endif()
       endif()
       set(USE_BOOST_STACKTRACE ON)
       set(BOOST_STACKTRACE_TARGET Boost::${backend})

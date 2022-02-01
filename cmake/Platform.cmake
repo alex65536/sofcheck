@@ -59,6 +59,8 @@ set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
 set(USE_LTO ${USE_LTO_DEFAULT} CACHE BOOL
   "Enable link-time optimizations (makes engine faster, but may be broken on some compilers)")
+set(USE_STATIC_LINK OFF CACHE BOOL
+  "Link all the binaries statically. Experimental option, use with great care")
 
 
 # Detect system configuration
@@ -198,6 +200,57 @@ endif()
 if(USE_SANITIZERS)
   add_compile_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
   add_link_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined)
+endif()
+
+if(USE_STATIC_LINK)
+  if(MSVC)
+    # Use static runtime under MSVC
+    cmake_policy(GET CMP0091 CMP0091_NEW)
+    if("${CMP0091_NEW}" STREQUAL NEW)
+      set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+    else()
+      macro(fix_msvc_flags variable)
+        string(REPLACE "/MD" "/MT" "${variable}" "${${variable}}")
+      endmacro()
+      fix_msvc_flags(CMAKE_C_FLAGS)
+      fix_msvc_flags(CMAKE_C_FLAGS_DEBUG)
+      fix_msvc_flags(CMAKE_C_FLAGS_RELEASE)
+      fix_msvc_flags(CMAKE_C_FLAGS_MINSIZEREL)
+      fix_msvc_flags(CMAKE_C_FLAGS_RELWITHDEBINFO)
+      fix_msvc_flags(CMAKE_CXX_FLAGS)
+      fix_msvc_flags(CMAKE_CXX_FLAGS_DEBUG)
+      fix_msvc_flags(CMAKE_CXX_FLAGS_RELEASE)
+      fix_msvc_flags(CMAKE_CXX_FLAGS_MINSIZEREL)
+      fix_msvc_flags(CMAKE_CXX_FLAGS_RELWITHDEBINFO)
+    endif()
+  else()
+    if(APPLE)
+      message(WARNING
+        "Cannot use -static flag on macOS, see https://stackoverflow.com/questions/3801011 for "
+        "details. We will still try our best to link every other library statically except the "
+        "standard library."
+      )
+    else()
+      add_link_options(-static)
+    endif()
+  endif()
+  if(UNIX AND ("${CMAKE_SYSTEM_NAME}" STREQUAL Linux))
+    if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+      # Thin LTO is broken somehow with `USE_STATIC_LINK`, and linker emits me errors like
+      # `error: Failed to link module: Expected at most one ThinLTO module per bitcode file`.
+      # Disabling thin LTO and using full LTO instead solves the issue.
+      add_compile_options(-flto=full)
+    endif()
+    # Statically built application with threading support may segfault under GNU/Linux if we
+    # won't do this. For more details, see https://stackoverflow.com/questions/35116327.
+    target_link_options(Threads::Threads INTERFACE
+      -pthread
+      -Wl,--whole-archive
+        -lrt
+        -lpthread
+      -Wl,--no-whole-archive
+    )
+  endif()
 endif()
 
 set(CMAKE_CXX_STANDARD 17)

@@ -15,12 +15,17 @@ jobs:
         bmi2: ['true', 'false']
         builtin-jsoncpp: ['true', 'false']
         builtin-cxxopts: ['true', 'false']
+        static: ['true', 'false']
 
         exclude:
           - suite: macos-clang
             bmi2: 'true'
           - suite: macos-gcc
             bmi2: 'true'
+          - suite: macos-clang
+            static: 'true'
+          - suite: macos-gcc
+            static: 'true'
           - bmi2: 'true'
             builtin-jsoncpp: 'false'
           - builtin-jsoncpp: 'false'
@@ -87,6 +92,7 @@ jobs:
           "bmi2": ${{ matrix.bmi2 }},
           "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
           "builtin-cxxopts": ${{ matrix.builtin-cxxopts }},
+          "static": ${{ matrix.static }},
           "cmake-build-type": "Release",
           "cmake-generator": "${{ matrix.cmake-generator }}"
         }

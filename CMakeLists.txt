@@ -17,6 +17,10 @@
 
 cmake_minimum_required(VERSION 3.14)
 
+if(POLICY CMP0091)
+  cmake_policy(SET CMP0091 NEW)
+endif()
+
 project(SoFCheck)
 
 
@@ -124,8 +128,8 @@ add_library(sof_search STATIC
   src/search/private/util.cpp
 )
 target_link_libraries(sof_search
-  PUBLIC sof_bot_api
-  PRIVATE Threads::Threads ${LIBATOMIC_TARGET} sof_core sof_util sof_eval sof_version
+  PUBLIC sof_bot_api Threads::Threads
+  PRIVATE ${LIBATOMIC_TARGET} sof_core sof_util sof_eval sof_version
 )
 
 add_executable(sofcheck
@@ -280,7 +284,7 @@ if(GTest_FOUND)
     src/util/test/strutil.cpp
     src/util/test/valarray.cpp
   )
-  target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main)
+  target_link_libraries(test_util_unit_test sof_util GTest::GTest GTest::Main Threads::Threads)
   gtest_add_tests(TARGET test_util_unit_test)
 endif()
 
