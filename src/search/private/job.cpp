@@ -239,7 +239,7 @@ public:
       return;
     }
     if (jobId < moveCount_) {
-      std::reverse(moves_, moves_ + jobId);
+      std::reverse(moves_, moves_ + jobId + 1);
     } else {
       SoFUtil::randomShuffle(moves_, moves_ + moveCount_);
     }
