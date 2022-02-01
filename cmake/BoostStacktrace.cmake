@@ -21,6 +21,8 @@
 
 include_guard(GLOBAL)
 
+include(Platform)
+
 set(BOOST_STACKTRACE_BACKENDS
   stacktrace_windbg_cached
   stacktrace_windbg
@@ -28,12 +30,22 @@ set(BOOST_STACKTRACE_BACKENDS
   stacktrace_addr2line
   stacktrace_basic
 )
+
 find_package(Boost 1.65.0 OPTIONAL_COMPONENTS ${BOOST_STACKTRACE_BACKENDS})
+
+set(USE_BOOST_STACKTRACE OFF)
+set(BOOST_STACKTRACE_TARGET)
+
 if(Boost_FOUND)
   foreach(backend ${BOOST_STACKTRACE_BACKENDS})
     if(boost_${backend}_FOUND)
-      set(USE_BOOST_STACKTRACE ON)
       message(STATUS "Found boost::stacktrace backend: ${backend}")
+      if(USE_NO_EXCEPTIONS)
+        message(WARNING
+          "USE_NO_EXCEPTIONS conflicts with USE_BOOST_STACKTRACE. Disabling boost::stacktrace support.")
+        break()
+      endif()
+      set(USE_BOOST_STACKTRACE ON)
       set(BOOST_STACKTRACE_TARGET Boost::${backend})
       break()
     endif()

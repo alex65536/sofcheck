@@ -20,6 +20,8 @@
 
 include_guard(GLOBAL)
 
+include(Platform)
+
 
 # Declare configuration options
 set(USE_BUILTIN_CXXOPTS OFF CACHE BOOL "Use cxxopts version located in third-party/")
@@ -54,3 +56,12 @@ if("${CXXOPTS_TARGET}" STREQUAL "NOTFOUND")
   set(CXXOPTS_TARGET cxxopts_builtin)
   message(STATUS "Found cxxopts in third-party/")
 endif()
+
+
+# Add compile options
+if(USE_NO_EXCEPTIONS)
+  target_compile_definitions("${CXXOPTS_TARGET}" INTERFACE CXXOPTS_NO_EXCEPTIONS)
+endif()
+
+# Makes compilation of `cxxopts` much faster
+target_compile_definitions("${CXXOPTS_TARGET}" INTERFACE CXXOPTS_NO_REGEX)

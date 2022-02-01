@@ -20,6 +20,8 @@
 
 include_guard(GLOBAL)
 
+include(Platform)
+
 
 # Declare configuration options
 set(USE_BUILTIN_JSONCPP OFF CACHE BOOL "Use jsoncpp version located in third-party/")
@@ -55,7 +57,19 @@ if("${JSONCPP_TARGET}" STREQUAL "NOTFOUND")
     third-party/jsoncpp/jsoncpp.cpp
   )
   target_include_directories(jsoncpp_builtin PUBLIC third-party/jsoncpp)
+  if(NOT MSVC)
+    target_compile_options(jsoncpp_builtin PRIVATE -Wno-error)
+  endif()
+  if(USE_NO_EXCEPTIONS)
+    target_compile_definitions(jsoncpp_builtin PUBLIC JSON_USE_EXCEPTION=0)
+  endif()
 
   set(JSONCPP_TARGET jsoncpp_builtin)
   message(STATUS "Found jsoncpp target: ${JSONCPP_TARGET}")
+endif()
+
+
+# Add compile options
+if(USE_NO_EXCEPTIONS)
+  target_compile_definitions("${JSONCPP_TARGET}" INTERFACE JSON_USE_EXCEPTION=0)
 endif()
