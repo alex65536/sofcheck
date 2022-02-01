@@ -167,6 +167,7 @@ def install_deps(config, storage, args):
     elif config['os'] == 'linux' or config['os'] == 'ubuntu':
         install_pkgs = [storage['pkg']['compiler'],
                         storage['pkg']['clang-tidy'],
+                        'libc6-dev',
                         'cmake',
                         'libjsoncpp-dev']
         if not config['static']:
