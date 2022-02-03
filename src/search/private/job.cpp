@@ -362,7 +362,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
   }
 
-  // Run quiescence search. We do this in two cases: either the depth is less than zero, meaning
+  // Run quiescense search. We do this in two cases: either the depth is less than zero, meaning
   // that it's the leaf node, or that we will overflow the `stack_` array if we continue the
   // recursion. The second case is pretty unlikely, but is necessary to improve the engine
   // robustness
