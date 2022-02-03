@@ -298,6 +298,8 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     return 0;
   }
 
+  results_.inc(JobStat::Nodes);
+
   const score_t evalScore = evaluator_.evalForCur(board_, tag);
   DIAGNOSTIC({
     if (alpha < evalScore && evalScore < beta) {
@@ -321,7 +323,6 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     if (!isMoveLegal(board_)) {
       continue;
     }
-    results_.inc(JobStat::Nodes);
     const score_t score = -quiescenseSearch(-beta, -alpha, guard.tag());
     DIAGNOSTIC({
       if (alpha < score && score < beta) {
@@ -375,6 +376,10 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
     return quiescenseSearch(alpha, beta, tag);
   }
+
+  // We need to increment node count after quiescense search, so nodes will not be calculated twice
+  // in both quiescense search and main search
+  results_.inc(JobStat::Nodes);
 
   auto ttStore = [&](score_t score) {
     PositionCostBound bound = PositionCostBound::Exact;
@@ -466,7 +471,6 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     MoveMakeGuard guard(board_, Move::null(), tag);
     tt_.prefetch(board_.hash);
     DGN_ASSERT(isMoveLegal(board_));
-    results_.inc(JobStat::Nodes);
     const Flags newFlags = (flags & Flags::Inherit) | Flags::NullMove;
     const score_t score = -search<NodeKind::Simple>(depth - NullMove::DEPTH_DEC, idepth + 1, -beta,
                                                     -beta + 1, guard.tag(), newFlags);
@@ -501,7 +505,6 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
         ++numHistoryMoves;
       }
     }
-    results_.inc(JobStat::Nodes);
 
     const bool isCapture = isMoveCapture(board_, move);
     const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::Capture : Flags::None);
