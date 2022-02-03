@@ -220,10 +220,10 @@ def build_deps(config, storage, args):
             cmake_args += lib_info.get('flags_static', [])
         else:
             cmake_args += lib_info.get('flags_nostatic', [])
-        if config['static'] and config['compiler'].find('msvc') != -1:
+        if config['static']:
             src_dir = storage['path']['src-dir']
             override_file = \
-                os.path.join(src_dir, 'cmake', 'overrides', 'MSVCStaticBuild.cmake')
+                os.path.join(src_dir, 'cmake', 'overrides', 'StaticLink.cmake')
             cmake_args += ['-DCMAKE_USER_MAKE_RULES_OVERRIDE=' + override_file]
         pexec(cmake_args, cwd=build_dir)
         cmake_build(config, storage, build_dir)
