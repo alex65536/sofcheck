@@ -34,7 +34,7 @@ if(benchmark_FOUND)
   add_library(benchmark_main
     bench/benchmark_main.cpp
   )
-  target_link_libraries(benchmark_main benchmark::benchmark)
+  target_link_libraries(benchmark_main PRIVATE benchmark::benchmark PUBLIC Threads::Threads)
 endif()
 
 function(target_benchmark target)
