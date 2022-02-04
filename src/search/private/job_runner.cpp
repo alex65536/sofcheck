@@ -208,8 +208,7 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
         nodeStream << "Node counts: P = " << stats.pvNodes() << " N = " << stats.nonPvNodes()
                    << " O = " << stats.otherNodes()
                    << " PI = " << stats.get(JobStat::PvInternalNodes)
-                   << " NI = " << stats.get(JobStat::NonPvInternalNodes)
-                   << " PZI = " << stats.get(JobStat::PvZeroWindowIntNodes);
+                   << " NI = " << stats.get(JobStat::NonPvInternalNodes);
         std::ostringstream edgeStream;
         edgeStream.precision(3);
         edgeStream.flags(edgeStream.flags() | std::ostream::fixed);

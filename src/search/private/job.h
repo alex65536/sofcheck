@@ -108,7 +108,6 @@ enum class JobStat : size_t {
   NonPvNodes,
   PvInternalNodes,
   NonPvInternalNodes,
-  PvZeroWindowIntNodes,
   PPEdges,  // PV -> PV transitions
   PNEdges,  // PV -> non-PV transitions
   NNEdges,  // non-PV -> non-PV transitions

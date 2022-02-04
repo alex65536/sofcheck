@@ -492,9 +492,6 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   size_t numHistoryMoves = 0;
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
   results_.inc(isNodeKindPv(Node) ? JobStat::PvInternalNodes : JobStat::NonPvInternalNodes);
-  if (isNodeKindPv(Node) && alpha + 1 == beta) {
-    results_.inc(JobStat::PvZeroWindowIntNodes);
-  }
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
@@ -513,10 +510,12 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
 
     const bool isCapture = isMoveCapture(board_, move);
     const Flags newFlags = (flags & Flags::Inherit) | (isCapture ? Flags::Capture : Flags::None);
+    const bool isFirstMove = !hasMove;
+    hasMove = true;
 
     // Late move reduction (LMR)
     if constexpr (Node != NodeKind::Root) {
-      const bool lmrEnabled = hasMove && !isNodeKindPv(Node) && depth >= LateMove::MIN_DEPTH &&
+      const bool lmrEnabled = !isFirstMove && !isNodeKindPv(Node) && depth >= LateMove::MIN_DEPTH &&
                               picker.stage() == MovePickerStage::History &&
                               numHistoryMoves > LateMove::MOVES_NO_REDUCE && !isCheck(board_);
       if (lmrEnabled) {
@@ -532,27 +531,29 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
       }
     }
 
-    if (hasMove && beta != alpha + 1) {
-      DGN_ASSERT(isNodeKindPv(Node));
+    // Perform PV search. If we are in a PV node, we search with zero window first. If we see that
+    // alpha has improved, then we search again, now with full window
+    score_t score = alpha;
+    const bool doZeroWindowSearch = isNodeKindPv(Node) && !isFirstMove;
+    if (doZeroWindowSearch) {
       results_.inc(JobStat::PNEdges);
-      const score_t score = -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha,
-                                                      guard.tag(), newFlags);
+      score = -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, guard.tag(),
+                                        newFlags);
+      score = score <= alpha ? alpha : alpha + 1;
       if (mustStop()) {
         return 0;
       }
-      if (score <= alpha) {
-        continue;
+    }
+    if (!doZeroWindowSearch || (alpha < score && (Node == NodeKind::Root || score < beta))) {
+      constexpr NodeKind newNode = isNodeKindPv(Node) ? NodeKind::Pv : NodeKind::Simple;
+      results_.inc(isNodeKindPv(Node) ? JobStat::PPEdges : JobStat::NNEdges);
+      score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, guard.tag(), newFlags);
+      if (mustStop()) {
+        return 0;
       }
     }
-    hasMove = true;
-    constexpr NodeKind newNode = isNodeKindPv(Node) ? NodeKind::Pv : NodeKind::Simple;
-    results_.inc(isNodeKindPv(Node) ? JobStat::PPEdges : JobStat::NNEdges);
-    const score_t score =
-        -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, guard.tag(), newFlags);
-    if (mustStop()) {
-      return 0;
-    }
     guard.release();
+
     if (score > alpha) {
       alpha = score;
       frame.bestMove = move;
