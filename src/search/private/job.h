@@ -104,7 +104,15 @@ enum class JobStat : size_t {
   Nodes,
   TtHits,
   TtExactHits,
-  Max  // Fake type to denote the total number of stats
+  PvNodes,
+  NonPvNodes,
+  PvInternalNodes,
+  NonPvInternalNodes,
+  PvZeroWindowIntNodes,
+  PPEdges,  // PV -> PV transitions
+  PNEdges,  // PV -> non-PV transitions
+  NNEdges,  // non-PV -> non-PV transitions
+  Max       // Fake type to denote the total number of stats
 };
 
 // Number of job stats

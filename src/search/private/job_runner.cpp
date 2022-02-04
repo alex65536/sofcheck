@@ -20,6 +20,7 @@
 #include <chrono>
 #include <cstdint>
 #include <deque>
+#include <sstream>
 #include <string>
 
 #include "bot_api/server.h"
@@ -50,8 +51,27 @@ constexpr const char *JOB_RUNNER = "JobRunner";
 class Stats {
 public:
   inline uint64_t get(const JobStat stat) const { return stats_[static_cast<size_t>(stat)]; }
+  inline double getDouble(const JobStat stat) const { return static_cast<double>(get(stat)); }
 
   inline uint64_t nodes() const { return get(JobStat::Nodes); }
+  inline uint64_t pvNodes() const { return get(JobStat::PvNodes); }
+  inline uint64_t nonPvNodes() const { return get(JobStat::NonPvNodes); }
+  inline uint64_t otherNodes() const { return nodes() - pvNodes() - nonPvNodes(); }
+
+  inline double pvBranchFactor() const {
+    return static_cast<double>(get(JobStat::PPEdges) + get(JobStat::PNEdges)) /
+           getDouble(JobStat::PvInternalNodes);
+  }
+
+  inline double nonPvBranchFactor() const {
+    return getDouble(JobStat::NNEdges) / getDouble(JobStat::NonPvInternalNodes);
+  }
+
+  inline double branchFactor() const {
+    return static_cast<double>(get(JobStat::PPEdges) + get(JobStat::PNEdges) +
+                               get(JobStat::NNEdges)) /
+           static_cast<double>(get(JobStat::PvInternalNodes) + get(JobStat::NonPvInternalNodes));
+  }
 
   inline void add(const JobResults &results) {
     for (size_t i = 0; i < JOB_STAT_SZ; ++i) {
@@ -184,7 +204,25 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
       server_.sendNodeCount(stats.nodes());
       server_.sendHashHits(stats.get(JobStat::TtHits));
       if (isDebugMode()) {
+        std::ostringstream nodeStream;
+        nodeStream << "Node counts: P = " << stats.pvNodes() << " N = " << stats.nonPvNodes()
+                   << " O = " << stats.otherNodes()
+                   << " PI = " << stats.get(JobStat::PvInternalNodes)
+                   << " NI = " << stats.get(JobStat::NonPvInternalNodes)
+                   << " PZI = " << stats.get(JobStat::PvZeroWindowIntNodes);
+        std::ostringstream edgeStream;
+        edgeStream.precision(3);
+        edgeStream.flags(edgeStream.flags() | std::ostream::fixed);
+        edgeStream << "Edge counts: PP = " << stats.get(JobStat::PPEdges)
+                   << " PN = " << stats.get(JobStat::PNEdges)
+                   << " NN = " << stats.get(JobStat::NNEdges)
+                   << " PBranch = " << stats.pvBranchFactor()
+                   << " NBranch = " << stats.nonPvBranchFactor()
+                   << " Branch = " << stats.branchFactor();
+
         server_.sendString("Hash exact hits: " + std::to_string(stats.get(JobStat::TtExactHits)));
+        server_.sendString(nodeStream.str());
+        server_.sendString(edgeStream.str());
       }
       while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
