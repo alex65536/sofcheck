@@ -18,6 +18,8 @@
 # Exported variables:
 # - `CPU_ARCH`: target CPU architecture (`x86`, `amd64` or `unknown`)
 # - configuration options (see below)
+# - `USE_POPCNT`: target will use native popcount (like __builtin_popcount() or POPCNT instruction)
+# - `USE_BMI2`: target has support for BMI2 instruction set
 # - `USE_SYSTEM_STPCPY`: target has `stpcpy` function
 # - `LIBATOMIC_TARGET`: target to support atomics. Empty if such target is not required
 include_guard(GLOBAL)
@@ -52,8 +54,13 @@ endif()
 
 # Declare configuration options
 if("${CPU_ARCH}" STREQUAL amd64)
-  set(USE_BMI1 ON CACHE BOOL "Use BMI1 insruction set (x86_64/amd64 only)")
-  set(USE_BMI2 OFF CACHE BOOL "Use BMI2 insruction set (x86_64/amd64 only)")
+  set(CPU_ARCH_LEVEL "POPCNT" CACHE STRING
+    "Type of CPU (x86_64 only). Possible values are (from oldest to newest CPUs): OLD means support \
+for any x86_64 CPU, POPCNT means support for SSE4.2 instruction set and POPCNT, and BMI2 means \
+support for AVX2 and BMI2 instruction sets. Note: do not use BMI2 level on AMD CPUs older than \
+Zen 3 (non-inclusively).")
+  set(CPU_ARCH_LEVEL_VALUES OLD POPCNT BMI2)
+  set_property(CACHE CPU_ARCH_LEVEL PROPERTY STRINGS ${CPU_ARCH_LEVEL_VALUES})
 endif()
 set(USE_SANITIZERS OFF CACHE BOOL "Enable sanitizers")
 set(USE_NO_EXCEPTIONS OFF CACHE BOOL "Build without exception support")
@@ -63,20 +70,29 @@ set(USE_STATIC_LINK OFF CACHE BOOL
   "Link all the binaries statically. Experimental option, use with great care")
 
 
+# Validate configuration
+if(NOT ("${CPU_ARCH_LEVEL}" IN_LIST CPU_ARCH_LEVEL_VALUES))
+  message(FATAL_ERROR "\"${CPU_ARCH_LEVEL}\" is an invalid value for CPU_ARCH_LEVEL")
+endif()
+
+
 # Detect system configuration
+
+# We enable popcnt by default in hope that it exists in target CPU architecture
+set(USE_POPCNT ON)
+set(USE_BMI2 OFF)
+
 if("${CPU_ARCH}" STREQUAL amd64)
   if(MSVC)
-    # MSVC doesn't have the flags for BMI1 and BMI2, but each CPU with these instruction sets has
-    # AVX and AVX2 respectively. We enable AVX in hope that it won't make anything worse (if you
-    # build code for CPUs with BMI, they will surely have AVX), but the compiler might generate
-    # better code with newer instruction sets.
-    set(BMI1_FLAGS /arch:AVX)
-    set(BMI2_FLAGS /arch:AVX2)
+    set(POPCNT_LEVEL_FLAGS)
+    set(BMI2_LEVEL_FLAGS /arch:AVX2)
   else()
-    set(BMI1_FLAGS -mbmi)
-    set(BMI2_FLAGS -mbmi2)
+    set(POPCNT_LEVEL_FLAGS -msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
+    set(BMI2_LEVEL_FLAGS -mavx -mavx2 -mbmi -mbmi2)
   endif()
-  set(CMAKE_REQUIRED_FLAGS ${BMI2_FLAGS})
+
+  set(CMAKE_REQUIRED_FLAGS "${POPCNT_LEVEL_FLAGS};${BMI2_LEVEL_FLAGS}")
+  string(REPLACE ";" " " CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
   check_c_source_compiles("
       #include <immintrin.h>
       #include <stdint.h>
@@ -90,12 +106,25 @@ if("${CPU_ARCH}" STREQUAL amd64)
     HAS_BMI2
   )
   unset(CMAKE_REQUIRED_FLAGS)
-else()
-  set(HAS_BMI2 OFF)
-endif()
-if(USE_BMI2 AND NOT HAS_BMI2)
-  message(WARNING "BMI2 intrinsics don't compile, so USE_BMI2 is disabled.")
-  set(USE_BMI2 OFF)
+  if((NOT HAS_BMI2) AND ("${CPU_ARCH_LEVEL}" STREQUAL "BMI2"))
+    message(WARNING "BMI2 intrinsics don't compile. Downgrading CPU level to POPCNT")
+    set(CPU_ARCH_LEVEL "POPCNT")
+  endif()
+
+  if(CPU_ARCH_LEVEL STREQUAL "OLD")
+    set(USE_POPCNT OFF)
+    set(USE_BMI2 OFF)
+  elseif(CPU_ARCH_LEVEL STREQUAL "POPCNT")
+    add_compile_options(${POPCNT_LEVEL_FLAGS})
+    set(USE_POPCNT ON)
+    set(USE_BMI2 OFF)
+  elseif(CPU_ARCH_LEVEL STREQUAL "BMI2")
+    add_compile_options(${POPCNT_LEVEL_FLAGS} ${BMI2_LEVEL_FLAGS})
+    set(USE_POPCNT ON)
+    set(USE_BMI2 ON)
+  else()
+    message(FATAL_ERROR "Unknown value of CPU_ARCH_LEVEL: ${CPU_ARCH_LEVEL}")
+  endif()
 endif()
 
 if(MSVC)
@@ -141,25 +170,6 @@ endif()
 
 
 # Apply compiler flags
-if("${CPU_ARCH}" STREQUAL amd64)
-  if(NOT MSVC)
-    # We assume that the CPU is modern enough (Core or newer) to support SSE4.2 and POPCNT
-    add_compile_options(-msse -msse2 -msse3 -mssse3 -msse4.1 -msse4.2 -mpopcnt)
-  endif()
-  if(USE_BMI1)
-    add_compile_options(${BMI1_FLAGS})
-  endif()
-  if(USE_BMI2)
-    add_compile_options(${BMI2_FLAGS})
-  endif()
-else()
-  if(USE_BMI1 OR USE_BMI2)
-    message(WARNING "BMI1 and BMI2 are relevant only on amd64 architecture; disabling them.")
-  endif()
-  set(USE_BMI1 OFF)
-  set(USE_BMI2 OFF)
-endif()
-
 if(MSVC)
   add_compile_options(/W4 /WX /wd4146 /wd4127 /wd4068)
   add_compile_definitions(_CRT_SECURE_NO_WARNINGS _ENABLE_ATOMIC_ALIGNMENT_FIX)

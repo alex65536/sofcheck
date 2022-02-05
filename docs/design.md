@@ -68,8 +68,8 @@ disregarded when the implementation depends on such details of another module
 - performance is better than clean implementation code. If it's necessary to overcome the linter
 warnings to write faster code, then it can be done
   - the code is optimized primarily for modern x86_64 systems. For them, CPUs are required to have
-SSE4.2 and POPCNT and encouraged to have BMI1 and BMI2. The code should not throw compile errors on
-other platforms, though I'm not planning to focus on optimizing it for such targets
+SSE4.2 and POPCNT and encouraged to have BMI2. The code should not throw compile errors on other
+platforms, though I'm not planning to focus on optimizing it for such targets
   - to detect platform features, use flags in CMake and detect in `CMakeLists.txt` if this feature
 is available
   - benchmarks, profilers and assembly listings (with `gcc -S` or other tools) are encouraged to

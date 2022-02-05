@@ -240,8 +240,7 @@ def build(config, storage, args):
     cmake_args = gen_cmake_command(config, storage, '..')
     cmake_args += [
         '-DUSE_NO_EXCEPTIONS=ON',
-        '-DUSE_BMI1=' + bool_to_onoff(config['bmi1']),
-        '-DUSE_BMI2=' + bool_to_onoff(config['bmi2']),
+        '-DCPU_ARCH_LEVEL=' + config['cpu-level'].upper(),
         '-DUSE_BUILTIN_JSONCPP=' + bool_to_onoff(config['builtin-jsoncpp']),
         '-DUSE_BUILTIN_CXXOPTS=' + bool_to_onoff(config['builtin-cxxopts']),
         '-DUSE_STATIC_LINK=' + bool_to_onoff(config['static']),

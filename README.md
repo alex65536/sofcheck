@@ -95,15 +95,15 @@ You may also want to build the engine in release mode with maximum optimization.
 ~~~~~
 $ mkdir build
 $ cd build
-$ cmake -DCMAKE_BUILD_TYPE=Release -DUSE_BMI2=ON -DUSE_NO_EXCEPTIONS=ON ..
+$ cmake -DCMAKE_BUILD_TYPE=Release -DCPU_ARCH_LEVEL=BMI2 -DUSE_NO_EXCEPTIONS=ON ..
 $ make -j8
 ~~~~~
 
 For more flags, refer to [CMakeLists.txt](CMakeLists.txt) or use CMake GUI.
 
-Note on `-DUSE_BMI2=ON`: it should be used only on modern Intel CPUs and on AMD with Zen 3 (or
-later) microarchitecture. Older AMD CPUs have a very slow implementation of `PDEP` and `PEXT`
-instructions, so using this flag may slow down the engine greatly.
+Note on `-DCPU_ARCH_LEVEL=BMI2`: it should be used only on modern Intel CPUs and on AMD with
+Zen 3 (or later) microarchitecture. Older AMD CPUs have a very slow implementation of `PDEP` and
+`PEXT` instructions, so using this flag may slow down the engine greatly.
 
 ## Running tests
 

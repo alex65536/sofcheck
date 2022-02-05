@@ -21,6 +21,9 @@
 // Use BMI2 instruction set?
 #cmakedefine USE_BMI2
 
+// Use a native popcount (like __builtin_popcount() or POPCNT instruction)?
+#cmakedefine USE_POPCNT
+
 // The system has stpcpy function?
 #cmakedefine USE_SYSTEM_STPCPY
 

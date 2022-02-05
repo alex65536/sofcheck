@@ -44,9 +44,9 @@
 namespace SoFUtil {
 
 // Returns the number of ones in `x`
-#if defined(SOF_BIT_GCC)
+#if defined(SOF_BIT_GCC) && defined(USE_POPCNT)
 inline size_t popcount(uint64_t x) { return __builtin_popcountll(x); }
-#elif defined(SOF_BIT_MSVC64)
+#elif defined(SOF_BIT_MSVC64) && defined(USE_POPCNT)
 inline size_t popcount(uint64_t x) { return __popcnt64(x); }
 #else
 // See https://www.chessprogramming.org/Population_Count#SWAR-Popcount for more details. This

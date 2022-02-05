@@ -11,22 +11,23 @@ jobs:
       fail-fast: false
       matrix:
         suite: [win-gcc, win-msvc32, win-msvc64, linux-gcc, linux-clang, macos-gcc, macos-clang]
-        bmi1: ['true']
-        bmi2: ['true', 'false']
+        cpu-level: ['old', 'popcnt', 'bmi2']
         builtin-jsoncpp: ['true', 'false']
         builtin-cxxopts: ['true', 'false']
         static: ['true', 'false']
 
         exclude:
           - suite: macos-clang
-            bmi2: 'true'
+            cpu-level: 'bmi2'
           - suite: macos-gcc
-            bmi2: 'true'
+            cpu-level: 'bmi2'
           - suite: macos-clang
             static: 'true'
           - suite: macos-gcc
             static: 'true'
-          - bmi2: 'true'
+          - cpu-level: 'bmi2'
+            builtin-jsoncpp: 'false'
+          - cpu-level: 'old'
             builtin-jsoncpp: 'false'
           - builtin-jsoncpp: 'false'
             builtin-cxxopts: 'true'
@@ -78,18 +79,12 @@ jobs:
       run: |
         OS="${{ matrix.os }}"
         OS="${OS%%-*}"
-        BMI1="${{ matrix.bmi1 }}"
-        if [[ "$OS" == "macos" ]]; then
-          # Force disable BMI1 on macOS, otherwise we get SIGILL in CI
-          BMI1="false"
-        fi
         (
         cat <<EOF
         {
           "os": "$OS",
           "compiler": "${{ matrix.compiler }}",
-          "bmi1": $BMI1,
-          "bmi2": ${{ matrix.bmi2 }},
+          "cpu-level": ${{ matrix.cpu-level }},
           "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
           "builtin-cxxopts": ${{ matrix.builtin-cxxopts }},
           "static": ${{ matrix.static }},
