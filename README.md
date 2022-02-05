@@ -30,7 +30,10 @@ and alpha-beta pruning to find out how to analyze positions. The main features o
 - Multithreading: SoFCheck uses lazy SMP to perform search in multiple threads simultaneously
 - Reusability: the parts of SoFCheck can be used as a general-purpose chess library. Also, you can
   relatively easy add new communication protocols to the engine or integrate it into your GUI. Now
-  the engine supports only UCI, but the situation will change in the future.
+  the engine supports only UCI, but the situation may change in the future
+- Measurability: all the changes in the engine are verified to ensure that new version doesn't play
+  weaker than the previous one. To achieve this, it's a good idea to run matches between different
+  versions of the engine
 
 To learn more, see [the project design](docs/design.md).
 
@@ -95,11 +98,12 @@ You may also want to build the engine in release mode with maximum optimization.
 ~~~~~
 $ mkdir build
 $ cd build
-$ cmake -DCMAKE_BUILD_TYPE=Release -DCPU_ARCH_LEVEL=BMI2 -DUSE_NO_EXCEPTIONS=ON ..
+$ cmake -DCMAKE_BUILD_TYPE=Release -DCPU_ARCH_LEVEL=BMI2 -DUSE_NO_EXCEPTIONS=ON -DUSE_LTO=ON ..
 $ make -j8
 ~~~~~
 
-For more flags, refer to [CMakeLists.txt](CMakeLists.txt) or use CMake GUI.
+For more flags, refer to corresponding CMake scripts (like [CMakeLists.txt](CMakeLists.txt) or
+[cmake/Platform.cmake](cmake/Platform.cmake)) or use CMake GUI.
 
 Note on `-DCPU_ARCH_LEVEL=BMI2`: it should be used only on modern Intel CPUs and on AMD with
 Zen 3 (or later) microarchitecture. Older AMD CPUs have a very slow implementation of `PDEP` and
