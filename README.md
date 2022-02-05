@@ -35,7 +35,7 @@ and alpha-beta pruning to find out how to analyze positions. The main features o
   weaker than the previous one. To achieve this, it's a good idea to run matches between different
   versions of the engine
 
-To learn more, see [the project design](docs/design.md).
+To learn more, see [the project design](docs/design.md) and [how it works](docs/howitworks.md).
 
 ## State of the project
 
