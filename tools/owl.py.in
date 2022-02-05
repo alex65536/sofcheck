@@ -109,16 +109,19 @@ def rebuild(jobs=0, with_pgo=False):
         if IS_CLANG:
             write_stderr('Gathering profile...')
             llvm_profdata = subprocess.check_output(
-                [CXX_COMPILER, '-print-prog-name=llvm-profdata']).strip().decode()
+                [CXX_COMPILER,
+                 '-print-prog-name=llvm-profdata']).strip().decode()
             write_stderr(f'llvm-profdata binary is located at {llvm_profdata}')
-            subprocess.check_call([llvm_profdata, 'merge', PROFILE_TRAIN_FILE, '-o', PROFILE_USE_FILE])
+            subprocess.check_call([llvm_profdata, 'merge', PROFILE_TRAIN_FILE,
+                                   '-o', PROFILE_USE_FILE])
 
         write_stderr('Building final executable...')
         subprocess.check_call(
             [CMAKE_EXECUTABLE, BINARY_DIR, '-DPGO_BUILD_TYPE=USE'])
         do_rebuild(jobs=jobs)
     finally:
-        subprocess.check_call([CMAKE_EXECUTABLE, BINARY_DIR, '-DPGO_BUILD_TYPE=NONE'])
+        subprocess.check_call(
+            [CMAKE_EXECUTABLE, BINARY_DIR, '-DPGO_BUILD_TYPE=NONE'])
 
 
 def git_save():
