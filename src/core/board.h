@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <string>
 
 #include "core/types.h"
@@ -102,6 +103,17 @@ struct Board {
 
   static Board initialPosition();
   static SoFUtil::Result<Board, FenParseResult> fromFen(const char *fen);
+
+  inline bool operator==(const Board &b) const {
+    return std::memcmp(cells, b.cells, 64) == 0 &&  //
+           side == b.side &&                        //
+           castling == b.castling &&                //
+           enpassantCoord == b.enpassantCoord &&    //
+           moveCounter == b.moveCounter &&          //
+           moveNumber == b.moveNumber;
+  }
+
+  inline bool operator!=(const Board &b) const { return !(*this == b); }
 
   inline constexpr bitboard_t &bbColor(Color c) { return c == Color::White ? bbWhite : bbBlack; }
 

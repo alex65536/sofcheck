@@ -21,12 +21,14 @@
 #include <atomic>
 #include <cstddef>
 #include <mutex>
+#include <optional>
 #include <thread>
 #include <vector>
 
 #include "eval/score.h"
 #include "search/private/job.h"
 #include "search/private/transposition_table.h"
+#include "search/private/types.h"
 
 namespace SoFBotApi {
 class Server;
@@ -34,7 +36,6 @@ class Server;
 
 namespace SoFSearch::Private {
 
-struct Position;
 struct SearchLimits;
 
 // The class that runs multiple search jobs simultaneously and controls them.
@@ -66,6 +67,9 @@ public:
   // search is stopped.
   void clearHash();
 
+  // Indicates that the following searches will use positions from a new game
+  void newGame();
+
   // Returns the number of jobs to run
   inline size_t numJobs() const { return numJobs_; }
 
@@ -90,6 +94,9 @@ private:
   // called under `applyConfigLock_`
   void tryApplyConfigUnlocked();
 
+  // Helper method. Acknowledges that search in the position `position` is being started
+  void setPosition(Position position);
+
   JobCommunicator comm_;
   TranspositionTable tt_;
   SoFBotApi::Server &server_;
@@ -100,9 +107,12 @@ private:
   std::atomic<bool> debugMode_ = false;
   bool canApplyConfig_ = true;
 
+  std::optional<Position> lastPosition_;
+
   size_t hashSize_ = TranspositionTable::DEFAULT_SIZE;
   size_t numJobs_ = DEFAULT_NUM_JOBS;
   bool needClearHash_ = false;
+  bool needNewGame_ = false;
 };
 
 }  // namespace SoFSearch::Private

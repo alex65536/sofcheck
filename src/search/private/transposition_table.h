@@ -120,9 +120,14 @@ public:
   // This function is not thread-safe. No other thread should use the table while resizing.
   void resize(size_t maxSize, bool clearTable, size_t jobs);
 
-  // Increments the hash table epoch. It is recommended to call this function once before the new
-  // search is started. Note that this function is not thread-safe.
-  inline void nextEpoch() { ++epoch_; }
+  // Indicates that `amount` epochs have passed. It will help to evict irrelevant items from the
+  // hash table. Note that this function is not thread-safe
+  inline void growEpoch(const uint8_t amount = 1) { epoch_ += amount; }
+
+  // Indicates that a new game is started and we should clear the hash table. Actually, we do not
+  // clear it. Instead, we just increment the epoch by a large enough value and let the old entries
+  // evict from the hash table. Note that this function is not thread-safe
+  inline void resetEpoch() { epoch_ += 19; }
 
   // Returns the hash table size (in bytes)
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }

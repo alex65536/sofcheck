@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020, 2022 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,6 +40,13 @@ struct Position {
     return position;
   }
 };
+
+// Special return value for `commonPrefix` function
+constexpr size_t COMMON_PREFIX_NONE = static_cast<size_t>(-1);
+
+// Calculates maximum number of common first moves between positions `p1` and `p2`. If first boards
+// of positions differ, returns `COMMON_PREFIX_NONE`
+size_t commonPrefix(const Position &p1, const Position &p2);
 
 }  // namespace SoFSearch::Private
 

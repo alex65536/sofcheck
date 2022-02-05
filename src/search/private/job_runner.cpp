@@ -32,6 +32,7 @@
 #include "search/private/types.h"
 #include "util/defer.h"
 #include "util/logging.h"
+#include "util/math.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -91,6 +92,12 @@ void JobRunner::clearHash() {
   tryApplyConfigUnlocked();
 }
 
+void JobRunner::newGame() {
+  std::unique_lock lock(applyConfigLock_);
+  needNewGame_ = true;
+  tryApplyConfigUnlocked();
+}
+
 void JobRunner::setHashSize(const size_t size) {
   std::unique_lock lock(applyConfigLock_);
   hashSize_ = size;
@@ -135,9 +142,19 @@ void JobRunner::tryApplyConfigUnlocked() {
     evaluators_.resize(numJobs_);
   }
   if (needClearHash_ || tt_.sizeBytes() != hashSize_) {
+    if (needClearHash_) {
+      lastPosition_ = std::nullopt;
+    }
     tt_.resize(hashSize_, needClearHash_, numJobs_);
     needClearHash_ = false;
     hashSize_ = tt_.sizeBytes();
+  }
+  if (needNewGame_) {
+    needNewGame_ = false;
+    if (lastPosition_) {
+      lastPosition_ = std::nullopt;
+      tt_.resetEpoch();
+    }
   }
 }
 
@@ -263,9 +280,31 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
 void JobRunner::start(const Position &position, const SearchLimits &limits) {
   join();
   comm_.reset(limits);
-  tt_.nextEpoch();
+  setPosition(position);
   mainThread_ = std::thread(
       [this, position, jobCount = this->numJobs_]() { runMainThread(position, jobCount); });
+}
+
+void JobRunner::setPosition(Position position) {
+  if (!lastPosition_) {
+    lastPosition_ = std::move(position);
+    return;
+  }
+  const size_t common = commonPrefix(*lastPosition_, position);
+  if (common != COMMON_PREFIX_NONE) {
+    const size_t diff = SoFUtil::absDiff(common, lastPosition_->moves.size()) +
+                        SoFUtil::absDiff(common, position.moves.size());
+    if (diff == 0) {
+      // Do nothing
+    } else if (diff <= 5) {
+      tt_.growEpoch(static_cast<uint8_t>(diff));
+    } else {
+      tt_.resetEpoch();
+    }
+  } else {
+    tt_.resetEpoch();
+  }
+  lastPosition_ = std::move(position);
 }
 
 void JobRunner::stop() { comm_.stop(); }

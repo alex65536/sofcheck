@@ -125,6 +125,7 @@ add_library(sof_search STATIC
   src/search/private/job_runner.cpp
   src/search/private/move_picker.cpp
   src/search/private/transposition_table.cpp
+  src/search/private/types.cpp
   src/search/private/util.cpp
 )
 target_link_libraries(sof_search

@@ -73,7 +73,10 @@ SoFBotApi::OptionStorage Engine::makeOptions(Engine *engine) {
       .options();
 }
 
-ApiResult Engine::newGame() { return ApiResult::Ok; }
+ApiResult Engine::newGame() {
+  p_->runner->newGame();
+  return ApiResult::Ok;
+}
 
 const char *Engine::name() const {
   static const std::string ENGINE_NAME =
