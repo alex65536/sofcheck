@@ -84,7 +84,7 @@ jobs:
         {
           "os": "$OS",
           "compiler": "${{ matrix.compiler }}",
-          "cpu-level": ${{ matrix.cpu-level }},
+          "cpu-level": "${{ matrix.cpu-level }}",
           "builtin-jsoncpp": ${{ matrix.builtin-jsoncpp }},
           "builtin-cxxopts": ${{ matrix.builtin-cxxopts }},
           "static": ${{ matrix.static }},
