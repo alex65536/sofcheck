@@ -71,8 +71,10 @@ set(USE_STATIC_LINK OFF CACHE BOOL
 
 
 # Validate configuration
-if(NOT ("${CPU_ARCH_LEVEL}" IN_LIST CPU_ARCH_LEVEL_VALUES))
-  message(FATAL_ERROR "\"${CPU_ARCH_LEVEL}\" is an invalid value for CPU_ARCH_LEVEL")
+if("${CPU_ARCH}" STREQUAL amd64)
+  if(NOT ("${CPU_ARCH_LEVEL}" IN_LIST CPU_ARCH_LEVEL_VALUES))
+    message(FATAL_ERROR "\"${CPU_ARCH_LEVEL}\" is an invalid value for CPU_ARCH_LEVEL")
+  endif()
 endif()
 
 
