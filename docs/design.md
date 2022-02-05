@@ -100,6 +100,25 @@ The project uses C++17. Below there is a comment about specific C++ features.
   - you can only inherit from an abstract class without any fields (not all of the methods them
 must be abstract, some can have a default implementation)
 
+# Improvements
+
+When making substantial changes to the engine, I need to ensure that they won't make the engine
+play worse. So, matches between new and old versions of the engine are conducted before committing
+the changes into `master` branch. Currently, [BattleField][bf] is used to conduct such matches.
+The acceptance criteria are as follows:
+
+- small changes which supposedly don't affect playing strength can be accepted without testing
+- if changes make the engine play better, they are accepted
+- if changes don't make the engine play worse and are good in some aspect (nicer behaviour in
+  certain rare positions, various refactorings, and so on), they are accepted
+- otherwise, the changes are not accepted, and we must either debug it or just don't apply
+
+There are also tests that ensure that the engine doesn't break (see above). Though, it's only a
+basic check and passing tests doesn't guarantee that there are no subtle bugs that descrease
+playing strength significantly.
+
+[bf]: https://github.com/alex65536/sofcheck-engine-tester/tree/master/battlefield
+
 # Why name "SoFCheck"?
 
 - SoFCheck => совчик => small owl :)
