@@ -172,7 +172,7 @@ def make_dataset(args):
 def build(args):
     def exe_name(tag):
         name = 'sofcheck' if not tag else 'sofcheck_' + tag
-        return os.path.join(args.dest_dir, name)
+        return os.path.join(args.dest_dir, name + EXECUTABLE_SUFFIX)
 
     if args.jobs < 0:
         raise RuntimeError('Number of jobs must be non-negative')
