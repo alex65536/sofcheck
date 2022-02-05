@@ -29,6 +29,7 @@ GIT_EXECUTABLE = '@GIT_EXECUTABLE@'
 PYTHON_EXECUTABLE = '@PYTHON_EXECUTABLE@'
 CXX_COMPILER_ID = '@CMAKE_CXX_COMPILER_ID@'
 CXX_COMPILER = '@CMAKE_CXX_COMPILER@'
+EXECUTABLE_SUFFIX = '@CMAKE_EXECUTABLE_SUFFIX@'
 IS_CLANG = (CXX_COMPILER_ID.find('Clang') != -1)
 GIT_FOUND = ('@Git_FOUND@'.lower() == 'true')
 if IS_CLANG:
@@ -44,6 +45,13 @@ def src_path(path):
 
 def bin_path(path):
     return os.path.join(*([BINARY_DIR] + path))
+
+
+def target_path(path):
+    if isinstance(path, str):
+        path = [path]
+    path[-1] += EXECUTABLE_SUFFIX
+    return bin_path(path)
 
 
 def git(*args):
@@ -96,7 +104,7 @@ def rebuild(jobs=0, with_pgo=False):
         subprocess.check_call([
             PYTHON_EXECUTABLE,
             src_path(['tools', 'run_test_positions.py']),
-            bin_path(['sofcheck'])])
+            target_path('sofcheck')])
 
         if IS_CLANG:
             write_stderr('Gathering profile...')
@@ -144,17 +152,17 @@ def show_owl(args):
 
 
 def show_weights(args):
-    subprocess.check_call([bin_path(['show_weights']), '-f', FEATURES_PATH])
+    subprocess.check_call([target_path('show_weights'), '-f', FEATURES_PATH])
 
 
 def apply_weights(args):
-    subprocess.check_call([bin_path(['apply_weights']), '-f', FEATURES_PATH])
+    subprocess.check_call([target_path('apply_weights'), '-f', FEATURES_PATH])
     if not args.no_rebuild:
         rebuild()
 
 
 def make_dataset(args):
-    cmdline = [bin_path(['make_dataset']), '-f', FEATURES_PATH] + args.flags
+    cmdline = [target_path('make_dataset'), '-f', FEATURES_PATH] + args.flags
     subprocess.check_call(cmdline)
 
 
@@ -169,7 +177,7 @@ def build(args):
     if not args.tags:
         rebuild(jobs=args.jobs, with_pgo=args.pgo)
         try:
-            copy_with_perms(bin_path(['sofcheck']), exe_name(''))
+            copy_with_perms(target_path('sofcheck'), exe_name(''))
         except shutil.SameFileError:
             pass
         return
@@ -186,7 +194,7 @@ def build(args):
             git('checkout', tag)
             rebuild(jobs=args.jobs, with_pgo=args.pgo)
             exe_tag = str(idx + 1) if args.numbers else tag
-            copy_with_perms(bin_path(['sofcheck']), exe_name(exe_tag))
+            copy_with_perms(target_path('sofcheck'), exe_name(exe_tag))
     finally:
         git_restore(saved_state)
 
