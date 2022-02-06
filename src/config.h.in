@@ -36,4 +36,7 @@
 // Build with search diagnostics?
 #cmakedefine USE_SEARCH_DIAGNOSTICS
 
+// Full CPU architecture name
+#define CPU_ARCH_FULL "@CPU_ARCH_FULL@"
+
 #endif  // SOF_CONFIG_INCLUDED

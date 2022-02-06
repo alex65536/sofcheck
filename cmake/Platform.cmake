@@ -17,6 +17,7 @@
 
 # Exported variables:
 # - `CPU_ARCH`: target CPU architecture (`x86`, `amd64` or `unknown`)
+# - `CPU_ARCH_FULL`: full name of target CPU architecture
 # - configuration options (see below)
 # - `USE_POPCNT`: target will use native popcount (like __builtin_popcount() or POPCNT instruction)
 # - `USE_BMI2`: target has support for BMI2 instruction set
@@ -36,8 +37,11 @@ if("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86_64|amd64|AMD64)$")
   set(CPU_ARCH amd64)
 elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^(x86|X86)$")
   set(CPU_ARCH x86)
+elseif("${CMAKE_SYSTEM_PROCESSOR}" MATCHES "^aarch64$")
+  set(CPU_ARCH aarch64)
 endif()
 message(STATUS "Detected CPU architecture: ${CPU_ARCH}")
+set(CPU_ARCH_FULL "${CPU_ARCH}")
 
 set(USE_LTO_DEFAULT ON)
 if(MINGW)
@@ -168,6 +172,12 @@ if(USE_LTO)
   endif()
 else()
   message(STATUS "Link-time optimizations are disabled by configuration")
+endif()
+
+if("${CPU_ARCH}" STREQUAL amd64)
+  string(TOLOWER "${CPU_ARCH_LEVEL}" CPU_ARCH_LEVEL_LOWER)
+  set(CPU_ARCH_FULL "${CPU_ARCH}-${CPU_ARCH_LEVEL_LOWER}")
+  unset(CPU_ARCH_LEVEL_LOWER)
 endif()
 
 

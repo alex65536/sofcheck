@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2021 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
       OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     execute_process(
-      COMMAND "${GIT_EXECUTABLE}" describe --tags --always --match='v*' --dirty
+      COMMAND "${GIT_EXECUTABLE}" describe --tags --always --match=v* --dirty
       WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
       OUTPUT_VARIABLE GIT_VERSION_NAME
       ERROR_QUIET

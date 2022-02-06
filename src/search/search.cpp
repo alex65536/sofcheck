@@ -20,6 +20,7 @@
 #include <optional>
 #include <vector>
 
+#include "config.h"
 #include "core/board.h"
 #include "core/move.h"
 #include "search/private/job_runner.h"
@@ -27,6 +28,7 @@
 #include "search/private/types.h"
 #include "util/logging.h"
 #include "util/misc.h"
+#include "util/strutil.h"
 #include "version/version.h"
 
 namespace SoFSearch {
@@ -79,8 +81,16 @@ ApiResult Engine::newGame() {
 }
 
 const char *Engine::name() const {
-  static const std::string ENGINE_NAME =
-      std::string("SoFCheck alpha (version ") + SoFVersion::GIT_VERSION + ")";
+  static const std::string ENGINE_NAME = []() {
+    const std::string rawVersion = SoFVersion::GIT_VERSION;
+    std::string version;
+    if (rawVersion == "unknown" || SoFUtil::startsWith(rawVersion, "v")) {
+      version = rawVersion;
+    } else {
+      version = "git:" + rawVersion;
+    }
+    return std::string("SoFCheck [") + CPU_ARCH_FULL + ", " + version + "]";
+  }();
   return ENGINE_NAME.c_str();
 }
 
