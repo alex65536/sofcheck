@@ -39,8 +39,8 @@ To learn more, see [the project design](docs/design.md) and [how it works](docs/
 
 ## State of the project
 
-The project is in alpha stage. So the engine doesn't play very strong now, and many useful
-heuristics are missing.
+The project is in beta stage. It means that the engine plays strong enough (~2400-2500 Elo,
+according to my rough estimation), but there is still much space for improvement.
 
 ## Building from source
 
