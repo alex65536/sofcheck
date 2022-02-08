@@ -1,4 +1,4 @@
-# SoFCheck
+# SoFCheck 🦉♟
 
 [![Build Status][build-badge]][build-link]
 
