@@ -74,9 +74,9 @@ public:
            static_cast<double>(get(JobStat::PvInternalNodes) + get(JobStat::NonPvInternalNodes));
   }
 
-  inline void add(const JobResults &results) {
+  inline void add(const JobStats &jobStats) {
     for (size_t i = 0; i < JOB_STAT_SZ; ++i) {
-      stats_[i] += results.get(static_cast<JobStat>(i));
+      stats_[i] += jobStats.get(static_cast<JobStat>(i));
     }
   }
 
@@ -159,6 +159,8 @@ void JobRunner::tryApplyConfigUnlocked() {
 }
 
 void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
+  using Event = JobCommunicator::Event;
+
   {
     std::unique_lock lock(applyConfigLock_);
     canApplyConfig_ = false;
@@ -175,7 +177,7 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
   SOF_ASSERT(evaluators_.size() == jobCount);
   std::deque<Job> jobs;
   for (size_t i = 0; i < jobCount; ++i) {
-    jobs.emplace_back(comm_, tt_, server_, evaluators_[i], i);
+    jobs.emplace_back(comm_, tt_, evaluators_[i], i);
   }
   std::vector<std::thread> threads;
   for (size_t i = 0; i < jobCount; ++i) {
@@ -199,15 +201,41 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
     return std::max(delay, 100us);
   };
 
+  size_t bestDepth = 0;
+  Move bestMove = Move::null();
+
   // Run loop in which we check the jobs' status
   auto statsLastUpdatedTime = startTime;
-  do {
+  for (;;) {
+    // Peek event
+    auto event = comm_.waitForEvent(calcSleepTime());
+    if (event == Event::Stopped) {
+      break;
+    }
+
     const auto now = steady_clock::now();
 
     // Collect stats
     Stats stats;
     for (const Job &job : jobs) {
-      stats.add(job.results());
+      stats.add(job.stats());
+    }
+
+    // Process PV lines if they are present
+    if (event == Event::NewLines) {
+      auto lines = comm_.extractLines();
+      // Normally, the extracted lines will be sorted by depth, but the jobs add them in a quite
+      // racy manner, so they may appear in any order. Thus, we sort them to reduce the chaos a
+      // little.
+      std::sort(lines.begin(), lines.end(),
+                [&](const auto &a, const auto &b) { return a.depth < b.depth; });
+      for (const auto &line : lines) {
+        server_.sendResult(line, stats.nodes());
+        if (line.depth > bestDepth && !line.pv.empty()) {
+          bestDepth = line.depth;
+          bestMove = line.pv[0];
+        }
+      }
     }
 
     // Check if it's time to stop
@@ -244,7 +272,7 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
         statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
       }
     }
-  } while (!comm_.wait(calcSleepTime()));
+  }
 
   // Join job threads
   for (std::thread &thread : threads) {
@@ -252,15 +280,6 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
   }
 
   // Display best move
-  size_t bestDepth = 0;
-  Move bestMove = Move::null();
-  for (const Job &job : jobs) {
-    const size_t depth = job.results().depth();
-    if (depth > bestDepth) {
-      bestDepth = depth;
-      bestMove = job.results().bestMove();
-    }
-  }
   if (bestMove == Move::null()) {
     if (bestDepth != 0) {
       logError(JOB_RUNNER) << "At least one depth is calculated, but the best move is not found";

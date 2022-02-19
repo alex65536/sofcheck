@@ -22,8 +22,6 @@
 #include <utility>
 #include <vector>
 
-#include "bot_api/server.h"
-#include "bot_api/types.h"
 #include "core/board.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
@@ -62,15 +60,39 @@ void JobCommunicator::stop() {
   if (!stopped_.compare_exchange_strong(tmp, 1, std::memory_order_release)) {
     return;
   }
-  // Lock and unlock `stopLock_` to ensure that we are not checking for `isStopped()` in
-  // `this->wait()` now. If we remove lock/unlock from here, the following may happen:
-  // - `this->wait()` checks for `isStopped()`, which returns `false`
+  // Lock and unlock `lock_` to ensure that we are not checking for `isStopped()` in
+  // `this->waitForEvent()` now. If we remove lock/unlock from here, the following may happen:
+  // - `this->waitForEvent()` checks for `isStopped()`, which returns `false`
   // - we change `stopped_` to `1` and notify all the waiting threads
-  // - `this->wait()` goes to `stopEvent_.wait()` and doesn't wake, since the thread didn't started
-  // waiting when nofitication arrived
-  stopLock_.lock();
-  stopLock_.unlock();
-  stopEvent_.notify_all();
+  // - `this->waitForEvent()` goes to `event_.wait()` and doesn't wake, since the thread didn't
+  // started waiting when nofitication arrived
+  lock_.lock();
+  lock_.unlock();
+  event_.notify_all();
+}
+
+void JobCommunicator::addLine(SoFBotApi::SearchResult line) {
+  std::unique_lock guard(lock_);
+  lines_.push_back(std::move(line));
+  lock_.unlock();
+  event_.notify_all();
+}
+
+std::vector<SoFBotApi::SearchResult> JobCommunicator::extractLines() {
+  std::unique_lock guard(lock_);
+  auto result = std::move(lines_);
+  lines_.clear();
+  return result;
+}
+
+JobCommunicator::Event JobCommunicator::checkEventUnlocked() {
+  if (!lines_.empty()) {
+    return Event::NewLines;
+  }
+  if (isStopped()) {
+    return Event::Stopped;
+  }
+  return Event::Timeout;
 }
 
 bool JobCommunicator::checkTimeout() {
@@ -150,8 +172,8 @@ public:
   inline Searcher(Job &job, Board &board, RepetitionTable &repetitions)
       : board_(board),
         tt_(job.tt_),
-        comm_(job.communicator_),
-        results_(job.results_),
+        comm_(job.comm_),
+        stats_(job.stats_),
         evaluator_(job.evaluator_),
         repetitions_(repetitions),
         jobId_(job.id_) {}
@@ -212,7 +234,7 @@ private:
   Board &board_;
   TranspositionTable &tt_;
   JobCommunicator &comm_;
-  JobResults &results_;
+  JobStats &stats_;
   Evaluator &evaluator_;
   RepetitionTable &repetitions_;
   size_t jobId_;
@@ -298,7 +320,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     return 0;
   }
 
-  results_.inc(JobStat::Nodes);
+  stats_.inc(JobStat::Nodes);
 
   const score_t evalScore = evaluator_.evalForCur(board_, tag);
   DIAGNOSTIC({
@@ -379,8 +401,8 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
 
   // We need to increment node count after quiescense search, so nodes will not be calculated twice
   // in both quiescense search and main search
-  results_.inc(JobStat::Nodes);
-  results_.inc(isNodeKindPv(Node) ? JobStat::PvNodes : JobStat::NonPvNodes);
+  stats_.inc(JobStat::Nodes);
+  stats_.inc(isNodeKindPv(Node) ? JobStat::PvNodes : JobStat::NonPvNodes);
 
   auto ttStore = [&](score_t score) {
     PositionCostBound bound = PositionCostBound::Exact;
@@ -402,14 +424,14 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   // Probe the transposition table
   Move hashMove = Move::null();
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
-    results_.inc(JobStat::TtHits);
+    stats_.inc(JobStat::TtHits);
     hashMove = data.move();
     if (Node != NodeKind::Root && data.depth() >= depth && board_.moveCounter < 90) {
       const score_t score = adjustCheckmate(data.score(), static_cast<int16_t>(idepth));
       switch (data.bound()) {
         case PositionCostBound::Exact: {
           frame.bestMove = hashMove;
-          results_.inc(JobStat::TtExactHits);
+          stats_.inc(JobStat::TtExactHits);
           // Refresh the hash entry, as it may come from older epoch
           tt_.refresh(board_.hash, data);
           return score;
@@ -491,7 +513,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   bool hasMove = false;
   size_t numHistoryMoves = 0;
   DIAGNOSTIC(DgnMoveRepeatChecker dgnMoves;)
-  results_.inc(isNodeKindPv(Node) ? JobStat::PvInternalNodes : JobStat::NonPvInternalNodes);
+  stats_.inc(isNodeKindPv(Node) ? JobStat::PvInternalNodes : JobStat::NonPvInternalNodes);
   for (Move move = picker.next(); move != Move::invalid(); move = picker.next()) {
     if (move == Move::null()) {
       continue;
@@ -536,7 +558,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     score_t score = alpha;
     const bool doZeroWindowSearch = isNodeKindPv(Node) && !isFirstMove;
     if (doZeroWindowSearch) {
-      results_.inc(JobStat::PNEdges);
+      stats_.inc(JobStat::PNEdges);
       score = -search<NodeKind::Simple>(depth - 1, idepth + 1, -alpha - 1, -alpha, guard.tag(),
                                         newFlags);
       score = score <= alpha ? alpha : alpha + 1;
@@ -546,7 +568,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     }
     if (!doZeroWindowSearch || (alpha < score && (Node == NodeKind::Root || score < beta))) {
       constexpr NodeKind newNode = isNodeKindPv(Node) ? NodeKind::Pv : NodeKind::Simple;
-      results_.inc(isNodeKindPv(Node) ? JobStat::PPEdges : JobStat::NNEdges);
+      stats_.inc(isNodeKindPv(Node) ? JobStat::PPEdges : JobStat::NNEdges);
       score = -search<newNode>(depth - 1, idepth + 1, -beta, -alpha, guard.tag(), newFlags);
       if (mustStop()) {
         return 0;
@@ -619,23 +641,23 @@ void Job::run(const Position &position) {
 
   // Perform iterative deepening
   Searcher searcher(*this, board, doubleRepeat);
-  const size_t maxDepth = std::min(communicator_.limits().depth, MAX_DEPTH);
+  const size_t maxDepth = std::min(comm_.limits().depth, MAX_DEPTH);
   for (size_t depth = 1; depth <= maxDepth; ++depth) {
     Move bestMove = Move::null();
     const score_t score = searcher.run(depth, bestMove);
-    if (communicator_.isStopped()) {
+    if (comm_.isStopped()) {
       return;
     }
-    if (communicator_.finishDepth(depth)) {
+    if (comm_.finishDepth(depth)) {
       DGN_ASSERT(bestMove != Move::null());
-      results_.setBestMove(depth, bestMove);
       std::vector<Move> pv = unwindPv(board, bestMove, tt_);
-      server_.sendResult({depth, pv.data(), pv.size(), SoFEval::scoreToPositionCost(score),
-                          PositionCostBound::Exact});
+      DGN_ASSERT(!pv.empty());
+      comm_.addLine(
+          {depth, std::move(pv), SoFEval::scoreToPositionCost(score), PositionCostBound::Exact});
     }
   }
 
-  communicator_.stop();
+  comm_.stop();
 }
 
 }  // namespace SoFSearch::Private

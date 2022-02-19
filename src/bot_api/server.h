@@ -67,8 +67,9 @@ public:
   virtual ApiResult sendString(const char *str) = 0;
   ApiResult sendString(const std::string &str) { return sendString(str.c_str()); }
 
-  // Send temporary search result. Call this method only during the search
-  virtual ApiResult sendResult(const SearchResult &result) = 0;
+  // Send temporary search result. If `nodes = 0`, then the number of nodes is considered unknown.
+  // Call this method only during the search.
+  virtual ApiResult sendResult(const SearchResult &result, uint64_t nodes = 0) = 0;
 
   // Send number of nodes currently searched. Call this method only during the search
   virtual ApiResult sendNodeCount(uint64_t nodes) = 0;

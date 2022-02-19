@@ -159,7 +159,7 @@ ApiResult UciServerConnector::sendNodeCount(const uint64_t nodes) {
   }
   const auto time = getSearchTime();
   const uint64_t timeMsec = duration_cast<milliseconds>(time).count();
-  D_CHECK_IO(out_ << "info nodes " << nodes << " time " << timeMsec);
+  D_CHECK_IO(out_ << "info time " << timeMsec << " nodes " << nodes);
   uint64_t nps = 0;
   if (calcNodesPerSecond(nodes, time, nps)) {
     D_CHECK_IO(out_ << " nps " << nps);
@@ -168,18 +168,26 @@ ApiResult UciServerConnector::sendNodeCount(const uint64_t nodes) {
   return ApiResult::Ok;
 }
 
-ApiResult UciServerConnector::sendResult(const SearchResult &result) {
+ApiResult UciServerConnector::sendResult(const SearchResult &result, const uint64_t nodes) {
   ensureClient();
   std::lock_guard guard(mutex_);
   if (!searchStarted_) {
     return ApiResult::UnexpectedCall;
   }
-  const uint64_t timeMsec = duration_cast<milliseconds>(getSearchTime()).count();
+  const auto time = getSearchTime();
+  const uint64_t timeMsec = duration_cast<milliseconds>(time).count();
   D_CHECK_IO(out_ << "info depth " << result.depth << " time " << timeMsec);
-  if (result.pvLen != 0) {
+  if (nodes != 0) {
+    D_CHECK_IO(out_ << " nodes " << nodes);
+    uint64_t nps = 0;
+    if (calcNodesPerSecond(nodes, time, nps)) {
+      D_CHECK_IO(out_ << " nps " << nps);
+    }
+  }
+  if (!result.pv.empty()) {
     D_CHECK_IO(out_ << " pv");
-    for (size_t i = 0; i < result.pvLen; ++i) {
-      D_CHECK_IO(out_ << " " << moveToStr(result.pv[i]));
+    for (const Move move : result.pv) {
+      D_CHECK_IO(out_ << " " << moveToStr(move));
     }
   }
   switch (result.cost.type()) {

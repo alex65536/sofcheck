@@ -79,12 +79,9 @@ public:
   ApiResult searchFixedTime(std::chrono::milliseconds time) override {
     cerr << "searchFixedTime(" << time.count() << ")" << endl;
     std::vector<SoFCore::Move> moves{SoFCore::Move{SoFCore::MoveKind::PawnDoubleMove, 52, 36, 0}};
-    server_->sendResult(
-        {10, moves.data(), moves.size(), PositionCost::centipawns(100), PositionCostBound::Exact});
-    server_->sendResult({15, moves.data(), moves.size(), PositionCost::checkMate(-1),
-                         PositionCostBound::Lowerbound});
-    server_->sendResult({20, moves.data(), moves.size(), PositionCost::checkMate(5),
-                         PositionCostBound::Upperbound});
+    server_->sendResult({10, moves, PositionCost::centipawns(100), PositionCostBound::Exact});
+    server_->sendResult({15, moves, PositionCost::checkMate(-1), PositionCostBound::Lowerbound});
+    server_->sendResult({20, moves, PositionCost::checkMate(5), PositionCostBound::Upperbound});
     return ApiResult::Ok;
   }
 

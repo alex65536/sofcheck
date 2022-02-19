@@ -21,6 +21,7 @@
 #include <chrono>
 #include <cstdint>
 #include <limits>
+#include <vector>
 
 #include "core/move.h"
 #include "core/types.h"
@@ -133,11 +134,10 @@ using permille_t = uint16_t;
 
 // Intermediate search result
 struct SearchResult {
-  size_t depth;             // Search depth (in plies)
-  const SoFCore::Move *pv;  // The best line found
-  size_t pvLen;             // Length of the best line found (if not present, set to zero)
-  PositionCost cost;        // Estimated position cost
-  PositionCostBound bound;  // Is position cost exact?
+  size_t depth;                   // Search depth (in plies)
+  std::vector<SoFCore::Move> pv;  // The best line found (empty if not present)
+  PositionCost cost;              // Estimated position cost
+  PositionCostBound bound;        // Is position cost exact?
 };
 
 }  // namespace SoFBotApi
