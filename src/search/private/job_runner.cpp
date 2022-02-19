@@ -281,9 +281,7 @@ void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
 
   // Display best move
   if (bestMove == Move::null()) {
-    if (bestDepth != 0) {
-      logError(JOB_RUNNER) << "At least one depth is calculated, but the best move is not found";
-    }
+    logWarn(JOB_RUNNER) << "The search didn't find anything; picking a random move";
     bestMove = pickRandomMove(position.last);
   }
   server_.finishSearch(bestMove);
