@@ -87,13 +87,13 @@ add_library(sof_bot_api STATIC
   src/bot_api/options.cpp
   src/bot_api/strutil.cpp
 )
-target_link_libraries(sof_bot_api PUBLIC sof_core sof_util)
+target_link_libraries(sof_bot_api PUBLIC sof_core sof_util Threads::Threads)
 
 add_library(sof_bot_api_clients STATIC
   src/bot_api/clients/private/uci_option_escape.cpp
   src/bot_api/clients/uci.cpp
 )
-target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api)
+target_link_libraries(sof_bot_api_clients PUBLIC sof_core sof_util sof_bot_api Threads::Threads)
 
 add_library(sof_gameset STATIC
   src/gameset/reader.cpp
