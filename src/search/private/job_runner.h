@@ -86,9 +86,6 @@ public:
   inline bool isDebugMode() const { return debugMode_.load(std::memory_order_acquire); }
 
 private:
-  // Main function of the thread which controls all the running jobs.
-  void runMainThread(const Position &position, size_t jobCount);
-
   // Does nothing if the search is running (i.e. `canApplyConfig_` is `false`). Otherwise, applies
   // new configuration if it has changed since last successful call to this function.  Must be
   // called under `applyConfigLock_`
@@ -96,6 +93,8 @@ private:
 
   // Helper method. Acknowledges that search in the position `position` is being started
   void setPosition(Position position);
+
+  class MainThread;
 
   JobCommunicator comm_;
   TranspositionTable tt_;

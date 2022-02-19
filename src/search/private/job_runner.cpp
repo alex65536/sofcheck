@@ -33,6 +33,7 @@
 #include "util/defer.h"
 #include "util/logging.h"
 #include "util/math.h"
+#include "util/no_copy_move.h"
 #include "util/random.h"
 
 namespace SoFSearch::Private {
@@ -84,6 +85,201 @@ private:
   uint64_t stats_[JOB_STAT_SZ] = {};
 };
 
+static Move pickRandomMove(Board board) {
+  Move moves[SoFCore::BUFSZ_MOVES];
+  const size_t count = genAllMoves(board, moves);
+  SoFUtil::randomShuffle(moves, moves + count);
+  for (size_t i = 0; i < count; ++i) {
+    const Move move = moves[i];
+    const SoFCore::MovePersistence persistence = moveMake(board, move);
+    if (!isMoveLegal(board)) {
+      moveUnmake(board, move, persistence);
+      continue;
+    }
+    moveUnmake(board, move, persistence);
+    return move;
+  }
+  return Move::null();
+}
+
+class JobRunner::MainThread : public SoFUtil::NoCopyMove {
+public:
+  explicit MainThread(JobRunner &p, const Position &position, const size_t jobCount)
+      : p_(p),
+        position_(position),
+        jobCount_(jobCount),
+        comm_(p_.comm_),
+        server_(p_.server_),
+        startTime_(comm_.startTime()),
+        limits_(comm_.limits()) {}
+
+  void run() {
+    disableReconfiguration();
+    SOF_DEFER({ enableReconfiguration(); });
+    createJobsAndThreads();
+    runMainLoop();
+    joinThreads();
+    finishSearch();
+  }
+
+private:
+  using Event = JobCommunicator::Event;
+
+  static constexpr microseconds STATS_UPDATE_INTERVAL = 3s;
+  static constexpr microseconds THREAD_TICK_INTERVAL = 30ms;
+
+  microseconds calcSleepTime() const {
+    if (limits_.time == TIME_UNLIMITED) {
+      return THREAD_TICK_INTERVAL;
+    }
+    const auto timePassed = timeElapsed(steady_clock::now());
+    const microseconds timeLeft = limits_.time - timePassed;
+    const auto delay = std::min(timeLeft + 100us, THREAD_TICK_INTERVAL);
+    return std::max(delay, 100us);
+  }
+
+  // Disables job runner reconfiguration. Must be called before the jobs are created
+  void disableReconfiguration() {
+    std::unique_lock lock(p_.applyConfigLock_);
+    p_.canApplyConfig_ = false;
+  }
+
+  // Re-enables job runner reconfiguration and performs delayed configuration requests. Must be
+  // called after the search is done
+  void enableReconfiguration() {
+    std::unique_lock lock(p_.applyConfigLock_);
+    p_.canApplyConfig_ = true;
+    p_.tryApplyConfigUnlocked();
+  }
+
+  void createJobsAndThreads() {
+    SOF_ASSERT(p_.evaluators_.size() == jobCount_);
+    for (size_t i = 0; i < jobCount_; ++i) {
+      jobs_.emplace_back(comm_, p_.tt_, p_.evaluators_[i], i);
+    }
+    for (size_t i = 0; i < jobCount_; ++i) {
+      threads_.emplace_back([&job = jobs_[i], this]() { job.run(position_); });
+    }
+  }
+
+  void updateStats() {
+    stats_ = Stats();
+    for (const Job &job : jobs_) {
+      stats_.add(job.stats());
+    }
+  }
+
+  void extractLines() {
+    auto lines = comm_.extractLines();
+    // Normally, the extracted lines will be sorted by depth, but the jobs add them in a quite racy
+    // manner, so they may appear in any order. Thus, we sort them to reduce the chaos a little.
+    std::sort(lines.begin(), lines.end(),
+              [&](const auto &a, const auto &b) { return a.depth < b.depth; });
+    for (const auto &line : lines) {
+      server_.sendResult(line, stats_.nodes());
+      if (line.depth > bestDepth_ && !line.pv.empty()) {
+        bestDepth_ = line.depth;
+        bestMove_ = line.pv[0];
+      }
+    }
+  }
+
+  microseconds timeElapsed(const steady_clock::time_point &now) const {
+    return duration_cast<microseconds>(now - startTime_);
+  }
+
+  bool mustStop(const steady_clock::time_point &now) const {
+    return stats_.nodes() > limits_.nodes ||
+           (limits_.time != TIME_UNLIMITED && timeElapsed(now) > limits_.time);
+  }
+
+  void printStats() {
+    server_.sendNodeCount(stats_.nodes());
+    server_.sendHashHits(stats_.get(JobStat::TtHits));
+
+    if (p_.isDebugMode()) {
+      std::ostringstream nodeStream;
+      nodeStream << "Node counts: P = " << stats_.pvNodes() << " N = " << stats_.nonPvNodes()
+                 << " O = " << stats_.otherNodes()
+                 << " PI = " << stats_.get(JobStat::PvInternalNodes)
+                 << " NI = " << stats_.get(JobStat::NonPvInternalNodes);
+
+      std::ostringstream edgeStream;
+      edgeStream.precision(3);
+      edgeStream.flags(edgeStream.flags() | std::ostream::fixed);
+      edgeStream << "Edge counts: PP = " << stats_.get(JobStat::PPEdges)
+                 << " PN = " << stats_.get(JobStat::PNEdges)
+                 << " NN = " << stats_.get(JobStat::NNEdges)
+                 << " PBranch = " << stats_.pvBranchFactor()
+                 << " NBranch = " << stats_.nonPvBranchFactor()
+                 << " Branch = " << stats_.branchFactor();
+
+      server_.sendString("Hash exact hits: " + std::to_string(stats_.get(JobStat::TtExactHits)));
+      server_.sendString(nodeStream.str());
+      server_.sendString(edgeStream.str());
+    }
+  }
+
+  void runMainLoop() {
+    auto statsLastUpdatedTime = startTime_;
+    for (;;) {
+      auto event = comm_.waitForEvent(calcSleepTime());
+      if (event == Event::Stopped) {
+        break;
+      }
+      const auto now = steady_clock::now();
+      updateStats();
+      if (event == Event::NewLines) {
+        extractLines();
+      }
+      if (mustStop(now)) {
+        comm_.stop();
+      }
+      if (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
+        printStats();
+        while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
+          statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
+        }
+      }
+    }
+  }
+
+  void joinThreads() {
+    for (std::thread &thread : threads_) {
+      thread.join();
+    }
+  }
+
+  void finishSearch() {
+    if (bestMove_ == Move::null()) {
+      logWarn(JOB_RUNNER) << "The search didn't find anything; picking a random move";
+      bestMove_ = pickRandomMove(position_.last);
+    }
+    server_.finishSearch(bestMove_);
+
+    if (p_.isDebugMode()) {
+      server_.sendString(
+          "Total search time: " + std::to_string(timeElapsed(steady_clock::now()).count()) + " us");
+    }
+  }
+
+  JobRunner &p_;
+  const Position &position_;
+  const size_t jobCount_;
+  JobCommunicator &comm_;
+  SoFBotApi::Server &server_;
+  const steady_clock::time_point startTime_;
+  const SearchLimits &limits_;
+
+  // We store the jobs in `deque` instead of `vector`, as `Job` instances are not moveable
+  std::deque<Job> jobs_;
+  std::vector<std::thread> threads_;
+
+  size_t bestDepth_ = 0;
+  Move bestMove_ = Move::null();
+  Stats stats_;
+};
+
 JobRunner::JobRunner(SoFBotApi::Server &server) : server_(server), evaluators_(DEFAULT_NUM_JOBS) {}
 
 void JobRunner::clearHash() {
@@ -117,23 +313,6 @@ void JobRunner::join() {
   }
 }
 
-static Move pickRandomMove(Board board) {
-  Move moves[SoFCore::BUFSZ_MOVES];
-  const size_t count = genAllMoves(board, moves);
-  SoFUtil::randomShuffle(moves, moves + count);
-  for (size_t i = 0; i < count; ++i) {
-    const Move move = moves[i];
-    const SoFCore::MovePersistence persistence = moveMake(board, move);
-    if (!isMoveLegal(board)) {
-      moveUnmake(board, move, persistence);
-      continue;
-    }
-    moveUnmake(board, move, persistence);
-    return move;
-  }
-  return Move::null();
-}
-
 void JobRunner::tryApplyConfigUnlocked() {
   if (!canApplyConfig_) {
     return;
@@ -158,148 +337,14 @@ void JobRunner::tryApplyConfigUnlocked() {
   }
 }
 
-void JobRunner::runMainThread(const Position &position, const size_t jobCount) {
-  using Event = JobCommunicator::Event;
-
-  {
-    std::unique_lock lock(applyConfigLock_);
-    canApplyConfig_ = false;
-  }
-  SOF_DEFER({
-    // Perform delayed reconfiguration
-    std::unique_lock lock(applyConfigLock_);
-    canApplyConfig_ = true;
-    tryApplyConfigUnlocked();
-  });
-
-  // Create jobs and associated threads. We store the jobs in `deque` instead of `vector`, as `Job`
-  // instances are not moveable
-  SOF_ASSERT(evaluators_.size() == jobCount);
-  std::deque<Job> jobs;
-  for (size_t i = 0; i < jobCount; ++i) {
-    jobs.emplace_back(comm_, tt_, evaluators_[i], i);
-  }
-  std::vector<std::thread> threads;
-  for (size_t i = 0; i < jobCount; ++i) {
-    threads.emplace_back([&job = jobs[i], &position]() { job.run(position); });
-  }
-
-  static constexpr microseconds STATS_UPDATE_INTERVAL = 3s;
-  static constexpr microseconds THREAD_TICK_INTERVAL = 30ms;
-
-  const auto startTime = comm_.startTime();
-  const SearchLimits &limits = comm_.limits();
-
-  const auto calcSleepTime = [&]() {
-    if (limits.time == TIME_UNLIMITED) {
-      return THREAD_TICK_INTERVAL;
-    }
-    const auto now = steady_clock::now();
-    const auto timePassed = now - startTime;
-    const auto timeLeft = duration_cast<microseconds>(limits.time - timePassed);
-    const auto delay = std::min(timeLeft + 100us, THREAD_TICK_INTERVAL);
-    return std::max(delay, 100us);
-  };
-
-  size_t bestDepth = 0;
-  Move bestMove = Move::null();
-
-  // Run loop in which we check the jobs' status
-  auto statsLastUpdatedTime = startTime;
-  for (;;) {
-    // Peek event
-    auto event = comm_.waitForEvent(calcSleepTime());
-    if (event == Event::Stopped) {
-      break;
-    }
-
-    const auto now = steady_clock::now();
-
-    // Collect stats
-    Stats stats;
-    for (const Job &job : jobs) {
-      stats.add(job.stats());
-    }
-
-    // Process PV lines if they are present
-    if (event == Event::NewLines) {
-      auto lines = comm_.extractLines();
-      // Normally, the extracted lines will be sorted by depth, but the jobs add them in a quite
-      // racy manner, so they may appear in any order. Thus, we sort them to reduce the chaos a
-      // little.
-      std::sort(lines.begin(), lines.end(),
-                [&](const auto &a, const auto &b) { return a.depth < b.depth; });
-      for (const auto &line : lines) {
-        server_.sendResult(line, stats.nodes());
-        if (line.depth > bestDepth && !line.pv.empty()) {
-          bestDepth = line.depth;
-          bestMove = line.pv[0];
-        }
-      }
-    }
-
-    // Check if it's time to stop
-    if (stats.nodes() > limits.nodes ||
-        (limits.time != TIME_UNLIMITED && now - startTime > limits.time)) {
-      comm_.stop();
-    }
-
-    // Print stats
-    if (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
-      server_.sendNodeCount(stats.nodes());
-      server_.sendHashHits(stats.get(JobStat::TtHits));
-      if (isDebugMode()) {
-        std::ostringstream nodeStream;
-        nodeStream << "Node counts: P = " << stats.pvNodes() << " N = " << stats.nonPvNodes()
-                   << " O = " << stats.otherNodes()
-                   << " PI = " << stats.get(JobStat::PvInternalNodes)
-                   << " NI = " << stats.get(JobStat::NonPvInternalNodes);
-        std::ostringstream edgeStream;
-        edgeStream.precision(3);
-        edgeStream.flags(edgeStream.flags() | std::ostream::fixed);
-        edgeStream << "Edge counts: PP = " << stats.get(JobStat::PPEdges)
-                   << " PN = " << stats.get(JobStat::PNEdges)
-                   << " NN = " << stats.get(JobStat::NNEdges)
-                   << " PBranch = " << stats.pvBranchFactor()
-                   << " NBranch = " << stats.nonPvBranchFactor()
-                   << " Branch = " << stats.branchFactor();
-
-        server_.sendString("Hash exact hits: " + std::to_string(stats.get(JobStat::TtExactHits)));
-        server_.sendString(nodeStream.str());
-        server_.sendString(edgeStream.str());
-      }
-      while (now >= statsLastUpdatedTime + STATS_UPDATE_INTERVAL) {
-        statsLastUpdatedTime += STATS_UPDATE_INTERVAL;
-      }
-    }
-  }
-
-  // Join job threads
-  for (std::thread &thread : threads) {
-    thread.join();
-  }
-
-  // Display best move
-  if (bestMove == Move::null()) {
-    logWarn(JOB_RUNNER) << "The search didn't find anything; picking a random move";
-    bestMove = pickRandomMove(position.last);
-  }
-  server_.finishSearch(bestMove);
-
-  if (isDebugMode()) {
-    const auto endTime = std::chrono::steady_clock::now();
-    const auto timeElapsed =
-        std::chrono::duration_cast<std::chrono::microseconds>(endTime - comm_.startTime());
-    server_.sendString("Total search time: " + std::to_string(timeElapsed.count()) + " us");
-  }
-}
-
 void JobRunner::start(const Position &position, const SearchLimits &limits) {
   join();
   comm_.reset(limits);
   setPosition(position);
-  mainThread_ = std::thread(
-      [this, position, jobCount = this->numJobs_]() { runMainThread(position, jobCount); });
+  mainThread_ = std::thread([this, position, jobCount = this->numJobs_]() {
+    MainThread mt(*this, position, jobCount);
+    mt.run();
+  });
 }
 
 void JobRunner::setPosition(Position position) {
