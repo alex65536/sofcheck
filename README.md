@@ -121,6 +121,8 @@ engine.
 - Andrey Brenkman, author of [Ifrit](http://alphagameset.xyz/ifrit/ifrit_chess_engine.html) chess
   engine, for well-commented source code of Ifrit. While looking at these sources, some ideas on
   how to use the heuristics in search became clearer to me.
+- [CCRL](https://ccrl.chessdom.com/) testers for testing the engine, and especially Graham Banks
+  for awesome tournaments ;)
 
 ## License
 
