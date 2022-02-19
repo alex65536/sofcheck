@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "core/board.h"
+#include "core/move.h"
 #include "core/movegen.h"
 #include "core/strutil.h"
 #include "eval/evaluate.h"

@@ -24,9 +24,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <mutex>
+#include <vector>
 
 #include "bot_api/types.h"
-#include "core/move.h"
 #include "eval/score.h"
 #include "search/private/limits.h"
 
