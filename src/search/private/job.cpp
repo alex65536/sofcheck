@@ -75,7 +75,7 @@ void JobCommunicator::stop() {
 void JobCommunicator::addLine(SoFBotApi::SearchResult line) {
   std::unique_lock guard(lock_);
   lines_.push_back(std::move(line));
-  lock_.unlock();
+  guard.unlock();
   event_.notify_all();
 }
 
