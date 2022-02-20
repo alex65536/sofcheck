@@ -21,7 +21,6 @@
 #include "bot_api/api_base.h"
 #include "bot_api/clients/uci.h"
 #include "bot_api/connection.h"
-#include "bot_api/connector.h"
 #include "bot_api/strutil.h"
 #include "core/init.h"
 #include "search/search.h"
@@ -54,8 +53,7 @@ int main() {
   std::cout << BANNER << std::endl;
 
   Connection connection =
-      Connection::clientSide(SoFSearch::makeEngine(),
-                             std::make_unique<SoFBotApi::Clients::UciServerConnector>())
+      Connection::clientSide(SoFSearch::makeEngine(), SoFBotApi::Clients::makeUciServerConnector())
           .okOrErr([](const auto err) {
             panic(std::string("Unable to initialize the engine: ") +
                   SoFBotApi::apiResultToStr(err));

@@ -50,16 +50,6 @@ public:
   static SoFUtil::Result<Connection, ApiResult> serverSide(std::unique_ptr<ClientConnector> client,
                                                            std::unique_ptr<Server> server);
 
-  template <typename Client, typename Server>
-  inline static SoFUtil::Result<Connection, ApiResult> clientSide() {
-    return clientSide(std::make_unique<Client>(), std::make_unique<Server>());
-  }
-
-  template <typename Client, typename Server>
-  inline static SoFUtil::Result<Connection, ApiResult> serverSide() {
-    return serverSide(std::make_unique<Client>(), std::make_unique<Server>());
-  }
-
   Connection(Connection &&) = default;
   Connection &operator=(Connection &&) = default;
 

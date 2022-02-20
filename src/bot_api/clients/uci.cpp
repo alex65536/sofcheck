@@ -18,14 +18,19 @@
 #include "bot_api/clients/uci.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
+#include <cstddef>
+#include <cstdint>
 #include <iostream>
 #include <limits>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "bot_api/api_base.h"
 #include "bot_api/client.h"
 #include "bot_api/clients/private/uci_option_escape.h"
 #include "bot_api/options.h"
@@ -38,6 +43,7 @@
 #include "core/strutil.h"
 #include "util/logging.h"
 #include "util/misc.h"
+#include "util/no_copy_move.h"
 #include "util/strutil.h"
 
 namespace SoFBotApi::Clients {
@@ -55,6 +61,7 @@ using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::seconds;
+using std::chrono::steady_clock;
 
 // Types of log entries
 constexpr const char *UCI_CLIENT = "UCI client";
@@ -76,66 +83,6 @@ constexpr const char *UCI_SERVER = "UCI server";
     }                             \
   }
 
-void UciServerConnector::ensureClient() { SOF_ASSERT_MSG("The client is not connected", client_); }
-
-ApiResult UciServerConnector::finishSearch(const Move bestMove) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  if (!searchStarted_) {
-    return ApiResult::UnexpectedCall;
-  }
-  D_CHECK_IO(out_ << "bestmove " << moveToStr(bestMove) << endl);
-  searchStarted_ = false;
-  return ApiResult::Ok;
-}
-
-ApiResult UciServerConnector::reportError(const char *message) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  logError(UCI_CLIENT) << message;
-  D_CHECK_IO(out_ << "info string UCI client error: " << SoFUtil::sanitizeEol(message) << endl);
-  return ApiResult::Ok;
-}
-
-ApiResult UciServerConnector::sendCurrMove(const Move move, const size_t moveNumber) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  if (!searchStarted_) {
-    return ApiResult::UnexpectedCall;
-  }
-  D_CHECK_IO(out_ << "info currmove " << moveToStr(move));
-  if (moveNumber != 0) {
-    D_CHECK_IO(out_ << " currmovenumber " << moveNumber);
-  }
-  D_CHECK_IO(out_ << endl);
-  return ApiResult::Ok;
-}
-
-ApiResult UciServerConnector::sendHashHits(const uint64_t hits) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  if (!searchStarted_) {
-    return ApiResult::UnexpectedCall;
-  }
-  if (debugEnabled_) {
-    D_CHECK_IO(out_ << "info string Hash table hits: " << std::to_string(hits) << endl);
-  }
-  return ApiResult::Ok;
-}
-
-ApiResult UciServerConnector::sendHashFull(const permille_t hashFull) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  if (!searchStarted_) {
-    return ApiResult::UnexpectedCall;
-  }
-  if (hashFull > 1000) {
-    return ApiResult::InvalidArgument;
-  }
-  D_CHECK_IO(out_ << "info hashfull " << hashFull << endl);
-  return ApiResult::Ok;
-}
-
 template <typename Duration>
 inline static bool calcNodesPerSecond(const uint64_t nodes, const Duration time, uint64_t &nps) {
   const double timeSec = duration_cast<duration<double>>(time).count();
@@ -151,132 +98,286 @@ inline static bool calcNodesPerSecond(const uint64_t nodes, const Duration time,
   return true;
 }
 
-ApiResult UciServerConnector::sendNodeCount(const uint64_t nodes) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  if (!searchStarted_) {
-    return ApiResult::UnexpectedCall;
-  }
-  const auto time = getSearchTime();
-  const uint64_t timeMsec = duration_cast<milliseconds>(time).count();
-  D_CHECK_IO(out_ << "info time " << timeMsec << " nodes " << nodes);
-  uint64_t nps = 0;
-  if (calcNodesPerSecond(nodes, time, nps)) {
-    D_CHECK_IO(out_ << " nps " << nps);
-  }
-  D_CHECK_IO(out_ << endl);
-  return ApiResult::Ok;
-}
+class UciServerConnector final : public ServerConnector, public SoFUtil::NoCopyMove {
+public:
+  const char *name() const override { return "UCI Server Connector"; }
+  const char *author() const override { return "SoFCheck developers"; }
 
-ApiResult UciServerConnector::sendResult(const SearchResult &result, const uint64_t nodes) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  if (!searchStarted_) {
-    return ApiResult::UnexpectedCall;
+  ApiResult finishSearch(const Move bestMove) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    if (!searchStarted_) {
+      return ApiResult::UnexpectedCall;
+    }
+    D_CHECK_IO(out_ << "bestmove " << moveToStr(bestMove) << endl);
+    searchStarted_ = false;
+    return ApiResult::Ok;
   }
-  const auto time = getSearchTime();
-  const uint64_t timeMsec = duration_cast<milliseconds>(time).count();
-  D_CHECK_IO(out_ << "info depth " << result.depth << " time " << timeMsec);
-  if (nodes != 0) {
-    D_CHECK_IO(out_ << " nodes " << nodes);
+
+  ApiResult sendString(const char *str) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    D_CHECK_IO(out_ << "info string " << SoFUtil::sanitizeEol(str) << endl);
+    return ApiResult::Ok;
+  }
+
+  ApiResult sendResult(const SearchResult &result, const uint64_t nodes = 0) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    if (!searchStarted_) {
+      return ApiResult::UnexpectedCall;
+    }
+    const auto time = getSearchTime();
+    const uint64_t timeMsec = duration_cast<milliseconds>(time).count();
+    D_CHECK_IO(out_ << "info depth " << result.depth << " time " << timeMsec);
+    if (nodes != 0) {
+      D_CHECK_IO(out_ << " nodes " << nodes);
+      uint64_t nps = 0;
+      if (calcNodesPerSecond(nodes, time, nps)) {
+        D_CHECK_IO(out_ << " nps " << nps);
+      }
+    }
+    if (!result.pv.empty()) {
+      D_CHECK_IO(out_ << " pv");
+      for (const Move move : result.pv) {
+        D_CHECK_IO(out_ << " " << moveToStr(move));
+      }
+    }
+    switch (result.cost.type()) {
+      case PositionCostType::Centipawns: {
+        D_CHECK_IO(out_ << " score cp " << result.cost.centipawns());
+        break;
+      }
+      case PositionCostType::Checkmate: {
+        D_CHECK_IO(out_ << " score mate " << result.cost.checkMate());
+        break;
+      }
+    }
+    switch (result.bound) {
+      case PositionCostBound::Exact: {
+        // Do nothing
+        break;
+      }
+      case PositionCostBound::Lowerbound: {
+        D_CHECK_IO(out_ << " lowerbound");
+        break;
+      }
+      case PositionCostBound::Upperbound: {
+        D_CHECK_IO(out_ << " upperbound");
+        break;
+      }
+    }
+    D_CHECK_IO(out_ << endl);
+    return ApiResult::Ok;
+  }
+
+  ApiResult sendNodeCount(const uint64_t nodes) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    if (!searchStarted_) {
+      return ApiResult::UnexpectedCall;
+    }
+    const auto time = getSearchTime();
+    const uint64_t timeMsec = duration_cast<milliseconds>(time).count();
+    D_CHECK_IO(out_ << "info time " << timeMsec << " nodes " << nodes);
     uint64_t nps = 0;
     if (calcNodesPerSecond(nodes, time, nps)) {
       D_CHECK_IO(out_ << " nps " << nps);
     }
+    D_CHECK_IO(out_ << endl);
+    return ApiResult::Ok;
   }
-  if (!result.pv.empty()) {
-    D_CHECK_IO(out_ << " pv");
-    for (const Move move : result.pv) {
-      D_CHECK_IO(out_ << " " << moveToStr(move));
-    }
-  }
-  switch (result.cost.type()) {
-    case PositionCostType::Centipawns: {
-      D_CHECK_IO(out_ << " score cp " << result.cost.centipawns());
-      break;
-    }
-    case PositionCostType::Checkmate: {
-      D_CHECK_IO(out_ << " score mate " << result.cost.checkMate());
-      break;
-    }
-  }
-  switch (result.bound) {
-    case PositionCostBound::Exact: {
-      // Do nothing
-      break;
-    }
-    case PositionCostBound::Lowerbound: {
-      D_CHECK_IO(out_ << " lowerbound");
-      break;
-    }
-    case PositionCostBound::Upperbound: {
-      D_CHECK_IO(out_ << " upperbound");
-      break;
-    }
-  }
-  D_CHECK_IO(out_ << endl);
-  return ApiResult::Ok;
-}
 
-ApiResult UciServerConnector::sendString(const char *str) {
-  ensureClient();
-  std::lock_guard guard(mutex_);
-  D_CHECK_IO(out_ << "info string " << SoFUtil::sanitizeEol(str) << endl);
-  return ApiResult::Ok;
-}
+  ApiResult sendHashHits(const uint64_t hits) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    if (!searchStarted_) {
+      return ApiResult::UnexpectedCall;
+    }
+    if (debugEnabled_) {
+      D_CHECK_IO(out_ << "info string Hash table hits: " << std::to_string(hits) << endl);
+    }
+    return ApiResult::Ok;
+  }
 
-ApiResult UciServerConnector::checkClient(ApiResult result) {
-  if (result == ApiResult::Ok || result == ApiResult::NotSupported) {
+  ApiResult sendHashFull(const permille_t hashFull) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    if (!searchStarted_) {
+      return ApiResult::UnexpectedCall;
+    }
+    if (hashFull > 1000) {
+      return ApiResult::InvalidArgument;
+    }
+    D_CHECK_IO(out_ << "info hashfull " << hashFull << endl);
+    return ApiResult::Ok;
+  }
+
+  ApiResult sendCurrMove(const Move move, const size_t moveNumber = 0) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    if (!searchStarted_) {
+      return ApiResult::UnexpectedCall;
+    }
+    D_CHECK_IO(out_ << "info currmove " << moveToStr(move));
+    if (moveNumber != 0) {
+      D_CHECK_IO(out_ << " currmovenumber " << moveNumber);
+    }
+    D_CHECK_IO(out_ << endl);
+    return ApiResult::Ok;
+  }
+
+  ApiResult reportError(const char *message) override {
+    ensureClient();
+    std::lock_guard guard(mutex_);
+    logError(UCI_CLIENT) << message;
+    D_CHECK_IO(out_ << "info string UCI client error: " << SoFUtil::sanitizeEol(message) << endl);
+    return ApiResult::Ok;
+  }
+
+  PollResult poll() override {
+    // Check that the client is connected
+    ensureClient();
+
+    // Read command line
+    string cmdLine;
+    std::getline(in_, cmdLine);
+    D_CHECK_POLL_IO(!in_.bad());
+    if (in_.eof()) {
+      logInfo(UCI_SERVER) << "Stopping.";
+      return PollResult::Shutdown;
+    }
+    if (cmdLine.empty()) {
+      return PollResult::NoData;
+    }
+
+    // Easter egg :) We need to treat this case in a special way
+    if (cmdLine == "how to draw an owl" || cmdLine == "how to draw owl") {
+      std::lock_guard guard(mutex_);
+      D_CHECK_POLL_IO(out_ << "1) Draw circles" << endl);
+      D_CHECK_POLL_IO(out_ << "2) Draw the rest of the owl" << endl);
+      return PollResult::Ok;
+    }
+
+    std::istringstream tokens(cmdLine);
+    return processUciCommand(tokens);
+  }
+
+  // Constructs `UciServerConnector` with default streams
+  UciServerConnector() : UciServerConnector(std::cin, std::cout) {}
+
+  // Constructs `UciServerConnector` with custom streams
+  UciServerConnector(std::istream &in, std::ostream &out)
+      : searchStarted_(false), debugEnabled_(false), client_(nullptr), in_(in), out_(out) {}
+
+  ~UciServerConnector() override {
+    SOF_ASSERT_MSG("Client was not disconnected properly", !client_);
+  }
+
+protected:
+  ApiResult connect(Client *client) override {
+    SOF_ASSERT_MSG("The client is already connected", !client_);
+    client_ = client;
+    return ApiResult::Ok;
+  }
+
+  void disconnect() override {
+    ensureClient();
+    client_ = nullptr;
+  }
+
+private:
+  // Makes sure that the client is connected
+  void ensureClient() { SOF_ASSERT_MSG("The client is not connected", client_); }
+
+  // Reports failures from client side, if any. Returns `result` unchanged
+  static ApiResult checkClient(const ApiResult result) {
+    if (result == ApiResult::Ok || result == ApiResult::NotSupported) {
+      return result;
+    }
+    logError(UCI_CLIENT) << apiResultToStr(result);
     return result;
   }
-  logError(UCI_CLIENT) << apiResultToStr(result);
-  return result;
-}
 
-PollResult UciServerConnector::doStartSearch(const ApiResult searchStartResult) {
-  if (searchStartResult != ApiResult::Ok) {
-    const char *strResult = apiResultToStr(searchStartResult);
-    logError(UCI_CLIENT) << "Cannot start search: " << strResult;
-    D_CHECK_POLL_IO(out_ << "info string Cannot start search: " << strResult << endl);
-    // We cannot start search from our side because of API call error. But it's better to tell the
-    // server that we stopped (by sending null move). Otherwise the server will wait for the search
-    // result infinitely.
-    D_CHECK_POLL_IO(out_ << "bestmove 0000" << endl);
+  // Helper method for `processUciGo`
+  PollResult doStartSearch(const ApiResult searchStartResult) {
+    if (searchStartResult != ApiResult::Ok) {
+      const char *strResult = apiResultToStr(searchStartResult);
+      logError(UCI_CLIENT) << "Cannot start search: " << strResult;
+      D_CHECK_POLL_IO(out_ << "info string Cannot start search: " << strResult << endl);
+      // We cannot start search from our side because of API call error. But it's better to tell the
+      // server that we stopped (by sending null move). Otherwise the server will wait for the
+      // search result infinitely.
+      D_CHECK_POLL_IO(out_ << "bestmove 0000" << endl);
+      return PollResult::Ok;
+    }
+    searchStarted_ = true;
+    searchStartTime_ = steady_clock::now();
     return PollResult::Ok;
   }
-  searchStarted_ = true;
-  searchStartTime_ = std::chrono::steady_clock::now();
-  return PollResult::Ok;
-}
 
-template <typename T>
-bool UciServerConnector::tryReadInt(T &val, std::istream &stream, const char *intType) {
-  string token;
-  if (!(stream >> token)) {
-    logError(UCI_SERVER) << "Expected token, but end of line found";
-    return false;
-  }
-  if (!SoFUtil::valueFromStr(token.data(), token.data() + token.size(), val)) {
-    logError(UCI_SERVER) << "Cannot interpret token \"" << token << "\" as " << intType;
-    return false;
-  }
-  return true;
-}
+  // Processes "go" command
+  PollResult processUciGo(std::istream &tokens);
 
-bool UciServerConnector::tryReadMsec(milliseconds &time, std::istream &stream) {
-  static constexpr uint64_t MAX_ALLOWED_TIME_MSEC = 2'000'000'000'000;
+  // Processes "position" subcommand
+  PollResult processUciPosition(std::istream &tokens);
 
-  uint64_t val = 0;
-  if (!tryReadInt(val, stream, "uint64")) {
-    return false;
+  // Lists engine options
+  PollResult listOptions();
+
+  // Processes "setoption" subcommand
+  PollResult processUciSetOption(std::istream &tokens);
+
+  // Processes UCI command line given as a stream of tokens
+  PollResult processUciCommand(std::istream &tokens);
+
+  // Tries to interpret the next token on the stream as integral type and put it to `val`. Returns
+  // true on success. Otherwise, returns `false`, reports the error and doesn't perform any writes
+  // into `val`. `intType` parameter is used for error reporting and denotes reported type name.
+  template <typename T>
+  bool tryReadInt(T &val, std::istream &stream, const char *intType) {
+    string token;
+    if (!(stream >> token)) {
+      logError(UCI_SERVER) << "Expected token, but end of line found";
+      return false;
+    }
+    if (!SoFUtil::valueFromStr(token.data(), token.data() + token.size(), val)) {
+      logError(UCI_SERVER) << "Cannot interpret token \"" << token << "\" as " << intType;
+      return false;
+    }
+    return true;
   }
-  if (val > MAX_ALLOWED_TIME_MSEC) {
-    logError(UCI_SERVER) << "Value " << val << " is too large for time";
-    return false;
+
+  // Tries to interpret the next token on the stream as milliseconds and put it to `time`. Returns
+  // `true` on success. Otherwise returns `false`, reports the error and doesn't perform any writes
+  // into `time`.
+  bool tryReadMsec(milliseconds &time, std::istream &stream) {
+    static constexpr uint64_t MAX_ALLOWED_TIME_MSEC = 2'000'000'000'000;
+
+    uint64_t val = 0;
+    if (!tryReadInt(val, stream, "uint64")) {
+      return false;
+    }
+    if (val > MAX_ALLOWED_TIME_MSEC) {
+      logError(UCI_SERVER) << "Value " << val << " is too large for time";
+      return false;
+    }
+    time = milliseconds(val);
+    return true;
   }
-  time = milliseconds(val);
-  return true;
-}
+
+  // Returns the amount of time the search is running. If the search was not started, the behaviour
+  // is undefined
+  steady_clock::duration getSearchTime() const { return steady_clock::now() - searchStartTime_; }
+
+  std::recursive_mutex mutex_;
+  bool searchStarted_;
+  bool debugEnabled_;
+  steady_clock::time_point searchStartTime_;
+  Client *client_;
+  std::istream &in_;
+  std::ostream &out_;
+};
 
 PollResult UciServerConnector::processUciGo(std::istream &tokens) {
   if (searchStarted_) {
@@ -600,7 +701,7 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
       return PollResult::Ok;
     }
     case OptionType::String: {
-      checkClient(opts.setString(name, (value == "<empty>") ? std::string() : value));
+      checkClient(opts.setString(name, (value == "<empty>") ? string() : value));
       return PollResult::Ok;
     }
     case OptionType::Enum: {
@@ -617,34 +718,6 @@ PollResult UciServerConnector::processUciSetOption(std::istream &tokens) {
   }
 
   panic("Unknown option type, end of function reached in processUciSetOption");
-}
-
-PollResult UciServerConnector::poll() {
-  // Check that the client is connected
-  ensureClient();
-
-  // Read command line
-  string cmdLine;
-  std::getline(in_, cmdLine);
-  D_CHECK_POLL_IO(!in_.bad());
-  if (in_.eof()) {
-    logInfo(UCI_SERVER) << "Stopping.";
-    return PollResult::Shutdown;
-  }
-  if (cmdLine.empty()) {
-    return PollResult::NoData;
-  }
-
-  // Easter egg :) We need to treat this case in a special way
-  if (cmdLine == "how to draw an owl" || cmdLine == "how to draw owl") {
-    std::lock_guard guard(mutex_);
-    D_CHECK_POLL_IO(out_ << "1) Draw circles" << endl);
-    D_CHECK_POLL_IO(out_ << "2) Draw the rest of the owl" << endl);
-    return PollResult::Ok;
-  }
-
-  std::istringstream tokens(cmdLine);
-  return processUciCommand(tokens);
 }
 
 PollResult UciServerConnector::processUciCommand(std::istream &tokens) {
@@ -732,24 +805,12 @@ PollResult UciServerConnector::processUciCommand(std::istream &tokens) {
   return PollResult::NoData;
 }
 
-ApiResult UciServerConnector::connect(Client *client) {
-  SOF_ASSERT_MSG("The client is already connected", !client_);
-  client_ = client;
-  return ApiResult::Ok;
+std::unique_ptr<ServerConnector> makeUciServerConnector() {
+  return std::make_unique<UciServerConnector>();
 }
 
-void UciServerConnector::disconnect() {
-  ensureClient();
-  client_ = nullptr;
-}
-
-UciServerConnector::UciServerConnector() : UciServerConnector(std::cin, std::cout) {}
-
-UciServerConnector::UciServerConnector(std::istream &in, std::ostream &out)
-    : searchStarted_(false), debugEnabled_(false), client_(nullptr), in_(in), out_(out) {}
-
-UciServerConnector::~UciServerConnector() {
-  SOF_ASSERT_MSG("Client was not disconnected properly", !client_);
+std::unique_ptr<ServerConnector> makeUciServerConnector(std::istream &in, std::ostream &out) {
+  return std::make_unique<UciServerConnector>(in, out);
 }
 
 }  // namespace SoFBotApi::Clients

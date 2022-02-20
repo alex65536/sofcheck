@@ -18,6 +18,7 @@
 #include "bot_api/clients/uci.h"
 
 #include <iostream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -39,7 +40,6 @@ using SoFBotApi::Connection;
 using SoFBotApi::PollResult;
 using SoFBotApi::PositionCost;
 using SoFBotApi::PositionCostBound;
-using SoFBotApi::Clients::UciServerConnector;
 using SoFUtil::panic;
 using std::cerr;
 using std::endl;
@@ -188,9 +188,11 @@ int main() {
   SoFCore::init();
 
   auto connection =
-      Connection::clientSide<TestEngine, UciServerConnector>().okOrErr([](const auto err) {
-        panic(std::string("Connection failed: ") + SoFBotApi::apiResultToStr(err));
-      });
+      Connection::clientSide(std::make_unique<TestEngine>(),
+                             SoFBotApi::Clients::makeUciServerConnector())
+          .okOrErr([](const auto err) {
+            panic(std::string("Connection failed: ") + SoFBotApi::apiResultToStr(err));
+          });
   PollResult result = connection.runPollLoop();
   if (result != PollResult::Ok) {
     panic(std::string("Poll failed: ") + SoFBotApi::pollResultToStr(result));
