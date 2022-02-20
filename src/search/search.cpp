@@ -87,9 +87,9 @@ const char *Engine::name() const {
     if (rawVersion == "unknown" || SoFUtil::startsWith(rawVersion, "v")) {
       version = rawVersion;
     } else {
-      version = "git:" + rawVersion;
+      version = "v0.0-g" + rawVersion;
     }
-    return std::string("SoFCheck [") + CPU_ARCH_FULL + ", " + version + "]";
+    return std::string("SoFCheck [") + version + " " + CPU_ARCH_FULL + "]";
   }();
   return ENGINE_NAME.c_str();
 }
