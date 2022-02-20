@@ -54,8 +54,9 @@ int main() {
   std::cout << BANNER << std::endl;
 
   Connection connection =
-      Connection::clientSide<SoFSearch::Engine, SoFBotApi::Clients::UciServerConnector>().okOrErr(
-          [](const auto err) {
+      Connection::clientSide(SoFSearch::makeEngine(),
+                             std::make_unique<SoFBotApi::Clients::UciServerConnector>())
+          .okOrErr([](const auto err) {
             panic(std::string("Unable to initialize the engine: ") +
                   SoFBotApi::apiResultToStr(err));
           });
