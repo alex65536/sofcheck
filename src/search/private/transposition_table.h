@@ -133,7 +133,7 @@ public:
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }
 
   // Returns `true` if `data` is from current epoch
-  inline bool isCurrentEpoch(const Data data) { return data.epoch_ == epoch_; }
+  inline bool isCurrentEpoch(const Data data) const { return data.epoch_ == epoch_; }
 
   // Clears the hash table. The hash table is cleared in a multithreaded way, using `jobs` threads.
   //
