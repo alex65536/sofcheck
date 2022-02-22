@@ -132,6 +132,9 @@ public:
   // Returns the hash table size (in bytes)
   inline size_t sizeBytes() const { return size_ * sizeof(Entry); }
 
+  // Returns `true` if `data` is from current epoch
+  inline bool isCurrentEpoch(const Data data) { return data.epoch_ == epoch_; }
+
   // Clears the hash table. The hash table is cleared in a multithreaded way, using `jobs` threads.
   //
   // This function is not thread-safe. No other thread should use the table while resizing.
@@ -146,13 +149,6 @@ public:
 
   // Stores `value` for the key `key`.
   void store(SoFCore::board_hash_t key, Data value);
-
-  // Stores `value` for the key `key` only if the epoch of `value` differs from the epoch of table
-  inline void refresh(const SoFCore::board_hash_t key, const Data value) {
-    if (value.epoch_ != epoch_) {
-      store(key, value);
-    }
-  }
 
 private:
   struct Entry {

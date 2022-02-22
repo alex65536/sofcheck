@@ -214,7 +214,8 @@ private:
                  << " NBranch = " << stats_.nonPvBranchFactor()
                  << " Branch = " << stats_.branchFactor();
 
-      server_.sendString("Hash exact hits: " + std::to_string(stats_.get(JobStat::TtExactHits)));
+      server_.sendString("Hash table hits with cutoff: " +
+                         std::to_string(stats_.get(JobStat::TtCutoffHits)));
       server_.sendString(nodeStream.str());
       server_.sendString(edgeStream.str());
     }

@@ -121,7 +121,7 @@ private:
 enum class JobStat : size_t {
   Nodes,
   TtHits,
-  TtExactHits,
+  TtCutoffHits,
   PvNodes,
   NonPvNodes,
   PvInternalNodes,

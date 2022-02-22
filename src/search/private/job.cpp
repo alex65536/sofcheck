@@ -427,28 +427,19 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   if (const TranspositionTable::Data data = tt_.load(board_.hash); data.isValid()) {
     stats_.inc(JobStat::TtHits);
     hashMove = data.move();
-    if (Node != NodeKind::Root && data.depth() >= depth && board_.moveCounter < 90) {
+    const bool allowCutoff = Node != NodeKind::Root && data.depth() >= depth &&
+                             board_.moveCounter < 90 &&
+                             (!isNodeKindPv(Node) || tt_.isCurrentEpoch(data));
+    if (allowCutoff) {
       const score_t score = adjustCheckmate(data.score(), static_cast<int16_t>(idepth));
-      switch (data.bound()) {
-        case PositionCostBound::Exact: {
-          frame.bestMove = hashMove;
-          stats_.inc(JobStat::TtExactHits);
-          // Refresh the hash entry, as it may come from older epoch
-          tt_.refresh(board_.hash, data);
-          return score;
-        }
-        case PositionCostBound::Lowerbound: {
-          if (score >= beta) {
-            return beta;
-          }
-          break;
-        }
-        case PositionCostBound::Upperbound: {
-          if (alpha >= score) {
-            return alpha;
-          }
-          break;
-        }
+      const PositionCostBound bound = data.bound();
+      const bool isCutoff = bound == PositionCostBound::Exact ||
+                            (bound == PositionCostBound::Lowerbound && score >= beta) ||
+                            (bound == PositionCostBound::Upperbound && alpha >= score);
+      if (isCutoff) {
+        frame.bestMove = hashMove;
+        stats_.inc(JobStat::TtCutoffHits);
+        return score;
       }
     }
   }
@@ -616,8 +607,6 @@ std::vector<Move> unwindPv(Board board, const Move bestMove, TranspositionTable 
         data.bound() != PositionCostBound::Exact) {
       break;
     }
-    // Refresh the hash entry, as it may come from older epoch
-    tt.refresh(board.hash, data);
     const Move move = data.move();
     moveMake(board, move);
     if (!repetitions.insert(board.hash)) {
