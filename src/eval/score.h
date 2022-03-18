@@ -115,8 +115,12 @@ public:
 
   // Extracts first item from the score pair
   constexpr score_t first() const {
-    const uint16_t unsignedRes = static_cast<uint32_t>(value_) & 0xffffU;
-    return static_cast<score_t>(unsignedRes);
+    // The conversion from `int32_t` to `int16_t` here is safe. The C++ standard says that
+    // narrowing signed integer conversions are implementation-defined before C++20, but almost all
+    // compilers will do exactly what we want (i.e. leave the lowest 16 bits). Since C++20, the
+    // behavior became defined instead of implementation-defined, and it's guaranteed that this code
+    // will just interpret lowest 16 bits of `value_` as `int16_t`
+    return static_cast<score_t>(value_);
   }
 
   // Extracts second item from the score pair
