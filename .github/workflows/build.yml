@@ -52,15 +52,15 @@ jobs:
             compiler: clang-11
             cmake-generator: 'Unix Makefiles'
           - suite: win-gcc
-            os: windows-latest
+            os: windows-2019
             compiler: gcc
             cmake-generator: 'MinGW Makefiles'
           - suite: win-msvc32
-            os: windows-latest
+            os: windows-2019
             compiler: msvc32
             cmake-generator: 'Visual Studio 16 2019'
           - suite: win-msvc64
-            os: windows-latest
+            os: windows-2019
             compiler: msvc64
             cmake-generator: 'Visual Studio 16 2019'
 
