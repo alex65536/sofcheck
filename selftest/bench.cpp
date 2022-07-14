@@ -104,7 +104,7 @@ inline void runKingAttack(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for ([[maybe_unused]] auto _ : state) {
-    benchmark::DoNotOptimize(isOpponentKingAttacked(board));
+    benchmark::DoNotOptimize(isLastMoveLegal(board));
   }
 }
 
@@ -127,7 +127,7 @@ void recurseSearch(ChessIntf::Board &board, int d) {
   for (int i = 0; i < cnt; ++i) {
     const Move &move = getMove(moves, i);
     MovePersistence persistence = makeMove(board, move);
-    if (!isOpponentKingAttacked(board)) {
+    if (isLastMoveLegal(board)) {
       recurseSearch(board, d - 1);
     }
     unmakeMove(board, move, persistence);

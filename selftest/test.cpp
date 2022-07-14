@@ -70,7 +70,7 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
     size_t wasLen = moveChain.size();
 #endif
     MovePersistence persistence = makeMove(board, move);
-    if (!isOpponentKingAttacked(board)) {
+    if (isLastMoveLegal(board)) {
 #ifdef DEPTH_DUMP_TRACE_CHAINS
       moveChain += str;
       moveChain += " ";
@@ -84,16 +84,21 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
   }
 }
 
-inline std::vector<std::string> getMoveStrList(const ChessIntf::Board &board,
+inline std::vector<std::string> getMoveStrList(ChessIntf::Board &board,
                                                const ChessIntf::MoveList &moves) {
   using namespace ChessIntf;
 
   std::vector<std::string> moveList;
   moveList.reserve(getMoveCount(moves));
   for (int i = 0; i < getMoveCount(moves); ++i) {
-    char str[6];
-    moveStr(board, getMove(moves, i), str);
-    moveList.emplace_back(str);
+    auto move = getMove(moves, i);
+    auto p = makeMove(board, move);
+    if (isLastMoveLegal(board)) {
+      char str[6];
+      moveStr(board, move, str);
+      moveList.emplace_back(str);
+    }
+    unmakeMove(board, move, p);
   }
   std::sort(moveList.begin(), moveList.end());
   return moveList;
@@ -147,7 +152,7 @@ void runTestsFen(const char *fen) {
   for (int i = 0; i < getMoveCount(moves); ++i) {
     const Move &move = getMove(moves, i);
     MovePersistence persistence = makeMove(board, move);
-    if (!isOpponentKingAttacked(board)) {
+    if (isLastMoveLegal(board)) {
       selfTest(board);
     }
     unmakeMove(board, move, persistence);
