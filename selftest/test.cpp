@@ -58,10 +58,8 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
     moveOrd[i].second = i;
   }
   std::sort(moveOrd, moveOrd + cnt);
-  for (int i = 0; i < cnt; ++i) {
-    hsh *= 2579;
-    hsh += static_cast<uint64_t>(moveOrd[i].first);
-  }
+  hsh *= 2579;
+  hsh += 519365819;
   for (int i = 0; i < cnt; ++i) {
     const Move &move = getMove(moves, moveOrd[i].second);
 #ifdef DEPTH_DUMP_TRACE_CHAINS
@@ -75,6 +73,8 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
       moveChain += str;
       moveChain += " ";
 #endif
+      hsh *= 2579;
+      hsh += static_cast<uint64_t>(moveOrd[i].first);
       depthDump(board, hsh, d - 1, checkHeatmaps, moveChain);
 #ifdef DEPTH_DUMP_TRACE_CHAINS
       moveChain.resize(wasLen);
@@ -82,6 +82,8 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
     }
     unmakeMove(board, move, persistence);
   }
+  hsh *= 2579;
+  hsh += 15967534195;
 }
 
 inline std::vector<std::string> getMoveStrList(ChessIntf::Board &board,
