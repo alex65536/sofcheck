@@ -86,6 +86,8 @@ inline bool isAttacked(const Board &board, bool isWhite, char cy, char cx) {
   }
 }
 
+inline bool isInCheck(const Board &board) { return isCheck(board); }
+
 inline bool isLastMoveLegal(const Board &board) { return isMoveLegal(board); }
 
 }  // namespace ChessIntf

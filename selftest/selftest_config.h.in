@@ -21,9 +21,10 @@
 #cmakedefine DEPTH_DUMP_TRACE_CHAINS
 #cmakedefine DEPTH_DUMP_LARGE
 #cmakedefine RUN_SELF_TESTS
+#cmakedefine ATTACK_HEATMAPS
 
 #if defined(RUN_SELF_TESTS) && !defined(CHESS_INTF_HAS_SELF_TESTS)
 #undef RUN_SELF_TESTS
 #endif
- 
+
 #endif  // SELFTEST_CONFIG_INCLUDED

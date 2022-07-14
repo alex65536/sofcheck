@@ -35,6 +35,8 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
 #ifdef DEPTH_DUMP_TRACE_CHAINS
     std::cout << "cur-chain: " << moveChain << "\n";
 #endif
+
+#ifdef ATTACK_HEATMAPS
     if (checkHeatmaps) {
       for (bool color : {true, false}) {
         for (char y = '8'; y >= '1'; --y) {
@@ -48,6 +50,13 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
         }
       }
     }
+#else
+    assert(!checkHeatmaps);
+#endif
+
+    hsh *= 2579;
+    hsh += isInCheck(board);
+
     return;
   }
   MoveList moves = generateMoves(board);
@@ -138,6 +147,10 @@ void runTestsFen(const char *fen) {
     std::cout << "  " << str << "\n";
   }
   std::cout << "]\n";
+
+  std::cout << "check?: " << (isInCheck(board) ? "true" : "false") << "\n";
+
+#ifdef ATTACK_HEATMAPS
   for (bool color : {true, false}) {
     std::cout << (color ? "white" : "black") << "-heatmap: [\n";
     for (char y = '8'; y >= '1'; --y) {
@@ -149,6 +162,7 @@ void runTestsFen(const char *fen) {
     }
     std::cout << "]\n";
   }
+#endif
 
 #ifdef RUN_SELF_TESTS
   for (int i = 0; i < getMoveCount(moves); ++i) {
@@ -161,11 +175,19 @@ void runTestsFen(const char *fen) {
   }
 #endif
 
+#ifdef ATTACK_HEATMAPS
   uint64_t hsh = 0;
   std::string moveChain;
   moveChain.clear();
   depthDump(board, hsh, 1, true, moveChain);
   std::cout << "depth-dump-at-1-heatmaps: " << hsh << "\n";
+#else
+  uint64_t hsh = 0;
+  std::string moveChain;
+  moveChain.clear();
+  depthDump(board, hsh, 1, false, moveChain);
+  std::cout << "depth-dump-at-1: " << hsh << "\n";
+#endif
 
   hsh = 0;
   moveChain.clear();
@@ -173,10 +195,12 @@ void runTestsFen(const char *fen) {
   std::cout << "depth-dump-at-2: " << hsh << "\n";
 
 #ifdef DEPTH_DUMP_LARGE
+#ifdef ATTACK_HEATMAPS
   hsh = 0;
   moveChain.clear();
   depthDump(board, hsh, 2, true, moveChain);
   std::cout << "depth-dump-at-2-heatmaps: " << hsh << "\n";
+#endif
 
   hsh = 0;
   moveChain.clear();

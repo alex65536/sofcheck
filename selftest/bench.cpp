@@ -21,6 +21,7 @@
 
 #include "chess_intf.h"
 #include "core/bench_boards.h"
+#include "selftest_config.h"
 #include "util.h"
 
 inline void runGenMoves(benchmark::State &state, const char *fen) {
@@ -72,6 +73,7 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
 #include "core/bench_xmacro.h"
 #undef BENCH_DO
 
+#ifdef ATTACK_HEATMAPS
 inline void runIsAttacked(benchmark::State &state, const char *fen) {
   using namespace ChessIntf;
 
@@ -96,7 +98,9 @@ inline void runIsAttacked(benchmark::State &state, const char *fen) {
 #include "core/bench_xmacro.h"
 #undef BENCH_DO
 
-inline void runKingAttack(benchmark::State &state, const char *fen) {
+#endif
+
+inline void runIsCheck(benchmark::State &state, const char *fen) {
   using namespace ChessIntf;
 
   init();
@@ -104,13 +108,13 @@ inline void runKingAttack(benchmark::State &state, const char *fen) {
   Board board = boardFromFen(fen);
 
   for ([[maybe_unused]] auto _ : state) {
-    benchmark::DoNotOptimize(isLastMoveLegal(board));
+    benchmark::DoNotOptimize(isInCheck(board));
   }
 }
 
 #define BENCH_DO(name)                                                                            \
-  static void BM_KingAttack##name(benchmark::State &state) { runKingAttack(state, g_fen##name); } \
-  BENCHMARK(BM_KingAttack##name);
+  static void BM_IsCheck##name(benchmark::State &state) { runIsCheck(state, g_fen##name); } \
+  BENCHMARK(BM_IsCheck##name);
 #include "core/bench_xmacro.h"
 #undef BENCH_DO
 

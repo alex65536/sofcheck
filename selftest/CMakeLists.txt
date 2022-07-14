@@ -36,6 +36,8 @@ Run depthDump on bigger recursion depths (consumes more time for test).")
 
 set(RUN_SELF_TESTS ON CACHE BOOL "Run ChessIntf::selfTest() while testing.")
 
+set(ATTACK_HEATMAPS OFF CACHE BOOL "Enable checking attack heatmaps")
+
 configure_file(selftest_config.h.in "${PROJECT_BINARY_DIR}/src/selftest_config.h")
 include_directories("${PROJECT_BINARY_DIR}/src")
 

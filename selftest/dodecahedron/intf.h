@@ -83,6 +83,10 @@ inline bool isAttacked(const Board &board, bool isWhite, char cx, char cy) {
     return is_attacked(board, isWhite ? WHITE : BLACK, arrpos('8' - cy, cx - 'a'));
 }
 
+inline bool isInCheck(const Board &board) {
+    return is_check(board);
+}
+
 inline bool isLastMoveLegal(const Board &board) {
     return !is_opponent_king_attacked(board);
 }
