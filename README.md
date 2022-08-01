@@ -21,6 +21,11 @@
   \__/  \__/  |        \__/  |  |  \__   \__  | \
 ~~~~~
 
+SoFCheck plays on [CCRL] and [Lichess].
+
+[CCRL]: https://ccrl.chessdom.com/ccrl/4040/cgi/engine_details.cgi?match_length=30&print=Details&each_game=1&eng=SoFCheck%200.9%20beta%2064-bit#SoFCheck_0_9_beta_64-bit
+[Lichess]: https://lichess.org/@/SoFCheck
+
 ## About
 
 SoFCheck is a chess engine. As many other chess engines, it uses magic bitboards to generate moves
