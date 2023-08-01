@@ -36,11 +36,11 @@ jobs:
 
         include:
           - suite: linux-gcc
-            os: ubuntu-latest
+            os: ubuntu-20.04
             compiler: gcc-8
             cmake-generator: 'Unix Makefiles'
           - suite: linux-clang
-            os: ubuntu-latest
+            os: ubuntu-20.04
             compiler: clang-9
             cmake-generator: 'Unix Makefiles'
           - suite: macos-gcc
