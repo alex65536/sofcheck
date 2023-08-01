@@ -45,7 +45,7 @@ jobs:
             cmake-generator: 'Unix Makefiles'
           - suite: macos-gcc
             os: macos-latest
-            compiler: gcc-9
+            compiler: gcc-10
             cmake-generator: 'Unix Makefiles'
           - suite: macos-clang
             os: macos-latest
