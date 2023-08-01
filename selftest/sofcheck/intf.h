@@ -18,6 +18,8 @@
 #ifndef SOFCHECK_INTF_H_INCLUDED
 #define SOFCHECK_INTF_H_INCLUDED
 
+#include <optional>
+
 #include "core/board.h"
 #include "core/init.h"
 #include "core/move.h"
@@ -32,7 +34,7 @@ namespace ChessIntf {
 
 using Board = SoFCore::Board;
 using Move = SoFCore::Move;
-using MovePersistence = SoFCore::MovePersistence;
+using MovePersistence = std::optional<SoFCore::MovePersistence>;
 
 constexpr int MOVES_MAX = SoFCore::BUFSZ_MOVES;
 
@@ -60,12 +62,21 @@ inline Board boardFromFen(const char *fen) {
   return board;
 }
 
-inline MovePersistence makeMove(Board &board, const Move &move) {
-  return SoFCore::moveMake(board, move);
+inline MovePersistence tryMakeMove(Board &board, const Move &move) {
+  auto p = SoFCore::moveMake(board, move);
+  if (!isMoveLegal(board)) {
+    SoFCore::moveUnmake(board, move, p);
+    return std::nullopt;
+  }
+  return p;
+}
+
+inline bool isMoveMade(const MovePersistence& p) {
+  return p.has_value();
 }
 
 inline void unmakeMove(Board &board, const Move &move, MovePersistence &p) {
-  SoFCore::moveUnmake(board, move, p);
+  SoFCore::moveUnmake(board, move, *p);
 }
 
 inline void moveStr(const Board &, const Move &mv, char *str) { SoFCore::moveToStr(mv, str); }
@@ -87,8 +98,6 @@ inline bool isAttacked(const Board &board, bool isWhite, char cy, char cx) {
 }
 
 inline bool isInCheck(const Board &board) { return isCheck(board); }
-
-inline bool isLastMoveLegal(const Board &board) { return isMoveLegal(board); }
 
 }  // namespace ChessIntf
 

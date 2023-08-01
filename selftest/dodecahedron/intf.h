@@ -18,6 +18,8 @@
 #ifndef DODECAHEDRON_INTF_H_INCLUDED
 #define DODECAHEDRON_INTF_H_INCLUDED
 
+#include <optional>
+
 #include "board.h"
 #include "moves.h"
 #include "movestr.h"
@@ -30,7 +32,7 @@ namespace ChessIntf {
 
 using Board = BOARD;
 using Move = MOVE;
-using MovePersistence = MOVE_PERSISTENCE;
+using MovePersistence = std::optional<MOVE_PERSISTENCE>;
 
 constexpr int MOVES_MAX = 240;
 
@@ -59,14 +61,22 @@ inline Board boardFromFen(const char *fen) {
     return board;
 }
 
-inline MovePersistence makeMove(Board &board, const Move &move) {
-    MovePersistence p;
+inline MovePersistence tryMakeMove(Board &board, const Move &move) {
+    MOVE_PERSISTENCE p;
     make_move(board, move, p);
+    if (is_opponent_king_attacked(board)) {
+      unmake_move(board, move, p);
+      return std::nullopt;
+    }
     return p;
 }
 
+inline bool isMoveMade(const MovePersistence& p) {
+  return p.has_value();
+}
+
 inline void unmakeMove(Board &board, const Move &move, MovePersistence &p) {
-    unmake_move(board, move, p);
+    unmake_move(board, move, *p);
 }
 
 inline void moveStr(const Board &, const Move &move, char *str) {
@@ -85,10 +95,6 @@ inline bool isAttacked(const Board &board, bool isWhite, char cx, char cy) {
 
 inline bool isInCheck(const Board &board) {
     return is_check(board);
-}
-
-inline bool isLastMoveLegal(const Board &board) {
-    return !is_opponent_king_attacked(board);
 }
 
 }

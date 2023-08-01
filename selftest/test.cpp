@@ -76,8 +76,8 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
     moveStr(board, move, str);
     size_t wasLen = moveChain.size();
 #endif
-    MovePersistence persistence = makeMove(board, move);
-    if (isLastMoveLegal(board)) {
+    auto p = tryMakeMove(board, move);
+    if (isMoveMade(p)) {
 #ifdef DEPTH_DUMP_TRACE_CHAINS
       moveChain += str;
       moveChain += " ";
@@ -88,8 +88,8 @@ void depthDump(ChessIntf::Board &board, uint64_t &hsh, int d, bool checkHeatmaps
 #ifdef DEPTH_DUMP_TRACE_CHAINS
       moveChain.resize(wasLen);
 #endif
+      unmakeMove(board, move, p);
     }
-    unmakeMove(board, move, persistence);
   }
   hsh *= 2579;
   hsh += 15967534195;
@@ -103,13 +103,13 @@ inline std::vector<std::string> getMoveStrList(ChessIntf::Board &board,
   moveList.reserve(getMoveCount(moves));
   for (int i = 0; i < getMoveCount(moves); ++i) {
     auto move = getMove(moves, i);
-    auto p = makeMove(board, move);
-    if (isLastMoveLegal(board)) {
+    auto p = tryMakeMove(board, move);
+    if (isMoveMade(p)) {
       char str[6];
       moveStr(board, move, str);
       moveList.emplace_back(str);
+      unmakeMove(board, move, p);
     }
-    unmakeMove(board, move, p);
   }
   std::sort(moveList.begin(), moveList.end());
   return moveList;
@@ -167,11 +167,11 @@ void runTestsFen(const char *fen) {
 #ifdef RUN_SELF_TESTS
   for (int i = 0; i < getMoveCount(moves); ++i) {
     const Move &move = getMove(moves, i);
-    MovePersistence persistence = makeMove(board, move);
-    if (isLastMoveLegal(board)) {
+    auto p = tryMakeMove(board, move);
+    if (isMoveMade(p)) {
       selfTest(board);
+      unmakeMove(board, move, p);
     }
-    unmakeMove(board, move, persistence);
   }
 #endif
 

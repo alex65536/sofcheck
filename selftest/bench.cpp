@@ -61,8 +61,10 @@ inline void runMakeMove(benchmark::State &state, const char *fen) {
 
   for ([[maybe_unused]] auto _ : state) {
     for (int i = 0; i < cnt; ++i) {
-      MovePersistence p = makeMove(board, moves[i]);
-      unmakeMove(board, moves[i], p);
+      auto p = tryMakeMove(board, moves[i]);
+      if (isMoveMade(p)) {
+        unmakeMove(board, moves[i], p);
+      }
     }
   }
 }
@@ -130,11 +132,11 @@ void recurseSearch(ChessIntf::Board &board, int d) {
 
   for (int i = 0; i < cnt; ++i) {
     const Move &move = getMove(moves, i);
-    MovePersistence persistence = makeMove(board, move);
-    if (isLastMoveLegal(board)) {
+    auto p = tryMakeMove(board, move);
+    if (isMoveMade(p)) {
       recurseSearch(board, d - 1);
+      unmakeMove(board, move, p);
     }
-    unmakeMove(board, move, persistence);
   }
 }
 
