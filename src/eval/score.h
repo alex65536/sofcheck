@@ -186,13 +186,17 @@ static_assert(ScorePair::from(1, -5) - ScorePair::from(3, 0) == ScorePair::from(
 static_assert(ScorePair::from(-1, -5) - ScorePair::from(0, -6) == ScorePair::from(-1, 1));
 
 static_assert(-ScorePair::from(3, 4) == ScorePair::from(-3, -4));
-static_assert(-ScorePair::from(3, 4) == ScorePair::from(-3, -4));
+static_assert(-ScorePair::from(3, -4) == ScorePair::from(-3, 4));
+static_assert(-ScorePair::from(-3, 4) == ScorePair::from(3, -4));
+static_assert(-ScorePair::from(-3, -4) == ScorePair::from(3, 4));
 static_assert(-ScorePair::from(3, 0) == ScorePair::from(-3, 0));
 static_assert(-ScorePair::from(0, -3) == ScorePair::from(0, 3));
 static_assert(-ScorePair::from(0, 0) == ScorePair::from(0, 0));
 
 static_assert(ScorePair::from(3, 4) * 2 == ScorePair::from(6, 8));
-static_assert(ScorePair::from(3, 4) * 2 == ScorePair::from(6, 8));
+static_assert(ScorePair::from(3, -4) * 2 == ScorePair::from(6, -8));
+static_assert(ScorePair::from(-3, 4) * 2 == ScorePair::from(-6, 8));
+static_assert(ScorePair::from(-3, -4) * 2 == ScorePair::from(-6, -8));
 static_assert(ScorePair::from(3, 0) * 2 == ScorePair::from(6, 0));
 static_assert(ScorePair::from(0, -3) * 2 == ScorePair::from(0, -6));
 static_assert(ScorePair::from(0, 0) * 2 == ScorePair::from(0, 0));
