@@ -50,20 +50,14 @@ according to my rough estimation), but there is still much space for improvement
 ## Building from source
 
 The project is using [CMake](https://cmake.org) as a build system. You will also need a
-C++17-compatible compiler. The engine is tested on the following compilers:
+C++17-compatible compiler. The engine should build fine with the following compilers:
 
-- GCC >= 8 (GCC 7 and earlier don't support `<charconv>` header)
-- Clang >= 8 (Clang 6 and earlier don't support `<charconv>` header, and Clang 7 fails with
-  linker error `undefined reference to '__muloti4'` in `std::from_chars`)
-- Visual Studio 2019. (Visual Studio 2017 won't work for the reasons described below, and other
-  versions are just not tested). Note that MSVC is not supported as good as GCC and Clang, and the
-  resulting binaries may be slower. Be aware of it.
+- GCC >= 8 (GCC 12 is used in CI). GCC <= 7 won't work.
+- Clang >= 8 (Clang 14 is used in CI). Clang <= 7 won't work.
+- Visual Studio >= 2019 (VS 2019 is used in CI). Visual Studio <= 2017 won't work.
 
-  Now, let's talk why Visual Studio 2017 fails to build SoFCheck. It produces errors like
-  `result cannot be constant expression` when overloading some operators in the template code. I
-  tried to work around this issue, but didn't find a good way to fix it without using arcane
-  template magic, so I gave up. I am pretty sure that it is a bug in the compiler, because all other
-  compilers (including VS 2019) are OK with this code.
+Note that MSVC is not supported as good as GCC and Clang, and the resulting binaries may be slower.
+Be aware of it.
 
 Other compilers are not tested.
 
