@@ -14,23 +14,19 @@ llvm-namespace-comment, \
 -bugprone-easily-swappable-parameters, \
 -bugprone-exception-escape, \
 -bugprone-narrowing-conversions, \
--bugprone-suspicious-semicolon, \
 -modernize-use-trailing-return-type, \
 -modernize-avoid-c-arrays, \
--cert-err58-cpp, \
 -clang-analyzer-security.insecureAPI.rand, \
 -cppcoreguidelines-avoid-c-arrays, \
 -cppcoreguidelines-avoid-magic-numbers, \
 -cppcoreguidelines-avoid-non-const-global-variables, \
 -cppcoreguidelines-macro-usage, \
 -cppcoreguidelines-narrowing-conversions, \
--cppcoreguidelines-owning-memory, \
 -cppcoreguidelines-pro-bounds-*, \
 -cppcoreguidelines-pro-type-reinterpret-cast, \
 -cppcoreguidelines-pro-type-member-init, \
 -cppcoreguidelines-special-member-functions, \
 -hicpp-avoid-c-arrays, \
--hicpp-braces-around-statements, \
 -hicpp-member-init, \
 -hicpp-named-parameter, \
 -hicpp-no-array-decay, \
@@ -40,36 +36,28 @@ llvm-namespace-comment, \
 -modernize-return-braced-init-list, \
 -misc-no-recursion, \
 -misc-non-private-member-variables-in-classes, \
--readability-braces-around-statements, \
 -readability-function-cognitive-complexity, \
 -readability-identifier-length, \
 -readability-implicit-bool-conversion, \
 -readability-magic-numbers, \
--readability-named-parameter, \
--readability-misleading-indentation"
+-readability-named-parameter"
 
 # Notes:
 # - hicpp-signed-bitwise might be interesting to fix, but there is too much bit magic, and most of
 # the issues here are constructs like (x << 3).
-# - cppcoreguidelines-avoid-magic-numbers is disabled because the chess rules contain enough
-# magic, and I am lazy to put them into constants.
-# - readability-magic-numbers is tightly related to the previous issue.
-# - hicpp-braces-around-statements is buggy with if constexpr.
-# - readability-misleading-indentation is also buggy with if constexpr.
-# - bugprone-suspicious-semicolon is also buggy with if constexpr.
-# - readability-braces-around-statements is also buggy with if constexpr.
+# - readability-magic-numbers is disabled because the chess rules contain enough magic, and I am
+# lazy to put them into constants.
+# - cppcoreguidelines-avoid-magic-numbers is the same as readability-magic-numbers.
 # - misc-non-private-member-variables-in-classes is disabled by design.
 # - bugprone-exception-escape is very expensive and can be false-positive on Result<T, E>.
-# - cppcoreguidelines-owning-memory has false-positives with Google Test.
-# - cppcoreguidelines-special-member-functions also has false-positives with Google Test.
-# - hicpp-special-member-functions also has false-positives with Google Test.
-# - cert-err58-cpp also has false-positives with Google Test.
 # - cppcoreguidelines-avoid-non-const-global-variables conflicts with tests and benchmarks.
 # - clang-analyzer-security.insecureAPI.rand yields false positives on macOS with SoFUtil::random().
 # - bugprone-narrowing-conversions might be interesting to fix, but it triggers too many times and
 # if I fix it, the code will be harder to read because of many `static_cast<>`'s.
-# - cppcoreguidelines-narrowing-conversions is tightly related to the previous issue.
+# - cppcoreguidelines-narrowing-conversions is the same as bugprone-narrowing-conversions.
 # - readability-identifier-length is super annoying.
+# - hicpp-special-member-functions may be interesting to fix later, but I am lazy to do it.
+# - cppcoreguidelines-special-member-functions is the same as hicpp-special-member-functions.
 
 HeaderFilterRegex: '(bench|gen|src)/.+'
 
