@@ -42,6 +42,7 @@ llvm-namespace-comment, \
 -misc-non-private-member-variables-in-classes, \
 -readability-braces-around-statements, \
 -readability-function-cognitive-complexity, \
+-readability-identifier-length, \
 -readability-implicit-bool-conversion, \
 -readability-magic-numbers, \
 -readability-named-parameter, \
@@ -68,6 +69,7 @@ llvm-namespace-comment, \
 # - bugprone-narrowing-conversions might be interesting to fix, but it triggers too many times and
 # if I fix it, the code will be harder to read because of many `static_cast<>`'s.
 # - cppcoreguidelines-narrowing-conversions is tightly related to the previous issue.
+# - readability-identifier-length is super annoying.
 
 HeaderFilterRegex: '(bench|gen|src)/.+'
 

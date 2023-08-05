@@ -44,7 +44,7 @@ void sortMvvLva(const Board &board, Move *moves, const size_t count) {
 }
 
 QuiescenseMovePicker::QuiescenseMovePicker(const Board &board)
-    : board_(board), moveCount_(genCaptures(board, moves_)), stage_(Stage::Capture) {
+    : board_(board), moveCount_(genCaptures(board, moves_)) {
   sortMvvLva(board, moves_, moveCount_);
 }
 

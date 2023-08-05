@@ -113,8 +113,7 @@ public:
       : board_(board),
         tag_(tag.updated(board, move)),
         persistence_(moveMake(board, move)),
-        move_(move),
-        active_(true) {
+        move_(move) {
     DGN_ASSERT(tag_.isValid(board_));
   }
 
@@ -139,7 +138,7 @@ private:
   Evaluator::Tag tag_;
   MovePersistence persistence_;
   Move move_;
-  bool active_;
+  bool active_ = true;
 };
 
 class Searcher {

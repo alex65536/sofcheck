@@ -69,27 +69,24 @@ public:
 
   MovePicker(const SoFCore::Board &board, const SoFCore::Move hashMove, const KillerLine &killers,
              const HistoryTable &history)
-      : stage_(MovePickerStage::Start),
-        hashMove_(hashMove),
+      : hashMove_(hashMove),
         board_(board),
         killers_(killers),
         history_(history),
-        savedKillers_{SoFCore::Move::null(), SoFCore::Move::null()},
-        moveCount_(0),
-        movePosition_(0) {}
+        savedKillers_{SoFCore::Move::null(), SoFCore::Move::null()} {}
 
 private:
   void nextStage();
 
-  MovePickerStage stage_;
+  MovePickerStage stage_ = MovePickerStage::Start;
   SoFCore::Move hashMove_;
   const SoFCore::Board &board_;
   const KillerLine &killers_;
   const HistoryTable &history_;
   SoFCore::Move moves_[SoFCore::BUFSZ_MOVES];
   SoFCore::Move savedKillers_[2];
-  size_t moveCount_;
-  size_t movePosition_;
+  size_t moveCount_ = 0;
+  size_t movePosition_ = 0;
 };
 
 // Iterates over all the moves that must be considered in quiescense search. The moves arrive in a
@@ -122,7 +119,7 @@ private:
   SoFCore::Move moves_[std::max(SoFCore::BUFSZ_CAPTURES, SoFCore::BUFSZ_SIMPLE_PROMOTES)];
   size_t moveCount_;
   size_t movePosition_ = 0;
-  Stage stage_;
+  Stage stage_ = Stage::Capture;
 };
 
 }  // namespace SoFSearch::Private
