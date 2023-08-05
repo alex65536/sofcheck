@@ -17,6 +17,8 @@ jobs:
         static: ['true', 'false']
 
         exclude:
+          - suite: win-msvc32
+            cpu-level: 'bmi2'
           - suite: macos-clang
             cpu-level: 'bmi2'
           - suite: macos-gcc
@@ -36,20 +38,20 @@ jobs:
 
         include:
           - suite: linux-gcc
-            os: ubuntu-20.04
-            compiler: gcc-8
+            os: ubuntu-latest
+            compiler: gcc-12
             cmake-generator: 'Unix Makefiles'
           - suite: linux-clang
-            os: ubuntu-20.04
-            compiler: clang-9
+            os: ubuntu-latest
+            compiler: clang-14
             cmake-generator: 'Unix Makefiles'
           - suite: macos-gcc
             os: macos-latest
-            compiler: gcc-10
+            compiler: gcc-12
             cmake-generator: 'Unix Makefiles'
           - suite: macos-clang
             os: macos-latest
-            compiler: clang-11
+            compiler: clang-14
             cmake-generator: 'Unix Makefiles'
           - suite: win-gcc
             os: windows-2019

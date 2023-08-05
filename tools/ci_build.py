@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # This file is part of SoFCheck
 #
-# Copyright (c) 2021-2022 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2021-2023 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,17 +127,17 @@ def configure(config, storage, args):
     elif config['os'] == 'linux' or config['os'] == 'ubuntu':
         storage['cmd']['cc'] = cc_names[compiler] + comp_version_suf
         storage['cmd']['cxx'] = cxx_names[compiler] + comp_version_suf
-        storage['cmd']['clang-tidy'] = 'clang-tidy-11'
+        storage['cmd']['clang-tidy'] = 'clang-tidy-14'
         storage['pkg']['compiler'] = \
             linux_pkg_names[compiler] + comp_version_suf
-        storage['pkg']['clang-tidy'] = 'clang-tidy-11'
+        storage['pkg']['clang-tidy'] = 'clang-tidy-14'
     elif config['os'] == 'macos':
         storage['cmd']['cc'] = cc_names[compiler] + comp_version_suf
         storage['cmd']['cxx'] = cxx_names[compiler] + comp_version_suf
         storage['pkg']['compiler'] = \
             macos_pkg_names[compiler] + comp_version_suf.replace('-', '@')
 
-        llvm_ver = '11'
+        llvm_ver = '14'
         if compiler == 'clang' and comp_version != '':
             llvm_ver = comp_version
 
