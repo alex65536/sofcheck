@@ -251,7 +251,7 @@ def build(config, storage, args):
         if 'clang-tidy' in storage['cmd'] and \
                 storage['cmd']['clang-tidy'] is not None:
             clang_tidy = list_or_str(storage['cmd']['clang-tidy'])
-            clang_tidy += ['--warnings-as-errors=*', '-Wno-ignored-optimization-argument']
+            clang_tidy += ['--warnings-as-errors=*', '--extra-arg=-Wno-ignored-optimization-argument']
             cmake_args += ['-DCMAKE_CXX_CLANG_TIDY=' + ';'.join(clang_tidy)]
 
     pexec(cmake_args, cwd=build_dir)
