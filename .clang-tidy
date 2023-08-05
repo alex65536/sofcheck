@@ -19,6 +19,7 @@ llvm-namespace-comment, \
 -modernize-avoid-c-arrays, \
 -cert-err58-cpp, \
 -clang-analyzer-security.insecureAPI.rand, \
+-clang-diagnostic-ignored-optimization-argument, \
 -cppcoreguidelines-avoid-c-arrays, \
 -cppcoreguidelines-avoid-magic-numbers, \
 -cppcoreguidelines-avoid-non-const-global-variables, \

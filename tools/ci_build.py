@@ -184,13 +184,13 @@ def build_deps(config, storage, args):
     libs = {
         'googletest': {
             'repo': 'https://github.com/google/googletest/',
-            'branch': 'release-1.10.0',
+            'branch': 'release-1.12.1',
             'flags': [],
             'flags_nostatic': ['-Dgtest_force_shared_crt=ON']
         },
         'benchmark': {
             'repo': 'https://github.com/google/benchmark/',
-            'branch': 'v1.5.5',
+            'branch': 'v1.7.1',
             'flags': ['-DBENCHMARK_ENABLE_TESTING=OFF']
         },
         'cxxopts': {
