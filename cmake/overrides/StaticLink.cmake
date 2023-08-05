@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2022 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2022-2023 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ if(MSVC)
   set(CMAKE_CXX_FLAGS_MINSIZEREL_INIT     "/MT /O1 /Ob1 /DNDEBUG")
   set(CMAKE_CXX_FLAGS_RELEASE_INIT        "/MT /O2 /Ob2 /DNDEBUG")
   set(CMAKE_CXX_FLAGS_RELWITHDEBINFO_INIT "/MT /Zi /O2 /Ob1 /DNDEBUG")
+
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
 # Do not search for dynamic libraries
