@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -272,7 +272,7 @@ private:
       const bitboard_t stormMask2 = ((bbEnemyPawns & row2) >> shift2) & 7U;
       const bitboard_t stormMask3 = ((bbEnemyPawns & row3) >> shift3) & 7U;
 
-      const bool inverted = kingY > 4;
+      const bool inverted = kingY >= 4;
       const auto shieldWeights =
           inverted ? Weights::KING_PAWN_SHIELD_INV : Weights::KING_PAWN_SHIELD;
       const auto stormWeights = inverted ? Weights::KING_PAWN_STORM_INV : Weights::KING_PAWN_STORM;
