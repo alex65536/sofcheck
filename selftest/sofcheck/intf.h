@@ -83,7 +83,8 @@ inline void moveStr(const Board &, const Move &mv, char *str) { SoFCore::moveToS
 
 inline MoveList generateMoves(const Board &board) {
   MoveList moves;
-  moves.count = static_cast<int>(SoFCore::genAllMoves(board, moves.moves));
+  SoFCore::MoveGen gen(board);
+  moves.count = static_cast<int>(gen.genAllMoves(moves.moves));
   return moves;
 }
 

@@ -44,12 +44,12 @@ void sortMvvLva(const Board &board, Move *moves, const size_t count) {
 }
 
 QuiescenseMovePicker::QuiescenseMovePicker(const Board &board)
-    : board_(board), moveCount_(genCaptures(board, moves_)) {
+    : gen_(board), moveCount_(gen_.genCaptures(moves_)) {
   sortMvvLva(board, moves_, moveCount_);
 }
 
 void QuiescenseMovePicker::addSimplePromotes() {
-  moveCount_ = genSimplePromotes(board_, moves_);
+  moveCount_ = gen_.genSimplePromotes(moves_);
   movePosition_ = 0;
   std::sort(moves_, moves_ + moveCount_, [](const Move m1, const Move m2) {
     return static_cast<int8_t>(m1.kind) > static_cast<int8_t>(m2.kind);
@@ -81,13 +81,13 @@ void MovePicker::nextStage() {
       }
       case MovePickerStage::Capture: {
         // Generate captures and sort them by MVV/LVA
-        moveCount_ = genCaptures(board_, moves_);
-        sortMvvLva(board_, moves_, moveCount_);
+        moveCount_ = gen_.genCaptures(moves_);
+        sortMvvLva(gen_.board(), moves_, moveCount_);
         break;
       }
       case MovePickerStage::SimplePromote: {
         // Generate simple promotes and sort them by promoting piece
-        moveCount_ = genSimplePromotes(board_, moves_);
+        moveCount_ = gen_.genSimplePromotes(moves_);
         std::sort(moves_, moves_ + moveCount_, [](const Move m1, const Move m2) {
           return static_cast<int8_t>(m1.kind) > static_cast<int8_t>(m2.kind);
         });
@@ -96,11 +96,11 @@ void MovePicker::nextStage() {
       case MovePickerStage::Killer: {
         // Try two killers if they are valid
         const Move firstKiller = killers_.first();
-        if (isValidKiller(board_, firstKiller)) {
+        if (isValidKiller(gen_.board(), firstKiller)) {
           moves_[moveCount_++] = firstKiller;
         }
         const Move secondKiller = killers_.second();
-        if (isValidKiller(board_, secondKiller)) {
+        if (isValidKiller(gen_.board(), secondKiller)) {
           moves_[moveCount_++] = secondKiller;
         }
         savedKillers_[0] = firstKiller;
@@ -109,7 +109,7 @@ void MovePicker::nextStage() {
       }
       case MovePickerStage::History: {
         // Sort the moves by history heuristic
-        moveCount_ = genSimpleMovesNoPromote(board_, moves_);
+        moveCount_ = gen_.genSimpleMovesNoPromote(moves_);
         std::sort(moves_, moves_ + moveCount_,
                   [this](const Move m1, const Move m2) { return history_[m1] > history_[m2]; });
         for (size_t i = 0; i < moveCount_; ++i) {

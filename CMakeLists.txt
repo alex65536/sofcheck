@@ -1,6 +1,6 @@
 # This file is part of SoFCheck
 #
-# Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
+# Copyright (c) 2020-2023 Alexander Kernozhitsky and SoFCheck contributors
 #
 # SoFCheck is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,6 +79,7 @@ add_library(sof_core STATIC
   src/core/test/selftest.cpp
   "${PROJECT_BINARY_DIR}/src/core/private/near_attacks.h"
   "${PROJECT_BINARY_DIR}/src/core/private/magic_consts.h"
+  "${PROJECT_BINARY_DIR}/src/core/private/between_consts.h"
 )
 target_link_libraries(sof_core PUBLIC sof_util)
 
@@ -212,6 +213,11 @@ generate_file(
 generate_file(
   gen/core/magic_consts.cpp
   src/core/private/magic_consts.h
+)
+
+generate_file(
+  gen/core/between_consts.cpp
+  src/core/private/between_consts.h
 )
 
 generate_file_json(

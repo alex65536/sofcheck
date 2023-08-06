@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020, 2022 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020, 2022-2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 #ifndef SOF_CORE_PRIVATE_BITBOARD_INCLUDED
 #define SOF_CORE_PRIVATE_BITBOARD_INCLUDED
+
+#include "core/types.h"
 
 namespace SoFCore::Private {
 

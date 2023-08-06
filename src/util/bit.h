@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -58,6 +58,9 @@ inline size_t popcount(uint64_t x) {
   return static_cast<size_t>((x * 0x0101010101010101ULL) >> 56);
 }
 #endif
+
+// Returns true if `popcount(x) <= 1`
+inline constexpr uint64_t hasZeroOrOneBit(uint64_t x) { return (x & (x - 1)) == 0; }
 
 // Clears the lowest bit set to one in `x`
 inline constexpr uint64_t clearLowest(uint64_t x) { return x & (x - 1); }

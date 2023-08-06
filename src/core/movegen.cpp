@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 #include "core/movegen.h"
 
 #include "core/bitboard.h"
+#include "core/private/between.h"
 #include "core/private/bitboard.h"
 #include "core/private/geometry.h"
 #include "core/private/magic.h"
@@ -56,15 +57,46 @@ bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
          (Private::rookAttackBitboard(b.bbAll, coord) & bbLinePieces<C>(b));
 }
 
-bool isMoveLegal(const Board &b) {
-  const Color c = b.side;
-  return !isCellAttacked(b, b.kingPos(invert(c)), c);
+template <Color C>
+bitboard_t cellAttackers(const Board &b, coord_t coord) {
+  // Here, we use black attack map for white, as we need to trace the attack from destination piece,
+  // not from the source one
+  constexpr auto *pawnAttacks =
+      (C == Color::White) ? Private::BLACK_PAWN_ATTACKS : Private::WHITE_PAWN_ATTACKS;
+
+  return (b.bbPieces[makeCell(C, Piece::Pawn)] & pawnAttacks[coord]) |
+         (b.bbPieces[makeCell(C, Piece::King)] & Private::KING_ATTACKS[coord]) |
+         (b.bbPieces[makeCell(C, Piece::Knight)] & Private::KNIGHT_ATTACKS[coord]) |
+         (Private::bishopAttackBitboard(b.bbAll, coord) & bbDiagPieces<C>(b)) |
+         (Private::rookAttackBitboard(b.bbAll, coord) & bbLinePieces<C>(b));
 }
 
 bool isCheck(const Board &b) {
   const Color c = b.side;
   return isCellAttacked(b, b.kingPos(c), invert(c));
 }
+
+bool isMoveLegal(const Board &b) {
+  const Color c = b.side;
+  return !isCellAttacked(b, b.kingPos(invert(c)), c);
+}
+
+enum class PromoteGenPolicy { All, PromoteOnly, NoPromote };
+
+struct SimpleGenFilter {
+  static constexpr bool GEN_CASTLING = true;
+
+  // NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+  inline bitboard_t filterDst(const bitboard_t bbDst) const { return bbDst; }
+};
+
+struct CheckGenFilter {
+  static constexpr bool GEN_CASTLING = false;
+
+  bitboard_t bbDstMask;
+
+  inline bitboard_t filterDst(const bitboard_t bbDst) const { return bbDst & bbDstMask; }
+};
 
 template <bool IsPromote>
 inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t src,
@@ -80,10 +112,10 @@ inline static size_t addPawnWithPromote(Move *list, size_t size, const coord_t s
   return size;
 }
 
-template <Color C, bool IsPromote>
+template <Color C, bool IsPromote, typename GenFilter>
 inline static size_t doGenPawnSingle(const Board &b, const bitboard_t bbPawns, Move *list,
-                                     size_t size) {
-  bitboard_t bbPawnDsts = advancePawnForward(C, bbPawns) & ~b.bbAll;
+                                     size_t size, const GenFilter filter) {
+  bitboard_t bbPawnDsts = filter.filterDst(advancePawnForward(C, bbPawns) & ~b.bbAll);
   while (bbPawnDsts) {
     const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
     size = addPawnWithPromote<IsPromote>(list, size, dst - Private::pawnForwardDelta(C), dst);
@@ -91,11 +123,11 @@ inline static size_t doGenPawnSingle(const Board &b, const bitboard_t bbPawns, M
   return size;
 }
 
-template <Color C>
+template <Color C, typename GenFilter>
 inline static size_t doGenPawnDouble(const Board &b, const bitboard_t bbPawns, Move *list,
-                                     size_t size) {
+                                     size_t size, const GenFilter filter) {
   const bitboard_t bbPawnTmps = advancePawnForward(C, bbPawns) & ~b.bbAll;
-  bitboard_t bbPawnDsts = advancePawnForward(C, bbPawnTmps) & ~b.bbAll;
+  bitboard_t bbPawnDsts = filter.filterDst(advancePawnForward(C, bbPawnTmps) & ~b.bbAll);
   while (bbPawnDsts) {
     const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
     const coord_t src = dst - 2 * Private::pawnForwardDelta(C);
@@ -104,15 +136,15 @@ inline static size_t doGenPawnDouble(const Board &b, const bitboard_t bbPawns, M
   return size;
 }
 
-template <Color C, bool IsPromote>
+template <Color C, bool IsPromote, typename GenFilter>
 inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, Move *list,
-                                      size_t size) {
+                                      size_t size, const GenFilter filter) {
   const bitboard_t bbAllowed = b.bbColor(invert(C));
   constexpr coord_t leftDelta = Private::pawnLeftDelta(C);
   constexpr coord_t rightDelta = Private::pawnRightDelta(C);
   {
     // Left capture
-    bitboard_t bbPawnDsts = advancePawnLeft(C, bbPawns) & bbAllowed;
+    bitboard_t bbPawnDsts = filter.filterDst(advancePawnLeft(C, bbPawns) & bbAllowed);
     while (bbPawnDsts) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
       size = addPawnWithPromote<IsPromote>(list, size, dst - leftDelta, dst);
@@ -120,7 +152,7 @@ inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, 
   }
   {
     // Right capture
-    bitboard_t bbPawnDsts = advancePawnRight(C, bbPawns) & bbAllowed;
+    bitboard_t bbPawnDsts = filter.filterDst(advancePawnRight(C, bbPawns) & bbAllowed);
     while (bbPawnDsts) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbPawnDsts));
       size = addPawnWithPromote<IsPromote>(list, size, dst - rightDelta, dst);
@@ -129,31 +161,29 @@ inline static size_t doGenPawnCapture(const Board &b, const bitboard_t bbPawns, 
   return size;
 }
 
-enum class PromoteGenPolicy { All, PromoteOnly, NoPromote };
-
-template <Color C, PromoteGenPolicy P>
-inline static size_t genPawnSimple(const Board &b, Move *list) {
+template <Color C, PromoteGenPolicy P, typename GenFilter>
+inline static size_t genPawnSimple(const Board &b, Move *list, const GenFilter filter) {
   size_t size = 0;
   constexpr bitboard_t bbPromote = BB_ROW[Private::promoteSrcRow(C)];
   constexpr bitboard_t bbDouble = BB_ROW[Private::doubleMoveSrcRow(C)];
   const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
   if constexpr (P == PromoteGenPolicy::All || P == PromoteGenPolicy::NoPromote) {
-    size = doGenPawnSingle<C, false>(b, bbPawns & ~bbPromote, list, size);
-    size = doGenPawnDouble<C>(b, bbPawns & bbDouble, list, size);
+    size = doGenPawnSingle<C, false>(b, bbPawns & ~bbPromote, list, size, filter);
+    size = doGenPawnDouble<C>(b, bbPawns & bbDouble, list, size, filter);
   }
   if constexpr (P == PromoteGenPolicy::All || P == PromoteGenPolicy::PromoteOnly) {
-    size = doGenPawnSingle<C, true>(b, bbPawns & bbPromote, list, size);
+    size = doGenPawnSingle<C, true>(b, bbPawns & bbPromote, list, size, filter);
   }
   return size;
 }
 
-template <Color C>
-inline static size_t genPawnCapture(const Board &b, Move *list) {
+template <Color C, typename GenFilter>
+inline static size_t genPawnCapture(const Board &b, Move *list, const GenFilter filter) {
   size_t size = 0;
   constexpr bitboard_t bbPromote = BB_ROW[Private::promoteSrcRow(C)];
   const bitboard_t bbPawns = b.bbPieces[makeCell(C, Piece::Pawn)];
-  size = doGenPawnCapture<C, false>(b, bbPawns & ~bbPromote, list, size);
-  size = doGenPawnCapture<C, true>(b, bbPawns & bbPromote, list, size);
+  size = doGenPawnCapture<C, false>(b, bbPawns & ~bbPromote, list, size, filter);
+  size = doGenPawnCapture<C, true>(b, bbPawns & bbPromote, list, size, filter);
   return size;
 }
 
@@ -186,8 +216,8 @@ inline static bitboard_t getAllowedMask(const Board &b) {
   return GenSimple ? (GenCaptures ? ~b.bbColor(C) : ~b.bbAll) : b.bbColor(invert(C));
 }
 
-template <Color C, Piece P, bool GenSimple, bool GenCaptures>
-inline static size_t genKnightOrKing(const Board &b, Move *list) {
+template <Color C, Piece P, bool GenSimple, bool GenCaptures, typename GenFilter>
+inline static size_t genKnightOrKing(const Board &b, Move *list, const GenFilter filter) {
   static_assert(P == Piece::Knight || P == Piece::King);
   size_t size = 0;
   const bitboard_t bbAllowed = getAllowedMask<C, GenSimple, GenCaptures>(b);
@@ -195,7 +225,7 @@ inline static size_t genKnightOrKing(const Board &b, Move *list) {
   bitboard_t bbSrc = b.bbPieces[makeCell(C, P)];
   while (bbSrc) {
     const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbSrc));
-    bitboard_t bbDst = attacks[src] & bbAllowed;
+    bitboard_t bbDst = filter.filterDst(attacks[src] & bbAllowed);
     while (bbDst) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbDst));
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
@@ -204,18 +234,19 @@ inline static size_t genKnightOrKing(const Board &b, Move *list) {
   return size;
 }
 
-template <Color C, bool GenSimple, bool GenCaptures>
-inline static size_t genKnight(const Board &b, Move *list) {
-  return genKnightOrKing<C, Piece::Knight, GenSimple, GenCaptures>(b, list);
+template <Color C, bool GenSimple, bool GenCaptures, typename GenFilter>
+inline static size_t genKnight(const Board &b, Move *list, const GenFilter filter) {
+  return genKnightOrKing<C, Piece::Knight, GenSimple, GenCaptures>(b, list, filter);
 }
 
 template <Color C, bool GenSimple, bool GenCaptures>
 inline static size_t genKing(const Board &b, Move *list) {
-  return genKnightOrKing<C, Piece::King, GenSimple, GenCaptures>(b, list);
+  return genKnightOrKing<C, Piece::King, GenSimple, GenCaptures>(b, list, SimpleGenFilter{});
 }
 
-template <Color C, Piece P, bool GenSimple, bool GenCaptures>
-inline static size_t genBishopOrRook(const Board &b, Move *list, bitboard_t bbSrc) {
+template <Color C, Piece P, bool GenSimple, bool GenCaptures, typename GenFilter>
+inline static size_t genBishopOrRook(const Board &b, Move *list, bitboard_t bbSrc,
+                                     const GenFilter filter) {
   static_assert(P == Piece::Bishop || P == Piece::Rook);
   size_t size = 0;
   const bitboard_t bbAllowed = getAllowedMask<C, GenSimple, GenCaptures>(b);
@@ -223,7 +254,7 @@ inline static size_t genBishopOrRook(const Board &b, Move *list, bitboard_t bbSr
     const auto src = static_cast<coord_t>(SoFUtil::extractLowest(bbSrc));
     bitboard_t bbDst = (P == Piece::Bishop) ? Private::bishopAttackBitboard(b.bbAll, src)
                                             : Private::rookAttackBitboard(b.bbAll, src);
-    bbDst &= bbAllowed;
+    bbDst = filter.filterDst(bbDst & bbAllowed);
     while (bbDst) {
       const auto dst = static_cast<coord_t>(SoFUtil::extractLowest(bbDst));
       list[size++] = Move{MoveKind::Simple, src, dst, 0};
@@ -232,18 +263,23 @@ inline static size_t genBishopOrRook(const Board &b, Move *list, bitboard_t bbSr
   return size;
 }
 
-template <Color C, bool GenSimple, bool GenCaptures>
-inline static size_t genBishop(const Board &b, Move *list, bitboard_t bbSrc) {
-  return genBishopOrRook<C, Piece::Bishop, GenSimple, GenCaptures>(b, list, bbSrc);
+template <Color C, bool GenSimple, bool GenCaptures, typename GenFilter>
+inline static size_t genBishop(const Board &b, Move *list, bitboard_t bbSrc,
+                               const GenFilter filter) {
+  return genBishopOrRook<C, Piece::Bishop, GenSimple, GenCaptures>(b, list, bbSrc, filter);
 }
 
-template <Color C, bool GenSimple, bool GenCaptures>
-inline static size_t genRook(const Board &b, Move *list, bitboard_t bbSrc) {
-  return genBishopOrRook<C, Piece::Rook, GenSimple, GenCaptures>(b, list, bbSrc);
+template <Color C, bool GenSimple, bool GenCaptures, typename GenFilter>
+inline static size_t genRook(const Board &b, Move *list, bitboard_t bbSrc, const GenFilter filter) {
+  return genBishopOrRook<C, Piece::Rook, GenSimple, GenCaptures>(b, list, bbSrc, filter);
 }
 
-template <Color C>
-inline static size_t genCastling(const Board &b, Move *list) {
+template <Color C, typename GenFilter>
+inline static size_t genCastling(const Board &b, Move *list, const GenFilter) {
+  // We don't verify castling under check here. We rely on the fact that `CheckGenFilter` is passed
+  // to `genImplInner()` on check, eliminating the call to this function.
+  static_assert(GenFilter::GEN_CASTLING);
+
   size_t size = 0;
   constexpr subcoord_t x = Private::castlingRow(C);
   constexpr coord_t castlingOffset = Private::castlingOffset(C);
@@ -252,8 +288,7 @@ inline static size_t genCastling(const Board &b, Move *list) {
     constexpr coord_t src = makeCoord(x, 4);
     constexpr coord_t tmp = makeCoord(x, 5);
     constexpr coord_t dst = makeCoord(x, 6);
-    if (!(castlingPass & b.bbAll) && !isCellAttacked<invert(C)>(b, src) &&
-        !isCellAttacked<invert(C)>(b, tmp)) {
+    if (!(castlingPass & b.bbAll) && !isCellAttacked<invert(C)>(b, tmp)) {
       list[size++] = Move{MoveKind::CastlingKingside, src, dst, 0};
     }
   }
@@ -262,61 +297,120 @@ inline static size_t genCastling(const Board &b, Move *list) {
     constexpr coord_t src = makeCoord(x, 4);
     constexpr coord_t tmp = makeCoord(x, 3);
     constexpr coord_t dst = makeCoord(x, 2);
-    if (!(castlingPass & b.bbAll) && !isCellAttacked<invert(C)>(b, src) &&
-        !isCellAttacked<invert(C)>(b, tmp)) {
+    if (!(castlingPass & b.bbAll) && !isCellAttacked<invert(C)>(b, tmp)) {
       list[size++] = Move{MoveKind::CastlingQueenside, src, dst, 0};
     }
   }
   return size;
 }
 
-template <Color C, bool GenSimple, bool GenCaptures, bool GenSimplePromote>
-inline static size_t genImpl(const Board &b, Move *list) {
+template <Color C, bool GenSimple, bool GenCaptures, bool GenSimplePromote, typename GenFilter>
+inline static size_t genImplInner(const Board &b, Move *list, const GenFilter filter) {
   static_assert(GenSimple || GenCaptures);
+  static_assert(GenSimple || !GenSimplePromote);
+
   size_t size = 0;
   if constexpr (GenSimple) {
     constexpr PromoteGenPolicy promotePolicy =
         GenSimplePromote ? PromoteGenPolicy::All : PromoteGenPolicy::NoPromote;
-    size += genPawnSimple<C, promotePolicy>(b, list + size);
+    size += genPawnSimple<C, promotePolicy>(b, list + size, filter);
   }
   if constexpr (GenCaptures) {
-    size += genPawnCapture<C>(b, list + size);
+    size += genPawnCapture<C>(b, list + size, filter);
     size += genPawnEnpassant<C>(b, list + size);
   }
   size += genKing<C, GenSimple, GenCaptures>(b, list + size);
-  size += genKnight<C, GenSimple, GenCaptures>(b, list + size);
-  size += genBishop<C, GenSimple, GenCaptures>(b, list + size, bbDiagPieces<C>(b));
-  size += genRook<C, GenSimple, GenCaptures>(b, list + size, bbLinePieces<C>(b));
-  if constexpr (GenSimple) {
-    size += genCastling<C>(b, list + size);
+  size += genKnight<C, GenSimple, GenCaptures>(b, list + size, filter);
+  size += genBishop<C, GenSimple, GenCaptures>(b, list + size, bbDiagPieces<C>(b), filter);
+  size += genRook<C, GenSimple, GenCaptures>(b, list + size, bbLinePieces<C>(b), filter);
+  if constexpr (GenSimple && GenFilter::GEN_CASTLING) {
+    size += genCastling<C>(b, list + size, filter);
   }
   return size;
 }
 
-size_t genCaptures(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, false, true, true>(b, list)
-                                  : genImpl<Color::Black, false, true, true>(b, list);
+MoveGen::MoveGen(const Board &b) : b_(b), side_(b.side) {
+  const coord_t king = b.kingPos(side_);
+  const bitboard_t kingAttackers = cellAttackers(b, king, invert(side_));
+
+  if (!kingAttackers) {
+    check_ = CheckKind::None;
+    return;
+  }
+
+  if (!SoFUtil::hasZeroOrOneBit(kingAttackers)) {
+    check_ = CheckKind::Double;
+    return;
+  }
+
+  check_ = CheckKind::Single;
+  const auto checker = static_cast<coord_t>(SoFUtil::getLowest(kingAttackers));
+  checkMask_ = Private::between(checker, king) | kingAttackers;
 }
 
-size_t genAllMoves(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, true, true, true>(b, list)
-                                  : genImpl<Color::Black, true, true, true>(b, list);
+template <Color C, bool GenSimple, bool GenCaptures, bool GenSimplePromote>
+size_t MoveGen::genImpl(Move *list) const {
+  static_assert(GenSimple || GenCaptures);
+  static_assert(GenSimple || !GenSimplePromote);
+
+  switch (check_) {
+    case CheckKind::None: {
+      return genImplInner<C, GenSimple, GenCaptures, GenSimplePromote>(b_, list, SimpleGenFilter{});
+    }
+    case CheckKind::Single: {
+      return genImplInner<C, GenSimple, GenCaptures, GenSimplePromote>(b_, list,
+                                                                       CheckGenFilter{checkMask_});
+    }
+    case CheckKind::Double: {
+      // Double check or more. We can move only the king.
+      return genKing<C, GenSimple, GenCaptures>(b_, list);
+    }
+  }
+
+  SOF_UNREACHABLE();
 }
 
-size_t genSimpleMoves(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, true, false, true>(b, list)
-                                  : genImpl<Color::Black, true, false, true>(b, list);
+template <Color C>
+size_t MoveGen::genSimplePromotesImpl(Move *list) const {
+  switch (check_) {
+    case CheckKind::None: {
+      return genPawnSimple<C, PromoteGenPolicy::PromoteOnly>(b_, list, SimpleGenFilter{});
+    }
+    case CheckKind::Single: {
+      return genPawnSimple<C, PromoteGenPolicy::PromoteOnly>(b_, list, CheckGenFilter{checkMask_});
+    }
+    case CheckKind::Double: {
+      // Double check or more. We can move only the king.
+      return 0;
+    }
+  }
+
+  SOF_UNREACHABLE();
 }
 
-size_t genSimpleMovesNoPromote(const Board &b, Move *list) {
-  return (b.side == Color::White) ? genImpl<Color::White, true, false, false>(b, list)
-                                  : genImpl<Color::Black, true, false, false>(b, list);
+size_t MoveGen::genCaptures(Move *list) const {
+  return (side_ == Color::White) ? genImpl<Color::White, false, true, false>(list)
+                                 : genImpl<Color::Black, false, true, false>(list);
 }
 
-size_t genSimplePromotes(const Board &b, Move *list) {
-  return (b.side == Color::White)
-             ? genPawnSimple<Color::White, PromoteGenPolicy::PromoteOnly>(b, list)
-             : genPawnSimple<Color::Black, PromoteGenPolicy::PromoteOnly>(b, list);
+size_t MoveGen::genAllMoves(Move *list) const {
+  return (side_ == Color::White) ? genImpl<Color::White, true, true, true>(list)
+                                 : genImpl<Color::Black, true, true, true>(list);
+}
+
+size_t MoveGen::genSimpleMoves(Move *list) const {
+  return (side_ == Color::White) ? genImpl<Color::White, true, false, true>(list)
+                                 : genImpl<Color::Black, true, false, true>(list);
+}
+
+size_t MoveGen::genSimpleMovesNoPromote(Move *list) const {
+  return (side_ == Color::White) ? genImpl<Color::White, true, false, false>(list)
+                                 : genImpl<Color::Black, true, false, false>(list);
+}
+
+size_t MoveGen::genSimplePromotes(Move *list) const {
+  return (side_ == Color::White) ? genSimplePromotesImpl<Color::White>(list)
+                                 : genSimplePromotesImpl<Color::Black>(list);
 }
 
 template <Color C>
@@ -397,5 +491,8 @@ bool isMoveValid(const Board &b, const Move move) {
 
 template bool isCellAttacked<Color::White>(const Board &b, coord_t coord);
 template bool isCellAttacked<Color::Black>(const Board &b, coord_t coord);
+
+template bitboard_t cellAttackers<Color::White>(const Board &b, coord_t coord);
+template bitboard_t cellAttackers<Color::Black>(const Board &b, coord_t coord);
 
 }  // namespace SoFCore

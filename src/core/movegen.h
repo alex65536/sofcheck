@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021, 2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -29,13 +29,25 @@ namespace SoFCore {
 // Checks if the cell is attacked by any of the pieces of color `C`
 //
 // For optimization purposes, enpassant captures are not considered by this function, as the primary
-// purpose of this function is to check for king attacks  (e. g. in `isMoveLegal()`)
+// purpose of this function is to check for king attacks (e. g. in `isMoveLegal()`)
 template <Color C>
 bool isCellAttacked(const Board &b, coord_t coord);
 
 inline bool isCellAttacked(const Board &b, const coord_t coord, const Color c) {
   return (c == Color::White) ? isCellAttacked<Color::White>(b, coord)
                              : isCellAttacked<Color::Black>(b, coord);
+}
+
+// Returns the set of pieces of color `C` which attack the given cell
+//
+// For optimization purposes, enpassant captures are not considered by this function, as the primary
+// purpose of this function is to check for king attacks (e. g. in `isMoveLegal()`)
+template <Color C>
+bitboard_t cellAttackers(const Board &b, coord_t coord);
+
+inline bitboard_t cellAttackers(const Board &b, const coord_t coord, const Color c) {
+  return (c == Color::White) ? cellAttackers<Color::White>(b, coord)
+                             : cellAttackers<Color::Black>(b, coord);
 }
 
 // Returns `true` if the last move applied to the board `b` was legal. Note that it doesn't mean
@@ -48,38 +60,66 @@ bool isMoveLegal(const Board &b);
 // Returns `true` is the king of the moving side is currenly under check
 bool isCheck(const Board &b);
 
-// All these functions generate pseudo-legal moves (i.e. all the moves that are legal by chess rules
-// if we ignore the rule that the king must not be under check). The arguments are passed in the
-// following way:
-//
-// - `board` is the current position
-// - `list` is an output list in which the moves will be written
-// - the return value indicates the number of moves generated
-//
-// To generate only legal moves you can use `isMoveLegal()` function
-size_t genAllMoves(const Board &b, Move *list);
-size_t genSimpleMoves(const Board &b, Move *list);
-size_t genSimpleMovesNoPromote(const Board &b, Move *list);
-size_t genSimplePromotes(const Board &b, Move *list);
-size_t genCaptures(const Board &b, Move *list);
+// Move generator
+class MoveGen {
+public:
+  // Creates a move generator for the board `b`. The provided board must not be changed from the
+  // outside, though making some moves and reverting them between the calls is allowed.
+  explicit MoveGen(const Board &b);
+
+  // Returns a pointer to the board, for which the moves are being generated.
+  const Board &board() const { return b_; }
+
+  // All these functions generate all the legal moves plus some pseudo-legal moves. Thus, after
+  // applying some of the generated moves, the king may become under check, but otherwise the moves
+  // are valid according to the rules of chess. The moves are written into `list`, and the return
+  // value indicates the number of moves generated.
+  //
+  // To generate only legal moves you can use `isMoveLegal()` function
+  size_t genAllMoves(Move *list) const;
+  size_t genSimpleMoves(Move *list) const;
+  size_t genSimpleMovesNoPromote(Move *list) const;
+  size_t genSimplePromotes(Move *list) const;
+  size_t genCaptures(Move *list) const;
+
+private:
+  enum class CheckKind : int8_t {
+    None = 0,
+    Single = 1,
+    Double = 2,
+  };
+
+  const Board &b_;
+  bitboard_t checkMask_ = 0;
+  CheckKind check_;
+  Color side_;
+
+  template <Color, bool, bool, bool>
+  size_t genImpl(Move *list) const;
+
+  template <Color>
+  size_t genSimplePromotesImpl(Move *list) const;
+};
 
 // Upper bound for total number of pseudo-legal moves in any valid position. You can use it as a
-// buffer size for `genAllMoves()`.
+// buffer size for `MoveGen::genAllMoves()`.
 constexpr size_t BUFSZ_MOVES = 300;
 
 // Upper bound for total number of pseudo-legal captures in any valid position. You can use it as a
-// buffer size for `genCaptures()`.
+// buffer size for `MoveGen::genCaptures()`.
 constexpr size_t BUFSZ_CAPTURES = 128;
 
 // Upper bound for total number of pseudo-legal simple promotes in any valid position. You can use
-// it as a buffer size for `genSimplePromotes()`.
+// it as a buffer size for `MoveGen::genSimplePromotes()`.
 constexpr size_t BUFSZ_SIMPLE_PROMOTES = 32;
 
-// Returns `true` if the move `move` can be returned by `genAllMoves()`
+// Returns `true` if the move `move` is pseudo-legal
 //
 // The move must be well-formed (i.e. `move.isWellFormed(b.side)` must return `true`), otherwise the
 // behavior is undefined. Null moves are considered invalid by this function, as they cannot be
 // returned by `genAllMoves()`.
+//
+// To check for legality you can use `isMoveLegal()` function
 bool isMoveValid(const Board &b, Move move);
 
 // Returns `true` if the move is capture

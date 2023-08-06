@@ -70,7 +70,7 @@ public:
   MovePicker(const SoFCore::Board &board, const SoFCore::Move hashMove, const KillerLine &killers,
              const HistoryTable &history)
       : hashMove_(hashMove),
-        board_(board),
+        gen_(board),
         killers_(killers),
         history_(history),
         savedKillers_{SoFCore::Move::null(), SoFCore::Move::null()} {}
@@ -80,7 +80,7 @@ private:
 
   MovePickerStage stage_ = MovePickerStage::Start;
   SoFCore::Move hashMove_;
-  const SoFCore::Board &board_;
+  SoFCore::MoveGen gen_;
   const KillerLine &killers_;
   const HistoryTable &history_;
   SoFCore::Move moves_[SoFCore::BUFSZ_MOVES];
@@ -115,7 +115,7 @@ private:
 
   void addSimplePromotes();
 
-  const SoFCore::Board &board_;
+  SoFCore::MoveGen gen_;
   SoFCore::Move moves_[std::max(SoFCore::BUFSZ_CAPTURES, SoFCore::BUFSZ_SIMPLE_PROMOTES)];
   size_t moveCount_;
   size_t movePosition_ = 0;

@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2021 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2021, 2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ inline void runCheckValid(benchmark::State &state, const char *fen) {
 
   Board board = Board::fromFen(fen).unwrap();
   Move moves[BUFSZ_MOVES];
-  size_t cnt = genAllMoves(board, moves);
+  size_t cnt = MoveGen(board).genAllMoves(moves);
 
   for ([[maybe_unused]] auto _ : state) {
     for (size_t i = 0; i < cnt; ++i) {
