@@ -190,14 +190,12 @@ auto GameReader::tryReadCommand() -> std::optional<CommandResult> {
     for (const auto &srcMove : SoFUtil::split(bodyBegin)) {
       const Move move =
           SoFCore::moveParse(srcMove.data(), srcMove.data() + srcMove.size(), *lastBoard_);
-      if (!move.isWellFormed(lastBoard_->side) || !isMoveValid(*lastBoard_, move)) {
-        return error("Move #" + std::to_string(moves.size() + 1) + " is invalid");
+      if (!move.isWellFormed(lastBoard_->side) || !isMoveValid(*lastBoard_, move) ||
+          !isMoveLegal(*lastBoard_, move)) {
+        return error("Move #" + std::to_string(moves.size() + 1) + " is illegal");
       }
       moves.push_back(move);
       moveMake(*lastBoard_, move);
-      if (!isMoveLegal(*lastBoard_)) {
-        return error("Move #" + std::to_string(moves.size() + 1) + " is illegal");
-      }
       if (canCaptureBoards()) {
         capturedBoards_.push_back(*lastBoard_);
       }

@@ -91,13 +91,9 @@ static Move pickRandomMove(Board board) {
   SoFUtil::randomShuffle(moves, moves + count);
   for (size_t i = 0; i < count; ++i) {
     const Move move = moves[i];
-    const SoFCore::MovePersistence persistence = moveMake(board, move);
-    if (!isMoveLegal(board)) {
-      moveUnmake(board, move, persistence);
-      continue;
+    if (isMoveLegal(board, move)) {
+      return move;
     }
-    moveUnmake(board, move, persistence);
-    return move;
   }
   return Move::null();
 }

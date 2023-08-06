@@ -22,6 +22,12 @@
 
 namespace SoFCore {
 
+// Empty bitboard
+constexpr bitboard_t BB_EMPTY = 0;
+
+// Full bitboard
+constexpr bitboard_t BB_FULL = 0xffffffffffffffff;
+
 // Bitboards for diagonals of type I. So, the bit `c` is set in the bitboard `BB_DIAG1[d]` iff
 // `coordDiag1(c) == d`
 constexpr bitboard_t BB_DIAG1[15] = {

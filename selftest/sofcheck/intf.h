@@ -64,7 +64,7 @@ inline Board boardFromFen(const char *fen) {
 
 inline MovePersistence tryMakeMove(Board &board, const Move &move) {
   auto p = SoFCore::moveMake(board, move);
-  if (!isMoveLegal(board)) {
+  if (!wasMoveLegal(board)) {
     SoFCore::moveUnmake(board, move, p);
     return std::nullopt;
   }

@@ -29,7 +29,7 @@ namespace SoFCore {
 // Checks if the cell is attacked by any of the pieces of color `C`
 //
 // For optimization purposes, enpassant captures are not considered by this function, as the primary
-// purpose of this function is to check for king attacks (e. g. in `isMoveLegal()`)
+// purpose of this function is to check for king attacks (e. g. in `wasMoveLegal()`)
 template <Color C>
 bool isCellAttacked(const Board &b, coord_t coord);
 
@@ -41,7 +41,7 @@ inline bool isCellAttacked(const Board &b, const coord_t coord, const Color c) {
 // Returns the set of pieces of color `C` which attack the given cell
 //
 // For optimization purposes, enpassant captures are not considered by this function, as the primary
-// purpose of this function is to check for king attacks (e. g. in `isMoveLegal()`)
+// purpose of this function is to check for king attacks (e. g. in `wasMoveLegal()`)
 template <Color C>
 bitboard_t cellAttackers(const Board &b, coord_t coord);
 
@@ -55,7 +55,7 @@ inline bitboard_t cellAttackers(const Board &b, const coord_t coord, const Color
 //
 // So, the typical use of this function is to make a pseudo-legal move, then check whether it is
 // legal, and then unmake it if it's illegal.
-bool isMoveLegal(const Board &b);
+bool wasMoveLegal(const Board &b);
 
 // Returns `true` is the king of the moving side is currenly under check
 bool isCheck(const Board &b);
@@ -75,7 +75,7 @@ public:
   // are valid according to the rules of chess. The moves are written into `list`, and the return
   // value indicates the number of moves generated.
   //
-  // To generate only legal moves you can use `isMoveLegal()` function
+  // To generate only legal moves you can use `isMoveLegal()` or `wasMoveLegal()` function
   size_t genAllMoves(Move *list) const;
   size_t genSimpleMoves(Move *list) const;
   size_t genSimpleMovesNoPromote(Move *list) const;
@@ -119,8 +119,17 @@ constexpr size_t BUFSZ_SIMPLE_PROMOTES = 32;
 // behavior is undefined. Null moves are considered invalid by this function, as they cannot be
 // returned by `genAllMoves()`.
 //
-// To check for legality you can use `isMoveLegal()` function
+// To check for legality you can use `isMoveLegal()` or `wasMoveLegal()` function
 bool isMoveValid(const Board &b, Move move);
+
+// Returns `true` if the move `move` is legal
+//
+// The move must be pseudo-legal (i.e. `move.isWellFormed(b.side) && isMoveValid(b, move)` must
+// return `true`), otherwise the behavior is undefined.
+//
+// As a special exception, null moves are considered legal by this function, but only if there is no
+// check.
+bool isMoveLegal(const Board &b, Move move);
 
 // Returns `true` if the move is capture
 inline constexpr bool isMoveCapture(const Board &b, const Move move) {

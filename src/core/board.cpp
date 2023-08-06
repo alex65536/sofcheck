@@ -424,7 +424,7 @@ ValidateResult Board::validate() {
   }
 
   // Check for `OpponentKingAttacked`
-  if (!isMoveLegal(*this)) {
+  if (!wasMoveLegal(*this)) {
     return ValidateResult::OpponentKingAttacked;
   }
 

@@ -555,16 +555,13 @@ PollResult UciServerConnector::processUciPosition(std::istream &tokens) {
   vector<Move> moves;
   while (tokens >> token) {
     const Move move = moveParse(token.c_str(), dstBoard);
-    if (!move.isWellFormed(dstBoard.side) || !isMoveValid(dstBoard, move)) {
-      logError(UCI_SERVER) << "Move \"" << token << "\" is invalid";
+    if (!move.isWellFormed(dstBoard.side) || !isMoveValid(dstBoard, move) ||
+        !isMoveLegal(dstBoard, move)) {
+      logError(UCI_SERVER) << "Move \"" << token << "\" is illegal";
       return PollResult::NoData;
     }
     moves.push_back(move);
     moveMake(dstBoard, move);
-    if (!isMoveLegal(dstBoard)) {
-      logError(UCI_SERVER) << "Move \"" << token << "\" is not legal";
-      return PollResult::NoData;
-    }
   }
 
   // Finally, after everything is parsed, just call client API

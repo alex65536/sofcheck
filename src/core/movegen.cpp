@@ -76,7 +76,7 @@ bool isCheck(const Board &b) {
   return isCellAttacked(b, b.kingPos(c), invert(c));
 }
 
-bool isMoveLegal(const Board &b) {
+bool wasMoveLegal(const Board &b) {
   const Color c = b.side;
   return !isCellAttacked(b, b.kingPos(invert(c)), c);
 }
@@ -482,6 +482,59 @@ inline static bool isMoveValidImpl(const Board &b, const Move move) {
            (Private::rookAttackBitboard(b.bbAll, src) & bbDst);
   }
   return false;
+}
+
+template <Color C>
+inline static bool isAttackedMaskedImpl(const Board &b, const coord_t kingPos,
+                                        const bitboard_t bbAll, const bitboard_t bbOursMask) {
+  // Here, we use black attack map for white, as we need to trace the attack from destination piece,
+  // not from the source one
+  constexpr auto *pawnAttacks =
+      (C == Color::White) ? Private::BLACK_PAWN_ATTACKS : Private::WHITE_PAWN_ATTACKS;
+
+  // Check near attacks
+  if (((b.bbPieces[makeCell(C, Piece::Pawn)] & pawnAttacks[kingPos]) |
+       (b.bbPieces[makeCell(C, Piece::King)] & Private::KING_ATTACKS[kingPos]) |
+       (b.bbPieces[makeCell(C, Piece::Knight)] & Private::KNIGHT_ATTACKS[kingPos])) &
+      bbOursMask) {
+    return true;
+  }
+
+  // Check far attacks
+  return (Private::bishopAttackBitboard(bbAll, kingPos) & bbDiagPieces<C>(b) & bbOursMask) ||
+         (Private::rookAttackBitboard(bbAll, kingPos) & bbLinePieces<C>(b) & bbOursMask);
+}
+
+template <Color C>
+inline static bool isMoveLegalImpl(const Board &b, const Move move) {
+  if (SOF_UNLIKELY(move.kind == MoveKind::Null)) {
+    return !isCheck(b);
+  }
+
+  const coord_t src = move.src;
+  const coord_t dst = move.dst;
+  const bitboard_t bbSrc = coordToBitboard(src);
+  const bitboard_t bbDst = coordToBitboard(dst);
+  const cell_t srcCell = b.cells[src];
+
+  if (srcCell == makeCell(C, Piece::King)) {
+    return !isAttackedMaskedImpl<invert(C)>(b, dst, b.bbAll ^ bbSrc, BB_FULL);
+  }
+
+  const coord_t king = b.kingPos(C);
+  bitboard_t bbAll = (b.bbAll ^ bbSrc) | bbDst;
+  bitboard_t bbOursMask = ~bbDst;
+  if (move.kind == MoveKind::Enpassant) {
+    const bitboard_t bbTmp = advancePawnForward(invert(C), bbDst);
+    bbAll ^= bbTmp;
+    bbOursMask ^= bbTmp;
+  }
+  return !isAttackedMaskedImpl<invert(C)>(b, king, bbAll, bbOursMask);
+}
+
+bool isMoveLegal(const Board &b, Move move) {
+  return (b.side == Color::White) ? isMoveLegalImpl<Color::White>(b, move)
+                                  : isMoveLegalImpl<Color::Black>(b, move);
 }
 
 bool isMoveValid(const Board &b, const Move move) {

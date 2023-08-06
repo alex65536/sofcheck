@@ -342,7 +342,7 @@ score_t Searcher::quiescenseSearch(score_t alpha, const score_t beta, const Eval
     }
     DIAGNOSTIC(dgnMoves.add(move);)
     MoveMakeGuard guard(board_, move, tag);
-    if (!isMoveLegal(board_)) {
+    if (!wasMoveLegal(board_)) {
       continue;
     }
     const score_t score = -quiescenseSearch(-beta, -alpha, guard.tag());
@@ -512,7 +512,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
     DIAGNOSTIC(dgnMoves.add(move);)
     MoveMakeGuard guard(board_, move, tag);
     tt_.prefetch(board_.hash);
-    if (!isMoveLegal(board_)) {
+    if (!wasMoveLegal(board_)) {
       continue;
     }
     if constexpr (Node != NodeKind::Root) {
