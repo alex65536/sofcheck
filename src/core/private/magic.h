@@ -1,6 +1,6 @@
 // This file is part of SoFCheck
 //
-// Copyright (c) 2020-2022 Alexander Kernozhitsky and SoFCheck contributors
+// Copyright (c) 2020-2023 Alexander Kernozhitsky and SoFCheck contributors
 //
 // SoFCheck is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,8 +42,8 @@ extern MagicEntry g_magicBishop[64];
 
 void initMagic();
 
-inline bitboard_t rookAttackBitboard(bitboard_t occupied, coord_t pos) {
-  const MagicEntry &entry = g_magicRook[pos];
+inline bitboard_t doRookAttackBitboard(const bitboard_t occupied, const coord_t pos,
+                                       const MagicEntry &entry) {
 #ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
 #else
@@ -53,8 +53,8 @@ inline bitboard_t rookAttackBitboard(bitboard_t occupied, coord_t pos) {
   return entry.lookup[idx] & entry.postMask;
 }
 
-inline bitboard_t bishopAttackBitboard(bitboard_t occupied, coord_t pos) {
-  const MagicEntry &entry = g_magicBishop[pos];
+inline bitboard_t doBishopAttackBitboard(bitboard_t occupied, coord_t pos,
+                                         const MagicEntry &entry) {
 #ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
 #else
@@ -62,6 +62,34 @@ inline bitboard_t bishopAttackBitboard(bitboard_t occupied, coord_t pos) {
       static_cast<size_t>(((occupied & entry.mask) * BISHOP_MAGICS[pos]) >> BISHOP_SHIFTS[pos]);
 #endif
   return entry.lookup[idx] & entry.postMask;
+}
+
+inline bitboard_t rookAttackBitboard(bitboard_t occupied, coord_t pos) {
+  const MagicEntry &entry = g_magicRook[pos];
+  return doRookAttackBitboard(occupied, pos, entry);
+}
+
+inline bitboard_t rookAttackBitboard(bitboard_t occupied, coord_t pos, bitboard_t postMask) {
+  MagicEntry entry = g_magicRook[pos];
+  entry.postMask &= postMask;
+  if (!entry.postMask) {
+    return 0;
+  }
+  return doRookAttackBitboard(occupied, pos, entry);
+}
+
+inline bitboard_t bishopAttackBitboard(bitboard_t occupied, coord_t pos) {
+  const MagicEntry &entry = g_magicBishop[pos];
+  return doBishopAttackBitboard(occupied, pos, entry);
+}
+
+inline bitboard_t bishopAttackBitboard(bitboard_t occupied, coord_t pos, bitboard_t postMask) {
+  MagicEntry entry = g_magicBishop[pos];
+  entry.postMask &= postMask;
+  if (!entry.postMask) {
+    return 0;
+  }
+  return doBishopAttackBitboard(occupied, pos, entry);
 }
 
 }  // namespace SoFCore::Private

@@ -53,8 +53,8 @@ bool isCellAttacked(const SoFCore::Board &b, SoFCore::coord_t coord) {
   }
 
   // Check far attacks
-  return (Private::bishopAttackBitboard(b.bbAll, coord) & bbDiagPieces<C>(b)) ||
-         (Private::rookAttackBitboard(b.bbAll, coord) & bbLinePieces<C>(b));
+  return Private::bishopAttackBitboard(b.bbAll, coord, bbDiagPieces<C>(b)) ||
+         Private::rookAttackBitboard(b.bbAll, coord, bbLinePieces<C>(b));
 }
 
 template <Color C>
@@ -67,8 +67,8 @@ bitboard_t cellAttackers(const Board &b, coord_t coord) {
   return (b.bbPieces[makeCell(C, Piece::Pawn)] & pawnAttacks[coord]) |
          (b.bbPieces[makeCell(C, Piece::King)] & Private::KING_ATTACKS[coord]) |
          (b.bbPieces[makeCell(C, Piece::Knight)] & Private::KNIGHT_ATTACKS[coord]) |
-         (Private::bishopAttackBitboard(b.bbAll, coord) & bbDiagPieces<C>(b)) |
-         (Private::rookAttackBitboard(b.bbAll, coord) & bbLinePieces<C>(b));
+         Private::bishopAttackBitboard(b.bbAll, coord, bbDiagPieces<C>(b)) |
+         Private::rookAttackBitboard(b.bbAll, coord, bbLinePieces<C>(b));
 }
 
 bool isCheck(const Board &b) {
@@ -472,14 +472,14 @@ inline static bool isMoveValidImpl(const Board &b, const Move move) {
     return Private::KNIGHT_ATTACKS[src] & bbDst;
   }
   if (srcCell == makeCell(C, Piece::Bishop)) {
-    return Private::bishopAttackBitboard(b.bbAll, src) & bbDst;
+    return Private::bishopAttackBitboard(b.bbAll, src, bbDst);
   }
   if (srcCell == makeCell(C, Piece::Rook)) {
-    return Private::rookAttackBitboard(b.bbAll, src) & bbDst;
+    return Private::rookAttackBitboard(b.bbAll, src, bbDst);
   }
   if (srcCell == makeCell(C, Piece::Queen)) {
-    return (Private::bishopAttackBitboard(b.bbAll, src) & bbDst) ||
-           (Private::rookAttackBitboard(b.bbAll, src) & bbDst);
+    return Private::bishopAttackBitboard(b.bbAll, src, bbDst) ||
+           Private::rookAttackBitboard(b.bbAll, src, bbDst);
   }
   return false;
 }
@@ -501,8 +501,8 @@ inline static bool isAttackedMaskedImpl(const Board &b, const coord_t kingPos,
   }
 
   // Check far attacks
-  return (Private::bishopAttackBitboard(bbAll, kingPos) & bbDiagPieces<C>(b) & bbOursMask) ||
-         (Private::rookAttackBitboard(bbAll, kingPos) & bbLinePieces<C>(b) & bbOursMask);
+  return Private::bishopAttackBitboard(bbAll, kingPos, bbDiagPieces<C>(b) & bbOursMask) ||
+         Private::rookAttackBitboard(bbAll, kingPos, bbLinePieces<C>(b) & bbOursMask);
 }
 
 template <Color C>
