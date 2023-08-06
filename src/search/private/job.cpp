@@ -484,7 +484,7 @@ score_t Searcher::doSearch(int32_t depth, const size_t idepth, score_t alpha, co
   if (canNullMove) {
     MoveMakeGuard guard(board_, Move::null(), tag);
     tt_.prefetch(board_.hash);
-    DGN_ASSERT(isMoveLegal(board_));
+    DGN_ASSERT(wasMoveLegal(board_));
     const Flags newFlags = (flags & Flags::Inherit) | Flags::NullMove;
     const score_t score = -search<NodeKind::Simple>(depth - NullMove::DEPTH_DEC, idepth + 1, -beta,
                                                     -beta + 1, guard.tag(), newFlags);
