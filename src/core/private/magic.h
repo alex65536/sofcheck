@@ -42,7 +42,8 @@ extern MagicEntry g_magicBishop[64];
 
 void initMagic();
 
-inline bitboard_t doRookAttackBitboard(const bitboard_t occupied, const coord_t pos,
+inline bitboard_t doRookAttackBitboard(const bitboard_t occupied,
+                                       [[maybe_unused]] const coord_t pos,
                                        const MagicEntry &entry) {
 #ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
@@ -53,7 +54,8 @@ inline bitboard_t doRookAttackBitboard(const bitboard_t occupied, const coord_t 
   return entry.lookup[idx] & entry.postMask;
 }
 
-inline bitboard_t doBishopAttackBitboard(bitboard_t occupied, coord_t pos,
+inline bitboard_t doBishopAttackBitboard(const bitboard_t occupied,
+                                         [[maybe_unused]] const coord_t pos,
                                          const MagicEntry &entry) {
 #ifdef USE_BMI2
   const size_t idx = _pext_u64(occupied, entry.mask);
@@ -64,12 +66,13 @@ inline bitboard_t doBishopAttackBitboard(bitboard_t occupied, coord_t pos,
   return entry.lookup[idx] & entry.postMask;
 }
 
-inline bitboard_t rookAttackBitboard(bitboard_t occupied, coord_t pos) {
+inline bitboard_t rookAttackBitboard(const bitboard_t occupied, const coord_t pos) {
   const MagicEntry &entry = g_magicRook[pos];
   return doRookAttackBitboard(occupied, pos, entry);
 }
 
-inline bitboard_t rookAttackBitboard(bitboard_t occupied, coord_t pos, bitboard_t postMask) {
+inline bitboard_t rookAttackBitboard(const bitboard_t occupied, const coord_t pos,
+                                     const bitboard_t postMask) {
   MagicEntry entry = g_magicRook[pos];
   entry.postMask &= postMask;
   if (!entry.postMask) {
