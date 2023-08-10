@@ -128,11 +128,7 @@ inline constexpr uint8_t byteGather(uint64_t x) {
 
 // Creates a 8-bit number, with all of its bytes equal to `x`
 inline constexpr uint64_t byteScatter(uint8_t x) {
-  uint64_t r = x;
-  r |= r << 8;
-  r |= r << 16;
-  r |= r << 32;
-  return r;
+  return static_cast<uint64_t>(x) * 0x0101010101010101ULL;
 }
 
 // Performs a left rotation of `x` by `shift`. If `shift >= 64`, the behavior is undefined
