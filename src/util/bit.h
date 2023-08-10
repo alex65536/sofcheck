@@ -167,6 +167,16 @@ inline uint64_t depositBits(uint64_t x, uint64_t msk) {
 }
 #endif
 
+// Static tests (performed at compile time)
+
+// Tests for `byteScatter()`
+static_assert(byteScatter(0) == 0);
+static_assert(byteScatter(0x42) == 0x4242424242424242);
+static_assert(byteScatter(0x7f) == 0x7f7f7f7f7f7f7f7f);
+static_assert(byteScatter(0x80) == 0x8080808080808080);
+static_assert(byteScatter(0xfe) == 0xfefefefefefefefe);
+static_assert(byteScatter(0xff) == 0xffffffffffffffff);
+
 }  // namespace SoFUtil
 
 #endif  // SOF_UTIL_BIT_INCLUDED
