@@ -145,17 +145,13 @@ inline constexpr uint64_t rotateRight(const uint64_t x, const size_t shift) {
   return (shift == 0) ? x : ((x >> shift) | (x << (64 - shift)));
 }
 
-#ifdef USE_BMI2
-
 // The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)
 //
 // For more details, you can look at https://www.felixcloutier.com/x86/pdep
+#ifdef USE_BMI2
+// If BMI2 is supported, just use PDEP instruction
 inline uint64_t depositBits(uint64_t x, uint64_t msk) { return _pdep_u64(x, msk); }
-
 #else
-
-// The function does the same as `_pdep_u64` Intel intrinsic (or `PDEP` Intel instruction)
-//
 // This is a naive implementation for CPUs that don't support BMI2
 inline uint64_t depositBits(uint64_t x, uint64_t msk) {
   uint64_t res = 0;
@@ -169,7 +165,6 @@ inline uint64_t depositBits(uint64_t x, uint64_t msk) {
   }
   return res;
 }
-
 #endif
 
 }  // namespace SoFUtil
