@@ -87,7 +87,7 @@ space in this description means one or more spaces in the file.
 
 ### Canonical and non-canonical games
 
-A game is _canonical_ if there is exactly one command from the set (`startpos`, `fen`). Note that
+A game is _canonical_ if there is exactly one command from the set (`start`, `board`). Note that
 canonical games by definition correspond to valid chess games.
 
 A file is _canonical_ if it contains only canonical games.
