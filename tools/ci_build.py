@@ -141,7 +141,7 @@ def configure(config, storage, args):
         if compiler == 'clang' and comp_version != '':
             llvm_ver = comp_version
 
-        clang_path = '/usr/local/opt/llvm@' + llvm_ver + '/bin'
+        clang_path = '/opt/homebrew/opt/llvm@' + llvm_ver + '/bin'
         storage['cmd']['clang-tidy'] = os.path.join(clang_path, 'clang-tidy')
         storage['pkg']['clang-tidy'] = 'llvm@' + llvm_ver
 
